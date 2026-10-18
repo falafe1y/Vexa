@@ -331,5 +331,62 @@ Item {
             mouseClick(rows[0]); compare(financeMock.selectedAccountId, "");
             mouseClick(rows[0], 80, 20, Qt.RightButton); compare(scene.menuCalls, 1);
         }
+        function test_summary_is_static_and_preserves_filters() {
+            const summary = findChild(dashboard, "editorialAsset_all");
+            compare(summary.enabled, false); compare(summary.focusPolicy, Qt.NoFocus);
+            compare(summary.background.color, Qt.color("#031528"));
+            dashboard.selectAsset("fiat"); dashboard.selectAccount(financeMock.allAccounts[1]);
+            mouseClick(summary);
+            compare(dashboard.asset, "fiat"); compare(financeMock.selectedAccountId, "a1");
+            dashboard.selectAsset("investment"); mouseClick(summary);
+            compare(dashboard.asset, "investment"); compare(financeMock.selectedAsset, "investment");
+        }
+        function test_current_capital_ignores_history_cutoff() {
+            const state = {balanceMinorUnits:100000,dateFilterActive:true,appCurrency:"RUB",
+                currentCurrencyRates:financeMock.currentCurrencyRates,
+                allAccounts:[{currency:"RUB",balanceMinor:10000,currentBalanceMinor:25000},
+                    {currency:"USD",balanceMinor:100,currentBalanceMinor:200},
+                    {currency:"RUB",balanceMinor:-2000,currentBalanceMinor:-4000,isCreditCard:true,countsDebt:false},
+                    {currency:"RUB",balanceMinor:-1000,currentBalanceMinor:-3000,isCreditCard:true,countsDebt:true}]};
+            compare(Data.currentCapital(state), 123000);
+            state.dateFilterActive = false; compare(Data.currentCapital(state), 100000);
+        }
+        function test_credit_amounts_fit_seven_digits_at_full_hd() {
+            const original = financeMock.allAccounts;
+            try {
+                const amounts = [[8500000,9392783],[999999999,999999999],[1000000000,1000000000]];
+                let previousWidth = 0;
+                amounts.forEach(function(pair, index) {
+                    financeMock.allAccounts = [Object.assign({}, original[0], {isCreditCard:true,type:"credit_card",
+                        name:"Сбер | Кредитная карта с длинным названием",availableCreditMinor:pair[0],debtMinor:pair[1]})];
+                    wait(30);
+                    const row = findChild(dashboard, "editorialAccountRow");
+                    const available = findChild(row, "editorialAccountPrimaryAmount");
+                    const debt = findChild(row, "editorialAccountDebtAmount");
+                    const availableLabel = findChild(row, "editorialCreditAvailableLabel");
+                    const debtLabel = findChild(row, "editorialCreditDebtLabel");
+                    compare(row.height, 72);
+                    verify(availableLabel.visible); verify(debtLabel.visible);
+                    verify(available.y < debt.y); verify(availableLabel.y < debtLabel.y);
+                    compare(available.text, scene.money(pair[0], "RUB", false));
+                    compare(debt.text, scene.money(pair[1], "RUB", false));
+                    compare(available.truncated, index === 2); compare(debt.truncated, index === 2);
+                    compare(available.font.pixelSize, 28); compare(debt.font.pixelSize, 28);
+                    verify(debt.x + debt.width <= debt.parent.width);
+                    if (index === 1) verify(available.width > previousWidth);
+                    previousWidth = available.width;
+                    if (typeof uiCaptureDirectory !== "undefined" && uiCaptureDirectory !== "")
+                        grabImage(scene).save(uiCaptureDirectory + "/credit-" + index + "-1920x1080.png");
+                });
+                const widths = [1600,1440,1280,1024,800];
+                widths.forEach(function(width) {
+                    scene.width = width; scene.height = 960; wait(30);
+                    const row = findChild(dashboard, "editorialAccountRow");
+                    const amount = findChild(row, "editorialAccountPrimaryAmount");
+                    verify(amount.width >= 0); verify(amount.parent.x >= 0);
+                    verify(amount.parent.x + amount.parent.width <= row.width);
+                });
+            } finally { financeMock.allAccounts = original; }
+        }
     }
 }

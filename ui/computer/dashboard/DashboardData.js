@@ -1,5 +1,18 @@
 .pragma library
 
+function currentCapital(controller) {
+    let total = Number(controller.balanceMinorUnits);
+    if (!controller.dateFilterActive) return total;
+    controller.allAccounts.forEach(function(row) {
+        if (row.currentBalanceMinor === undefined) return;
+        function counted(value) { return row.isCreditCard && row.countsDebt === false ? Math.max(0, value) : value; }
+        const current = convertMinor(counted(Number(row.currentBalanceMinor)), row.currency, controller.appCurrency, controller.currentCurrencyRates);
+        const historical = convertMinor(counted(Number(row.balanceMinor)), row.currency, controller.appCurrency, controller.currentCurrencyRates);
+        if (current !== null && historical !== null) total += current - historical;
+    });
+    return total;
+}
+
 function accountCount(accounts, wallets, asset) {
     const seen = new Set();
     function addRows(rows) {

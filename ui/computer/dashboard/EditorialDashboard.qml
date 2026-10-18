@@ -16,9 +16,9 @@ Flickable {
     readonly property int sectionNumberWidth: small ? 24 : 32
     readonly property int topInset: compact ? 16 : 24
     readonly property int mainWidth: Math.max(0, width - pad * 2)
-    readonly property int leftWidth: narrow ? mainWidth : Math.round(mainWidth * (small ? .58 : .59596) / 4) * 4
+    readonly property int leftWidth: narrow ? mainWidth : Math.round(mainWidth * (small ? .60 : .625) / 4) * 4
     readonly property string selectedId: controller.selectedAsset === "crypto" ? controller.selectedCryptoWalletId : controller.selectedAccountId
-    property string asset: "all"
+    property string asset: "fiat"
     property string category: ""
     property string sortField: "date"
     property int sortDirection: -1
@@ -82,7 +82,7 @@ Flickable {
     function sortBy(field) { sortDirection = sortField === field ? -sortDirection : -1; sortField = field; }
     function colStart(index) { let value = 0; for (let i = 0; i < index; ++i) value += columns[i]; return Math.round(mainWidth * value / 4) * 4; }
     function colWidth(index) { return index === 5 ? mainWidth - colStart(index) : colStart(index + 1) - colStart(index); }
-    function assetBalance(code) { return code === "all" ? controller.balanceMinorUnits : host.assetAmount(code); }
+    function assetBalance(code) { return code === "all" ? Data.currentCapital(controller) : host.assetAmount(code); }
     function money(minor, code, sign, digits) { return Data.money(minor, code, sign, digits, controller.uiLanguage); }
     function scheduledAmount() {
         if (!nextEvent) return "";
@@ -307,34 +307,39 @@ Flickable {
                     id: assetButton
                     required property int index
                     required property var modelData
-                    readonly property int cellPad: index === 0 || (view.narrow && index === 2) ? 0 : view.small ? 16 : view.medium ? 20 : 24
+                    readonly property bool summaryOnly: index === 0
+                    readonly property int cellPad: view.narrow && index === 2 ? 0 : view.small ? 16 : view.medium ? 20 : 24
                     x: view.narrow ? (index % 2) * summary.width / 2 : index === 0 ? 0 : summary.width * (3 + (index - 1) * 2) / 9
                     y: view.narrow ? Math.floor(index / 2) * 144 : 0
                     width: view.narrow ? summary.width / 2 : summary.width * (index === 0 ? 3 : 2) / 9
                     height: view.narrow ? 144 : summary.height
-                    padding: 0; hoverEnabled: true
+                    padding: 0; hoverEnabled: !summaryOnly
+                    enabled: !summaryOnly
+                    focusPolicy: summaryOnly ? Qt.NoFocus : Qt.StrongFocus
                     objectName: "editorialAsset_" + modelData[0]
+                    Accessible.role: summaryOnly ? Accessible.StaticText : Accessible.Button
                     Accessible.name: modelData[1] + " " + value.text + ", " + view.caption(modelData[0])
                     contentItem: Item {
-                        Mono { x: assetButton.cellPad; y: view.compact ? 16 : 24; height: 24; width: parent.width - x - 16; text: "0" + (assetButton.index + 1) + " / " + assetButton.modelData[1]; font.letterSpacing: .5 }
+                        Mono { x: assetButton.cellPad; y: view.compact ? 16 : 24; height: 24; width: parent.width - x - 16; text: "0" + (assetButton.index + 1) + " / " + assetButton.modelData[1]; font.letterSpacing: .5; color: assetButton.summaryOnly ? "#d2cfbf" : "#59616a" }
                         Serif {
                             id: value
                             x: assetButton.cellPad; y: (view.compact ? 16 : 24) + 32; height: 56; width: parent.width - x - 12
                             text: view.money(view.assetBalance(assetButton.modelData[0]), view.controller.appCurrency, false, assetButton.modelData[0] === "crypto" && !view.assetBalance("crypto") ? 0 : 2)
                             font.pixelSize: assetButton.index === 0 ? (view.small ? 30 : view.medium ? 36 : 44) : view.small ? 26 : view.medium ? 30 : 36
                             font.letterSpacing: -.8
+                            color: assetButton.summaryOnly ? "#f9f6ea" : "#031528"
                             minimumPixelSize: 20; fontSizeMode: Text.Fit
                         }
-                        Mono { x: assetButton.cellPad; y: value.y + 64; height: 24; width: parent.width - x - 12; text: view.caption(assetButton.modelData[0]) }
+                        Mono { x: assetButton.cellPad; y: value.y + 64; height: 24; width: parent.width - x - 12; text: view.caption(assetButton.modelData[0]); color: assetButton.summaryOnly ? "#d2cfbf" : "#59616a" }
                         EditorialArrow { visible: assetButton.index > 0; x: parent.width - width - (view.small ? 12 : 24); y: view.compact ? 16 : 24; width: view.small ? 16 : 24; height: width }
                     }
                     background: Rectangle {
-                        color: view.asset === assetButton.modelData[0] ? "#09031528" : assetButton.hovered ? "#05031528" : "transparent"
+                        color: assetButton.summaryOnly ? "#031528" : view.asset === assetButton.modelData[0] ? "#09031528" : assetButton.hovered ? "#05031528" : "transparent"
                         Rectangle { visible: assetButton.index !== 0 && !(view.narrow && assetButton.index === 2); width: 1; height: parent.height; color: "#031528" }
-                        Rule { visible: view.asset === assetButton.modelData[0]; y: parent.height - 2; height: 2; width: parent.width }
+                        Rule { visible: !assetButton.summaryOnly && view.asset === assetButton.modelData[0]; y: parent.height - 2; height: 2; width: parent.width }
                         Rule { visible: view.narrow && assetButton.index < 2; y: parent.height - 1; width: parent.width; color: "#bbb5a8" }
                     }
-                    onClicked: view.selectAsset(modelData[0])
+                    onClicked: if (!summaryOnly) view.selectAsset(modelData[0])
                 }
             }
         }
@@ -354,7 +359,6 @@ Flickable {
                     onActivated: view.host.editorialAddAccount()
                 }
                 readonly property int numberWidth: view.small ? 20 : view.medium ? 24 : 32
-                readonly property int amountWidth: view.small ? 136 : view.medium ? 176 : 208
                 readonly property int arrowWidth: view.small ? 16 : 24
                 readonly property int gap: view.small ? 8 : view.medium ? 12 : 16
                 ListView {
@@ -375,29 +379,63 @@ Flickable {
                         required property int index
                         objectName: "editorialAccountRow"
                         readonly property bool selected: view.selectedId === modelData.id
-                        width: accounts.width - 8; height: 56; padding: 0; hoverEnabled: true
-                        Accessible.name: modelData.name + " " + view.host.accountCompactAmount(modelData)
+                        readonly property bool credit: modelData.isCreditCard === true
+                        readonly property string primaryText: credit ? view.money(modelData.availableCreditMinor, modelData.currency, false, 2) : view.host.accountCompactAmount(modelData)
+                        readonly property string debtText: credit ? view.money(modelData.debtMinor, modelData.currency, false, 2) : ""
+                        width: accounts.width - 8; height: credit ? 72 : 64; padding: 0; hoverEnabled: true
+                        Accessible.name: modelData.name + " " + (credit ? qsTr("Доступно ") + primaryText + qsTr(", долг ") + debtText : primaryText)
+                        ToolTip.visible: hovered && (primaryAmount.truncated || debtAmount.truncated)
+                        ToolTip.delay: 500
+                        ToolTip.text: Accessible.name
                         contentItem: Item {
-                            Mono { width: accountsPanel.numberWidth; height: 56; text: String(accountButton.index + 1).padStart(2, "0") }
+                            Mono { width: accountsPanel.numberWidth; height: parent.height; text: String(accountButton.index + 1).padStart(2, "0") }
                             Item {
-                                x: accountsPanel.numberWidth + accountsPanel.gap; height: 56
-                                width: parent.width - x - accountsPanel.amountWidth - accountsPanel.arrowWidth - accountsPanel.gap * 2
-                                EditorialText { y: 2; height: 24; width: parent.width; text: accountButton.modelData.name; font.bold: true; font.pixelSize: view.small ? 14 : 16 }
-                                EditorialText { y: 30; height: 20; width: parent.width; text: accountButton.modelData.isExchange ? qsTr("Биржевой счёт") : accountButton.modelData.isCrypto ? (accountButton.modelData.symbol + " · " + accountButton.modelData.network) : view.host.accountTypeLabel(accountButton.modelData.type); font.pixelSize: view.small ? 12 : 14; color: "#59616a" }
+                                id: accountName
+                                x: accountsPanel.numberWidth + accountsPanel.gap; height: 56; y: (parent.height - height) / 2
+                                width: Math.max(0, accountAmounts.x - x - accountsPanel.gap)
+                                EditorialText { y: 4; height: 24; width: parent.width; text: accountButton.modelData.name; font.bold: true; font.pixelSize: view.small ? 14 : 16 }
+                                EditorialText { y: 32; height: 20; width: parent.width; text: accountButton.modelData.isExchange ? qsTr("Биржевой счёт") : accountButton.modelData.isCrypto ? (accountButton.modelData.symbol + " · " + accountButton.modelData.network) : view.host.accountTypeLabel(accountButton.modelData.type); font.pixelSize: view.small ? 12 : 14; color: "#59616a" }
                             }
-                            Serif {
+                            Item {
+                                id: accountAmounts
                                 anchors.right: parent.right; anchors.rightMargin: accountsPanel.arrowWidth + accountsPanel.gap
-                                width: accountsPanel.amountWidth; height: 56
-                                text: view.host.accountCompactAmount(accountButton.modelData)
-                                font.pixelSize: view.small ? 22 : view.medium ? 24 : 28
-                                horizontalAlignment: Text.AlignRight; minimumPixelSize: 16; fontSizeMode: Text.Fit
+                                readonly property int labelWidth: accountButton.credit ? Math.ceil(Math.max(availableLabel.implicitWidth, debtLabel.implicitWidth) / 4) * 4 + 8 : 0
+                                readonly property int valueWidth: Math.ceil(Math.min(sevenDigits.advanceWidth + 8, Math.max(primaryAmount.implicitWidth, debtAmount.implicitWidth) + 4) / 4) * 4
+                                width: Math.min(labelWidth + valueWidth, Math.max(0, parent.width - accountName.x - (view.small ? 112 : 176) - accountsPanel.arrowWidth - accountsPanel.gap * 2))
+                                height: accountButton.credit ? 64 : parent.height; y: (parent.height - height) / 2
+                                TextMetrics {
+                                    id: sevenDigits; font: primaryAmount.font
+                                    text: view.money(Number(accountButton.modelData.balanceMinor) < 0 && !accountButton.credit ? -999999999 : 999999999, accountButton.modelData.currency, false, 2)
+                                }
+                                EditorialText {
+                                    id: availableLabel; objectName: "editorialCreditAvailableLabel"
+                                    visible: accountButton.credit; height: 32; width: accountAmounts.labelWidth - 8
+                                    text: qsTr("Доступно"); font.pixelSize: view.small ? 12 : 14; color: "#59616a"
+                                }
+                                Serif {
+                                    id: primaryAmount; objectName: "editorialAccountPrimaryAmount"
+                                    x: accountAmounts.labelWidth; width: Math.max(0, parent.width - x); height: accountButton.credit ? 32 : parent.height
+                                    text: accountButton.primaryText; font.pixelSize: view.small ? 22 : view.medium ? 24 : 28
+                                    horizontalAlignment: Text.AlignRight
+                                }
+                                EditorialText {
+                                    id: debtLabel; objectName: "editorialCreditDebtLabel"
+                                    visible: accountButton.credit; y: 32; height: 32; width: accountAmounts.labelWidth - 8
+                                    text: qsTr("Долг"); font.pixelSize: view.small ? 12 : 14; color: "#59616a"
+                                }
+                                Serif {
+                                    id: debtAmount; objectName: "editorialAccountDebtAmount"
+                                    visible: accountButton.credit; x: accountAmounts.labelWidth; y: 32; width: Math.max(0, parent.width - x); height: 32
+                                    text: accountButton.debtText; font.pixelSize: primaryAmount.font.pixelSize
+                                    horizontalAlignment: Text.AlignRight
+                                }
                             }
                             EditorialArrow { anchors.right: parent.right; anchors.verticalCenter: parent.verticalCenter; width: accountsPanel.arrowWidth; height: width }
                         }
                         background: Rectangle {
                             color: accountButton.selected ? "#09031528" : accountButton.hovered ? "#06031528" : "transparent"
                             Rule { y: parent.height - 1; width: parent.width; color: "#bbb5a8" }
-                            Rectangle { visible: accountButton.selected; y: 8; height: 40; width: 2; color: "#031528" }
+                            Rectangle { visible: accountButton.selected; y: 8; height: parent.height - 16; width: 2; color: "#031528" }
                         }
                         onClicked: view.selectAccount(modelData)
                         TapHandler { acceptedButtons: Qt.RightButton; onTapped: (point) => view.host.openAccountContextMenu(accountButton.modelData, accountButton, point.position.x, point.position.y) }
