@@ -11,6 +11,14 @@ EditorialPage {
     title: qsTr("Финансовая траектория.")
     readonly property var trajectory: controller.financialTrajectory
     property string scenarioName: "base"
+    // The sources the user ticked for the calculation; saved with the next recalculation
+    property var sourceSelection: trajectory.sourceIds || []
+    function toggleSource(id, on) {
+        const list = sourceSelection.filter(function (item) { return item !== id; });
+        if (on)
+            list.push(id);
+        sourceSelection = list;
+    }
     function money(value) {
         return theme.money(value, trajectory.currency, false);
     }
@@ -19,7 +27,7 @@ EditorialPage {
         return isFinite(value) ? value : 0;
     }
     function applySettings() {
-        var result = controller.saveFinancialTrajectorySettings({
+        var result = controller.saveFinancialTrajectorySettings(Object.assign({
                                                                     analysisMonths: Number(analysis.currentValue),
                                                                     horizonMonths: Number(horizon.currentValue),
                                                                     annualReturnPercent: number(returnField.text),
@@ -33,23 +41,20 @@ EditorialPage {
                                                                                                                  Number(purchaseMonth.currentValue),
                                                                                                                  Number(horizon.currentValue)) :
                                                                                                              0
-                                                                });
+                                                                }, {allSources: allSourcesCheck.checked, sourceIds: page.sourceSelection}));
         errorText.text = result.ok ? "" : result.error;
     }
+    // A mode sets the return as the typed inflation plus a spread, and the income and expense changes
     function scenario(kind) {
-        if (kind === "safe") {
-            returnField.text = "2";
-            incomeField.text = "-10";
-            expenseField.text = "10";
-        } else if (kind === "growth") {
-            returnField.text = "8";
-            incomeField.text = "5";
-            expenseField.text = "-5";
-        } else {
-            returnField.text = "5";
-            incomeField.text = "0";
-            expenseField.text = "0";
-        }
+        const presets = {
+            safe: { spread: 0, income: 0, expense: 0 },
+            growth: { spread: 8, income: 30, expense: 15 },
+            base: { spread: 3, income: 10, expense: 5 }
+        };
+        const preset = presets[kind] || presets.base;
+        returnField.text = String(number(inflationField.text) + preset.spread);
+        incomeField.text = String(preset.income);
+        expenseField.text = String(preset.expense);
         applySettings();
     }
 
@@ -121,6 +126,16 @@ EditorialPage {
                                 value: r.realMinor
                             };
                         })
+                    },
+                    {
+                        label: qsTr("Со сложным процентом"),
+                        dotted: true,
+                        rows: trajectory.forecast.map(function (r) {
+                            return {
+                                date: r.date,
+                                value: r.compoundMinor
+                            };
+                        })
                     }
                 ]
             }
@@ -133,6 +148,10 @@ EditorialPage {
                     {
                         label: qsTr("С учётом инфляции"),
                         dashed: true
+                    },
+                    {
+                        label: qsTr("Со сложным процентом"),
+                        dotted: true
                     }
                 ]
             }
@@ -143,7 +162,7 @@ EditorialPage {
                 font.pixelSize: 14
                 color: "#59616a"
                 text: qsTr(
-                          "Доходность применяется к текущей стоимости инвестиций; будущие накопления автоматически не считаются вложенными.")
+                          "Доходность применяется к текущей стоимости инвестиций; будущие накопления автоматически не считаются вложенными. Линия «Со сложным процентом» вкладывает накопления каждый месяц и тоже приносит по ним доходность.")
             }
         }
         Item {
@@ -356,6 +375,34 @@ EditorialPage {
                                               };
                                           })
                         Component.onCompleted: currentIndex = Math.max(0, Math.min(59, trajectory.purchaseMonth - 1))
+                    }
+                }
+                SettingRow {
+                    EditorialCheck {
+                        id: allSourcesCheck
+                        checked: trajectory.allSources
+                    }
+                    EditorialText {
+                        Layout.fillWidth: true
+                        text: qsTr("Все счета и кошельки")
+                        font.pixelSize: 14
+                    }
+                }
+                Repeater {
+                    model: controller.goalSources
+                    SettingRow {
+                        required property var modelData
+                        EditorialCheck {
+                            enabled: !allSourcesCheck.checked
+                            checked: allSourcesCheck.checked || page.sourceSelection.indexOf(modelData.id) >= 0
+                            onToggled: page.toggleSource(modelData.id, checked)
+                        }
+                        EditorialText {
+                            Layout.fillWidth: true
+                            text: modelData.name
+                            font.pixelSize: 13
+                            elide: Text.ElideRight
+                        }
                     }
                 }
                 EditorialText {

@@ -25,6 +25,17 @@ QVariantMap accountNamed(FinanceController& controller, const QString& name)
     }
     return {};
 }
+
+qint64 goalCurrentMinor(FinanceController& controller)
+{
+    const QVariantList goals = controller.financialGoals();
+    return goals.isEmpty() ? 0 : goals.first().toMap().value(QStringLiteral("currentMinor")).toLongLong();
+}
+
+QVariantList historyOf(FinanceController& controller)
+{
+    return controller.financialTrajectory().value(QStringLiteral("history")).toList();
+}
 } // namespace
 
 class CreditDebtFlagControllerTest : public QObject {
@@ -127,6 +138,91 @@ private slots:
         const QVariantList historyAfter = c.capitalHistoryRub();
         QCOMPARE(historyAfter.last().toMap().value(QStringLiteral("totalMinor")).toLongLong(),
                  qint64(600000 - 9392783 - 100000));
+    }
+
+    void trajectoryCapitalFollowsTheDebtFlag()
+    {
+        QTemporaryDir dir;
+        const auto path = dir.filePath("data.db");
+        {
+            FinanceRepository r(path);
+            QVERIFY(r.saveAutomaticCurrencyRates(false));
+            QVERIFY(r.saveManualCurrencyRates(1, 100, 120));
+        }
+        FinanceController c(nullptr, path);
+        c.setSelectedAsset("fiat");
+        QVERIFY(c.addAccount("Наличка", "cash", "RUB", 600000, 0));
+        QVERIFY(c.addAccount("Сбер | Кредитка", "credit_card", "RUB", -9392783, 15000000, 0.0, QString(), 1, false));
+        // The debt the card does not count stays out of the trajectory's current capital
+        QCOMPARE(c.financialTrajectory().value(QStringLiteral("currentMinor")).toLongLong(), qint64(600000));
+
+        const QString cardId = accountNamed(c, "Сбер | Кредитка").value("id").toString();
+        QVERIFY(c.updateAccount(cardId, "Сбер | Кредитка", "credit_card", "RUB", -9392783, 15000000,
+                                0.0, QString(), 1, true));
+        // Counted again: the debt comes off the trajectory as well
+        QCOMPARE(c.financialTrajectory().value(QStringLiteral("currentMinor")).toLongLong(),
+                 qint64(600000 - 9392783));
+    }
+
+    void goalsDoNotSubtractADebtThatIsNotCounted()
+    {
+        QTemporaryDir dir;
+        const auto path = dir.filePath("data.db");
+        {
+            FinanceRepository r(path);
+            QVERIFY(r.saveAutomaticCurrencyRates(false));
+            QVERIFY(r.saveManualCurrencyRates(1, 100, 120));
+        }
+        FinanceController c(nullptr, path);
+        c.setSelectedAsset("fiat");
+        QVERIFY(c.addAccount("Наличка", "cash", "RUB", 600000, 0));
+        QVERIFY(c.addAccount("Сбер | Кредитка", "credit_card", "RUB", -9392783, 15000000, 0.0, QString(), 1, false));
+        QVERIFY(c.saveFinancialGoal({{QStringLiteral("name"), QStringLiteral("Цель")},
+                                     {QStringLiteral("currency"), QStringLiteral("RUB")},
+                                     {QStringLiteral("amountText"), QStringLiteral("100000")}})
+                    .value(QStringLiteral("ok")).toBool());
+
+        // The card's debt is not counted anywhere, so the goal sees only the cash
+        QCOMPARE(goalCurrentMinor(c), qint64(600000));
+
+        const QString cardId = accountNamed(c, "Сбер | Кредитка").value("id").toString();
+        QVERIFY(c.updateAccount(cardId, "Сбер | Кредитка", "credit_card", "RUB", -9392783, 15000000,
+                                0.0, QString(), 1, true));
+        // Counted again: the goal subtracts the debt as before
+        QCOMPARE(goalCurrentMinor(c), qint64(600000 - 9392783));
+    }
+
+    void trajectoryHistoryFollowsTheDebtFlagOnEveryDay()
+    {
+        QTemporaryDir dir;
+        const auto path = dir.filePath("data.db");
+        {
+            FinanceRepository r(path);
+            QVERIFY(r.saveAutomaticCurrencyRates(false));
+            QVERIFY(r.saveManualCurrencyRates(1, 100, 120));
+        }
+        FinanceController c(nullptr, path);
+        c.setSelectedAsset("fiat");
+        QVERIFY(c.addAccount("Наличка", "cash", "RUB", 600000, 0));
+        QVERIFY(c.addAccount("Сбер | Кредитка", "credit_card", "RUB", -9392783, 15000000, 0.0, QString(), 1, false));
+
+        // The stored snapshot keeps the card's balance, the trajectory gives back the debt the card does not count
+        QVariantList history = historyOf(c);
+        QVERIFY(!history.isEmpty());
+        QCOMPARE(history.last().toMap().value(QStringLiteral("valueMinor")).toLongLong(), qint64(600000));
+
+        const QString cardId = accountNamed(c, "Сбер | Кредитка").value("id").toString();
+        QVERIFY(c.updateAccount(cardId, "Сбер | Кредитка", "credit_card", "RUB", -9392783, 15000000,
+                                0.0, QString(), 1, true));
+        history = historyOf(c);
+        QVERIFY(!history.isEmpty());
+        QCOMPARE(history.last().toMap().value(QStringLiteral("valueMinor")).toLongLong(),
+                 qint64(600000 - 9392783));
+
+        QVERIFY(c.updateAccount(cardId, "Сбер | Кредитка", "credit_card", "RUB", -9392783, 15000000,
+                                0.0, QString(), 1, false));
+        history = historyOf(c);
+        QCOMPARE(history.last().toMap().value(QStringLiteral("valueMinor")).toLongLong(), qint64(600000));
     }
 };
 

@@ -32,21 +32,29 @@ QVector<FinancialTrajectoryPoint> FinancialTrajectoryCalculator::calculate(
         (1.0L + settings.expenseChangePercent / 100.0L);
     long double capital = input.currentCapitalMinor;
     long double invested = std::max<qint64>(0, input.investmentCapitalMinor);
+    // Compound line: the investments and every month's savings earn the return, cash does not (as in the forecast line)
+    long double compoundInvested = invested;
+    long double compoundCash = static_cast<long double>(input.currentCapitalMinor) - invested;
 
     QVector<FinancialTrajectoryPoint> result;
     result.reserve(horizon + 1);
     result.append({input.currentDate, input.currentCapitalMinor,
-                   input.currentCapitalMinor});
+                   input.currentCapitalMinor, input.currentCapitalMinor});
     long double accumulatedInflation = 1.0L;
     for (int month = 1; month <= horizon; ++month) {
         const long double investmentGain = invested * monthlyReturn;
         invested += investmentGain;
-        capital += income - expense + investmentGain;
-        if (settings.purchaseMinor > 0 && settings.purchaseMonth == month)
+        const long double saving = income - expense;
+        capital += saving + investmentGain;
+        compoundInvested = compoundInvested * (1.0L + monthlyReturn) + saving;
+        if (settings.purchaseMinor > 0 && settings.purchaseMonth == month) {
             capital -= settings.purchaseMinor;
+            compoundCash -= settings.purchaseMinor;
+        }
         accumulatedInflation *= monthlyInflation;
         result.append({input.currentDate.addMonths(month), roundedMinor(capital),
-                       roundedMinor(capital / accumulatedInflation)});
+                       roundedMinor(capital / accumulatedInflation),
+                       roundedMinor(compoundInvested + compoundCash)});
         expense *= monthlyInflation;
     }
     return result;

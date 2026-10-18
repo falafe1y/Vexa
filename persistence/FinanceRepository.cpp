@@ -4326,12 +4326,18 @@ FinancialTrajectorySettings FinanceRepository::loadFinancialTrajectorySettings()
     };
     result.analysisMonths = value(QStringLiteral("trajectory_analysis_months"), 6).toInt();
     result.horizonMonths = value(QStringLiteral("trajectory_horizon_months"), 12).toInt();
-    result.annualReturnPercent = value(QStringLiteral("trajectory_return"), 5.0).toDouble();
+    result.annualReturnPercent = value(QStringLiteral("trajectory_return"), 9.0).toDouble();
     result.annualInflationPercent = value(QStringLiteral("trajectory_inflation"), 6.0).toDouble();
-    result.incomeChangePercent = value(QStringLiteral("trajectory_income_change"), 0.0).toDouble();
-    result.expenseChangePercent = value(QStringLiteral("trajectory_expense_change"), 0.0).toDouble();
+    result.incomeChangePercent = value(QStringLiteral("trajectory_income_change"), 10.0).toDouble();
+    result.expenseChangePercent = value(QStringLiteral("trajectory_expense_change"), 5.0).toDouble();
     result.purchaseMinor = value(QStringLiteral("trajectory_purchase_minor"), 0).toLongLong();
     result.purchaseMonth = value(QStringLiteral("trajectory_purchase_month"), 0).toInt();
+    result.allSources = value(QStringLiteral("trajectory_all_sources"), 1).toInt() != 0;
+    const QJsonArray sourceIds = QJsonDocument::fromJson(
+        value(QStringLiteral("trajectory_sources"), QStringLiteral("[]")).toString().toUtf8()).array();
+    for (const QJsonValue& item : sourceIds) {
+        result.sourceIds.append(item.toString());
+    }
     return result;
 }
 
@@ -4351,7 +4357,10 @@ bool FinanceRepository::saveFinancialTrajectorySettings(
         {QStringLiteral("trajectory_income_change"), settings.incomeChangePercent},
         {QStringLiteral("trajectory_expense_change"), settings.expenseChangePercent},
         {QStringLiteral("trajectory_purchase_minor"), settings.purchaseMinor},
-        {QStringLiteral("trajectory_purchase_month"), settings.purchaseMonth}};
+        {QStringLiteral("trajectory_purchase_month"), settings.purchaseMonth},
+        {QStringLiteral("trajectory_all_sources"), settings.allSources ? 1 : 0},
+        {QStringLiteral("trajectory_sources"), QString::fromUtf8(QJsonDocument(
+            QJsonArray::fromStringList(settings.sourceIds)).toJson(QJsonDocument::Compact))}};
     for (const auto& item : values) {
         query.bindValue(0, item.first); query.bindValue(1, item.second);
         if (!query.exec()) { setLastError(query.lastError().text()); database_.rollback(); return false; }

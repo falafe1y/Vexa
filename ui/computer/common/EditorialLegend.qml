@@ -20,7 +20,7 @@ RowLayout {
                     ctx.reset();
                     ctx.strokeStyle = "#031528";
                     ctx.lineWidth = 2;
-                    ctx.setLineDash(modelData.dashed ? [6, 4] : []);
+                    ctx.setLineDash(modelData.dashed ? [6, 4] : modelData.dotted ? [2, 4] : []);
                     ctx.beginPath();
                     ctx.moveTo(0, 4);
                     ctx.lineTo(width, 4);

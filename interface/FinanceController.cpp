@@ -3492,8 +3492,9 @@ QVariantList FinanceController::expenseHistoryByMonthRub() const
     QHash<QDate, qint64> totals;
     for (const Transaction& transaction : transactions_) {
         const QDate date = transaction.date().toLocalTime().date();
+        // A transfer is stored with an expense leg too, but it only moves money between the user's accounts
         if (transaction.type() != TransactionType::Expense ||
-            !date.isValid()) {
+            isTransfer(transaction) || !date.isValid()) {
             continue;
         }
         const QDate month(date.year(), date.month(), 1);
@@ -6394,8 +6395,10 @@ QVector<GoalAssetValue> FinanceController::goalAssetValues() const
             }
         }
         for(const auto& op:investmentOperations_)if(op.accountId==account.id() && op.occurredAtUtc<=now)balance+=op.cashDeltaMinor;
-        values.append({source, Money(static_cast<qint64>(std::clamp(balance, minimum, maximum)),
-                                     account.currency()), balance >= minimum && balance <= maximum});
+        // A card that does not count its debt keeps only a positive balance, in goals and in the trajectory too (ADR-022)
+        const auto clamped = static_cast<qint64>(std::clamp(balance, minimum, maximum));
+        values.append({source, Money(account.countedBalanceMinor(clamped), account.currency()),
+                       balance >= minimum && balance <= maximum});
         if (account.assetType() != AssetType::Investment) continue;
         for (const auto& position : investmentPositions_) {
             if (position.accountId() != account.id()) continue;
@@ -6533,11 +6536,21 @@ QVariantMap FinanceController::financialTrajectory()
         ? trajectorySettings_.analysisMonths : 6;
     const QDate firstIncludedMonth = end.addMonths(-(months - 1));
     const QDate start(firstIncludedMonth.year(), firstIncludedMonth.month(), 1);
+    // The trajectory counts every current source, or only the sources the user chose
+    QSet<QString> currentSources;
+    for (const QVariant& source : goalSources()) {
+        currentSources.insert(source.toMap().value(QStringLiteral("id")).toString());
+    }
+    const auto counted = [this, &currentSources](const QString& sourceId) {
+        return currentSources.contains(sourceId) &&
+            (trajectorySettings_.allSources || trajectorySettings_.sourceIds.contains(sourceId));
+    };
     qint64 income = 0;
     qint64 expense = 0;
     for (const auto& transaction : transactions_) {
         const QDate date = transaction.date().date();
-        if (date < start || date > end || isTransfer(transaction)) continue;
+        if (date < start || date > end || isTransfer(transaction) ||
+            !counted(QStringLiteral("account:") + transaction.accountId())) continue;
         const qint64 amount = currencyConverter_.convert(
             transaction.money(), appCurrency_).minorUnits();
         if (transaction.type() == TransactionType::Income)
@@ -6552,6 +6565,7 @@ QVariantMap FinanceController::financialTrajectory()
     qint64 investmentCapital = 0;
     bool complete = true;
     for (const auto& asset : goalAssetValues()) {
+        if (!counted(asset.sourceId)) continue;
         complete = complete && asset.available &&
             rateProvider_.rateToUsd(asset.value.currency()) > 0;
         if (!asset.available) continue;
@@ -6576,19 +6590,44 @@ QVariantMap FinanceController::financialTrajectory()
     input.currentDate = today;
     const auto forecast = FinancialTrajectoryCalculator::calculate(input);
 
+    // Each stored day is the sum of the counted sources' balances on that day, converted now. A card that does not
+    // count its debt contributes only a positive balance (ADR-022).
+    QHash<QString, qint64> historyByDate;
+    const auto addDailyRows = [&](const AssetDailyValuation::Kind kind) {
+        for (const QVariant& value : repository_.loadDailyValuations(kind)) {
+            const QVariantMap row = value.toMap();
+            const QString accountId = row.value(QStringLiteral("account_id")).toString();
+            const QString sourceId = kind == AssetDailyValuation::Crypto
+                ? row.value(QStringLiteral("source_id")).toString()
+                : QStringLiteral("account:") + accountId;
+            if (!counted(sourceId)) continue;
+            qint64 balance = row.value(QStringLiteral("value_minor")).toLongLong();
+            const auto account = std::find_if(accounts_.cbegin(), accounts_.cend(),
+                [&accountId](const auto& item) { return item.id() == accountId; });
+            if (account != accounts_.cend()) balance = account->countedBalanceMinor(balance);
+            const QString date = row.value(QStringLiteral("snapshot_date")).toString();
+            historyByDate[date] = saturatedCapitalAdd(historyByDate.value(date), currencyConverter_.convert(
+                Money(balance, currencyFromString(row.value(QStringLiteral("currency")).toString())),
+                appCurrency_).minorUnits());
+        }
+    };
+    addDailyRows(AssetDailyValuation::Fiat);
+    addDailyRows(AssetDailyValuation::Investment);
+    addDailyRows(AssetDailyValuation::Crypto);
     QVariantList historyRows;
     for (const auto& snapshot : repository_.loadCapitalSnapshots()) {
+        const QString date = snapshot.date.toString(Qt::ISODate);
         historyRows.append(QVariantMap{
-            {QStringLiteral("date"), snapshot.date.toString(Qt::ISODate)},
-            {QStringLiteral("valueMinor"), currencyConverter_.convert(
-                Money(snapshot.totalMinor, snapshot.currency), appCurrency_).minorUnits()}});
+            {QStringLiteral("date"), date},
+            {QStringLiteral("valueMinor"), historyByDate.value(date)}});
     }
     QVariantList forecastRows;
     for (const auto& point : forecast) {
         forecastRows.append(QVariantMap{
             {QStringLiteral("date"), point.date.toString(Qt::ISODate)},
             {QStringLiteral("valueMinor"), point.nominalMinor},
-            {QStringLiteral("realMinor"), point.realMinor}});
+            {QStringLiteral("realMinor"), point.realMinor},
+            {QStringLiteral("compoundMinor"), point.compoundMinor}});
     }
     const qint64 saving = saturatedCapitalSubtract(averageIncome, averageExpense);
     return {
@@ -6609,7 +6648,9 @@ QVariantMap FinanceController::financialTrajectory()
         {QStringLiteral("incomeChangePercent"), trajectorySettings_.incomeChangePercent},
         {QStringLiteral("expenseChangePercent"), trajectorySettings_.expenseChangePercent},
         {QStringLiteral("purchaseMinor"), trajectorySettings_.purchaseMinor},
-        {QStringLiteral("purchaseMonth"), trajectorySettings_.purchaseMonth}};
+        {QStringLiteral("purchaseMonth"), trajectorySettings_.purchaseMonth},
+        {QStringLiteral("allSources"), trajectorySettings_.allSources},
+        {QStringLiteral("sourceIds"), trajectorySettings_.sourceIds}};
 }
 
 QVariantMap FinanceController::saveFinancialTrajectorySettings(const QVariantMap& values)
@@ -6623,6 +6664,8 @@ QVariantMap FinanceController::saveFinancialTrajectorySettings(const QVariantMap
     next.expenseChangePercent = values.value(QStringLiteral("expenseChangePercent"), next.expenseChangePercent).toDouble();
     next.purchaseMinor = values.value(QStringLiteral("purchaseMinor"), next.purchaseMinor).toLongLong();
     next.purchaseMonth = values.value(QStringLiteral("purchaseMonth"), next.purchaseMonth).toInt();
+    next.allSources = values.value(QStringLiteral("allSources"), next.allSources).toBool();
+    next.sourceIds = values.value(QStringLiteral("sourceIds"), QVariant(next.sourceIds)).toStringList();
     const auto finite = [](double value) { return std::isfinite(value) && value > -100.0 && value <= 1000.0; };
     if ((next.analysisMonths != 3 && next.analysisMonths != 6 && next.analysisMonths != 12) ||
         (next.horizonMonths != 6 && next.horizonMonths != 12 && next.horizonMonths != 36 && next.horizonMonths != 60) ||
@@ -6631,6 +6674,21 @@ QVariantMap FinanceController::saveFinancialTrajectorySettings(const QVariantMap
         next.purchaseMinor < 0 || next.purchaseMonth < 0 || next.purchaseMonth > next.horizonMonths) {
         return {{QStringLiteral("ok"), false},
                 {QStringLiteral("error"), tr("Проверьте параметры прогноза")}};
+    }
+    if (!next.allSources) {
+        if (next.sourceIds.isEmpty()) {
+            return {{QStringLiteral("ok"), false},
+                    {QStringLiteral("error"), tr("Выберите хотя бы один счёт")}};
+        }
+        const auto sources = goalSources();
+        for (const QString& id : next.sourceIds) {
+            const bool exists = std::any_of(sources.cbegin(), sources.cend(),
+                [&id](const QVariant& source) { return source.toMap().value(QStringLiteral("id")).toString() == id; });
+            if (!exists) {
+                return {{QStringLiteral("ok"), false},
+                        {QStringLiteral("error"), tr("Один из выбранных счетов больше не доступен")}};
+            }
+        }
     }
     if (!repository_.saveFinancialTrajectorySettings(next)) {
         return {{QStringLiteral("ok"), false},

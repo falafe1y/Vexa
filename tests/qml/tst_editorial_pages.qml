@@ -214,22 +214,27 @@ Item {
                                                expenseChangePercent: 0,
                                                purchaseMinor: 0,
                                                purchaseMonth: 0,
+                                               allSources: true,
+                                               sourceIds: [],
                                                history: [],
                                                forecast: [
                                                    {
                                                        date: "2026-10-18",
                                                        valueMinor: 26545617,
-                                                       realMinor: 26545617
+                                                       realMinor: 26545617,
+                                                       compoundMinor: 26545617
                                                    },
                                                    {
                                                        date: "2027-10-18",
                                                        valueMinor: 50000000,
-                                                       realMinor: 47000000
+                                                       realMinor: 47000000,
+                                                       compoundMinor: 51000000
                                                    },
                                                    {
                                                        date: "2029-10-18",
                                                        valueMinor: 94700000,
-                                                       realMinor: 79000000
+                                                       realMinor: 79000000,
+                                                       compoundMinor: 96000000
                                                    }
                                                ]
                                            })
@@ -828,11 +833,15 @@ Item {
         function test_trajectory_uses_real_settings() {
             const p = open("trajectory");
             p.scenario("safe");
-            compare(finance.trajectorySettings.annualReturnPercent, 2);
+            // The safe mode: the return equals the typed inflation (6 %), income and expenses do not change
+            compare(finance.trajectorySettings.annualReturnPercent, 6);
+            compare(finance.trajectorySettings.incomeChangePercent, 0);
+            compare(finance.trajectorySettings.expenseChangePercent, 0);
             const chart = findChild(p, "editorialTrajectoryChart");
-            compare(chart.series.length, 2);
+            compare(chart.series.length, 3);
             compare(chart.series[0].dashed, undefined);
             compare(chart.series[1].dashed, true);
+            compare(chart.series[2].dotted, true);
         }
     }
 }

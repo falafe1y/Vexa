@@ -3836,7 +3836,7 @@ ApplicationWindow {
             Text {
                 Layout.fillWidth: true
                 visible: accountDialog.creditCardSelected && !accountDialog.countsDebtChecked
-                text: qsTr("Долг не вычитается из суммы фиата: в суммах учитывается только положительный остаток карты.")
+                text: qsTr("Долг не учитывается нигде: ни в суммах, ни в целях и траектории. В них входит только положительный остаток карты.")
                 color: root.muted
                 font.pixelSize: 14
                 wrapMode: Text.WordWrap

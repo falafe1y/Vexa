@@ -18,15 +18,15 @@ Item {
 
     function scenario(kind) {
         const presets = {
-            safe: { annualReturnPercent: 2, incomeChangePercent: -10, expenseChangePercent: 10 },
-            base: { annualReturnPercent: 5, incomeChangePercent: 0, expenseChangePercent: 0 },
-            growth: { annualReturnPercent: 8, incomeChangePercent: 5, expenseChangePercent: -5 }
+            safe: { spread: 0, incomeChangePercent: 0, expenseChangePercent: 0 },
+            base: { spread: 3, incomeChangePercent: 10, expenseChangePercent: 5 },
+            growth: { spread: 8, incomeChangePercent: 30, expenseChangePercent: 15 }
         };
         const preset = presets[kind];
         applySettings({
             analysisMonths: trajectory.analysisMonths,
             horizonMonths: trajectory.horizonMonths,
-            annualReturnPercent: preset.annualReturnPercent,
+            annualReturnPercent: trajectory.annualInflationPercent + preset.spread,
             annualInflationPercent: trajectory.annualInflationPercent,
             incomeChangePercent: preset.incomeChangePercent,
             expenseChangePercent: preset.expenseChangePercent,
@@ -143,7 +143,7 @@ Item {
                 }
                 Text {
                     Layout.fillWidth: true
-                    text: qsTr("Сплошная линия — история, пунктир — прогноз, точки — прогноз с учётом инфляции")
+                    text: qsTr("Сплошная линия — история, пунктир — прогноз, точки — прогноз с учётом инфляции, штрих-пунктир — со сложным процентом")
                     wrapMode: Text.Wrap
                     color: MobileTheme.muted
                     font.pixelSize: MobileTheme.sizeCaption
@@ -167,6 +167,7 @@ Item {
                         for (let j = 0; j < page.forecast.length; ++j) {
                             values.push(Number(page.forecast[j].valueMinor));
                             values.push(Number(page.forecast[j].realMinor));
+                            values.push(Number(page.forecast[j].compoundMinor));
                         }
                         if (values.length === 0)
                             return;
@@ -221,6 +222,7 @@ Item {
                         drawSeries(page.history, "valueMinor", MobileTheme.accentSoft, [], 0);
                         drawSeries(page.forecast, "valueMinor", MobileTheme.income, [8, 5], forecastOffset);
                         drawSeries(page.forecast, "realMinor", MobileTheme.muted, [2, 4], forecastOffset);
+                        drawSeries(page.forecast, "compoundMinor", MobileTheme.accent, [12, 4, 2, 4], forecastOffset);
                     }
                 }
 
@@ -260,7 +262,7 @@ Item {
 
             Text {
                 Layout.fillWidth: true
-                text: qsTr("Прогноз не является инвестиционной рекомендацией. Доходность применяется только к текущей стоимости инвестиций; будущие накопления автоматически не считаются вложенными.")
+                text: qsTr("Прогноз не является инвестиционной рекомендацией. Доходность применяется только к текущей стоимости инвестиций; будущие накопления автоматически не считаются вложенными. Линия со сложным процентом вкладывает накопления и тоже начисляет на них доходность.")
                 wrapMode: Text.Wrap
                 color: MobileTheme.muted
                 font.pixelSize: MobileTheme.sizeCaption
@@ -278,6 +280,15 @@ Item {
         property bool purchaseEnabled: false
         property int purchaseMonth: 12
         property string errorText: ""
+        property bool allSources: true
+        property var sourceSelection: []
+
+        function toggleSource(id, on) {
+            const list = sourceSelection.filter(function (item) { return item !== id; });
+            if (on)
+                list.push(id);
+            sourceSelection = list;
+        }
 
         title: qsTr("Параметры прогноза")
 
@@ -289,6 +300,8 @@ Item {
             inflationField.text = String(current.annualInflationPercent);
             incomeField.text = String(current.incomeChangePercent);
             expenseField.text = String(current.expenseChangePercent);
+            allSources = current.allSources;
+            sourceSelection = current.sourceIds.slice();
             purchaseEnabled = current.purchaseMonth > 0;
             purchaseField.text = MobileFormat.amountText(current.purchaseMinor);
             purchaseMonth = current.purchaseMonth > 0 ? current.purchaseMonth : 12;
@@ -305,7 +318,9 @@ Item {
                 incomeChangePercent: MobileFormat.numberFromText(incomeField.text),
                 expenseChangePercent: MobileFormat.numberFromText(expenseField.text),
                 purchaseMinor: purchaseEnabled ? MobileFormat.minorFromText(purchaseField.text) : 0,
-                purchaseMonth: purchaseEnabled ? Math.min(purchaseMonth, horizonMonths) : 0
+                purchaseMonth: purchaseEnabled ? Math.min(purchaseMonth, horizonMonths) : 0,
+                allSources: allSources,
+                sourceIds: sourceSelection
             });
             if (ok)
                 settingsSheet.close();
@@ -405,6 +420,26 @@ Item {
             onActivated: function(chosen) { settingsSheet.purchaseMonth = chosen; }
         }
 
+        SheetLabel {
+            text: qsTr("Счета для расчёта")
+        }
+        MobileCheckRow {
+            Layout.fillWidth: true
+            label: qsTr("Все счета и кошельки")
+            checked: settingsSheet.allSources
+            onToggled: function(nowChecked) { settingsSheet.allSources = nowChecked; }
+        }
+        Repeater {
+            model: financeController.goalSources
+            MobileCheckRow {
+                required property var modelData
+                Layout.fillWidth: true
+                label: modelData.name
+                enabled: !settingsSheet.allSources
+                checked: settingsSheet.allSources || settingsSheet.sourceSelection.indexOf(modelData.id) >= 0
+                onToggled: function(nowChecked) { settingsSheet.toggleSource(modelData.id, nowChecked); }
+            }
+        }
         Text {
             Layout.fillWidth: true
             visible: settingsSheet.errorText.length > 0

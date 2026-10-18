@@ -85,7 +85,7 @@ Canvas {
             const rows = s.rows || [];
             ctx.strokeStyle = "#031528";
             ctx.lineWidth = 2;
-            ctx.setLineDash(s.dashed ? [8, 6] : []);
+            ctx.setLineDash(s.dashed ? [8, 6] : s.dotted ? [2, 4] : []);
             ctx.beginPath();
             let connected = false;
             for (let i = 0; i < rows.length; ++i) {

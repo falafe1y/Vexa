@@ -746,6 +746,10 @@ add_executable(CreditDebtFlagControllerTest tests/CreditDebtFlagControllerTest.c
 target_link_libraries(CreditDebtFlagControllerTest PRIVATE vexa_storage Qt6::Core Qt6::Gui Qt6::Sql Qt6::Network Qt6::Concurrent Qt6::Test ZLIB::ZLIB)
 add_test(NAME CreditDebtFlagControllerTest COMMAND CreditDebtFlagControllerTest)
 
+add_executable(TrajectoryControllerTest tests/TrajectoryControllerTest.cpp ${investment_controller_test_sources} services/BankRecipients.qrc)
+target_link_libraries(TrajectoryControllerTest PRIVATE vexa_storage Qt6::Core Qt6::Gui Qt6::Sql Qt6::Network Qt6::Concurrent Qt6::Test ZLIB::ZLIB)
+add_test(NAME TrajectoryControllerTest COMMAND TrajectoryControllerTest)
+
 add_executable(InvestmentStructureIncomeTest tests/InvestmentStructureIncomeTest.cpp services/InvestmentRiskCalculator.cpp services/InvestmentPerformanceCalculator.cpp services/InvestmentValuation.cpp core/Currency.cpp)
 target_link_libraries(InvestmentStructureIncomeTest PRIVATE Qt6::Core Qt6::Test)
 add_test(NAME InvestmentStructureIncomeTest COMMAND InvestmentStructureIncomeTest)
