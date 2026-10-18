@@ -16,7 +16,7 @@ Flickable {
     readonly property int sectionNumberWidth: small ? 24 : 32
     readonly property int topInset: compact ? 16 : 24
     readonly property int mainWidth: Math.max(0, width - pad * 2)
-    readonly property int leftWidth: narrow ? mainWidth : Math.round(mainWidth * (small ? .60 : .625) / 4) * 4
+    readonly property int leftWidth: narrow ? mainWidth : Math.round(mainWidth * (small ? .58 : .59596) / 4) * 4
     readonly property string selectedId: controller.selectedAsset === "crypto" ? controller.selectedCryptoWalletId : controller.selectedAccountId
     property string asset: "fiat"
     property string category: ""
@@ -380,11 +380,10 @@ Flickable {
                         objectName: "editorialAccountRow"
                         readonly property bool selected: view.selectedId === modelData.id
                         readonly property bool credit: modelData.isCreditCard === true
-                        readonly property string primaryText: credit ? view.money(modelData.availableCreditMinor, modelData.currency, false, 2) : view.host.accountCompactAmount(modelData)
-                        readonly property string debtText: credit ? view.money(modelData.debtMinor, modelData.currency, false, 2) : ""
-                        width: accounts.width - 8; height: credit ? 72 : 64; padding: 0; hoverEnabled: true
-                        Accessible.name: modelData.name + " " + (credit ? qsTr("Доступно ") + primaryText + qsTr(", долг ") + debtText : primaryText)
-                        ToolTip.visible: hovered && (primaryAmount.truncated || debtAmount.truncated)
+                        readonly property string primaryText: credit ? view.money(modelData.debtMinor, modelData.currency, false, 2) : view.host.accountCompactAmount(modelData)
+                        width: accounts.width - 8; height: 64; padding: 0; hoverEnabled: true
+                        Accessible.name: modelData.name + " " + (credit ? qsTr("Долг ") : "") + primaryText
+                        ToolTip.visible: hovered && primaryAmount.truncated
                         ToolTip.delay: 500
                         ToolTip.text: Accessible.name
                         contentItem: Item {
@@ -399,34 +398,23 @@ Flickable {
                             Item {
                                 id: accountAmounts
                                 anchors.right: parent.right; anchors.rightMargin: accountsPanel.arrowWidth + accountsPanel.gap
-                                readonly property int labelWidth: accountButton.credit ? Math.ceil(Math.max(availableLabel.implicitWidth, debtLabel.implicitWidth) / 4) * 4 + 8 : 0
-                                readonly property int valueWidth: Math.ceil(Math.min(sevenDigits.advanceWidth + 8, Math.max(primaryAmount.implicitWidth, debtAmount.implicitWidth) + 4) / 4) * 4
+                                readonly property int labelWidth: accountButton.credit ? Math.ceil(debtLabel.implicitWidth / 4) * 4 + 8 : 0
+                                readonly property int valueWidth: Math.ceil(Math.min(sevenDigits.advanceWidth + 8, primaryAmount.implicitWidth + 4) / 4) * 4
                                 width: Math.min(labelWidth + valueWidth, Math.max(0, parent.width - accountName.x - (view.small ? 112 : 176) - accountsPanel.arrowWidth - accountsPanel.gap * 2))
-                                height: accountButton.credit ? 64 : parent.height; y: (parent.height - height) / 2
+                                height: parent.height
                                 TextMetrics {
                                     id: sevenDigits; font: primaryAmount.font
                                     text: view.money(Number(accountButton.modelData.balanceMinor) < 0 && !accountButton.credit ? -999999999 : 999999999, accountButton.modelData.currency, false, 2)
                                 }
                                 EditorialText {
-                                    id: availableLabel; objectName: "editorialCreditAvailableLabel"
-                                    visible: accountButton.credit; height: 32; width: accountAmounts.labelWidth - 8
-                                    text: qsTr("Доступно"); font.pixelSize: view.small ? 12 : 14; color: "#59616a"
-                                }
-                                Serif {
-                                    id: primaryAmount; objectName: "editorialAccountPrimaryAmount"
-                                    x: accountAmounts.labelWidth; width: Math.max(0, parent.width - x); height: accountButton.credit ? 32 : parent.height
-                                    text: accountButton.primaryText; font.pixelSize: view.small ? 22 : view.medium ? 24 : 28
-                                    horizontalAlignment: Text.AlignRight
-                                }
-                                EditorialText {
                                     id: debtLabel; objectName: "editorialCreditDebtLabel"
-                                    visible: accountButton.credit; y: 32; height: 32; width: accountAmounts.labelWidth - 8
+                                    visible: accountButton.credit; height: parent.height; width: accountAmounts.labelWidth - 8
                                     text: qsTr("Долг"); font.pixelSize: view.small ? 12 : 14; color: "#59616a"
                                 }
                                 Serif {
-                                    id: debtAmount; objectName: "editorialAccountDebtAmount"
-                                    visible: accountButton.credit; x: accountAmounts.labelWidth; y: 32; width: Math.max(0, parent.width - x); height: 32
-                                    text: accountButton.debtText; font.pixelSize: primaryAmount.font.pixelSize
+                                    id: primaryAmount; objectName: "editorialAccountPrimaryAmount"
+                                    x: accountAmounts.labelWidth; width: Math.max(0, parent.width - x); height: parent.height
+                                    text: accountButton.primaryText; font.pixelSize: view.small ? 22 : view.medium ? 24 : 28
                                     horizontalAlignment: Text.AlignRight
                                 }
                             }

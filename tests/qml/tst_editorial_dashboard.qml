@@ -119,6 +119,7 @@ Item {
             const accounts = findChild(dashboard, "editorialAccountsScroll");
             compare(sidebar.width, 240);
             compare(paper.x, 48); compare(paper.width, 1584);
+            compare(dashboard.leftWidth, 944);
             compare(head.y + paper.y, 896);
             compare(accounts.height, 168);
             compare(accounts.y, 64);
@@ -361,20 +362,17 @@ Item {
                         name:"Сбер | Кредитная карта с длинным названием",availableCreditMinor:pair[0],debtMinor:pair[1]})];
                     wait(30);
                     const row = findChild(dashboard, "editorialAccountRow");
-                    const available = findChild(row, "editorialAccountPrimaryAmount");
-                    const debt = findChild(row, "editorialAccountDebtAmount");
+                    const debt = findChild(row, "editorialAccountPrimaryAmount");
                     const availableLabel = findChild(row, "editorialCreditAvailableLabel");
                     const debtLabel = findChild(row, "editorialCreditDebtLabel");
-                    compare(row.height, 72);
-                    verify(availableLabel.visible); verify(debtLabel.visible);
-                    verify(available.y < debt.y); verify(availableLabel.y < debtLabel.y);
-                    compare(available.text, scene.money(pair[0], "RUB", false));
+                    compare(row.height, 64);
+                    compare(availableLabel, null); verify(debtLabel.visible);
                     compare(debt.text, scene.money(pair[1], "RUB", false));
-                    compare(available.truncated, index === 2); compare(debt.truncated, index === 2);
-                    compare(available.font.pixelSize, 28); compare(debt.font.pixelSize, 28);
+                    compare(debt.truncated, index === 2);
+                    compare(debt.font.pixelSize, 28);
                     verify(debt.x + debt.width <= debt.parent.width);
-                    if (index === 1) verify(available.width > previousWidth);
-                    previousWidth = available.width;
+                    if (index === 1) verify(debt.width > previousWidth);
+                    previousWidth = debt.width;
                     if (typeof uiCaptureDirectory !== "undefined" && uiCaptureDirectory !== "")
                         grabImage(scene).save(uiCaptureDirectory + "/credit-" + index + "-1920x1080.png");
                 });
