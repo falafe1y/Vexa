@@ -91,6 +91,16 @@ qt_add_qml_module(vexa
         ui/computer/common/EditorialChart.qml
         ui/computer/common/EditorialCheck.qml
         ui/computer/common/EditorialChoice.qml
+        ui/computer/common/EditorialDialog.qml
+        ui/computer/common/EditorialDialogTitle.qml
+        ui/computer/common/EditorialDialogForm.qml
+        ui/computer/common/EditorialScrollView.qml
+        ui/computer/common/EditorialLabel.qml
+        ui/computer/common/EditorialStyle.js
+        ui/computer/common/EditorialRowLayout.qml
+        ui/computer/common/EditorialColumnLayout.qml
+        ui/computer/common/EditorialMenu.qml
+        ui/computer/common/EditorialMenuItem.qml
         ui/computer/common/EditorialDonut.qml
         ui/computer/common/EditorialField.qml
         ui/computer/common/EditorialLedgerPage.qml

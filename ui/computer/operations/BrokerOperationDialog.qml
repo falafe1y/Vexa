@@ -1,22 +1,24 @@
 import QtQuick
 import QtQuick.Controls
 import QtQuick.Layouts
+import "../common"
+import "../common/EditorialStyle.js" as Appearance
 
 // Operations on a brokerage account: buy an instrument, sell one that is already held,
 // or move free money to and from fiat or a deposit.
-Dialog {
-    id: dialog
+EditorialDialog {
+    id: dialog; objectName: "dialog"
     property var controller
     property string accountId: ""
     property string mode: ""
-    property color panelColor: "#FFFFF8"
-    property color softColor: "#FFFFF0"
+    property color panelColor: (Appearance.desktop ? "#f3eddf" : "#FFFFF8")
+    property color softColor: (Appearance.desktop ? "#f3eddf" : "#FFFFF0")
     property color textColor: "#031528"
-    property color mutedColor: "#687483"
-    property color lineColor: "#D8D7C7"
+    property color mutedColor: (Appearance.desktop ? "#59616a" : "#687483")
+    property color lineColor: (Appearance.desktop ? "#bbb5a8" : "#D8D7C7")
     property color accentColor: "#031528"
-    property color hoverColor: "#E4E8F1"
-    property color errorColor: "#B94F48"
+    property color hoverColor: (Appearance.desktop ? "#e9e4d8" : "#E4E8F1")
+    property color errorColor: (Appearance.desktop ? "#b84932" : "#B94F48")
     property string localError: ""
     property int searchResultIndex: -1
     // Which of a price per unit and a sum was typed last: the other one follows it
@@ -53,14 +55,13 @@ Dialog {
     modal: true
     title: qsTr("Операция по брокерскому счёту")
     standardButtons: Dialog.NoButton
-    header: Label {
-        text: dialog.title; color: dialog.textColor; font.pixelSize: 21; font.weight: Font.Bold
-        leftPadding: dialog.leftPadding; rightPadding: dialog.rightPadding; topPadding: dialog.topPadding
+    header: EditorialDialogTitle {
+        text: dialog.title; color: dialog.textColor;  leftPadding: dialog.leftPadding; rightPadding: dialog.rightPadding; topPadding: dialog.topPadding
         wrapMode: Text.WordWrap
     }
     background: Rectangle {
-        color: dialog.panelColor; radius: 16; border.width: 1; border.color: dialog.accentColor
-        HardShadow { depth: 6; shadowColor: dialog.accentColor }
+        color: dialog.panelColor; radius: Appearance.desktop ? 0 : 16; border.width: 1; border.color: dialog.accentColor
+        HardShadow { visible: !Appearance.desktop;  depth: 6; shadowColor: dialog.accentColor }
     }
 
     function parseAmount(text) {
@@ -482,17 +483,17 @@ Dialog {
         signal picked()
         Layout.fillWidth: true
         implicitHeight: choiceColumn.implicitHeight + 28
-        radius: 12
+        radius: Appearance.desktop ? 0 : 12
         color: dialog.softColor
         border.width: 1
         border.color: dialog.lineColor
-        ColumnLayout {
-            id: choiceColumn
+        EditorialColumnLayout {
+            id: choiceColumn; objectName: "choiceColumn"
             anchors.fill: parent
-            anchors.margins: 14
+            anchors.margins: Appearance.desktop ? 16 : 14
             spacing: 4
-            Label { Layout.fillWidth: true; text: heading; color: dialog.textColor; font.pixelSize: 17; font.weight: Font.DemiBold }
-            Label { Layout.fillWidth: true; text: hint; color: dialog.mutedColor; font.pixelSize: 14; wrapMode: Text.WordWrap }
+            EditorialLabel { Layout.fillWidth: true; text: heading; color: dialog.textColor; font.pixelSize: 17; font.weight: Font.DemiBold }
+            EditorialLabel { Layout.fillWidth: true; text: hint; color: dialog.mutedColor; font.pixelSize: Appearance.desktop ? 16 : 14; wrapMode: Text.WordWrap }
         }
         MouseArea {
             anchors.fill: parent
@@ -501,10 +502,10 @@ Dialog {
         }
     }
 
-    contentItem: ColumnLayout {
+    contentItem: EditorialColumnLayout {
         spacing: 12
-        Label {
-            Layout.fillWidth: true; visible: !!dialog.account; wrapMode: Text.WordWrap; color: dialog.mutedColor; font.pixelSize: 14
+        EditorialLabel {
+            Layout.fillWidth: true; visible: !!dialog.account; wrapMode: Text.WordWrap; color: dialog.mutedColor; font.pixelSize: Appearance.desktop ? 16 : 14
             text: dialog.account
                 ? qsTr("%1 · свободно сейчас: %2 · заблокировано: %3 %4")
                     .arg(dialog.account.name)
@@ -514,14 +515,14 @@ Dialog {
                 : ""
         }
         StackLayout {
-            id: pages
+            id: pages; objectName: "pages"
             Layout.fillWidth: true
             Layout.fillHeight: true
             currentIndex: dialog.mode === "buy" ? 1 : dialog.mode === "sell" ? 2 : dialog.mode === "transfer" ? 3 : dialog.mode === "charge" ? 4 : 0
 
-            ColumnLayout {
+            EditorialColumnLayout {
                 spacing: 12
-                Label { Layout.fillWidth: true; wrapMode: Text.WordWrap; text: qsTr("Что делаем с брокерским счётом?"); color: dialog.textColor; font.pixelSize: 17; font.weight: Font.DemiBold }
+                EditorialLabel { Layout.fillWidth: true; wrapMode: Text.WordWrap; text: qsTr("Что делаем с брокерским счётом?"); color: dialog.textColor; font.pixelSize: 17; font.weight: Font.DemiBold }
                 ChoiceCard {
                     heading: qsTr("Покупка")
                     hint: qsTr("Акция, облигация, фонд или другой инструмент. Деньги уйдут с брокерского счёта.")
@@ -545,29 +546,29 @@ Dialog {
                 Item { Layout.fillHeight: true }
             }
 
-            ScrollView {
-                id: buyScroll
+            EditorialScrollView {
+                id: buyScroll; objectName: "buyScroll"
                 contentWidth: availableWidth
                 clip: true
                 ScrollBar.horizontal.policy: ScrollBar.AlwaysOff
-                ColumnLayout {
+                EditorialColumnLayout {
                     width: buyScroll.availableWidth
                     spacing: 8
-                    Label { text: qsTr("Откуда инструмент"); color: dialog.mutedColor; font.pixelSize: 14 }
+                    EditorialLabel { text: qsTr("Откуда инструмент"); color: dialog.mutedColor; font.pixelSize: Appearance.desktop ? 16 : 14 }
                     FormCombo {
-                        id: sourceBox; Layout.fillWidth: true
+                        id: sourceBox; objectName: "sourceBox"; Layout.fillWidth: true
                         model: [qsTr("Найти на бирже"), qsTr("Другой инструмент, вручную")]
                         onActivated: { dialog.localError = ""; dialog.searchResultIndex = -1; }
                     }
-                    RowLayout {
+                    EditorialRowLayout {
                         Layout.fillWidth: true; visible: !dialog.manualInstrument
                         FormField {
-                            id: searchField; Layout.fillWidth: true
+                            id: searchField; objectName: "searchField"; Layout.fillWidth: true
                             placeholderText: qsTr("Название, обозначение или ISIN")
                             onAccepted: searchButton.clicked()
                         }
                         FormButton {
-                            id: searchButton
+                            id: searchButton; objectName: "searchButton"
                             text: dialog.controller && dialog.controller.investmentSearchBusy ? qsTr("Ищем…") : qsTr("Найти")
                             enabled: !!dialog.controller && !dialog.controller.investmentSearchBusy && searchField.text.trim().length >= 2
                             onClicked: {
@@ -578,26 +579,26 @@ Dialog {
                     }
                     Rectangle {
                         Layout.fillWidth: true; Layout.preferredHeight: 150; visible: !dialog.manualInstrument
-                        color: dialog.softColor; radius: 12; border.width: 1; border.color: dialog.lineColor
+                        color: dialog.softColor; radius: Appearance.desktop ? 0 : 12; border.width: 1; border.color: dialog.lineColor
                         ListView {
                             anchors.fill: parent; anchors.margins: 8; clip: true; spacing: 4
                             model: dialog.controller ? dialog.controller.investmentSearchResults : []
                             delegate: Rectangle {
                                 required property var modelData
                                 required property int index
-                                width: ListView.view.width; height: 56; radius: 8
+                                width: ListView.view.width; height: 56; radius: Appearance.desktop ? 0 : 8
                                 color: index === dialog.searchResultIndex ? dialog.hoverColor : "transparent"
                                 Column {
-                                    anchors.fill: parent; anchors.margins: 8; spacing: 3
-                                    Text {
+                                    anchors.fill: parent; anchors.margins: 8; spacing: Appearance.desktop ? 4 : 3
+                                    EditorialLabel {
                                         width: parent.width; text: modelData.symbol + " · " + modelData.name
-                                        color: dialog.textColor; font.pixelSize: 14; font.weight: Font.DemiBold; elide: Text.ElideRight
+                                        color: dialog.textColor; font.pixelSize: Appearance.desktop ? 16 : 14; font.weight: Font.DemiBold; elide: Text.ElideRight
                                     }
-                                    Text {
+                                    EditorialLabel {
                                         width: parent.width
                                         text: modelData.typeName + (modelData.hasPrice
                                               ? " · " + modelData.priceText + (modelData.type === 2 ? "%" : " " + modelData.currency) : "")
-                                        color: dialog.mutedColor; font.pixelSize: 13; elide: Text.ElideRight
+                                        color: dialog.mutedColor; font.pixelSize: Appearance.desktop ? 16 : 13; elide: Text.ElideRight
                                     }
                                 }
                                 MouseArea {
@@ -609,7 +610,7 @@ Dialog {
                                     }
                                 }
                             }
-                            Label {
+                            EditorialLabel {
                                 anchors.centerIn: parent; visible: parent.count === 0; width: parent.width - 24
                                 text: qsTr("Акции, облигации, фонды, металлы и валюта")
                                 color: dialog.mutedColor; wrapMode: Text.WordWrap; horizontalAlignment: Text.AlignHCenter
@@ -617,7 +618,7 @@ Dialog {
                         }
                     }
                     FormCombo {
-                        id: typeBox; Layout.fillWidth: true; visible: dialog.manualInstrument
+                        id: typeBox; objectName: "typeBox"; Layout.fillWidth: true; visible: dialog.manualInstrument
                         textRole: "name"; valueRole: "value"
                         model: [ {name: qsTr("Акция"), value: 0}, {name: qsTr("Привилегированная акция"), value: 5},
                             {name: qsTr("Депозитарная расписка"), value: 6}, {name: qsTr("Биржевой фонд"), value: 1},
@@ -625,154 +626,154 @@ Dialog {
                             {name: qsTr("Драгоценный металл"), value: 7}, {name: qsTr("Валюта"), value: 8},
                             {name: qsTr("Другой инструмент"), value: 4} ]
                     }
-                    FormField { id: nameField; Layout.fillWidth: true; visible: dialog.manualInstrument; placeholderText: qsTr("Название инструмента") }
-                    FormField { id: symbolField; Layout.fillWidth: true; visible: dialog.manualInstrument; placeholderText: qsTr("Обозначение инструмента") }
-                    Label {
-                        Layout.fillWidth: true; visible: dialog.derivativeSelected; wrapMode: Text.WordWrap; color: dialog.errorColor; font.pixelSize: 14
+                    FormField { id: nameField; objectName: "nameField"; Layout.fillWidth: true; visible: dialog.manualInstrument; placeholderText: qsTr("Название инструмента") }
+                    FormField { id: symbolField; objectName: "symbolField"; Layout.fillWidth: true; visible: dialog.manualInstrument; placeholderText: qsTr("Обозначение инструмента") }
+                    EditorialLabel {
+                        Layout.fillWidth: true; visible: dialog.derivativeSelected; wrapMode: Text.WordWrap; color: dialog.errorColor; font.pixelSize: Appearance.desktop ? 16 : 14
                         text: qsTr("Контракты добавляются через список позиций: здесь покупаются акции, облигации, фонды, металлы и валюта.")
                     }
-                    Label {
+                    EditorialLabel {
                         Layout.fillWidth: true
                         visible: !!dialog.selectedInstrument && !dialog.derivativeSelected && !!dialog.selectedInstrument.hasPrice
-                        wrapMode: Text.WordWrap; color: dialog.mutedColor; font.pixelSize: 14
+                        wrapMode: Text.WordWrap; color: dialog.mutedColor; font.pixelSize: Appearance.desktop ? 16 : 14
                         text: dialog.selectedInstrument
                             ? qsTr("Последняя цена: %1").arg(dialog.selectedInstrument.priceText) + (dialog.selectedInstrument.type === 2 ? " %" : " " + dialog.selectedInstrument.currency)
                             : ""
                     }
                     FormField {
-                        id: quantityField; Layout.fillWidth: true; inputMethodHints: Qt.ImhFormattedNumbersOnly
+                        id: quantityField; objectName: "quantityField"; Layout.fillWidth: true; inputMethodHints: Qt.ImhFormattedNumbersOnly
                         placeholderText: qsTr("Количество")
                         onTextEdited: dialog.relinkBuy()
                     }
                     FormField {
-                        id: priceField; Layout.fillWidth: true; inputMethodHints: Qt.ImhFormattedNumbersOnly
+                        id: priceField; objectName: "priceField"; Layout.fillWidth: true; inputMethodHints: Qt.ImhFormattedNumbersOnly
                         placeholderText: dialog.percentPrice
                             ? qsTr("Цена покупки, % от номинала")
                             : qsTr("Цена покупки за единицу, %1").arg(dialog.selectedInstrument ? dialog.selectedInstrument.currency : dialog.accountCurrency)
                         onTextEdited: { dialog.buyLinkedBy = "price"; dialog.relinkBuy(); }
                     }
                     FormField {
-                        id: manualValueField; Layout.fillWidth: true; visible: dialog.manualInstrument; inputMethodHints: Qt.ImhFormattedNumbersOnly
+                        id: manualValueField; objectName: "manualValueField"; Layout.fillWidth: true; visible: dialog.manualInstrument; inputMethodHints: Qt.ImhFormattedNumbersOnly
                         placeholderText: qsTr("Стоимость всей позиции, %1").arg(dialog.accountCurrency)
                     }
-                    Label {
-                        Layout.fillWidth: true; visible: dialog.manualInstrument; wrapMode: Text.WordWrap; color: dialog.mutedColor; font.pixelSize: 14
+                    EditorialLabel {
+                        Layout.fillWidth: true; visible: dialog.manualInstrument; wrapMode: Text.WordWrap; color: dialog.mutedColor; font.pixelSize: Appearance.desktop ? 16 : 14
                         text: qsTr("Для инструмента с ручной оценкой укажите его текущую стоимость. Разница с суммой покупки станет доходом или убытком.")
                     }
                     FormField {
-                        id: cashField; Layout.fillWidth: true; inputMethodHints: Qt.ImhFormattedNumbersOnly
+                        id: cashField; objectName: "cashField"; Layout.fillWidth: true; inputMethodHints: Qt.ImhFormattedNumbersOnly
                         placeholderText: qsTr("Сумма покупки без комиссии, %1").arg(dialog.accountCurrency)
                         onTextEdited: { dialog.buyLinkedBy = "sum"; dialog.relinkBuy(); }
                     }
-                    ColumnLayout {
+                    EditorialColumnLayout {
                         Layout.fillWidth: true
-                        spacing: 6
+                        spacing: Appearance.desktop ? 8 : 6
                         visible: dialog.purchaseShortfallMinor() > 0
-                        Label {
+                        EditorialLabel {
                             Layout.fillWidth: true
                             wrapMode: Text.WordWrap
                             color: dialog.textColor
-                            font.pixelSize: 14
+                            font.pixelSize: Appearance.desktop ? 16 : 14
                             text: qsTr("Свободных денег на счёте не хватает на %1. Откуда перевести?")
                                 .arg(dialog.money(dialog.purchaseShortfallMinor()) + " " + dialog.accountCurrency)
                         }
                         FormCombo {
-                            id: fundingBox
+                            id: fundingBox; objectName: "fundingBox"
                             Layout.fillWidth: true
                             model: dialog.fundingSources()
                             textRole: "name"
                             valueRole: "id"
                         }
                         FormField {
-                            id: fundingAmountField
+                            id: fundingAmountField; objectName: "fundingAmountField"
                             Layout.fillWidth: true
                             inputMethodHints: Qt.ImhFormattedNumbersOnly
                             placeholderText: qsTr("Сумма перевода, %1").arg(dialog.accountCurrency)
                         }
                     }
-                    RowLayout {
+                    EditorialRowLayout {
                         Layout.fillWidth: true
-                        FormField { id: feeField; Layout.fillWidth: true; inputMethodHints: Qt.ImhFormattedNumbersOnly; placeholderText: qsTr("Комиссия (необязательно)") }
-                        FormCombo { id: feeUnitBox; Layout.preferredWidth: 96; model: [qsTr("₽"), qsTr("%")] }
+                        FormField { id: feeField; objectName: "feeField"; Layout.fillWidth: true; inputMethodHints: Qt.ImhFormattedNumbersOnly; placeholderText: qsTr("Комиссия (необязательно)") }
+                        FormCombo { id: feeUnitBox; objectName: "feeUnitBox"; Layout.preferredWidth: 96; model: [qsTr("₽"), qsTr("%")] }
                     }
-                    Label {
-                        Layout.fillWidth: true; wrapMode: Text.WordWrap; color: dialog.mutedColor; font.pixelSize: 14
+                    EditorialLabel {
+                        Layout.fillWidth: true; wrapMode: Text.WordWrap; color: dialog.mutedColor; font.pixelSize: Appearance.desktop ? 16 : 14
                         visible: feeUnitBox.currentIndex === 1 && dialog.commissionMinor(feeField.text, true, Math.round(parseAmount(cashField.text) * 100)) > 0
                         text: qsTr("Комиссия составит %1 %2").arg(dialog.money(dialog.commissionMinor(feeField.text, true, Math.round(parseAmount(cashField.text) * 100)))).arg(dialog.accountCurrency)
                     }
-                    Label {
-                        Layout.fillWidth: true; wrapMode: Text.WordWrap; color: dialog.mutedColor; font.pixelSize: 14
+                    EditorialLabel {
+                        Layout.fillWidth: true; wrapMode: Text.WordWrap; color: dialog.mutedColor; font.pixelSize: Appearance.desktop ? 16 : 14
                         text: qsTr("Комиссия спишется со свободных денег брокера отдельной строкой. Если их не хватит, счёт уйдёт в минус, и с него нельзя будет переводить деньги.")
                     }
                 }
             }
 
-            ScrollView {
-                id: sellScroll
+            EditorialScrollView {
+                id: sellScroll; objectName: "sellScroll"
                 contentWidth: availableWidth
                 clip: true
                 ScrollBar.horizontal.policy: ScrollBar.AlwaysOff
-                ColumnLayout {
+                EditorialColumnLayout {
                     width: sellScroll.availableWidth
                     spacing: 8
-                    Label { text: qsTr("Какую позицию продаём"); color: dialog.mutedColor; font.pixelSize: 14 }
+                    EditorialLabel { text: qsTr("Какую позицию продаём"); color: dialog.mutedColor; font.pixelSize: Appearance.desktop ? 16 : 14 }
                     FormCombo {
-                        id: positionBox; Layout.fillWidth: true
+                        id: positionBox; objectName: "positionBox"; Layout.fillWidth: true
                         model: dialog.positionsForSale(); textRole: "name"; valueRole: "id"
                     }
-                    Label {
+                    EditorialLabel {
                         Layout.fillWidth: true; visible: dialog.selectedSaleHeldText().length > 0
-                        wrapMode: Text.WordWrap; color: dialog.mutedColor; font.pixelSize: 14
+                        wrapMode: Text.WordWrap; color: dialog.mutedColor; font.pixelSize: Appearance.desktop ? 16 : 14
                         text: qsTr("В наличии: %1").arg(dialog.selectedSaleHeldText())
                     }
                     FormField {
-                        id: sellQuantityField; Layout.fillWidth: true; inputMethodHints: Qt.ImhFormattedNumbersOnly
+                        id: sellQuantityField; objectName: "sellQuantityField"; Layout.fillWidth: true; inputMethodHints: Qt.ImhFormattedNumbersOnly
                         placeholderText: qsTr("Количество к продаже")
                         onTextEdited: dialog.relinkSell()
                     }
                     FormField {
-                        id: sellPriceField; Layout.fillWidth: true; inputMethodHints: Qt.ImhFormattedNumbersOnly
+                        id: sellPriceField; objectName: "sellPriceField"; Layout.fillWidth: true; inputMethodHints: Qt.ImhFormattedNumbersOnly
                         placeholderText: qsTr("Цена продажи за единицу (необязательно)")
                         onTextEdited: { dialog.sellLinkedBy = "price"; dialog.relinkSell(); }
                     }
                     FormField {
-                        id: sellCashField; Layout.fillWidth: true; inputMethodHints: Qt.ImhFormattedNumbersOnly
+                        id: sellCashField; objectName: "sellCashField"; Layout.fillWidth: true; inputMethodHints: Qt.ImhFormattedNumbersOnly
                         placeholderText: qsTr("Сумма сделки без комиссии, %1").arg(dialog.accountCurrency)
                         onTextEdited: { dialog.sellLinkedBy = "sum"; dialog.relinkSell(); }
                     }
-                    RowLayout {
+                    EditorialRowLayout {
                         Layout.fillWidth: true
-                        FormField { id: sellFeeField; Layout.fillWidth: true; inputMethodHints: Qt.ImhFormattedNumbersOnly; placeholderText: qsTr("Комиссия (необязательно)") }
-                        FormCombo { id: sellFeeUnitBox; Layout.preferredWidth: 96; model: [qsTr("₽"), qsTr("%")] }
-                        FormField { id: sellTaxField; Layout.fillWidth: true; inputMethodHints: Qt.ImhFormattedNumbersOnly; placeholderText: qsTr("Налог (необязательно)") }
+                        FormField { id: sellFeeField; objectName: "sellFeeField"; Layout.fillWidth: true; inputMethodHints: Qt.ImhFormattedNumbersOnly; placeholderText: qsTr("Комиссия (необязательно)") }
+                        FormCombo { id: sellFeeUnitBox; objectName: "sellFeeUnitBox"; Layout.preferredWidth: 96; model: [qsTr("₽"), qsTr("%")] }
+                        FormField { id: sellTaxField; objectName: "sellTaxField"; Layout.fillWidth: true; inputMethodHints: Qt.ImhFormattedNumbersOnly; placeholderText: qsTr("Налог (необязательно)") }
                     }
-                    Label {
-                        Layout.fillWidth: true; wrapMode: Text.WordWrap; color: dialog.mutedColor; font.pixelSize: 14
+                    EditorialLabel {
+                        Layout.fillWidth: true; wrapMode: Text.WordWrap; color: dialog.mutedColor; font.pixelSize: Appearance.desktop ? 16 : 14
                         text: qsTr("Комиссия и налог запишутся отдельными расходами по этой позиции. Налог вносите фактической суммой, которую удержал брокер.")
                     }
                 }
             }
 
-            ScrollView {
-                id: transferScroll
+            EditorialScrollView {
+                id: transferScroll; objectName: "transferScroll"
                 contentWidth: availableWidth
                 clip: true
                 ScrollBar.horizontal.policy: ScrollBar.AlwaysOff
-                ColumnLayout {
+                EditorialColumnLayout {
                     width: transferScroll.availableWidth
                     spacing: 8
                     FormCombo {
-                        id: directionBox; Layout.fillWidth: true
+                        id: directionBox; objectName: "directionBox"; Layout.fillWidth: true
                         model: [qsTr("С брокерского счёта: на фиат или вклад"), qsTr("На брокерский счёт: с фиата или вклада")]
                     }
-                    Label { text: directionBox.currentIndex === 0 ? qsTr("Куда перевести") : qsTr("Откуда перевести"); color: dialog.mutedColor; font.pixelSize: 14 }
+                    EditorialLabel { text: directionBox.currentIndex === 0 ? qsTr("Куда перевести") : qsTr("Откуда перевести"); color: dialog.mutedColor; font.pixelSize: Appearance.desktop ? 16 : 14 }
                     FormCombo {
-                        id: counterpartBox; Layout.fillWidth: true
+                        id: counterpartBox; objectName: "counterpartBox"; Layout.fillWidth: true
                         model: dialog.counterparts(); textRole: "name"; valueRole: "id"
                     }
-                    Label {
+                    EditorialLabel {
                         Layout.fillWidth: true; visible: directionBox.currentIndex === 0 && !!dialog.account
-                        wrapMode: Text.WordWrap; color: dialog.mutedColor; font.pixelSize: 14
+                        wrapMode: Text.WordWrap; color: dialog.mutedColor; font.pixelSize: Appearance.desktop ? 16 : 14
                         text: dialog.account
                             ? qsTr("Можно перевести только свободные деньги: %1. Заблокировано под обеспечение: %2.")
                                 .arg(dialog.money(dialog.account.freeNowMinor) + " " + dialog.accountCurrency)
@@ -780,49 +781,49 @@ Dialog {
                             : ""
                     }
                     FormField {
-                        id: transferAmountField; Layout.fillWidth: true; inputMethodHints: Qt.ImhFormattedNumbersOnly
+                        id: transferAmountField; objectName: "transferAmountField"; Layout.fillWidth: true; inputMethodHints: Qt.ImhFormattedNumbersOnly
                         placeholderText: directionBox.currentIndex === 0
                             ? qsTr("Сумма, %1 со счёта брокера").arg(dialog.accountCurrency)
                             : qsTr("Сумма в валюте счёта-отправителя")
                     }
-                    Label {
-                        Layout.fillWidth: true; wrapMode: Text.WordWrap; color: dialog.mutedColor; font.pixelSize: 14
+                    EditorialLabel {
+                        Layout.fillWidth: true; wrapMode: Text.WordWrap; color: dialog.mutedColor; font.pixelSize: Appearance.desktop ? 16 : 14
                         text: qsTr("Если валюты отличаются, сумма пересчитается по курсу программы.")
                     }
                 }
             }
-            ScrollView {
-                id: chargeScroll
+            EditorialScrollView {
+                id: chargeScroll; objectName: "chargeScroll"
                 contentWidth: availableWidth
                 clip: true
                 ScrollBar.horizontal.policy: ScrollBar.AlwaysOff
-                ColumnLayout {
+                EditorialColumnLayout {
                     width: chargeScroll.availableWidth
                     spacing: 8
-                    Label { text: qsTr("Что списано с брокерского счёта"); color: dialog.mutedColor; font.pixelSize: 14 }
+                    EditorialLabel { text: qsTr("Что списано с брокерского счёта"); color: dialog.mutedColor; font.pixelSize: Appearance.desktop ? 16 : 14 }
                     FormCombo {
-                        id: chargeKindBox; Layout.fillWidth: true
+                        id: chargeKindBox; objectName: "chargeKindBox"; Layout.fillWidth: true
                         textRole: "name"; valueRole: "value"
                         model: [ {name: qsTr("Комиссия брокера"), value: "fee"}, {name: qsTr("Налог, удержанный брокером"), value: "tax"} ]
                     }
                     FormField {
-                        id: chargeAmountField; Layout.fillWidth: true; inputMethodHints: Qt.ImhFormattedNumbersOnly
+                        id: chargeAmountField; objectName: "chargeAmountField"; Layout.fillWidth: true; inputMethodHints: Qt.ImhFormattedNumbersOnly
                         placeholderText: qsTr("Сумма, %1 со счёта брокера").arg(dialog.accountCurrency)
                     }
-                    Label {
-                        Layout.fillWidth: true; wrapMode: Text.WordWrap; color: dialog.mutedColor; font.pixelSize: 14
+                    EditorialLabel {
+                        Layout.fillWidth: true; wrapMode: Text.WordWrap; color: dialog.mutedColor; font.pixelSize: Appearance.desktop ? 16 : 14
                         text: qsTr("Списывается со свободных денег этого брокерского счёта. Если их не хватит, счёт уйдёт в минус, и с него нельзя будет переводить деньги. Налог вносите фактической суммой, которую удержал брокер.")
                     }
                 }
             }
         }
-        FormField { id: dateField; Layout.fillWidth: true; visible: dialog.mode !== ""; placeholderText: qsTr("Дата и время операции, дд.мм.гггг чч:мм:сс") }
-        FormField { id: descriptionField; Layout.fillWidth: true; visible: dialog.mode !== ""; placeholderText: qsTr("Описание (необязательно)") }
-        Label {
+        FormField { id: dateField; objectName: "dateField"; Layout.fillWidth: true; visible: dialog.mode !== ""; placeholderText: qsTr("Дата и время операции, дд.мм.гггг чч:мм:сс") }
+        FormField { id: descriptionField; objectName: "descriptionField"; Layout.fillWidth: true; visible: dialog.mode !== ""; placeholderText: qsTr("Описание (необязательно)") }
+        EditorialLabel {
             Layout.fillWidth: true; visible: dialog.localError.length > 0; text: dialog.localError
-            color: dialog.errorColor; wrapMode: Text.WordWrap; font.pixelSize: 14
+            color: dialog.errorColor; wrapMode: Text.WordWrap; font.pixelSize: Appearance.desktop ? 16 : 14
         }
-        RowLayout {
+        EditorialRowLayout {
             Layout.fillWidth: true
             FormButton { text: qsTr("Назад"); visible: dialog.mode !== ""; onClicked: { dialog.mode = ""; dialog.localError = ""; } }
             Item { Layout.fillWidth: true }

@@ -4,6 +4,7 @@ import QtQuick.Layouts
 import "../common"
 import "../dashboard"
 import "../dashboard/DashboardData.js" as Data
+import "../common/EditorialStyle.js" as Appearance
 
 EditorialPage {
     id: page
@@ -38,8 +39,8 @@ EditorialPage {
         neo: true
         cornerRadius: 8
         font.weight: Font.DemiBold
-        leftPadding: 14
-        rightPadding: 14
+        leftPadding: Appearance.desktop ? 16 : 14
+        rightPadding: Appearance.desktop ? 16 : 14
         appTextColor: theme.accent
         appMutedColor: theme.muted
         appPanelColor: theme.panel
@@ -50,30 +51,7 @@ EditorialPage {
         appOnAccentColor: theme.white
         appErrorColor: theme.red
     }
-    component GoalMenuItem: MenuItem {
-        id: menuItem
-        property bool destructive: false
-        hoverEnabled: true
-        implicitHeight: 40
-        leftPadding: 12
-        rightPadding: 12
-        contentItem: Text {
-            text: menuItem.text
-            color: !menuItem.enabled ? theme.muted : menuItem.highlighted || menuItem.hovered ? theme.white :
-                                                                                                menuItem.destructive
-                                                                                                ? theme.red :
-                                                                                                  theme.accent
-            font.pixelSize: 14
-            font.weight: Font.DemiBold
-            verticalAlignment: Text.AlignVCenter
-        }
-        background: Rectangle {
-            radius: 8
-            color: menuItem.highlighted || menuItem.hovered ? (menuItem.destructive ? theme.red : theme.accent) :
-                                                              "transparent"
-
-        }
-    }
+    component GoalMenuItem: EditorialMenuItem { }
 
     Item {
         width: parent.width
@@ -233,8 +211,8 @@ EditorialPage {
         text: qsTr("Создайте цель и выберите счета, которые нужно учитывать.")
         color: "#59616a"
     }
-    Menu {
-        id: goalContextMenu
+    EditorialMenu {
+        id: goalContextMenu; objectName: "goalContextMenu"
         parent: page
         width: 224
         padding: 6
@@ -272,17 +250,7 @@ EditorialPage {
             }
         }
 
-        background: Rectangle {
-            HardShadow {
-                depth: 4
-                shadowColor: theme.accent
-            }
 
-            color: theme.panel
-            radius: 12
-            border.width: 1
-            border.color: theme.accent
-        }
     }
     FinancialGoalDialog {
         id: editor
@@ -290,52 +258,47 @@ EditorialPage {
         theme: page.theme
         parent: Overlay.overlay
     }
-    Dialog {
-        id: deletion
+    EditorialDialog {
+        id: deletion; objectName: "deletion"
         parent: Overlay.overlay
         property string goalId: ""
         property string goalName: ""
         property string errorText: ""
-        width: Math.min(470, parent ? parent.width - 40 : 470)
+        width: Math.min(480, parent ? parent.width - 48 : 480)
         anchors.centerIn: parent
         modal: true
         padding: 24
         background: Rectangle {
-            HardShadow {
-                depth: 6
-                shadowColor: theme.accent
-            }
-            radius: 16
+
+            radius: 0
             color: theme.panel
             border.width: 1
             border.color: theme.accent
         }
-        contentItem: ColumnLayout {
-            spacing: 14
-            Text {
+        contentItem: EditorialDialogForm {
+            spacing: 16
+            EditorialDialogTitle {
                 text: qsTr("Удалить цель?")
                 color: theme.accent
-                font.pixelSize: 21
-                font.bold: true
             }
-            Text {
+            EditorialLabel {
                 Layout.fillWidth: true
                 text: deletion.goalName
                 color: theme.accent
                 elide: Text.ElideRight
             }
-            Text {
+            EditorialLabel {
                 Layout.fillWidth: true
                 text: qsTr("Счета, деньги и операции останутся без изменений.")
                 color: theme.muted
                 wrapMode: Text.WordWrap
             }
-            Text {
+            EditorialLabel {
                 visible: deletion.errorText.length > 0
                 text: deletion.errorText
                 color: theme.red
             }
-            RowLayout {
+            EditorialRowLayout {
                 Item {
                     Layout.fillWidth: true
                 }

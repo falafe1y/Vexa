@@ -1,23 +1,25 @@
 import QtQuick
 import QtQuick.Controls
 import QtQuick.Layouts
+import "../common"
+import "../common/EditorialStyle.js" as Appearance
 
 Rectangle {
     id: panel
     required property var controller
-    property color surface: "#FFFFF8"
+    property color surface: (Appearance.desktop ? "#f3eddf" : "#FFFFF8")
     property color ink: "#031528"
-    property color muted: "#687483"
-    property color line: "#D8D7C7"
+    property color muted: (Appearance.desktop ? "#59616a" : "#687483")
+    property color line: (Appearance.desktop ? "#bbb5a8" : "#D8D7C7")
     property color positive: "#3F735F"
-    property color negative: "#B94F48"
+    property color negative: (Appearance.desktop ? "#b84932" : "#B94F48")
     readonly property var report: controller ? (controller.investmentPerformance || ({})) : ({})
     readonly property var choices: [{id: "", name: qsTr("Все инвестиционные счета")}, {id: "group:brokerage", name: qsTr("Все брокерские счета")}, {id: "group:deposit", name: qsTr("Все вклады")}].concat(controller ? (controller.performanceAccounts || []) : [])
     readonly property var warnings: report.warnings || []
     property bool detailsOpen: false
     color: surface
     border.color: ink
-    radius: 12
+    radius: Appearance.desktop ? 0 : 12
     implicitHeight: content.implicitHeight + 40
 
     function available(n) { return n !== undefined && n !== null && isFinite(Number(n)) }
@@ -25,19 +27,19 @@ Rectangle {
     function percent(n) { return available(n) ? Number(n).toLocaleString(Qt.locale(), 'f', 2) + " %" : "—" }
     function date(s) { return s ? s.substr(8, 2) + "." + s.substr(5, 2) + "." + s.substr(0, 4) : "—" }
 
-    ColumnLayout {
+    EditorialColumnLayout {
         id: content
         anchors.left: parent.left
         anchors.right: parent.right
         anchors.top: parent.top
         anchors.margins: 20
-        spacing: 14
-        RowLayout {
+        spacing: Appearance.desktop ? 16 : 14
+        EditorialRowLayout {
             Layout.fillWidth: true
-            Label { text: qsTr("Доходность"); color: panel.ink; font.pixelSize: 20; font.bold: true; Layout.fillWidth: true }
-            ComboBox {
-                id: account
-                Layout.preferredWidth: 290
+            EditorialDialogTitle { text: qsTr("Доходность"); color: panel.ink;   Layout.fillWidth: true }
+            StyledComboBox {
+                id: account; objectName: "account"
+                Layout.preferredWidth: Appearance.desktop ? 292 : 290
                 model: panel.choices
                 textRole: "name"
                 currentIndex: {
@@ -48,7 +50,7 @@ Rectangle {
                 onActivated: panel.controller.setPerformanceAccount(panel.choices[currentIndex].id)
             }
         }
-        Label {
+        EditorialLabel {
             Layout.fillWidth: true
             color: panel.muted
             wrapMode: Text.WordWrap
@@ -76,42 +78,42 @@ Rectangle {
                     Layout.preferredHeight: 152
                     color: "transparent"
                     border.color: panel.line
-                    radius: 8
-                    ColumnLayout {
+                    radius: Appearance.desktop ? 0 : 8
+                    EditorialColumnLayout {
                         anchors.fill: parent
                         anchors.margins: 12
-                        spacing: 6
-                        RowLayout {
+                        spacing: Appearance.desktop ? 8 : 6
+                        EditorialRowLayout {
                             Layout.fillWidth: true
-                            Label { Layout.fillWidth: true; text: modelData.title; color: panel.muted; wrapMode: Text.WordWrap }
+                            EditorialLabel { Layout.fillWidth: true; text: modelData.title; color: panel.muted; wrapMode: Text.WordWrap }
                             InvestmentMetricHelp { metric: ["gain","period","annual","realized","unrealized","inflation"][index]; displayValue: modelData.value; ink: panel.ink; muted: panel.muted }
                         }
-                        Label { Layout.fillWidth: true; text: modelData.value; color: panel.ink; font.pixelSize: 24; font.bold: true; elide: Text.ElideRight }
-                        Label { Layout.fillWidth: true; Layout.fillHeight: true; text: modelData.hint; color: panel.muted; font.pixelSize: 12; wrapMode: Text.WordWrap }
+                        EditorialLabel { Layout.fillWidth: true; text: modelData.value; color: panel.ink; font.pixelSize: 24; font.bold: true; elide: Text.ElideRight }
+                        EditorialLabel { Layout.fillWidth: true; Layout.fillHeight: true; text: modelData.hint; color: panel.muted; font.pixelSize: 12; wrapMode: Text.WordWrap }
                     }
                 }
             }
         }
-        RowLayout {
+        EditorialRowLayout {
             Layout.fillWidth: true
-            Label { text: qsTr("Заданная инфляция, % в год:"); color: panel.ink }
+            EditorialLabel { text: qsTr("Заданная инфляция, % в год:"); color: panel.ink }
             TextField {
-                id: inflation
-                Layout.preferredWidth: 110
+                id: inflation; objectName: "inflation"
+                Layout.preferredWidth: Appearance.desktop ? 112 : 110
                 text: panel.controller ? panel.controller.performanceInflation : ""
                 placeholderText: qsTr("Не задана")
                 selectByMouse: true
                 onAccepted: saveInflation.clicked()
             }
-            Button {
-                id: saveInflation
+            StyledButton {
+                id: saveInflation; objectName: "saveInflation"
                 text: qsTr("Применить")
                 onClicked: inflationError.text = panel.controller.setPerformanceInflation(inflation.text) ? "" : qsTr("Введите ставку больше −100 и не выше 1000 %; до 4 знаков после запятой.")
             }
             Item { Layout.fillWidth: true }
         }
-        Label { id: inflationError; visible: text.length > 0; color: panel.negative; wrapMode: Text.WordWrap; Layout.fillWidth: true }
-        Label { Layout.fillWidth: true; text: qsTr("Ставка — ваше допущение, одинаковое на весь период. Это не исторический индекс потребительских цен."); color: panel.muted; font.pixelSize: 12; wrapMode: Text.WordWrap }
+        EditorialLabel { id: inflationError; visible: text.length > 0; color: panel.negative; wrapMode: Text.WordWrap; Layout.fillWidth: true }
+        EditorialLabel { Layout.fillWidth: true; text: qsTr("Ставка — ваше допущение, одинаковое на весь период. Это не исторический индекс потребительских цен."); color: panel.muted; font.pixelSize: 12; wrapMode: Text.WordWrap }
         Rectangle { Layout.fillWidth: true; implicitHeight: 1; color: panel.line }
         InvestmentDataQualityPanel {
             Layout.fillWidth: true
@@ -161,45 +163,45 @@ Rectangle {
             positive: panel.positive; negative: panel.negative
         }
         Rectangle { Layout.fillWidth: true; implicitHeight: 1; color: panel.line }
-        Label { text: qsTr("Разложение результата за период"); font.pixelSize: 17; font.bold: true; color: panel.ink }
-        Label {
+        EditorialLabel { text: qsTr("Разложение результата за период"); font.pixelSize: 17; font.bold: true; color: panel.ink }
+        EditorialLabel {
             Layout.fillWidth: true
             text: qsTr("Чистые пополнения и выводы: %1 · Изменение прибыли открытых позиций: %2").arg(panel.amount(panel.report.externalFlowMinor)).arg(panel.amount(panel.report.unrealizedChangeMinor))
             wrapMode: Text.WordWrap
             color: panel.muted
         }
-        RowLayout {
+        EditorialRowLayout {
             InvestmentMetricHelp { metric: "flow"; displayValue: panel.amount(panel.report.externalFlowMinor); ink: panel.ink; muted: panel.muted }
-            Label { text: qsTr("Пополнения и выводы"); color: panel.muted }
+            EditorialLabel { text: qsTr("Пополнения и выводы"); color: panel.muted }
             InvestmentMetricHelp { metric: "unrealized_change"; displayValue: panel.amount(panel.report.unrealizedChangeMinor); ink: panel.ink; muted: panel.muted }
-            Label { text: qsTr("Изменение открытой прибыли"); color: panel.muted }
+            EditorialLabel { text: qsTr("Изменение открытой прибыли"); color: panel.muted }
         }
         Repeater {
             model: panel.available(panel.report.gainMinor) ? (panel.report.breakdown || []) : []
-            delegate: RowLayout {
+            delegate: EditorialRowLayout {
                 required property var modelData
                 Layout.fillWidth: true
-                Label { text: modelData.label + (modelData.complete ? "" : qsTr(" · известная часть")); color: panel.ink; Layout.fillWidth: true; wrapMode: Text.WordWrap }
-                Label { text: panel.amount(modelData.amountMinor); color: modelData.amountMinor < 0 ? panel.negative : panel.positive; font.bold: true }
+                EditorialLabel { text: modelData.label + (modelData.complete ? "" : qsTr(" · известная часть")); color: panel.ink; Layout.fillWidth: true; wrapMode: Text.WordWrap }
+                EditorialLabel { text: panel.amount(modelData.amountMinor); color: modelData.amountMinor < 0 ? panel.negative : panel.positive; font.bold: true }
                 InvestmentMetricHelp { metric: "part_" + modelData.code; displayValue: panel.amount(modelData.amountMinor); ink: panel.ink; muted: panel.muted }
             }
         }
-        Label {
+        EditorialLabel {
             visible: !panel.available(panel.report.gainMinor)
             text: qsTr("Разложение появится, когда будут известны результат периода и денежные потоки.")
             color: panel.muted
             Layout.fillWidth: true
             wrapMode: Text.WordWrap
         }
-        Label {
+        EditorialLabel {
             Layout.fillWidth: true
             font.pixelSize: 12
             wrapMode: Text.WordWrap
             text: qsTr("Продажи и переоценка показаны до отдельно указанных комиссий и удержаний. Валютная строка отражает изменение курса валюты счёта к валюте отчёта; курс валюты самого инструмента включён в результат позиции.")
             color: panel.muted
         }
-        Button { visible: panel.warnings.length > 0; text: panel.detailsOpen ? qsTr("Скрыть пояснения") : qsTr("Пояснения к расчёту (%1)").arg(panel.warnings.length); onClicked: panel.detailsOpen = !panel.detailsOpen }
-        Label {
+        StyledButton { visible: panel.warnings.length > 0; text: panel.detailsOpen ? qsTr("Скрыть пояснения") : qsTr("Пояснения к расчёту (%1)").arg(panel.warnings.length); onClicked: panel.detailsOpen = !panel.detailsOpen }
+        EditorialLabel {
             visible: panel.detailsOpen && panel.warnings.length > 0
             Layout.fillWidth: true
             wrapMode: Text.WordWrap

@@ -2,6 +2,8 @@ import QtQuick
 import QtQuick.Controls
 import QtQuick.Dialogs
 import QtQuick.Layouts
+import "../common"
+import "../common/EditorialStyle.js" as Appearance
 
 Item {
     id: flow
@@ -56,8 +58,8 @@ Item {
             importDialog.open()
         }
     }
-    Dialog {
-        id: exportDialog
+    EditorialDialog {
+        id: exportDialog; objectName: "exportDialog"
         parent: Overlay.overlay
         anchors.centerIn: parent
         width: Math.min(520, parent.width - 48)
@@ -66,27 +68,27 @@ Item {
         closePolicy: databaseProtection.busy ? Popup.NoAutoClose : Popup.CloseOnEscape
         title: qsTr("Создать резервную копию")
         onClosed: { exportPassword.clear(); repeatPassword.clear(); databaseProtection.discardBackup() }
-        background: Rectangle { color: "#FFFFF8"; radius: 16; border.color: "#D8D7C7" }
-        contentItem: ColumnLayout {
+        background: Rectangle { color: (Appearance.desktop ? "#f3eddf" : "#FFFFF8"); radius: Appearance.desktop ? 0 : 16; border.color: (Appearance.desktop ? "#bbb5a8" : "#D8D7C7") }
+        contentItem: EditorialDialogForm {
             spacing: 16
-            Text {
+            EditorialLabel {
                 Layout.fillWidth: true
                 text: qsTr("Пароль позволит восстановить данные на другом устройстве или после переустановки системы. Сохраните его: восстановить забытый пароль копии невозможно.")
-                color: "#031528"; font.pixelSize: 14; wrapMode: Text.WordWrap
+                color: "#031528"; font.pixelSize: Appearance.desktop ? 16 : 14; wrapMode: Text.WordWrap
             }
             StyledCheckBox {
-                id: plaintext
+                id: plaintext; objectName: "plaintext"
                 text: qsTr("Сохранить без пароля")
                 enabled: !databaseProtection.busy
             }
-            Text {
+            EditorialLabel {
                 Layout.fillWidth: true
                 visible: plaintext.checked
                 text: qsTr("Файл будет содержать открытые данные, даже если локальная база зашифрована.")
-                color: "#B94F48"; font.pixelSize: 14; wrapMode: Text.WordWrap
+                color: (Appearance.desktop ? "#b84932" : "#B94F48"); font.pixelSize: Appearance.desktop ? 16 : 14; wrapMode: Text.WordWrap
             }
             StyledTextField {
-                id: exportPassword
+                id: exportPassword; objectName: "exportPassword"
                 Layout.fillWidth: true
                 visible: !plaintext.checked
                 enabled: !databaseProtection.busy
@@ -95,7 +97,7 @@ Item {
                 placeholderText: qsTr("Пароль копии: 12–1024 символа")
             }
             StyledTextField {
-                id: repeatPassword
+                id: repeatPassword; objectName: "repeatPassword"
                 Layout.fillWidth: true
                 visible: !plaintext.checked
                 enabled: !databaseProtection.busy
@@ -103,14 +105,14 @@ Item {
                 maximumLength: 2048
                 placeholderText: qsTr("Повторите пароль")
             }
-            Text {
+            EditorialLabel {
                 Layout.fillWidth: true
                 text: flow.localError || databaseProtection.backupError
                 visible: text.length > 0
-                color: "#B94F48"; font.pixelSize: 14; wrapMode: Text.WordWrap
+                color: (Appearance.desktop ? "#b84932" : "#B94F48"); font.pixelSize: Appearance.desktop ? 16 : 14; wrapMode: Text.WordWrap
             }
             BusyIndicator { running: databaseProtection.busy; visible: running; Layout.alignment: Qt.AlignHCenter }
-            RowLayout {
+            EditorialRowLayout {
                 Layout.fillWidth: true
                 StyledButton { text: qsTr("Отмена"); enabled: !databaseProtection.busy; onClicked: exportDialog.close() }
                 Item { Layout.fillWidth: true }
@@ -131,8 +133,8 @@ Item {
             }
         }
     }
-    Dialog {
-        id: importDialog
+    EditorialDialog {
+        id: importDialog; objectName: "importDialog"
         parent: Overlay.overlay
         anchors.centerIn: parent
         width: Math.min(520, parent.width - 48)
@@ -141,16 +143,16 @@ Item {
         closePolicy: databaseProtection.busy ? Popup.NoAutoClose : Popup.CloseOnEscape
         title: databaseProtection.hasBackupPreview ? qsTr("Восстановить данные из копии?") : qsTr("Проверка резервной копии")
         onClosed: { importPassword.clear(); databaseProtection.discardBackup() }
-        background: Rectangle { color: "#FFFFF8"; radius: 16; border.color: "#D8D7C7" }
-        contentItem: ColumnLayout {
+        background: Rectangle { color: (Appearance.desktop ? "#f3eddf" : "#FFFFF8"); radius: Appearance.desktop ? 0 : 16; border.color: (Appearance.desktop ? "#bbb5a8" : "#D8D7C7") }
+        contentItem: EditorialDialogForm {
             spacing: 16
-            Text {
+            EditorialLabel {
                 Layout.fillWidth: true
                 text: databaseProtection.sourceName(openFile.selectedFile)
-                color: "#687483"; font.pixelSize: 14; elide: Text.ElideMiddle
+                color: (Appearance.desktop ? "#59616a" : "#687483"); font.pixelSize: Appearance.desktop ? 16 : 14; elide: Text.ElideMiddle
             }
             StyledTextField {
-                id: importPassword
+                id: importPassword; objectName: "importPassword"
                 Layout.fillWidth: true
                 visible: databaseProtection.backupPasswordRequired && !databaseProtection.hasBackupPreview
                 enabled: !databaseProtection.busy
@@ -158,7 +160,7 @@ Item {
                 maximumLength: 2048
                 placeholderText: qsTr("Пароль резервной копии")
             }
-            Text {
+            EditorialLabel {
                 Layout.fillWidth: true
                 visible: databaseProtection.hasBackupPreview
                 text: {
@@ -168,24 +170,24 @@ Item {
                     if (summary.appVersion) details += "\n" + qsTr("Версия Vexa: %1").arg(summary.appVersion)
                     return details
                 }
-                color: "#031528"; font.pixelSize: 14; wrapMode: Text.WordWrap
+                color: "#031528"; font.pixelSize: Appearance.desktop ? 16 : 14; wrapMode: Text.WordWrap
             }
-            Text {
+            EditorialLabel {
                 Layout.fillWidth: true
                 visible: databaseProtection.hasBackupPreview
                 text: flow.recoveryMode
                     ? qsTr("Недоступная база будет заменена данными из копии. Исходные файлы сохраним отдельно. Если прежняя база была зашифрована, восстановленная база также будет зашифрована системным ключом. Vexa перезапустится.")
                     : qsTr("Текущие счета, операции, настройки и заметки будут заменены. Перед заменой сохраним копию текущего состояния. Настройка шифрования этой установки сохранится. Vexa перезапустится.")
-                color: "#031528"; font.pixelSize: 14; wrapMode: Text.WordWrap
+                color: "#031528"; font.pixelSize: Appearance.desktop ? 16 : 14; wrapMode: Text.WordWrap
             }
-            Text {
+            EditorialLabel {
                 Layout.fillWidth: true
                 text: flow.localError || databaseProtection.backupError
                 visible: text.length > 0
-                color: "#B94F48"; font.pixelSize: 14; wrapMode: Text.WordWrap
+                color: (Appearance.desktop ? "#b84932" : "#B94F48"); font.pixelSize: Appearance.desktop ? 16 : 14; wrapMode: Text.WordWrap
             }
             BusyIndicator { running: databaseProtection.busy; visible: running; Layout.alignment: Qt.AlignHCenter }
-            RowLayout {
+            EditorialRowLayout {
                 Layout.fillWidth: true
                 StyledButton { text: qsTr("Отмена"); enabled: !databaseProtection.busy; onClicked: importDialog.close() }
                 Item { Layout.fillWidth: true }

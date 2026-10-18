@@ -172,13 +172,13 @@ Item {
             }
         }
     }
-    Menu {
+    EditorialMenu {
         id: menu
-        MenuItem {
+        EditorialMenuItem {
             text: qsTr("Выделить все")
             onTriggered: table.selectAll()
         }
-        MenuItem {
+        EditorialMenuItem {
             text: qsTr("Удалить выделенные")
             onTriggered: table.host.editorialDeleteHistory(table)
         }

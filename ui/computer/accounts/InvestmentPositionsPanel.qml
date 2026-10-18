@@ -1,9 +1,11 @@
 import QtQuick
 import QtQuick.Controls
 import QtQuick.Layouts
+import "../common"
+import "../common/EditorialStyle.js" as Appearance
 
 Rectangle {
-    SurfaceShadow { }
+    SurfaceShadow { visible: !Appearance.desktop;  }
 
     id: panel
     signal contextMenuRequested(var position, var sourceItem, real x, real y)
@@ -14,38 +16,38 @@ Rectangle {
 
     property var controller
     property bool confirmDeletion: false
-    property color panelColor: "#FFFFF8"
+    property color panelColor: (Appearance.desktop ? "#f3eddf" : "#FFFFF8")
     property color textColor: "#031528"
-    property color mutedColor: "#687483"
-    property color lineColor: "#D8D7C7"
-    property color errorColor: "#B94F48"
+    property color mutedColor: (Appearance.desktop ? "#59616a" : "#687483")
+    property color lineColor: (Appearance.desktop ? "#bbb5a8" : "#D8D7C7")
+    property color errorColor: (Appearance.desktop ? "#b84932" : "#B94F48")
 
     component PanelButton: StyledButton {
         appTextColor: panel.textColor
         appMutedColor: panel.mutedColor
         appPanelColor: panel.panelColor
-        appSoftColor: "#FFFFF0"
+        appSoftColor: (Appearance.desktop ? "#f3eddf" : "#FFFFF0")
         appLineColor: panel.lineColor
         appAccentColor: panel.textColor
-        appHoverColor: "#E4E8F1"
+        appHoverColor: (Appearance.desktop ? "#e9e4d8" : "#E4E8F1")
         appOnAccentColor: panel.panelColor
         appErrorColor: panel.errorColor
     }
 
-    SurfaceShadow { }
+    SurfaceShadow { visible: !Appearance.desktop;  }
 
     color: panelColor
-    radius: 14
+    radius: Appearance.desktop ? 0 : 14
     border.color: lineColor
 
-    ColumnLayout {
+    EditorialColumnLayout {
         anchors.fill: parent
-        anchors.margins: 14
+        anchors.margins: Appearance.desktop ? 16 : 14
         spacing: 8
 
-        RowLayout {
+        EditorialRowLayout {
             Layout.fillWidth: true
-            Text {
+            EditorialLabel {
                 Layout.fillWidth: true
                 text: qsTr("Позиции")
                 color: panel.textColor
@@ -60,61 +62,61 @@ Rectangle {
             }
         }
 
-        Label {
+        EditorialLabel {
             Layout.fillWidth: true; visible: panel.controller && panel.controller.investmentValuationIncomplete
             text: qsTr("Оценка капитала неполная: для части позиций нужна котировка, курс или ручная стоимость.")
-            color: panel.errorColor; wrapMode: Text.WordWrap; font.pixelSize: 14
+            color: panel.errorColor; wrapMode: Text.WordWrap; font.pixelSize: Appearance.desktop ? 16 : 14
         }
         ListView {
             Layout.fillWidth: true
             Layout.fillHeight: true
             clip: true
-            spacing: 6
+            spacing: Appearance.desktop ? 8 : 6
             model: panel.controller ? panel.controller.investmentPositions : []
             delegate: Rectangle {
-                SurfaceShadow { }
+                SurfaceShadow { visible: !Appearance.desktop;  }
 
                 required property var modelData
                 required property int index
                 width: ListView.view.width
                 height: panel.width < 620 ? 144 : 104
                 color: index % 2 ? "#FAF9EC" : "transparent"
-                radius: 8
+                radius: Appearance.desktop ? 0 : 8
 
                 GridLayout {
                     columns: panel.width < 620 ? 2 : 3
                     anchors.fill: parent
-                    anchors.leftMargin: 10
-                    anchors.rightMargin: 6
-                    columnSpacing: 10
+                    anchors.leftMargin: Appearance.desktop ? 12 : 10
+                    anchors.rightMargin: Appearance.desktop ? 8 : 6
+                    columnSpacing: Appearance.desktop ? 12 : 10
                     rowSpacing: 8
-                    ColumnLayout {
+                    EditorialColumnLayout {
                         Layout.fillWidth: true
                         Layout.minimumWidth: 0
-                        spacing: 2
-                        Text {
+                        spacing: Appearance.desktop ? 4 : 2
+                        EditorialLabel {
                             Layout.fillWidth: true
                             text: modelData.symbol + " · " + modelData.name
                             color: panel.textColor
                             font.weight: Font.DemiBold
                             elide: Text.ElideRight
                         }
-                        Text {
+                        EditorialLabel {
                             Layout.fillWidth: true
                             text: modelData.accountName + " · "
                                   + modelData.quantityText + " " + modelData.quantityUnit
                                   + (modelData.direction === -1 ? " · " + qsTr("Продано") : "")
                             color: panel.mutedColor
-                            font.pixelSize: 14
+                            font.pixelSize: Appearance.desktop ? 16 : 14
                             elide: Text.ElideRight
                         }
                     }
-                    ColumnLayout {
+                    EditorialColumnLayout {
                         Layout.preferredWidth: panel.width < 620 ? 165 : 190
                         Layout.minimumWidth: 0
                         Layout.maximumWidth: panel.width < 620 ? 165 : 250
-                        spacing: 2
-                        Text {
+                        spacing: Appearance.desktop ? 4 : 2
+                        EditorialLabel {
                             Layout.fillWidth: true
                             text: modelData.hasQuote
                                   ? modelData.marketValueText + " " + modelData.currency
@@ -123,31 +125,31 @@ Rectangle {
                             horizontalAlignment: Text.AlignRight
                             font.weight: Font.DemiBold
                         }
-                        Text {
+                        EditorialLabel {
                             Layout.fillWidth: true
                             text: modelData.valuationLabel
                             elide: Text.ElideRight
-                            color: panel.mutedColor; horizontalAlignment: Text.AlignRight; font.pixelSize: 14
+                            color: panel.mutedColor; horizontalAlignment: Text.AlignRight; font.pixelSize: Appearance.desktop ? 16 : 14
                         }
-                        Text {
+                        EditorialLabel {
                             Layout.fillWidth: true
                             text: modelData.hasMarketQuote && !modelData.manualValuation
                                   ? modelData.priceText + (modelData.type === 2 ? "%" : modelData.type >= 9 ? " " + qsTr("пункт.") : " " + modelData.quoteCurrency)
                                     + " · " + modelData.quoteSourceLabel
                                   : modelData.valuationError
-                            color: panel.mutedColor; horizontalAlignment: Text.AlignRight; font.pixelSize: 14
+                            color: panel.mutedColor; horizontalAlignment: Text.AlignRight; font.pixelSize: Appearance.desktop ? 16 : 14
                             elide: Text.ElideRight
                             ToolTip.visible: hover.hovered && text.length > 0
                             ToolTip.text: text
                             HoverHandler { id: hover }
                         }
-                        Text {
+                        EditorialLabel {
                             Layout.fillWidth: true
                             text: modelData.manualValuation ? modelData.valuedAtText : modelData.quotedAtText
-                            color: panel.mutedColor; horizontalAlignment: Text.AlignRight; font.pixelSize: 14
+                            color: panel.mutedColor; horizontalAlignment: Text.AlignRight; font.pixelSize: Appearance.desktop ? 16 : 14
                         }
                     }
-                    RowLayout {
+                    EditorialRowLayout {
                         Layout.columnSpan: panel.width < 620 ? 2 : 1
                         Layout.fillWidth: panel.width < 620
                         PanelButton { text: qsTr("Операция"); onClicked: panel.operationRequested(modelData) }
@@ -184,7 +186,7 @@ Rectangle {
                     }
                 }
             }
-            Label {
+            EditorialLabel {
                 anchors.centerIn: parent
                 visible: parent.count === 0
                 text: qsTr("Позиций пока нет")

@@ -87,28 +87,25 @@ Item {
                     text: "⌄"
                     font.pixelSize: 14
                 }
-                Menu {
+                EditorialMenu {
                     id: periodMenu
                     y: parent.height
                     width: Math.max(parent.width, 240)
                     font.family: "Arimo"
                     font.pixelSize: 16
-                    background: Rectangle {
-                        color: "#f3eddf"
-                        border.color: "#031528"
-                    }
-                    MenuItem {
+
+                    EditorialMenuItem {
                         text: qsTr("Всё время")
                         onTriggered: head.controller.clearDateFilter()
                     }
-                    MenuItem {
+                    EditorialMenuItem {
                         text: qsTr("Текущий месяц")
                         onTriggered: {
                             const now = new Date();
                             head.controller.setDateFilter(new Date(now.getFullYear(), now.getMonth(), 1), now);
                         }
                     }
-                    MenuItem {
+                    EditorialMenuItem {
                         text: qsTr("Последние 7 дней")
                         onTriggered: {
                             const end = new Date();
@@ -117,7 +114,7 @@ Item {
                             head.controller.setDateFilter(start, end);
                         }
                     }
-                    MenuItem {
+                    EditorialMenuItem {
                         text: qsTr("Последние 30 дней")
                         onTriggered: {
                             const end = new Date();
@@ -126,7 +123,7 @@ Item {
                             head.controller.setDateFilter(start, end);
                         }
                     }
-                    MenuItem {
+                    EditorialMenuItem {
                         text: qsTr("Выбрать даты…")
                         onTriggered: head.host.editorialDateFilter()
                     }

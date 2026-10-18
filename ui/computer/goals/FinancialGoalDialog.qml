@@ -2,9 +2,10 @@ import QtQuick
 import QtQuick.Controls
 import QtQuick.Layouts
 import "../common"
+import "../common/EditorialStyle.js" as Appearance
 
-Dialog {
-    id: dialog
+EditorialDialog {
+    id: dialog; objectName: "dialog"
     required property var controller
     required property var theme
     property string editingId: ""
@@ -14,9 +15,9 @@ Dialog {
     height: Math.min(720, parent ? parent.height - 40 : 720)
     anchors.centerIn: parent
     modal: true
-    padding: 22
+    padding: Appearance.desktop ? 24 : 22
     closePolicy: Popup.CloseOnEscape
-    ListModel { id: sources }
+    ListModel { id: sources; objectName: "sources" }
 
     function russianDateFromIso(value) {
         const parts = String(value || "").split("-");
@@ -87,8 +88,8 @@ Dialog {
         else errorText = result.error;
     }
     background: Rectangle {
-        HardShadow { depth: 6; shadowColor: theme.accent }
-        radius: 16
+        HardShadow { visible: !Appearance.desktop;  depth: 6; shadowColor: theme.accent }
+        radius: Appearance.desktop ? 0 : 16
         color: theme.panel
         border.width: 1
         border.color: theme.accent
@@ -137,40 +138,40 @@ Dialog {
         appOnAccentColor: theme.white
         appErrorColor: theme.red
     }
-    contentItem: ColumnLayout {
-        spacing: 14
-        Text { text: dialog.editingId ? qsTr("Редактирование цели") : qsTr("Новая финансовая цель")
-            color: theme.accent; font.pixelSize: 21; font.bold: true }
-        ScrollView {
-            id: scroll
+    contentItem: EditorialColumnLayout {
+        spacing: Appearance.desktop ? 16 : 14
+        EditorialDialogTitle { text: dialog.editingId ? qsTr("Редактирование цели") : qsTr("Новая финансовая цель")
+            color: theme.accent;  }
+        EditorialScrollView {
+            id: scroll; objectName: "scroll"
             Layout.fillWidth: true; Layout.fillHeight: true
             clip: true; contentWidth: availableWidth
             ScrollBar.horizontal.policy: ScrollBar.AlwaysOff
             ScrollBar.vertical.policy: ScrollBar.AlwaysOff
-            ColumnLayout {
+            EditorialColumnLayout {
                 width: scroll.availableWidth
                 spacing: 12
-                Text { text: qsTr("Название"); color: theme.muted }
-                Field { id: nameField; Layout.fillWidth: true; maximumLength: 80
+                EditorialLabel { text: qsTr("Название"); color: theme.muted }
+                Field { id: nameField; objectName: "nameField"; Layout.fillWidth: true; maximumLength: 80
                     placeholderText: qsTr("Например, финансовая независимость") }
-                Text { text: qsTr("Сумма и валюта цели"); color: theme.muted }
-                RowLayout {
+                EditorialLabel { text: qsTr("Сумма и валюта цели"); color: theme.muted }
+                EditorialRowLayout {
                     Layout.fillWidth: true
-                    Field { id: amountField; implicitWidth: 160; Layout.minimumWidth: 0; Layout.fillWidth: true; maximumLength: 15
+                    Field { id: amountField; objectName: "amountField"; implicitWidth: 160; Layout.minimumWidth: 0; Layout.fillWidth: true; maximumLength: 15
                         placeholderText: "200000,00"; inputMethodHints: Qt.ImhFormattedNumbersOnly }
                     Choice {
-                        id: currencyBox; model: ["RUB", "USD", "EUR", "CNY"]
-                        implicitHeight: 44; Layout.preferredWidth: 110
+                        id: currencyBox; objectName: "currencyBox"; model: ["RUB", "USD", "EUR", "CNY"]
+                        implicitHeight: 44; Layout.preferredWidth: Appearance.desktop ? 112 : 110
                     }
                 }
-                FormCheckBox { id: limited; text: qsTr("Указать срок") }
-                Field { id: deadlineField; visible: limited.checked; Layout.fillWidth: true
+                FormCheckBox { id: limited; objectName: "limited"; text: qsTr("Указать срок") }
+                Field { id: deadlineField; objectName: "deadlineField"; visible: limited.checked; Layout.fillWidth: true
                     placeholderText: qsTr("ДД.ММ.ГГГГ"); maximumLength: 10 }
-                Text { visible: limited.checked; Layout.fillWidth: true
+                EditorialLabel { visible: limited.checked; Layout.fillWidth: true
                     text: qsTr("Срок включительно. После него цель продолжит обновляться.")
-                    color: theme.muted; font.pixelSize: 14; wrapMode: Text.WordWrap }
+                    color: theme.muted; font.pixelSize: Appearance.desktop ? 16 : 14; wrapMode: Text.WordWrap }
                 FormCheckBox {
-                    id: allSources
+                    id: allSources; objectName: "allSources"
                     text: qsTr("Учитывать весь текущий капитал")
                     palette.windowText: theme.accent
                     onToggled: {
@@ -197,9 +198,9 @@ Dialog {
                 }
             }
         }
-        Text { visible: dialog.errorText.length > 0; text: dialog.errorText
+        EditorialLabel { visible: dialog.errorText.length > 0; text: dialog.errorText
             Layout.fillWidth: true; wrapMode: Text.WordWrap; color: theme.red }
-        RowLayout {
+        EditorialRowLayout {
             Item { Layout.fillWidth: true }
             Action { text: qsTr("Отмена"); onClicked: dialog.close() }
             Action { text: qsTr("Сохранить"); primary: true; onClicked: dialog.submit() }

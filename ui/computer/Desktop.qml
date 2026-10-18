@@ -23,40 +23,49 @@ ApplicationWindow {
     minimumHeight: 600
     visible: true
     title: "Vexa"
+    palette.window: "#f3eddf"
+    palette.base: "#f3eddf"
+    palette.button: "#f3eddf"
+    palette.text: "#031528"
+    palette.windowText: "#031528"
+    palette.buttonText: "#031528"
+    palette.highlight: "#031528"
+    palette.highlightedText: "#f3eddf"
+    palette.toolTipBase: "#031528"
+    palette.toolTipText: "#f3eddf"
     onClosing: function(event) { if (databaseProtection.busy) event.accepted = false; else Qt.quit() }
     color: "#f3eddf"
-    font.family: "Commissioner"
-    font.pixelSize: 14
+    font.family: "Arimo"
+    font.pixelSize: 16
 
     readonly property int pageGap: 24
     readonly property int cardGap: 16
     readonly property int panelPadding: 24
-    readonly property int cardRadius: 12
+    readonly property int cardRadius: 0
 
-    // Outlined card style: solid dark outline + hard offset shadow (no blur).
-    // Panels / buttons / fields opt in with `neo: true`.
+    // Shared colors and spacing for desktop pages and dialogs.
     readonly property int outlineWidth: 1
-    readonly property int shadowDepth: 6
+    readonly property int shadowDepth: 0
 
     // Color palette
     // Ivory + indigo foundation. Indigo is the only primary accent;
     // Income and terracotta colors below are reserved for financial semantics.
-    readonly property color canvas: "#F5F3E4"
-    readonly property color panel: "#FFFFF8"
-    readonly property color soft: "#FFFFF0"
-    readonly property color line: "#D8D7C7"
+    readonly property color canvas: "#f3eddf"
+    readonly property color panel: "#f3eddf"
+    readonly property color soft: "#f3eddf"
+    readonly property color line: "#bbb5a8"
     readonly property color accent: "#031528"   // indigo
-    readonly property color muted: "#687483"
+    readonly property color muted: "#59616a"
 
     // readonly property color accentDark: "#020D1A"
-    // readonly property color accent2: "#294477"
-    readonly property color accentSoft: "#536A98"
-    readonly property color pale: "#E4E8F1"
-    readonly property color paleText: "#E9EDF6"
-    readonly property color red: "#B94F48"
+    // readonly property color accent2: "#031528"
+    readonly property color accentSoft: "#59616a"
+    readonly property color pale: "#e9e4d8"
+    readonly property color paleText: "#f3eddf"
+    readonly property color red: "#b84932"
 
-    readonly property color navSelected: "#294477"
-    readonly property color navHovered: "#142B48"
+    readonly property color navSelected: "#031528"
+    readonly property color navHovered: "#e9e4d8"
 
     readonly property color chartAccent1: "#072a50"
     readonly property color chartAccent2: "#0e54a0"
@@ -64,18 +73,18 @@ ApplicationWindow {
     readonly property color chartAccent4: "#31c7ed"
     readonly property color chartAccent5: "#70d6f0"
     readonly property var chartColors: [chartAccent1, chartAccent2, chartAccent3, chartAccent4, chartAccent5]
-    readonly property color tableHeader: "#EEEAD1"
-    readonly property color tableRowAlt: "#FAF9EC"
-    readonly property color categoryRow: "#FFFFF0"
-    readonly property color categoryEditRow: "#F4F3E3"
-    readonly property color controlHovered: "#F3F1E3"
+    readonly property color tableHeader: "#e9e0ce"
+    readonly property color tableRowAlt: "#f3eddf"
+    readonly property color categoryRow: "#f3eddf"
+    readonly property color categoryEditRow: "#e9e4d8"
+    readonly property color controlHovered: "#e9e4d8"
     readonly property int chartPriceLevels: 7
 
-    readonly property color incomePanel: "#E8F0E9"
-    readonly property color expensePanel: "#F5E6E2"
-    readonly property color income: "#3F735F"
+    readonly property color incomePanel: "#e9e4d8"
+    readonly property color expensePanel: "#e9e4d8"
+    readonly property color income: "#2e5947"
 
-    readonly property color white: "#FFFFF0"
+    readonly property color white: "#f3eddf"
     readonly property color transparentColor: "transparent"
 
     readonly property bool legacyPage: page === "accounts" || page === "operations"
@@ -839,11 +848,9 @@ ApplicationWindow {
         property bool neo: false
         property int shadowOffset: root.shadowDepth
 
-        SurfaceShadow { visible: !panelRoot.neo }
-        HardShadow { visible: panelRoot.neo; depth: panelRoot.shadowOffset }
 
         color: root.panel
-        radius: 16
+        radius: 0
         border.width: neo ? root.outlineWidth : 1
         border.color: neo ? root.accent : root.line
     }
@@ -989,13 +996,13 @@ ApplicationWindow {
             ToolTip.visible: containsMouse && analyticsLineRoot.hoveredValue.length > 0
             ToolTip.text: analyticsLineRoot.hoveredValue
         }
-        Text {
+        EditorialLabel {
             anchors.centerIn: parent
             width: Math.max(0, parent.width - 24)
             visible: analyticsLineRoot.points.length === 0
             text: qsTr("Добавьте операцию — здесь появится история капитала")
             color: root.muted
-            font.pixelSize: 14
+            font.pixelSize: 16
             horizontalAlignment: Text.AlignHCenter
             wrapMode: Text.WordWrap
         }
@@ -1143,7 +1150,7 @@ ApplicationWindow {
     component SoftButton: StyledButton {
         cornerRadius: 8
         primary: highlighted
-        controlHeight: 42
+        controlHeight: 48
         appTextColor: root.accent
         appMutedColor: root.muted
         appPanelColor: root.panel
@@ -1155,31 +1162,7 @@ ApplicationWindow {
         appErrorColor: root.red
     }
 
-    component AppMenuItem: MenuItem {
-        id: menuItem
-        property bool destructive: false
-        hoverEnabled: true
-        implicitHeight: 40
-        leftPadding: 12
-        rightPadding: 12
-
-        contentItem: Text {
-            text: menuItem.text
-            color: !menuItem.enabled ? root.muted
-                 : menuItem.highlighted || menuItem.hovered ? root.white
-                 : menuItem.destructive ? root.red : root.accent
-            font.pixelSize: 14
-            font.weight: Font.DemiBold
-            verticalAlignment: Text.AlignVCenter
-        }
-
-        background: Rectangle {
-            radius: 8
-            color: menuItem.highlighted || menuItem.hovered
-                   ? (menuItem.destructive ? root.red : root.accent)
-                   : root.transparentColor
-        }
-    }
+    component AppMenuItem: EditorialMenuItem { }
     component AppTextField: StyledTextField {
         appTextColor: root.accent
         appMutedColor: root.muted
@@ -1208,7 +1191,7 @@ ApplicationWindow {
         appHoverColor: root.controlHovered
     }
     component NavButton: Button {
-        id: nav
+        id: nav; objectName: "nav"
         property string glyph: ""
         property string iconSource: ""
         property string target: ""
@@ -1220,14 +1203,14 @@ ApplicationWindow {
         implicitHeight: 48
         leftPadding: 16
         rightPadding: 16
-        contentItem: RowLayout {
+        contentItem: EditorialRowLayout {
             spacing: 16
             transform: Translate { y: nav.pressShift }
             Item {
                 Layout.preferredWidth: 20
                 Layout.preferredHeight: 20
 
-                Text {
+                EditorialLabel {
                     anchors.fill: parent
                     visible: nav.iconSource.length === 0
                     text: nav.glyph
@@ -1252,7 +1235,7 @@ ApplicationWindow {
                     }
                 }
             }
-            Text {
+            EditorialLabel {
                 text: nav.text
                 font.weight: root.page === nav.target ? Font.Bold : Font.Normal
                 color: nav.selectedNav ? root.white : root.accent
@@ -1263,13 +1246,8 @@ ApplicationWindow {
         background: Rectangle {
             transform: Translate { y: nav.pressShift }
 
-            HardShadow {
-                visible: nav.selectedNav
-                depth: 4 - nav.pressShift
-                shadowColor: root.accent
-            }
 
-            radius: 12
+            radius: 0
             color: nav.selectedNav ? root.accent : (nav.hovered ? root.controlHovered : root.transparentColor)
             border.width: nav.selectedNav || nav.hovered ? root.outlineWidth : 0
             border.color: nav.selectedNav ? root.panel : root.accent
@@ -1277,7 +1255,7 @@ ApplicationWindow {
         onClicked: root.page = target
     }
 
-    RowLayout {
+    EditorialRowLayout {
         anchors.fill: parent
         spacing: 0
         EditorialSidebar {
@@ -1286,7 +1264,7 @@ ApplicationWindow {
             Layout.fillHeight: true
         }
 
-        ColumnLayout {
+        EditorialColumnLayout {
             Layout.fillWidth: true
             Layout.fillHeight: true
             Layout.topMargin: root.legacyPage ? 32 : 0
@@ -1294,12 +1272,12 @@ ApplicationWindow {
             Layout.bottomMargin: root.legacyPage ? 32 : 0
             Layout.leftMargin: root.legacyPage ? 32 : 0
             spacing: root.pageGap
-            RowLayout {
+            EditorialRowLayout {
                 visible: root.legacyPage
                 Layout.fillWidth: true
                 Layout.preferredHeight: 48
                 spacing: root.cardGap
-                Text {
+                EditorialLabel {
                     text: page === "overview" ? qsTr("Мои финансы")
                         : page === "accounts" ? qsTr("Счета")
                         : page === "categories" ? qsTr("Категории")
@@ -1321,7 +1299,7 @@ ApplicationWindow {
                 SoftButton {
                     visible: page === "overview" && financeController.selectedAsset === "fiat"
                     Layout.preferredWidth: root.width < 1360 ? 208 : 218
-                    controlHeight: 40
+                    controlHeight: 48
                     neo: true
                     font.weight: Font.Bold
                     text: qsTr("Плановые операции")
@@ -1331,21 +1309,21 @@ ApplicationWindow {
                     visible: page === "overview" || page === "accounts"
                           || page === "operations" || page === "analytics"
                     Layout.preferredWidth: root.width < 1360 ? 144 : 218
-                    controlHeight: 40
+                    controlHeight: 48
                     neo: true
                     font.weight: Font.Bold
                     text: root.dateFilterLabel()
                     onClicked: dateFilterDialog.openForCurrent()
                 }
                 AppComboBox {
-                    id: currencyBox
+                    id: currencyBox; objectName: "currencyBox"
                     Layout.preferredWidth: 104
-                    controlHeight: 40
+                    controlHeight: 48
                     leftPadding: 16
                     font.weight: Font.Bold
                     appAccentColor: root.accent
                     readonly property int pressShift: 0
-                    contentItem: Text {
+                    contentItem: EditorialLabel {
                         text: currencyBox.displayText
                         color: currencyBox.appTextColor
                         font: currencyBox.font
@@ -1353,7 +1331,7 @@ ApplicationWindow {
                         elide: Text.ElideRight
                         transform: Translate { y: currencyBox.pressShift }
                     }
-                    indicator: Text {
+                    indicator: EditorialLabel {
                         x: currencyBox.width - width - 15
                         y: (currencyBox.height - height) / 2 - 1
                         text: currencyBox.popup.visible ? "⌃" : "⌄"
@@ -1364,7 +1342,7 @@ ApplicationWindow {
                     }
                     background: Rectangle {
                         transform: Translate { y: currencyBox.pressShift }
-                        radius: 8
+                        radius: 0
                         color: currencyBox.hovered || currencyBox.pressed || currencyBox.popup.visible
                                ? root.controlHovered : root.panel
                         border.width: 1
@@ -1401,15 +1379,15 @@ ApplicationWindow {
         // This is the upcoming global schedule, independent of the history date filter.
         property var scheduledRows: financeController.scheduledTransactions
 
-        ColumnLayout {
+        EditorialColumnLayout {
             anchors.fill: parent
             anchors.margins: root.panelPadding
             spacing: 16
 
-            RowLayout {
+            EditorialRowLayout {
                 Layout.fillWidth: true
                 Layout.preferredHeight: 40
-                Text {
+                EditorialLabel {
                     text: qsTr("Плановые операции")
                     color: root.accent
                     font.pixelSize: 18
@@ -1423,35 +1401,35 @@ ApplicationWindow {
                     text: qsTr("Все")
                     implicitWidth: 72
                     Layout.preferredWidth: 72
-                    controlHeight: 40
+                    controlHeight: 48
                     font.weight: Font.Bold
                     onClicked: recurringTransactionsDialog.openManager()
                 }
             }
 
-            RowLayout {
+            EditorialRowLayout {
                 Layout.fillWidth: true
                 Layout.leftMargin: 12
                 Layout.rightMargin: 12
                 spacing: 8
-                Text {
+                EditorialLabel {
                     text: qsTr("Название")
                     color: root.muted
-                    font.pixelSize: 14
+                    font.pixelSize: 16
                     font.weight: Font.Bold
                     Layout.fillWidth: true
                 }
-                Text {
+                EditorialLabel {
                     text: qsTr("Когда")
                     color: root.muted
-                    font.pixelSize: 14
+                    font.pixelSize: 16
                     font.weight: Font.Bold
                     Layout.preferredWidth: 96
                 }
-                Text {
+                EditorialLabel {
                     text: qsTr("Сумма")
                     color: root.muted
-                    font.pixelSize: 14
+                    font.pixelSize: 16
                     font.weight: Font.Bold
                     Layout.preferredWidth: 120
                     horizontalAlignment: Text.AlignRight
@@ -1462,13 +1440,13 @@ ApplicationWindow {
                 Layout.fillWidth: true
                 Layout.fillHeight: true
 
-                Text {
+                EditorialLabel {
                     anchors.centerIn: parent
                     width: parent.width
                     visible: schedulePanel.scheduledRows.length === 0
                     text: qsTr("Плановых операций пока нет")
                     color: root.muted
-                    font.pixelSize: 14
+                    font.pixelSize: 16
                     horizontalAlignment: Text.AlignHCenter
                     wrapMode: Text.WordWrap
                 }
@@ -1486,44 +1464,43 @@ ApplicationWindow {
                     ScrollBar.horizontal: ScrollBar { policy: ScrollBar.AlwaysOff }
 
                     delegate: Rectangle {
-                        SurfaceShadow { visible: !schedulePanel.neo }
-                        HardShadow { visible: schedulePanel.neo; depth: 3 }
+
 
                         required property var modelData
                         readonly property bool isIncome: modelData.type === "income"
                         width: upcomingOperations.width
                         height: 56
-                        radius: 8
+                        radius: 0
                         color: isIncome ? root.incomePanel : root.expensePanel
                         border.width: schedulePanel.neo ? root.outlineWidth : 1
                         border.color: schedulePanel.neo ? root.accent
                                       : isIncome ? "#C9D9CE" : "#E1C9C2"
 
-                        RowLayout {
+                        EditorialRowLayout {
                             anchors.fill: parent
                             anchors.margins: 12
                             spacing: 8
-                            Text {
+                            EditorialLabel {
                                 text: modelData.name
                                 color: root.accent
-                                font.pixelSize: 14
+                                font.pixelSize: 16
                                 font.weight: Font.DemiBold
                                 Layout.fillWidth: true
                                 elide: Text.ElideRight
                             }
-                            Text {
+                            EditorialLabel {
                                 text: modelData.nextDate
                                       ? Qt.formatDate(root.dateFromIso(modelData.nextDate), "dd.MM.yyyy")
                                       : qsTr("Не назначено")
                                 color: root.muted
-                                font.pixelSize: 14
+                                font.pixelSize: 16
                                 Layout.preferredWidth: 96
                             }
-                            Text {
+                            EditorialLabel {
                                 text: root.money(isIncome ? modelData.amount : -modelData.amount,
                                                  modelData.currency, true)
                                 color: isIncome ? root.income : root.red
-                                font.pixelSize: 14
+                                font.pixelSize: 16
                                 font.weight: Font.DemiBold
                                 Layout.preferredWidth: 120
                                 horizontalAlignment: Text.AlignRight
@@ -1680,14 +1657,14 @@ ApplicationWindow {
         }
         visible: financeController.selectedAsset === "crypto" && rows.length > 0
         implicitHeight: 64 + Math.min(4, rows.length) * 40
-        ColumnLayout {
-            anchors.fill: parent; anchors.margins: 1; spacing: 0; clip: true
-            RowLayout {
+        EditorialColumnLayout {
+            anchors.fill: parent; anchors.margins: 4; spacing: 0; clip: true
+            EditorialRowLayout {
                 Layout.fillWidth: true; Layout.preferredHeight: 64
                 Layout.leftMargin: 24; Layout.rightMargin: 24
-                Text { text: qsTr("Остатки Bybit"); color: root.accent; font.pixelSize: 18; font.weight: Font.Bold }
+                EditorialLabel { text: qsTr("Остатки Bybit"); color: root.accent; font.pixelSize: 18; font.weight: Font.Bold }
                 Item { Layout.fillWidth: true }
-                Text { text: qsTr("Стоимость по данным биржи"); color: root.muted; font.pixelSize: 14 }
+                EditorialLabel { text: qsTr("Стоимость по данным биржи"); color: root.muted; font.pixelSize: 16 }
             }
             ListView {
                 id: exchangeBalancesList
@@ -1699,19 +1676,19 @@ ApplicationWindow {
                     required property var modelData
                     width: ListView.view.width; height: 40
                     color: modelData.summary ? root.tableHeader : root.panel
-                    RowLayout {
+                    EditorialRowLayout {
                         anchors.fill: parent; anchors.leftMargin: 24; anchors.rightMargin: 24
-                        Text {
+                        EditorialLabel {
                             Layout.fillWidth: true
                             text: modelData.accountName + " · " + root.exchangeSection(modelData.section)
                                 + (modelData.category ? " · " + modelData.category : "")
-                            color: root.accent; font.pixelSize: 14; elide: Text.ElideRight
+                            color: root.accent; font.pixelSize: 16; elide: Text.ElideRight
                             font.weight: modelData.summary ? Font.DemiBold : Font.Normal
                         }
-                        Text {
+                        EditorialLabel {
                             text: modelData.summary ? Number(modelData.usdValue).toLocaleString(root.uiLocale(), "f", 2) + " $"
                                 : String(modelData.amountText).replace(".", financeController.uiLanguage === "en" ? "." : ",") + " " + modelData.coin
-                            color: root.accent; font.pixelSize: 14; font.weight: Font.DemiBold
+                            color: root.accent; font.pixelSize: 16; font.weight: Font.DemiBold
                         }
                     }
                 }
@@ -1747,13 +1724,13 @@ ApplicationWindow {
                       ? 114 + Math.max(58, rows.length * 48)
                       : 230
 
-        ColumnLayout {
+        EditorialColumnLayout {
             clip: true
             anchors.fill: parent
-            anchors.margins: 1
+            anchors.margins: 4
             spacing: 0
 
-            RowLayout {
+            EditorialRowLayout {
                 Layout.fillWidth: true
                 Layout.minimumHeight: 40
                 Layout.preferredHeight: 40
@@ -1763,7 +1740,7 @@ ApplicationWindow {
                 Layout.topMargin: 16
                 Layout.bottomMargin: 16
 
-                Text {
+                EditorialLabel {
                     text: qsTr("История %1").arg(
                         root.selectedCryptoSymbol() || qsTr("криптовалюты")
                     )
@@ -1772,11 +1749,11 @@ ApplicationWindow {
                     font.weight: Font.Bold
                 }
                 Item { Layout.fillWidth: true }
-                Text {
+                EditorialLabel {
                     text: qsTr("Последние операции: %1")
                         .arg(dashboardCryptoHistory.rows.length)
                     color: root.muted
-                    font.pixelSize: 14
+                    font.pixelSize: 16
                 }
             }
 
@@ -1793,43 +1770,43 @@ ApplicationWindow {
                     color: root.line
                 }
 
-                RowLayout {
+                EditorialRowLayout {
                     anchors.fill: parent
                     anchors.leftMargin: 24
                     anchors.rightMargin: 24
 
-                    Text {
+                    EditorialLabel {
                         text: qsTr("Дата")
                         color: root.muted
-                        font.pixelSize: 14
+                        font.pixelSize: 16
                         font.weight: Font.Bold
                         Layout.preferredWidth: dashboardCryptoHistory.dateColumnWidth
                     }
-                    Text {
+                    EditorialLabel {
                         text: qsTr("Направление")
                         color: root.muted
-                        font.pixelSize: 14
+                        font.pixelSize: 16
                         font.weight: Font.Bold
                         Layout.preferredWidth: dashboardCryptoHistory.directionColumnWidth
                     }
-                    Text {
+                    EditorialLabel {
                         text: qsTr("Описание / адрес")
                         color: root.muted
-                        font.pixelSize: 14
+                        font.pixelSize: 16
                         font.weight: Font.Bold
                         Layout.fillWidth: true
                     }
-                    Text {
+                    EditorialLabel {
                         text: qsTr("Счёт / хеш")
                         color: root.muted
-                        font.pixelSize: 14
+                        font.pixelSize: 16
                         font.weight: Font.Bold
                         Layout.preferredWidth: dashboardCryptoHistory.hashColumnWidth
                     }
-                    Text {
+                    EditorialLabel {
                         text: qsTr("Сумма")
                         color: root.muted
-                        font.pixelSize: 14
+                        font.pixelSize: 16
                         font.weight: Font.Bold
                         Layout.preferredWidth: dashboardCryptoHistory.amountColumnWidth
                         horizontalAlignment: Text.AlignRight
@@ -1877,46 +1854,46 @@ ApplicationWindow {
                                 body: cryptoHistoryBody
                                 z: 2
                             }
-                            RowLayout {
+                            EditorialRowLayout {
                                 anchors.fill: parent
                                 anchors.leftMargin: 24
                                 anchors.rightMargin: 24
 
-                                Text {
+                                EditorialLabel {
                                     text: Qt.formatDateTime(
                                         modelData.occurredAt,
                                         "dd.MM.yyyy HH:mm"
                                     )
                                     color: root.accent
-                                    font.pixelSize: 14
+                                    font.pixelSize: 16
                                     Layout.preferredWidth: dashboardCryptoHistory.dateColumnWidth
                                 }
-                                Text {
+                                EditorialLabel {
                                     text: modelData.direction === "in"
                                           ? qsTr("Получено")
                                           : modelData.direction === "neutral" ? qsTr("Без изменения") : qsTr("Отправлено")
                                     color: modelData.direction === "in"
                                          ? root.income
                                          : modelData.direction === "neutral" ? root.muted : root.red
-                                    font.pixelSize: 14
+                                    font.pixelSize: 16
                                     font.weight: Font.Normal
                                     Layout.preferredWidth: dashboardCryptoHistory.directionColumnWidth
                                 }
-                                Text {
+                                EditorialLabel {
                                     text: modelData.counterparty
                                     color: root.accent
-                                    font.pixelSize: 14
+                                    font.pixelSize: 16
                                     Layout.fillWidth: true
                                     elide: Text.ElideMiddle
                                 }
-                                Text {
+                                EditorialLabel {
                                     text: modelData.isExchange ? root.exchangeSection(modelData.section) : modelData.transactionId
                                     color: root.accent
-                                    font.pixelSize: 14
+                                    font.pixelSize: 16
                                     Layout.preferredWidth: dashboardCryptoHistory.hashColumnWidth
                                     elide: Text.ElideMiddle
                                 }
-                                Text {
+                                EditorialLabel {
                                     readonly property string localizedAmount:
                                         financeController.uiLanguage === "en"
                                         ? modelData.amountText
@@ -1926,7 +1903,7 @@ ApplicationWindow {
                                     color: modelData.direction === "in"
                                          ? root.income
                                          : modelData.direction === "neutral" ? root.muted : root.red
-                                    font.pixelSize: 14
+                                    font.pixelSize: 16
                                     font.weight: Font.DemiBold
                                     Layout.preferredWidth: dashboardCryptoHistory.amountColumnWidth
                                     horizontalAlignment: Text.AlignRight
@@ -1936,7 +1913,7 @@ ApplicationWindow {
                     }
                 }
 
-                Label {
+                EditorialLabel {
                     anchors.centerIn: parent
                     visible: dashboardCryptoHistory.rows.length === 0
                     text: financeController.cryptoWallets.length === 0
@@ -1946,7 +1923,7 @@ ApplicationWindow {
                             : qsTr("У этого кошелька пока нет переводов %1")
                                   .arg(root.selectedCryptoSymbol())
                     color: root.muted
-                    font.pixelSize: 14
+                    font.pixelSize: 16
                 }
             }
         }
@@ -1969,13 +1946,13 @@ ApplicationWindow {
         implicitHeight: expandToContent ? 112 + border.width * 2 + rows.length * 48
                                         : 243 + border.width * 2
 
-        ColumnLayout {
+        EditorialColumnLayout {
             clip: true
             anchors.fill: parent
             anchors.margins: transactionBlock.border.width
             spacing: 0
 
-            RowLayout {
+            EditorialRowLayout {
                 Layout.fillWidth: true
                 Layout.minimumHeight: 40
                 Layout.preferredHeight: 40
@@ -1985,7 +1962,7 @@ ApplicationWindow {
                 Layout.topMargin: 16
                 Layout.bottomMargin: 16
 
-                Text {
+                EditorialLabel {
                     text: transactionBlock.title
                     color: root.accent
                     font.pixelSize: 18
@@ -1999,7 +1976,7 @@ ApplicationWindow {
                 AppTextField {
                     visible: transactionBlock.showSearch
                     neo: transactionBlock.neo
-                    Layout.preferredWidth: 265
+                    Layout.preferredWidth: 268
                     implicitHeight: 40
                     placeholderText: qsTr("Поиск по операциям...")
                     text: root.searchText
@@ -2010,8 +1987,8 @@ ApplicationWindow {
                     text: qsTr("+ Добавить операцию")
                     flat: true
                     neo: transactionBlock.neo
-                    controlHeight: 40
-                    font.pixelSize: 14
+                    controlHeight: 48
+                    font.pixelSize: 16
                     font.weight: Font.Bold
                     implicitWidth: 224
                     visible: !transactionBlock.addInvestmentPositionAction
@@ -2082,7 +2059,7 @@ ApplicationWindow {
         readonly property int dateColumnWidth: 110
         readonly property int amountColumnWidth: 130
 
-        ColumnLayout {
+        EditorialColumnLayout {
             anchors.fill: parent
             spacing: 0
 
@@ -2100,50 +2077,50 @@ ApplicationWindow {
                     color: transactionTable.neo ? root.accent : root.line
                 }
 
-                RowLayout {
+                EditorialRowLayout {
                     anchors.fill: parent
                     anchors.leftMargin: 24
                     anchors.rightMargin: 24
 
-                    Text {
+                    EditorialLabel {
                         text: qsTr("Дата")
                         color: root.muted
-                        font.pixelSize: 14
+                        font.pixelSize: 16
                         font.weight: Font.Bold
                         Layout.preferredWidth: transactionTable.dateColumnWidth
                     }
-                    Text {
+                    EditorialLabel {
                         text: qsTr("Операция")
                         color: root.muted
-                        font.pixelSize: 14
+                        font.pixelSize: 16
                         font.weight: Font.Bold
                         Layout.preferredWidth: transactionTable.operationColumnWidth
                     }
-                    Text {
+                    EditorialLabel {
                         text: qsTr("Счёт")
                         color: root.muted
-                        font.pixelSize: 14
+                        font.pixelSize: 16
                         font.weight: Font.Bold
                         Layout.preferredWidth: transactionTable.accountColumnWidth
                     }
-                    Text {
+                    EditorialLabel {
                         text: qsTr("Категория")
                         color: root.muted
-                        font.pixelSize: 14
+                        font.pixelSize: 16
                         font.weight: Font.Bold
                         Layout.preferredWidth: transactionTable.categoryColumnWidth
                     }
-                    Text {
+                    EditorialLabel {
                         text: qsTr("Описание")
                         color: root.muted
-                        font.pixelSize: 14
+                        font.pixelSize: 16
                         font.weight: Font.Bold
                         Layout.fillWidth: true
                     }
-                    Text {
+                    EditorialLabel {
                         text: qsTr("Сумма")
                         color: root.muted
-                        font.pixelSize: 14
+                        font.pixelSize: 16
                         font.weight: Font.Bold
                         Layout.preferredWidth: transactionTable.amountColumnWidth
                         horizontalAlignment: Text.AlignRight
@@ -2208,47 +2185,47 @@ ApplicationWindow {
                                 color: root.line
                             }
 
-                            RowLayout {
+                            EditorialRowLayout {
                                 anchors.fill: parent
                                 anchors.leftMargin: 24
                                 anchors.rightMargin: 24
 
-                                Text {
+                                EditorialLabel {
                                     text: Qt.formatDateTime(new Date(modelData.date), "dd.MM.yyyy")
                                     color: root.accent
-                                    font.pixelSize: 14
+                                    font.pixelSize: 16
                                     Layout.preferredWidth: transactionTable.dateColumnWidth
                                 }
-                                Text {
+                                EditorialLabel {
                                     text: root.transactionTypeLabel(modelData)
                                     color: root.accent
-                                    font.pixelSize: 14
+                                    font.pixelSize: 16
                                     font.weight: Font.Normal
                                     Layout.preferredWidth: transactionTable.operationColumnWidth
                                     elide: Text.ElideRight
                                 }
-                                Text {
+                                EditorialLabel {
                                     text: root.accountName(modelData.accountId)
                                     color: root.accent
-                                    font.pixelSize: 14
+                                    font.pixelSize: 16
                                     Layout.preferredWidth: transactionTable.accountColumnWidth
                                     elide: Text.ElideRight
                                 }
-                                Text {
+                                EditorialLabel {
                                     text: modelData.categoryName
                                     color: root.accent
-                                    font.pixelSize: 14
+                                    font.pixelSize: 16
                                     Layout.preferredWidth: transactionTable.categoryColumnWidth
                                     elide: Text.ElideRight
                                 }
-                                Text {
+                                EditorialLabel {
                                     text: root.transactionSummary(modelData)
                                     color: root.accent
-                                    font.pixelSize: 14
+                                    font.pixelSize: 16
                                     Layout.fillWidth: true
                                     elide: Text.ElideRight
                                 }
-                                Text {
+                                EditorialLabel {
                                     text: root.money(root.transactionSignedAmount(modelData), modelData.currency, true)
                                     color: modelData.type === "investment_position"
                                          ? root.navSelected
@@ -2256,7 +2233,7 @@ ApplicationWindow {
                                            ? root.navSelected
                                            : modelData.type === "income"
                                              ? root.income : root.red
-                                    font.pixelSize: 14
+                                    font.pixelSize: 16
                                     font.weight: Font.DemiBold
                                     Layout.preferredWidth: transactionTable.amountColumnWidth
                                     horizontalAlignment: Text.AlignRight
@@ -2314,47 +2291,47 @@ ApplicationWindow {
                             color: root.line
                         }
 
-                        RowLayout {
+                        EditorialRowLayout {
                             anchors.fill: parent
                             anchors.leftMargin: 24
                             anchors.rightMargin: 24
 
-                            Text {
+                            EditorialLabel {
                                 text: Qt.formatDateTime(new Date(modelData.date), "dd.MM.yyyy")
                                 color: root.accent
-                                font.pixelSize: 14
+                                font.pixelSize: 16
                                 Layout.preferredWidth: transactionTable.dateColumnWidth
                             }
-                            Text {
+                            EditorialLabel {
                                 text: root.transactionTypeLabel(modelData)
                                 color: root.accent
-                                font.pixelSize: 14
+                                font.pixelSize: 16
                                 font.weight: Font.Normal
                                 Layout.preferredWidth: transactionTable.operationColumnWidth
                                 elide: Text.ElideRight
                             }
-                            Text {
+                            EditorialLabel {
                                 text: root.accountName(modelData.accountId)
                                 color: root.accent
-                                font.pixelSize: 14
+                                font.pixelSize: 16
                                 Layout.preferredWidth: transactionTable.accountColumnWidth
                                 elide: Text.ElideRight
                             }
-                            Text {
+                            EditorialLabel {
                                 text: modelData.categoryName
                                 color: root.accent
-                                font.pixelSize: 14
+                                font.pixelSize: 16
                                 Layout.preferredWidth: transactionTable.categoryColumnWidth
                                 elide: Text.ElideRight
                             }
-                            Text {
+                            EditorialLabel {
                                 text: root.transactionSummary(modelData)
                                 color: root.accent
-                                font.pixelSize: 14
+                                font.pixelSize: 16
                                 Layout.fillWidth: true
                                 elide: Text.ElideRight
                             }
-                            Text {
+                            EditorialLabel {
                                 text: root.money(root.transactionSignedAmount(modelData), modelData.currency, true)
                                 color: modelData.type === "investment_position"
                                      ? root.navSelected
@@ -2362,7 +2339,7 @@ ApplicationWindow {
                                        ? root.navSelected
                                        : modelData.type === "income"
                                          ? root.income : root.red
-                                font.pixelSize: 14
+                                font.pixelSize: 16
                                 font.weight: Font.DemiBold
                                 Layout.preferredWidth: transactionTable.amountColumnWidth
                                 horizontalAlignment: Text.AlignRight
@@ -2412,9 +2389,9 @@ ApplicationWindow {
 
     Component {
         id: accountsPage
-        ColumnLayout {
-            spacing: 14
-            RowLayout {
+        EditorialColumnLayout {
+            spacing: 16
+            EditorialRowLayout {
                 Layout.fillWidth: true
                 Repeater {
                     model: root.assets
@@ -2457,20 +2434,20 @@ ApplicationWindow {
                     onClicked: accountDialog.openForSelectedAsset()
                 }
             }
-            RowLayout {
+            EditorialRowLayout {
                 Layout.fillWidth: true
                 visible: financeController.selectedAsset === "crypto"
                       && (financeController.cryptoRefreshing
                           || financeController.cryptoLastError.length > 0)
 
-                Text {
+                EditorialLabel {
                     Layout.fillWidth: true
                     text: financeController.cryptoRefreshing
                           ? qsTr("Обновляем балансы, цены и историю криптовалют…")
                           : qsTr("Не удалось обновить криптоданные: %1")
                                 .arg(financeController.cryptoLastError)
                     color: financeController.cryptoRefreshing ? root.muted : root.red
-                    font.pixelSize: 14
+                    font.pixelSize: 16
                     elide: Text.ElideRight
                 }
                 SoftButton {
@@ -2514,18 +2491,18 @@ ApplicationWindow {
                     height: modelData.isCrypto ? 156 : modelData.type === "brokerage" ? 146 : 132
                     color: selected ? root.accent : root.panel
                     border.color: selected ? root.accent : root.line
-                    ColumnLayout {
+                    EditorialColumnLayout {
                         anchors.fill: parent
-                        anchors.margins: 18
-                        RowLayout {
-                            Text {
+                        anchors.margins: 20
+                        EditorialRowLayout {
+                            EditorialLabel {
                                 text: "▣"
                                 color: accountCard.selected
                                      ? root.white
                                      : root.accent
                                 font.pixelSize: 24
                             }
-                            Text {
+                            EditorialLabel {
                                 text: modelData.name
                                 color: accountCard.selected
                                      ? root.white
@@ -2534,7 +2511,7 @@ ApplicationWindow {
                                 font.weight: Font.DemiBold
                             }
                         }
-                        Text {
+                        EditorialLabel {
                             text: root.accountPrimaryAmount(modelData)
                             color: accountCard.selected
                                  ? root.white
@@ -2542,7 +2519,7 @@ ApplicationWindow {
                             font.pixelSize: modelData.isCreditCard ? 20 : 25
                             font.weight: Font.Bold
                         }
-                        Text {
+                        EditorialLabel {
                             Layout.fillWidth: true
                             visible: modelData.type === "brokerage"
                             text: root.brokerageLine(modelData)
@@ -2552,15 +2529,15 @@ ApplicationWindow {
                             font.pixelSize: 12
                             elide: Text.ElideRight
                         }
-                        Text {
+                        EditorialLabel {
                             visible: modelData.isCreditCard
                             text: root.accountAvailableCredit(modelData)
                             color: accountCard.selected
                                  ? root.paleText
                                  : root.navSelected
-                            font.pixelSize: 14
+                            font.pixelSize: 16
                         }
-                        Text {
+                        EditorialLabel {
                             Layout.fillWidth: true
                             text: modelData.isCrypto
                                   ? modelData.network + " · " + modelData.address
@@ -2568,10 +2545,10 @@ ApplicationWindow {
                             color: accountCard.selected
                                  ? root.paleText
                                  : root.muted
-                            font.pixelSize: 14
+                            font.pixelSize: 16
                             elide: Text.ElideMiddle
                         }
-                        Text {
+                        EditorialLabel {
                             Layout.fillWidth: true
                             visible: modelData.isCrypto
                             text: root.cryptoWalletStatus(modelData)
@@ -2580,7 +2557,7 @@ ApplicationWindow {
                                  : modelData.refreshing
                                    ? root.navSelected
                                    : root.muted
-                            font.pixelSize: 14
+                            font.pixelSize: 16
                             elide: Text.ElideRight
                         }
                     }
@@ -2613,7 +2590,7 @@ ApplicationWindow {
                         }
                     }
                 }
-                Label {
+                EditorialLabel {
                     anchors.centerIn: parent
                     visible: parent.count === 0
                     text: financeController.selectedAsset === "crypto"
@@ -2659,19 +2636,19 @@ ApplicationWindow {
                 Layout.fillHeight: true
                 Layout.minimumHeight: 230
 
-                ColumnLayout {
+                EditorialColumnLayout {
                     anchors.fill: parent
-                    anchors.margins: 1
+                    anchors.margins: 4
                     spacing: 0
 
-                    RowLayout {
+                    EditorialRowLayout {
                         Layout.fillWidth: true
                         Layout.leftMargin: 16
                         Layout.rightMargin: 16
                         Layout.topMargin: 12
                         Layout.bottomMargin: 12
 
-                        Text {
+                        EditorialLabel {
                             text: qsTr("История %1").arg(
                                 root.selectedCryptoSymbol() || qsTr("криптовалюты")
                             )
@@ -2680,11 +2657,11 @@ ApplicationWindow {
                             font.weight: Font.DemiBold
                         }
                         Item { Layout.fillWidth: true }
-                        Text {
+                        EditorialLabel {
                             text: qsTr("Последние операции: %1")
                                 .arg(financeController.cryptoTransactions.length)
                             color: root.muted
-                            font.pixelSize: 14
+                            font.pixelSize: 16
                         }
                     }
 
@@ -2693,40 +2670,40 @@ ApplicationWindow {
                         height: 34
                         color: root.tableHeader
 
-                        RowLayout {
+                        EditorialRowLayout {
                             anchors.fill: parent
-                            anchors.leftMargin: 18
-                            anchors.rightMargin: 18
+                            anchors.leftMargin: 20
+                            anchors.rightMargin: 20
 
-                            Text {
+                            EditorialLabel {
                                 text: qsTr("Дата")
                                 color: root.muted
-                                font.pixelSize: 14
-                                Layout.preferredWidth: 125
+                                font.pixelSize: 16
+                                Layout.preferredWidth: 128
                             }
-                            Text {
+                            EditorialLabel {
                                 text: qsTr("Направление")
                                 color: root.muted
-                                font.pixelSize: 14
-                                Layout.preferredWidth: 105
+                                font.pixelSize: 16
+                                Layout.preferredWidth: 108
                             }
-                            Text {
+                            EditorialLabel {
                                 text: qsTr("Описание / адрес")
                                 color: root.muted
-                                font.pixelSize: 14
+                                font.pixelSize: 16
                                 Layout.fillWidth: true
                             }
-                            Text {
+                            EditorialLabel {
                                 text: qsTr("Счёт / хеш")
                                 color: root.muted
-                                font.pixelSize: 14
-                                Layout.preferredWidth: 175
+                                font.pixelSize: 16
+                                Layout.preferredWidth: 176
                             }
-                            Text {
+                            EditorialLabel {
                                 text: qsTr("Сумма")
                                 color: root.muted
-                                font.pixelSize: 14
-                                Layout.preferredWidth: 135
+                                font.pixelSize: 16
+                                Layout.preferredWidth: 136
                                 horizontalAlignment: Text.AlignRight
                             }
                         }
@@ -2759,46 +2736,46 @@ ApplicationWindow {
                                 height: 42
                                 color: index % 2 ? root.tableRowAlt : root.panel
 
-                                RowLayout {
+                                EditorialRowLayout {
                                     anchors.fill: parent
-                                    anchors.leftMargin: 18
-                                    anchors.rightMargin: 18
+                                    anchors.leftMargin: 20
+                                    anchors.rightMargin: 20
 
-                                    Text {
+                                    EditorialLabel {
                                         text: Qt.formatDateTime(
                                             modelData.occurredAt,
                                             "dd.MM.yyyy HH:mm"
                                         )
                                         color: root.muted
-                                        font.pixelSize: 14
-                                        Layout.preferredWidth: 125
+                                        font.pixelSize: 16
+                                        Layout.preferredWidth: 128
                                     }
-                                    Text {
+                                    EditorialLabel {
                                         text: modelData.direction === "in"
                                               ? qsTr("Получено")
                                               : modelData.direction === "neutral" ? qsTr("Без изменения") : qsTr("Отправлено")
                                         color: modelData.direction === "in"
                                              ? root.income
                                              : modelData.direction === "neutral" ? root.muted : root.red
-                                        font.pixelSize: 14
+                                        font.pixelSize: 16
                                         font.weight: Font.Medium
-                                        Layout.preferredWidth: 105
+                                        Layout.preferredWidth: 108
                                     }
-                                    Text {
+                                    EditorialLabel {
                                         text: modelData.counterparty
                                         color: root.muted
-                                        font.pixelSize: 14
+                                        font.pixelSize: 16
                                         Layout.fillWidth: true
                                         elide: Text.ElideMiddle
                                     }
-                                    Text {
+                                    EditorialLabel {
                                         text: modelData.isExchange ? root.exchangeSection(modelData.section) : modelData.transactionId
                                         color: root.muted
-                                        font.pixelSize: 14
-                                        Layout.preferredWidth: 175
+                                        font.pixelSize: 16
+                                        Layout.preferredWidth: 176
                                         elide: Text.ElideMiddle
                                     }
-                                    Text {
+                                    EditorialLabel {
                                         readonly property string localizedAmount:
                                             financeController.uiLanguage === "en"
                                             ? modelData.amountText
@@ -2808,16 +2785,16 @@ ApplicationWindow {
                                         color: modelData.direction === "in"
                                              ? root.income
                                              : modelData.direction === "neutral" ? root.muted : root.red
-                                        font.pixelSize: 14
+                                        font.pixelSize: 16
                                         font.weight: Font.DemiBold
-                                        Layout.preferredWidth: 135
+                                        Layout.preferredWidth: 136
                                         horizontalAlignment: Text.AlignRight
                                     }
                                 }
                             }
                         }
 
-                        Label {
+                        EditorialLabel {
                             anchors.centerIn: parent
                             visible: financeController.cryptoTransactions.length === 0
                             text: financeController.cryptoWallets.length === 0
@@ -2872,9 +2849,9 @@ ApplicationWindow {
         }
     }
 
-    Dialog {
-        id: clearDataDialog
-        width: 470
+    EditorialDialog {
+        id: clearDataDialog; objectName: "clearDataDialog"
+        width: Math.min(480, root.width - 48)
         modal: true
         anchors.centerIn: parent
         padding: 24
@@ -2905,77 +2882,76 @@ ApplicationWindow {
         }
 
         background: Rectangle {
-            HardShadow { depth: root.shadowDepth; shadowColor: root.accent }
+
 
             color: root.panel
-            radius: 16
+            radius: 0
             border.width: root.outlineWidth
             border.color: root.accent
         }
 
-        contentItem: ColumnLayout {
-            spacing: 14
+        contentItem: EditorialDialogForm {
+            spacing: 16
 
-            Text {
+            EditorialDialogTitle {
                 Layout.fillWidth: true
                 text: qsTr("Удалить все данные?")
                 color: root.accent
-                font.pixelSize: 21
-                font.weight: Font.Bold
                 wrapMode: Text.WordWrap
             }
 
-            Text {
+            EditorialLabel {
                 Layout.fillWidth: true
                 text: qsTr("Все счета, операции, цели, бюджеты, кошельки и другие пользовательские данные будут удалены. Это действие нельзя отменить.")
                 color: root.muted
-                font.pixelSize: 14
+                font.pixelSize: 16
                 wrapMode: Text.WordWrap
             }
 
             Rectangle {
-                HardShadow { depth: 3; shadowColor: root.accent }
+
 
                 Layout.fillWidth: true
-                implicitHeight: 52
-                radius: 10
+                implicitHeight: Math.max(64, clearDataWarningText.implicitHeight + 24)
+                radius: 0
                 color: root.soft
                 border.width: root.outlineWidth
                 border.color: root.accent
 
-                Text {
+                EditorialLabel {
+                    id: clearDataWarningText
                     anchors.fill: parent
                     anchors.margins: 12
                     text: qsTr("Перед удалением рекомендуем создать резервную копию базы данных.")
                     color: root.red
-                    font.pixelSize: 14
+                    font.pixelSize: 16
                     font.weight: Font.Medium
                     verticalAlignment: Text.AlignVCenter
                     wrapMode: Text.WordWrap
                 }
             }
 
-            Text {
+            EditorialLabel {
                 id: clearDataError
                 Layout.fillWidth: true
                 color: root.red
-                font.pixelSize: 14
+                font.pixelSize: 16
                 wrapMode: Text.WordWrap
             }
 
-            RowLayout {
+            EditorialRowLayout {
                 Item {
                     Layout.fillWidth: true
                 }
                 SoftButton {
                     neo: true
-                    id: clearDataCancelButton
+                    id: clearDataCancelButton; objectName: "clearDataCancelButton"
                     text: qsTr("Отмена")
                     onClicked: clearDataDialog.close()
                 }
                 SoftButton {
                     neo: true
-                    id: clearDataSubmitButton
+                    id: clearDataSubmitButton; objectName: "clearDataSubmitButton"
                     text: qsTr("Удалить всё")
                     destructive: true
                     onClicked: clearDataDialog.confirmClear()
@@ -3100,7 +3076,7 @@ ApplicationWindow {
         errorColor: root.red
     }
 
-    Dialog {
+    EditorialDialog {
         id: cryptoWalletDialog
         objectName: "cryptoConnectionDialog"
         width: Math.min(520, root.width - 48)
@@ -3145,15 +3121,14 @@ ApplicationWindow {
             onActivated: cryptoWalletDialog.submit()
         }
         background: Rectangle {
-            HardShadow { depth: 6; shadowColor: root.accent }
-            color: root.panel; radius: 16; border.width: root.outlineWidth; border.color: root.accent
+
+            color: root.panel; radius: 0; border.width: root.outlineWidth; border.color: root.accent
         }
-        contentItem: ColumnLayout {
+        contentItem: EditorialDialogForm {
             spacing: 16
-            Text {
+            EditorialDialogTitle {
                 text: cryptoWalletDialog.editingId ? qsTr("Редактировать криптовалюту") : qsTr("Добавить криптовалюту")
-                color: root.accent; font.pixelSize: 21; font.weight: Font.Bold
-            }
+                color: root.accent;  }
             AppTextField {
                 neo: true
                 appAccentColor: root.accent
@@ -3176,7 +3151,7 @@ ApplicationWindow {
             AppComboBox {
                 neo: true
                 appAccentColor: root.accent
-                id: cryptoTypeBox
+                id: cryptoTypeBox; objectName: "cryptoTypeBox"
                 Layout.fillWidth: true
                 visible: cryptoSourceBox.currentIndex === 0
                 enabled: !cryptoWalletDialog.editingId
@@ -3189,7 +3164,7 @@ ApplicationWindow {
             AppTextField {
                 neo: true
                 appAccentColor: root.accent
-                id: cryptoAddressField
+                id: cryptoAddressField; objectName: "cryptoAddressField"
                 Layout.fillWidth: true
                 visible: cryptoSourceBox.currentIndex === 0
                 enabled: !cryptoWalletDialog.editingId
@@ -3227,27 +3202,27 @@ ApplicationWindow {
                 maximumLength: 256
                 echoMode: TextInput.Password
             }
-            Text {
+            EditorialLabel {
                 Layout.fillWidth: true
                 text: cryptoSourceBox.currentIndex === 0
                     ? qsTr("Введите публичный адрес кошелька.")
                     : (cryptoWalletDialog.editingId ? qsTr("Оставьте оба поля ключей пустыми, чтобы сохранить подключение.\n") : "")
                       + qsTr("Bybit: основной сайт, ключ с доступом только на чтение. История торгового счёта и финансирования за последние 30 дней. Ключи сохраняются в защищённом хранилище системы; если оно недоступно — до закрытия приложения.")
-                color: root.muted; font.pixelSize: 14; wrapMode: Text.WordWrap
+                color: root.muted; font.pixelSize: 16; wrapMode: Text.WordWrap
             }
-            Text {
+            EditorialLabel {
                 id: cryptoWalletError
                 Layout.fillWidth: true
                 visible: text.length > 0
-                color: root.red; font.pixelSize: 14; wrapMode: Text.WordWrap
+                color: root.red; font.pixelSize: 16; wrapMode: Text.WordWrap
             }
-            RowLayout {
+            EditorialRowLayout {
                 Item { Layout.fillWidth: true }
                 SoftButton {
-                    neo: true; id: cryptoCancelButton; text: qsTr("Отмена"); onClicked: cryptoWalletDialog.close() }
+                    neo: true; id: cryptoCancelButton; objectName: "cryptoCancelButton"; text: qsTr("Отмена"); onClicked: cryptoWalletDialog.close() }
                 SoftButton {
                     neo: true
-                    id: cryptoSubmitButton
+                    id: cryptoSubmitButton; objectName: "cryptoSubmitButton"
                     text: cryptoWalletDialog.editingId ? qsTr("Сохранить") : qsTr("Добавить")
                     highlighted: true; onClicked: cryptoWalletDialog.submit()
                 }
@@ -3255,9 +3230,9 @@ ApplicationWindow {
         }
     }
 
-    Dialog {
-        id: accountDialog
-        width: 500
+    EditorialDialog {
+        id: accountDialog; objectName: "accountDialog"
+        width: Math.min(500, root.width - 48)
         modal: true
         anchors.centerIn: parent
         padding: 24
@@ -3465,35 +3440,33 @@ ApplicationWindow {
         }
 
         background: Rectangle {
-            HardShadow { depth: 6; shadowColor: root.accent }
+
 
             color: root.panel
-            radius: 16
+            radius: 0
             border.width: root.outlineWidth
             border.color: root.accent
         }
-        contentItem: ColumnLayout {
-            spacing: 14
-            Text {
+        contentItem: EditorialDialogForm {
+            spacing: 16
+            EditorialDialogTitle {
                 text: (accountDialog.editingId
                        ? qsTr("Редактирование счёта")
                        : qsTr("Новый счёт"))
                       + " · " + root.assetTitle(accountDialog.editingAsset)
                 color: root.accent
-                font.pixelSize: 21
-                font.weight: Font.Bold
-            }
+                }
             AppTextField {
                 neo: true
                 appAccentColor: root.accent
-                id: accountNameField
+                id: accountNameField; objectName: "accountNameField"
                 Layout.fillWidth: true
                 placeholderText: qsTr("Название счёта")
             }
             AppComboBox {
                 neo: true
                 appAccentColor: root.accent
-                id: accountTypeBox
+                id: accountTypeBox; objectName: "accountTypeBox"
                 Layout.fillWidth: true
                 model: accountDialog.accountTypes
                 textRole: "label"
@@ -3501,33 +3474,33 @@ ApplicationWindow {
             AppComboBox {
                 neo: true
                 appAccentColor: root.accent
-                id: accountCurrencyBox
+                id: accountCurrencyBox; objectName: "accountCurrencyBox"
                 Layout.fillWidth: true
                 model: ["RUB", "USD", "EUR", "CNY"]
                 enabled: !accountDialog.editingId
                       || !accountDialog.editingAccount
                       || accountDialog.editingAccount.transactionCount === 0
             }
-            Text {
+            EditorialLabel {
                 Layout.fillWidth: true
                 visible: accountDialog.editingId
                       && accountDialog.editingAccount
                       && accountDialog.editingAccount.transactionCount > 0
                 text: qsTr("Валюту счёта с операциями изменить нельзя")
                 color: root.muted
-                font.pixelSize: 14
+                font.pixelSize: 16
             }
-            Text {
+            EditorialLabel {
                 Layout.fillWidth: true
                 visible: accountDialog.creditCardSelected
                 text: qsTr("Кредитный лимит")
                 color: root.muted
-                font.pixelSize: 14
+                font.pixelSize: 16
             }
             AppTextField {
                 neo: true
                 appAccentColor: root.accent
-                id: accountCreditLimitField
+                id: accountCreditLimitField; objectName: "accountCreditLimitField"
                 Layout.fillWidth: true
                 visible: accountDialog.creditCardSelected
                 placeholderText: qsTr("Кредитный лимит")
@@ -3537,7 +3510,7 @@ ApplicationWindow {
                     decimals: 2
                 }
             }
-            Text {
+            EditorialLabel {
                 Layout.fillWidth: true
                 text: accountDialog.creditCardSelected
                       ? qsTr("Задолженность на момент добавления")
@@ -3545,12 +3518,12 @@ ApplicationWindow {
                         ? qsTr("Сумма вклада")
                       : accountTypeBox.currentValue === "brokerage" ? qsTr("Деньги на счёте, включая обеспечение") : qsTr("Начальный баланс")
                 color: root.muted
-                font.pixelSize: 14
+                font.pixelSize: 16
             }
             AppTextField {
                 neo: true
                 appAccentColor: root.accent
-                id: accountBalanceField
+                id: accountBalanceField; objectName: "accountBalanceField"
                 Layout.fillWidth: true
                 placeholderText: accountDialog.creditCardSelected
                                  ? qsTr("Задолженность на момент добавления")
@@ -3564,17 +3537,17 @@ ApplicationWindow {
                     decimals: 2
                 }
             }
-            Text {
+            EditorialLabel {
                 Layout.fillWidth: true
                 visible: accountDialog.depositSelected
                 text: qsTr("Годовая ставка, %")
                 color: root.muted
-                font.pixelSize: 14
+                font.pixelSize: 16
             }
             AppTextField {
                 neo: true
                 appAccentColor: root.accent
-                id: depositRateField
+                id: depositRateField; objectName: "depositRateField"
                 Layout.fillWidth: true
                 visible: accountDialog.depositSelected
                 placeholderText: qsTr("Например, 13")
@@ -3584,80 +3557,80 @@ ApplicationWindow {
                     decimals: 2
                 }
             }
-            Text {
+            EditorialLabel {
                 Layout.fillWidth: true
                 visible: accountDialog.depositSelected
                 text: qsTr("Начисление процентов")
                 color: root.muted
-                font.pixelSize: 14
+                font.pixelSize: 16
             }
             AppComboBox {
                 neo: true
                 appAccentColor: root.accent
-                id: depositPayoutBox
+                id: depositPayoutBox; objectName: "depositPayoutBox"
                 Layout.fillWidth: true
                 visible: accountDialog.depositSelected
                 model: accountDialog.depositPayoutTypes
                 textRole: "label"
             }
-            Text {
+            EditorialLabel {
                 Layout.fillWidth: true
                 visible: accountDialog.monthlyDepositSelected
                 text: qsTr("День выплаты")
                 color: root.muted
-                font.pixelSize: 14
+                font.pixelSize: 16
             }
             AppTextField {
                 neo: true
                 appAccentColor: root.accent
-                id: depositPayoutDayField
+                id: depositPayoutDayField; objectName: "depositPayoutDayField"
                 Layout.fillWidth: true
                 visible: accountDialog.monthlyDepositSelected
                 placeholderText: qsTr("От 1 до 31")
                 validator: IntValidator { bottom: 1; top: 31 }
             }
-            Text {
+            EditorialLabel {
                 Layout.fillWidth: true
                 visible: accountDialog.creditCardSelected
                 text: qsTr("Кредитный лимит не считается активом. Расходы увеличивают задолженность, а перевод на кредитку её погашает.")
                 color: root.muted
-                font.pixelSize: 14
+                font.pixelSize: 16
                 wrapMode: Text.WordWrap
             }
             AppCheckBox {
                 neo: true
-                id: creditDebtCheck
+                id: creditDebtCheck; objectName: "creditDebtCheck"
                 Layout.fillWidth: true
                 visible: accountDialog.creditCardSelected
                 text: qsTr("Учитывать долг?")
                 checked: true
             }
-            Text {
+            EditorialLabel {
                 Layout.fillWidth: true
                 visible: accountDialog.creditCardSelected && !creditDebtCheck.checked
                 text: qsTr("Долг не учитывается нигде: ни в суммах, ни в целях и траектории. В них входит только положительный остаток карты.")
                 color: root.muted
-                font.pixelSize: 14
+                font.pixelSize: 16
                 wrapMode: Text.WordWrap
             }
-            Text {
+            EditorialLabel {
                 id: accountError
                 color: root.red
-                font.pixelSize: 14
+                font.pixelSize: 16
             }
-            RowLayout {
+            EditorialRowLayout {
                 Item {
                     Layout.fillWidth: true
                 }
                 SoftButton {
                     neo: true
-                    id: accountCancelButton
+                    id: accountCancelButton; objectName: "accountCancelButton"
                     text: qsTr("Отмена")
                     onClicked: accountDialog.close()
                 }
                 SoftButton {
                     neo: true
-                    id: accountSubmitButton
+                    id: accountSubmitButton; objectName: "accountSubmitButton"
                     text: accountDialog.editingId ? qsTr("Сохранить") : qsTr("Добавить")
                     highlighted: true
                     onClicked: accountDialog.submit()
@@ -3666,10 +3639,10 @@ ApplicationWindow {
         }
     }
 
-    Menu {
-        id: categoryContextMenu
+    EditorialMenu {
+        id: categoryContextMenu; objectName: "categoryContextMenu"
         width: 224
-        padding: 6
+        padding: 8
         property var categoryData: null
         closePolicy: Popup.CloseOnEscape | Popup.CloseOnPressOutside
 
@@ -3706,19 +3679,12 @@ ApplicationWindow {
 
         onClosed: categoryData = null
 
-        background: Rectangle {
-            HardShadow { depth: 4; shadowColor: root.accent }
 
-            color: root.panel
-            radius: 12
-            border.width: root.outlineWidth
-            border.color: root.accent
-        }
     }
 
-    Dialog {
-        id: deleteCategoryDialog
-        width: 460
+    EditorialDialog {
+        id: deleteCategoryDialog; objectName: "deleteCategoryDialog"
+        width: Math.min(460, root.width - 48)
         modal: true
         anchors.centerIn: parent
         padding: 24
@@ -3752,29 +3718,27 @@ ApplicationWindow {
         onClosed: categoryData = null
 
         background: Rectangle {
-            HardShadow { depth: 6; shadowColor: root.accent }
+
 
             color: root.panel
-            radius: 16
+            radius: 0
             border.width: root.outlineWidth
             border.color: root.accent
         }
 
-        contentItem: ColumnLayout {
-            spacing: 14
+        contentItem: EditorialDialogForm {
+            spacing: 16
 
-            Text {
+            EditorialDialogTitle {
                 text: qsTr("Удалить категорию?")
                 color: root.accent
-                font.pixelSize: 21
-                font.weight: Font.Bold
-            }
+                }
 
-            Text {
+            EditorialLabel {
                 Layout.fillWidth: true
                 text: qsTr("Категория исчезнет из доступных для новых операций. Уже созданные операции сохранятся.")
                 color: root.muted
-                font.pixelSize: 14
+                font.pixelSize: 16
                 wrapMode: Text.WordWrap
             }
 
@@ -3784,41 +3748,41 @@ ApplicationWindow {
                 implicitHeight: 54
                 color: root.soft
 
-                Text {
+                EditorialLabel {
                     anchors.fill: parent
                     anchors.margins: 12
                     text: deleteCategoryDialog.categoryData
                           ? deleteCategoryDialog.categoryData.label
                           : ""
                     color: root.accent
-                    font.pixelSize: 14
+                    font.pixelSize: 16
                     font.weight: Font.DemiBold
                     verticalAlignment: Text.AlignVCenter
                     elide: Text.ElideRight
                 }
             }
 
-            Text {
+            EditorialLabel {
                 id: deleteCategoryError
                 Layout.fillWidth: true
                 color: root.red
-                font.pixelSize: 14
+                font.pixelSize: 16
                 wrapMode: Text.WordWrap
             }
 
-            RowLayout {
+            EditorialRowLayout {
                 Item {
                     Layout.fillWidth: true
                 }
                 SoftButton {
                     neo: true
-                    id: deleteCategoryCancelButton
+                    id: deleteCategoryCancelButton; objectName: "deleteCategoryCancelButton"
                     text: qsTr("Отмена")
                     onClicked: deleteCategoryDialog.close()
                 }
                 SoftButton {
                     neo: true
-                    id: deleteCategorySubmitButton
+                    id: deleteCategorySubmitButton; objectName: "deleteCategorySubmitButton"
                     text: qsTr("Удалить")
                     destructive: true
                     onClicked: deleteCategoryDialog.confirmDelete()
@@ -3827,10 +3791,10 @@ ApplicationWindow {
         }
     }
 
-    Menu {
-        id: budgetContextMenu
+    EditorialMenu {
+        id: budgetContextMenu; objectName: "budgetContextMenu"
         width: 224
-        padding: 6
+        padding: 8
         property var budgetData: null
         closePolicy: Popup.CloseOnEscape | Popup.CloseOnPressOutside
 
@@ -3865,20 +3829,13 @@ ApplicationWindow {
             }
         }
 
-        background: Rectangle {
-            HardShadow { depth: 4; shadowColor: root.accent }
 
-            color: root.panel
-            radius: 12
-            border.width: root.outlineWidth
-            border.color: root.accent
-        }
     }
 
-    Menu {
-        id: projectContextMenu
+    EditorialMenu {
+        id: projectContextMenu; objectName: "projectContextMenu"
         width: 224
-        padding: 6
+        padding: 8
         property var projectData: null
         closePolicy: Popup.CloseOnEscape | Popup.CloseOnPressOutside
 
@@ -3913,20 +3870,13 @@ ApplicationWindow {
             }
         }
 
-        background: Rectangle {
-            HardShadow { depth: 4; shadowColor: root.accent }
 
-            color: root.panel
-            radius: 12
-            border.width: root.outlineWidth
-            border.color: root.accent
-        }
     }
 
-    Menu {
-        id: accountContextMenu
+    EditorialMenu {
+        id: accountContextMenu; objectName: "accountContextMenu"
         width: 224
-        padding: 6
+        padding: 8
         property var accountData: null
         closePolicy: Popup.CloseOnEscape | Popup.CloseOnPressOutside
 
@@ -3965,19 +3915,12 @@ ApplicationWindow {
             }
         }
 
-        background: Rectangle {
-            HardShadow { depth: 4; shadowColor: root.accent }
 
-            color: root.panel
-            radius: 12
-            border.width: root.outlineWidth
-            border.color: root.accent
-        }
     }
 
-    Dialog {
-        id: deleteAccountDialog
-        width: 460
+    EditorialDialog {
+        id: deleteAccountDialog; objectName: "deleteAccountDialog"
+        width: Math.min(460, root.width - 48)
         modal: true
         anchors.centerIn: parent
         padding: 24
@@ -4015,28 +3958,26 @@ ApplicationWindow {
         onClosed: accountData = null
 
         background: Rectangle {
-            HardShadow { depth: 6; shadowColor: root.accent }
+
 
             color: root.panel
-            radius: 16
+            radius: 0
             border.width: root.outlineWidth
             border.color: root.accent
         }
 
-        contentItem: ColumnLayout {
-            spacing: 14
+        contentItem: EditorialDialogForm {
+            spacing: 16
 
-            Text {
+            EditorialDialogTitle {
                 text: deleteAccountDialog.accountData
                       && deleteAccountDialog.accountData.isCrypto
                       ? qsTr("Удалить криптовалюту?")
                       : qsTr("Удалить счёт?")
                 color: root.accent
-                font.pixelSize: 21
-                font.weight: Font.Bold
-            }
+                }
 
-            Text {
+            EditorialLabel {
                 Layout.fillWidth: true
                 text: deleteAccountDialog.accountData
                       && deleteAccountDialog.accountData.isCrypto
@@ -4046,7 +3987,7 @@ ApplicationWindow {
                       ? qsTr("Счёт и все связанные операции будут удалены. Связанные переводы удалятся целиком. Это действие нельзя отменить.")
                       : qsTr("Счёт будет удалён. Это действие нельзя отменить.")
                 color: root.muted
-                font.pixelSize: 14
+                font.pixelSize: 16
                 wrapMode: Text.WordWrap
             }
 
@@ -4056,23 +3997,23 @@ ApplicationWindow {
                 implicitHeight: 78
                 color: root.soft
 
-                ColumnLayout {
+                EditorialColumnLayout {
                     anchors.fill: parent
                     anchors.margins: 12
                     spacing: 4
 
-                    Text {
+                    EditorialLabel {
                         Layout.fillWidth: true
                         text: deleteAccountDialog.accountData
                               ? deleteAccountDialog.accountData.name
                               : ""
                         color: root.accent
-                        font.pixelSize: 14
+                        font.pixelSize: 16
                         font.weight: Font.DemiBold
                         elide: Text.ElideRight
                     }
 
-                    Text {
+                    EditorialLabel {
                         Layout.fillWidth: true
                         text: deleteAccountDialog.accountData
                               ? root.accountCompactAmount(
@@ -4084,33 +4025,33 @@ ApplicationWindow {
                                      + deleteAccountDialog.accountData.transactionCount)
                               : ""
                         color: root.muted
-                        font.pixelSize: 14
+                        font.pixelSize: 16
                         elide: Text.ElideRight
                     }
                 }
             }
 
-            Text {
+            EditorialLabel {
                 id: deleteAccountError
                 Layout.fillWidth: true
                 color: root.red
-                font.pixelSize: 14
+                font.pixelSize: 16
                 wrapMode: Text.WordWrap
             }
 
-            RowLayout {
+            EditorialRowLayout {
                 Item {
                     Layout.fillWidth: true
                 }
                 SoftButton {
                     neo: true
-                    id: deleteAccountCancelButton
+                    id: deleteAccountCancelButton; objectName: "deleteAccountCancelButton"
                     text: qsTr("Отмена")
                     onClicked: deleteAccountDialog.close()
                 }
                 SoftButton {
                     neo: true
-                    id: deleteAccountSubmitButton
+                    id: deleteAccountSubmitButton; objectName: "deleteAccountSubmitButton"
                     text: qsTr("Удалить")
                     destructive: true
                     onClicked: deleteAccountDialog.confirmDelete()
@@ -4133,12 +4074,12 @@ ApplicationWindow {
         }
     }
 
-    Menu {
+    EditorialMenu {
         id: historySelectionMenu
         objectName: "historySelectionMenu"
         property var selection: null
         width: 224
-        padding: 6
+        padding: 8
         AppMenuItem {
             text: qsTr("Отменить")
             onTriggered: {
@@ -4154,13 +4095,10 @@ ApplicationWindow {
                 deleteSelectedHistoryDialog.open();
             }
         }
-        background: Rectangle {
-            color: root.panel; radius: 12; border.width: root.outlineWidth; border.color: root.accent
-            HardShadow { depth: 4; shadowColor: root.accent }
-        }
+
     }
 
-    Dialog {
+    EditorialDialog {
         id: deleteSelectedHistoryDialog
         objectName: "deleteSelectedHistoryDialog"
         property var rows: []
@@ -4170,7 +4108,7 @@ ApplicationWindow {
         width: 440
         padding: 24
         title: qsTr("Удалить выделенные операции?")
-        header: Label {
+        header: EditorialLabel {
             text: deleteSelectedHistoryDialog.title
             color: root.accent
             font.pixelSize: 21
@@ -4181,15 +4119,15 @@ ApplicationWindow {
             wrapMode: Text.WordWrap
         }
         background: Rectangle {
-            color: root.panel; radius: 16; border.width: root.outlineWidth; border.color: root.accent
-            HardShadow { depth: 6; shadowColor: root.accent }
+            color: root.panel; radius: 0; border.width: root.outlineWidth; border.color: root.accent
+
         }
-        contentItem: ColumnLayout {
+        contentItem: EditorialDialogForm {
             spacing: 16
-            Text { text: qsTr("Выделено операций: %1").arg(deleteSelectedHistoryDialog.rows.length); color: root.accent; font.pixelSize: 14 }
-            Text { Layout.fillWidth: true; text: qsTr("Переводы будут удалены вместе с парной операцией."); color: root.muted; font.pixelSize: 14; wrapMode: Text.WordWrap }
-            Text { visible: text.length > 0; text: deleteSelectedHistoryDialog.errorText; color: root.red; font.pixelSize: 14; Layout.fillWidth: true; wrapMode: Text.WordWrap }
-            RowLayout {
+            EditorialLabel { text: qsTr("Выделено операций: %1").arg(deleteSelectedHistoryDialog.rows.length); color: root.accent; font.pixelSize: 16 }
+            EditorialLabel { Layout.fillWidth: true; text: qsTr("Переводы будут удалены вместе с парной операцией."); color: root.muted; font.pixelSize: 16; wrapMode: Text.WordWrap }
+            EditorialLabel { visible: text.length > 0; text: deleteSelectedHistoryDialog.errorText; color: root.red; font.pixelSize: 16; Layout.fillWidth: true; wrapMode: Text.WordWrap }
+            EditorialRowLayout {
                 Layout.alignment: Qt.AlignRight
                 spacing: 16
                 SoftButton {
@@ -4209,10 +4147,10 @@ ApplicationWindow {
         }
     }
 
-    Menu {
-        id: transactionContextMenu
+    EditorialMenu {
+        id: transactionContextMenu; objectName: "transactionContextMenu"
         width: 224
-        padding: 6
+        padding: 8
         property var transactionData: null
         closePolicy: Popup.CloseOnEscape | Popup.CloseOnPressOutside
 
@@ -4260,19 +4198,12 @@ ApplicationWindow {
             }
         }
 
-        background: Rectangle {
-            HardShadow { depth: 4; shadowColor: root.accent }
 
-            color: root.panel
-            radius: 12
-            border.width: root.outlineWidth
-            border.color: root.accent
-        }
     }
 
-    Dialog {
-        id: deleteTransactionDialog
-        width: 460
+    EditorialDialog {
+        id: deleteTransactionDialog; objectName: "deleteTransactionDialog"
+        width: Math.min(460, root.width - 48)
         modal: true
         anchors.centerIn: parent
         padding: 24
@@ -4311,29 +4242,27 @@ ApplicationWindow {
         onClosed: transactionData = null
 
         background: Rectangle {
-            HardShadow { depth: 6; shadowColor: root.accent }
+
 
             color: root.panel
-            radius: 16
+            radius: 0
             border.width: root.outlineWidth
             border.color: root.accent
         }
 
-        contentItem: ColumnLayout {
-            spacing: 14
+        contentItem: EditorialDialogForm {
+            spacing: 16
 
-            Text {
+            EditorialDialogTitle {
                 text: deleteTransactionDialog.transactionData
                       && deleteTransactionDialog.transactionData.type
                          === "investment_position"
                       ? qsTr("Удалить инвестиционную позицию?")
                       : qsTr("Удалить операцию?")
                 color: root.accent
-                font.pixelSize: 21
-                font.weight: Font.Bold
-            }
+                }
 
-            Text {
+            EditorialLabel {
                 Layout.fillWidth: true
                 text: deleteTransactionDialog.transactionData
                       && deleteTransactionDialog.transactionData.type === "transfer"
@@ -4344,7 +4273,7 @@ ApplicationWindow {
                         ? qsTr("Позиция будет удалена. Записанные движения денег сохранятся. Для продажи или исполнения используйте кнопку «Операция».")
                       : qsTr("Это действие нельзя отменить. Баланс и статистика будут пересчитаны.")
                 color: root.muted
-                font.pixelSize: 14
+                font.pixelSize: 16
                 wrapMode: Text.WordWrap
             }
 
@@ -4354,12 +4283,12 @@ ApplicationWindow {
                 implicitHeight: 78
                 color: root.soft
 
-                ColumnLayout {
+                EditorialColumnLayout {
                     anchors.fill: parent
                     anchors.margins: 12
                     spacing: 4
 
-                    Text {
+                    EditorialLabel {
                         Layout.fillWidth: true
                         text: deleteTransactionDialog.transactionData
                               ? (deleteTransactionDialog.transactionData.rawDescription
@@ -4371,12 +4300,12 @@ ApplicationWindow {
                                          : qsTr("Расход")))
                               : ""
                         color: root.accent
-                        font.pixelSize: 14
+                        font.pixelSize: 16
                         font.weight: Font.DemiBold
                         elide: Text.ElideRight
                     }
 
-                    Text {
+                    EditorialLabel {
                         Layout.fillWidth: true
                         text: deleteTransactionDialog.transactionData
                               ? root.accountName(deleteTransactionDialog.transactionData.accountId)
@@ -4388,33 +4317,33 @@ ApplicationWindow {
                                 )
                               : ""
                         color: root.muted
-                        font.pixelSize: 14
+                        font.pixelSize: 16
                         elide: Text.ElideRight
                     }
                 }
             }
 
-            Text {
+            EditorialLabel {
                 id: deleteTransactionError
                 Layout.fillWidth: true
                 color: root.red
-                font.pixelSize: 14
+                font.pixelSize: 16
                 wrapMode: Text.WordWrap
             }
 
-            RowLayout {
+            EditorialRowLayout {
                 Item {
                     Layout.fillWidth: true
                 }
                 SoftButton {
                     neo: true
-                    id: deleteTransactionCancelButton
+                    id: deleteTransactionCancelButton; objectName: "deleteTransactionCancelButton"
                     text: qsTr("Отмена")
                     onClicked: deleteTransactionDialog.close()
                 }
                 SoftButton {
                     neo: true
-                    id: deleteTransactionSubmitButton
+                    id: deleteTransactionSubmitButton; objectName: "deleteTransactionSubmitButton"
                     text: qsTr("Удалить")
                     destructive: true
                     onClicked: deleteTransactionDialog.confirmDelete()
@@ -4423,9 +4352,9 @@ ApplicationWindow {
         }
     }
 
-    Dialog {
-        id: projectDialog
-        width: 460
+    EditorialDialog {
+        id: projectDialog; objectName: "projectDialog"
+        width: Math.min(460, root.width - 48)
         modal: true
         anchors.centerIn: parent
         padding: 24
@@ -4470,41 +4399,39 @@ ApplicationWindow {
         onClosed: editingId = ""
 
         background: Rectangle {
-            HardShadow { depth: root.shadowDepth; shadowColor: root.accent }
+
 
             color: root.panel
-            radius: 16
+            radius: 0
             border.width: root.outlineWidth
             border.color: root.accent
         }
 
-        contentItem: ColumnLayout {
-            spacing: 14
-            Text {
+        contentItem: EditorialDialogForm {
+            spacing: 16
+            EditorialDialogTitle {
                 text: projectDialog.editingId.length > 0
                       ? qsTr("Редактирование проекта")
                       : qsTr("Новый проект")
                 color: root.accent
-                font.pixelSize: 21
-                font.weight: Font.Bold
-            }
+                }
             AppTextField {
                 neo: true
                 appAccentColor: root.accent
-                id: projectNameField
+                id: projectNameField; objectName: "projectNameField"
                 Layout.fillWidth: true
                 placeholderText: qsTr("Название проекта")
                 maximumLength: 80
                 onAccepted: projectDialog.submit()
             }
-            Text {
+            EditorialLabel {
                 id: projectError
                 Layout.fillWidth: true
                 color: root.red
-                font.pixelSize: 14
+                font.pixelSize: 16
                 wrapMode: Text.WordWrap
             }
-            RowLayout {
+            EditorialRowLayout {
                 Item { Layout.fillWidth: true }
                 SoftButton {
                     neo: true
@@ -4521,9 +4448,9 @@ ApplicationWindow {
         }
     }
 
-    Dialog {
-        id: deleteProjectDialog
-        width: 470
+    EditorialDialog {
+        id: deleteProjectDialog; objectName: "deleteProjectDialog"
+        width: Math.min(480, root.width - 48)
         modal: true
         anchors.centerIn: parent
         padding: 24
@@ -4548,23 +4475,21 @@ ApplicationWindow {
         onClosed: projectData = null
 
         background: Rectangle {
-            HardShadow { depth: root.shadowDepth; shadowColor: root.accent }
+
 
             color: root.panel
-            radius: 16
+            radius: 0
             border.width: root.outlineWidth
             border.color: root.accent
         }
 
-        contentItem: ColumnLayout {
-            spacing: 14
-            Text {
+        contentItem: EditorialDialogForm {
+            spacing: 16
+            EditorialDialogTitle {
                 text: qsTr("Удалить проект?")
                 color: root.accent
-                font.pixelSize: 21
-                font.weight: Font.Bold
-            }
-            Text {
+                }
+            EditorialLabel {
                 Layout.fillWidth: true
                 text: deleteProjectDialog.projectData
                       ? deleteProjectDialog.projectData.name
@@ -4574,20 +4499,20 @@ ApplicationWindow {
                 font.weight: Font.DemiBold
                 elide: Text.ElideRight
             }
-            Text {
+            EditorialLabel {
                 Layout.fillWidth: true
                 text: qsTr("Операции останутся на своих счетах и продолжат учитываться в общем балансе. Проект будет скрыт из списка.")
                 color: root.muted
-                font.pixelSize: 14
+                font.pixelSize: 16
                 wrapMode: Text.WordWrap
             }
-            Text {
+            EditorialLabel {
                 id: deleteProjectError
                 Layout.fillWidth: true
                 color: root.red
-                font.pixelSize: 14
+                font.pixelSize: 16
             }
-            RowLayout {
+            EditorialRowLayout {
                 Item { Layout.fillWidth: true }
                 SoftButton {
                     neo: true
@@ -4604,9 +4529,9 @@ ApplicationWindow {
         }
     }
 
-    Dialog {
-        id: deleteBudgetDialog
-        width: 470
+    EditorialDialog {
+        id: deleteBudgetDialog; objectName: "deleteBudgetDialog"
+        width: Math.min(480, root.width - 48)
         modal: true
         anchors.centerIn: parent
         padding: 24
@@ -4631,23 +4556,21 @@ ApplicationWindow {
         onClosed: budgetData = null
 
         background: Rectangle {
-            HardShadow { depth: root.shadowDepth; shadowColor: root.accent }
+
 
             color: root.panel
-            radius: 16
+            radius: 0
             border.width: root.outlineWidth
             border.color: root.accent
         }
 
-        contentItem: ColumnLayout {
-            spacing: 14
-            Text {
+        contentItem: EditorialDialogForm {
+            spacing: 16
+            EditorialDialogTitle {
                 text: qsTr("Удалить бюджет?")
                 color: root.accent
-                font.pixelSize: 21
-                font.weight: Font.Bold
-            }
-            Text {
+                }
+            EditorialLabel {
                 Layout.fillWidth: true
                 text: deleteBudgetDialog.budgetData
                     ? deleteBudgetDialog.budgetData.name : ""
@@ -4656,20 +4579,20 @@ ApplicationWindow {
                 font.weight: Font.DemiBold
                 elide: Text.ElideRight
             }
-            Text {
+            EditorialLabel {
                 Layout.fillWidth: true
                 text: qsTr("История операций и счета не изменятся. Будет удалён только бюджет и его месячные лимиты.")
                 color: root.muted
-                font.pixelSize: 14
+                font.pixelSize: 16
                 wrapMode: Text.WordWrap
             }
-            Text {
+            EditorialLabel {
                 id: deleteBudgetError
                 Layout.fillWidth: true
                 color: root.red
-                font.pixelSize: 14
+                font.pixelSize: 16
             }
-            RowLayout {
+            EditorialRowLayout {
                 Item { Layout.fillWidth: true }
                 SoftButton {
                     neo: true
@@ -4686,9 +4609,9 @@ ApplicationWindow {
         }
     }
 
-    Dialog {
-        id: operationDialog
-        width: 520
+    EditorialDialog {
+        id: operationDialog; objectName: "operationDialog"
+        width: Math.min(520, root.width - 48)
         modal: true
         anchors.centerIn: parent
         padding: 24
@@ -4938,16 +4861,16 @@ ApplicationWindow {
         }
 
         background: Rectangle {
-            HardShadow { depth: 6; shadowColor: root.accent }
+
 
             color: root.panel
-            radius: 16
+            radius: 0
             border.width: root.outlineWidth
             border.color: root.accent
         }
-        contentItem: ColumnLayout {
-            spacing: 14
-            Text {
+        contentItem: EditorialDialogForm {
+            spacing: 16
+            EditorialDialogTitle {
                 text: operationDialog.editingId
                       ? qsTr("Редактирование операции")
                       : operationDialog.editingProjectId.length > 0
@@ -4956,13 +4879,11 @@ ApplicationWindow {
                           )
                         : qsTr("Новая операция")
                 color: root.accent
-                font.pixelSize: 21
-                font.weight: Font.Bold
-            }
+                }
             AppComboBox {
                 neo: true
                 appAccentColor: root.accent
-                id: operationType
+                id: operationType; objectName: "operationType"
                 Layout.fillWidth: true
                 model: operationDialog.editingProjectId.length > 0
                      ? [qsTr("Доход"), qsTr("Расход")]
@@ -4988,16 +4909,16 @@ ApplicationWindow {
                     }
                 }
             }
-            Text {
+            EditorialLabel {
                 visible: operationType.currentIndex === 2
                 text: qsTr("Откуда")
                 color: root.muted
-                font.pixelSize: 14
+                font.pixelSize: 16
             }
             AppComboBox {
                 neo: true
                 appAccentColor: root.accent
-                id: operationAccount
+                id: operationAccount; objectName: "operationAccount"
                 Layout.fillWidth: true
                 model: operationDialog.editingProjectId.length > 0
                      ? financeController.allAccounts
@@ -5010,16 +4931,16 @@ ApplicationWindow {
                 enabled: count > 0
                 emptyText: qsTr("Добавьте счёт")
             }
-            Text {
+            EditorialLabel {
                 visible: operationType.currentIndex === 2
                 text: qsTr("Куда")
                 color: root.muted
-                font.pixelSize: 14
+                font.pixelSize: 16
             }
             AppComboBox {
                 neo: true
                 appAccentColor: root.accent
-                id: transferTargetAccount
+                id: transferTargetAccount; objectName: "transferTargetAccount"
                 Layout.fillWidth: true
                 visible: operationType.currentIndex === 2
                 model: financeController.allAccounts
@@ -5030,7 +4951,7 @@ ApplicationWindow {
             AppComboBox {
                 neo: true
                 appAccentColor: root.accent
-                id: operationCategory
+                id: operationCategory; objectName: "operationCategory"
                 Layout.fillWidth: true
                 visible: operationType.currentIndex !== 2
                 model: {
@@ -5061,7 +4982,7 @@ ApplicationWindow {
             AppTextField {
                 neo: true
                 appAccentColor: root.accent
-                id: operationAmount
+                id: operationAmount; objectName: "operationAmount"
                 Layout.fillWidth: true
                 placeholderText: qsTr("Сумма")
                 validator: DoubleValidator {
@@ -5073,22 +4994,22 @@ ApplicationWindow {
             AppTextField {
                 neo: true
                 appAccentColor: root.accent
-                id: operationDescription
+                id: operationDescription; objectName: "operationDescription"
                 Layout.fillWidth: true
                 placeholderText: qsTr("Описание")
             }
-            ColumnLayout {
+            EditorialColumnLayout {
                 Layout.fillWidth: true
-                spacing: 6
+                spacing: 8
 
-                Text {
+                EditorialLabel {
                     text: qsTr("Дата операции")
                     color: root.muted
-                    font.pixelSize: 14
+                    font.pixelSize: 16
                 }
 
                 Button {
-                    id: operationDateButton
+                    id: operationDateButton; objectName: "operationDateButton"
                     readonly property int pressShift: 0
                     Layout.fillWidth: true
                     implicitHeight: 44
@@ -5099,17 +5020,17 @@ ApplicationWindow {
                     )
                     onClicked: operationDateDialog.openFor(operationDialog.selectedDate)
 
-                    contentItem: RowLayout {
+                    contentItem: EditorialRowLayout {
                         transform: Translate { y: operationDateButton.pressShift }
-                        spacing: 10
-                        Text {
+                        spacing: 12
+                        EditorialLabel {
                             Layout.fillWidth: true
                             text: operationDateButton.text
                             color: root.accent
-                            font.pixelSize: 14
+                            font.pixelSize: 16
                             verticalAlignment: Text.AlignVCenter
                         }
-                        Text {
+                        EditorialLabel {
                             text: "▦"
                             color: root.accent
                             font.pixelSize: 18
@@ -5119,7 +5040,7 @@ ApplicationWindow {
                     background: Rectangle {
                         transform: Translate { y: operationDateButton.pressShift }
 
-                        radius: 8
+                        radius: 0
                         color: operationDateButton.down
                                ? root.panel
                                : operationDateButton.hovered
@@ -5130,24 +5051,24 @@ ApplicationWindow {
                     }
                 }
             }
-            Text {
+            EditorialLabel {
                 id: operationError
                 color: root.red
-                font.pixelSize: 14
+                font.pixelSize: 16
             }
-            RowLayout {
+            EditorialRowLayout {
                 Item {
                     Layout.fillWidth: true
                 }
                 SoftButton {
                     neo: true
-                    id: operationCancelButton
+                    id: operationCancelButton; objectName: "operationCancelButton"
                     text: qsTr("Отмена")
                     onClicked: operationDialog.close()
                 }
                 SoftButton {
                     neo: true
-                    id: operationSubmitButton
+                    id: operationSubmitButton; objectName: "operationSubmitButton"
                     text: qsTr("Сохранить")
                     highlighted: true
                     onClicked: operationDialog.submit()
@@ -5156,12 +5077,12 @@ ApplicationWindow {
         }
     }
 
-    Dialog {
-        id: dateFilterDialog
-        width: 450
+    EditorialDialog {
+        id: dateFilterDialog; objectName: "dateFilterDialog"
+        width: Math.min(450, root.width - 48)
         modal: true
         anchors.centerIn: parent
-        padding: 22
+        padding: 24
         closePolicy: Popup.CloseOnEscape
 
         property var pendingFrom: null
@@ -5240,27 +5161,25 @@ ApplicationWindow {
         }
 
         background: Rectangle {
-            HardShadow { depth: 6; shadowColor: root.accent }
+
 
             color: root.panel
-            radius: 16
+            radius: 0
             border.width: root.outlineWidth
             border.color: root.accent
         }
 
-        contentItem: ColumnLayout {
-            spacing: 14
+        contentItem: EditorialDialogForm {
+            spacing: 16
 
-            Text {
+            EditorialDialogTitle {
                 text: qsTr("Период")
                 color: root.accent
-                font.pixelSize: 21
-                font.weight: Font.Bold
-            }
+                }
 
-            RowLayout {
+            EditorialRowLayout {
                 Layout.fillWidth: true
-                spacing: 6
+                spacing: 8
 
                 SoftButton {
                     neo: true
@@ -5300,9 +5219,9 @@ ApplicationWindow {
                 }
             }
 
-            RowLayout {
+            EditorialRowLayout {
                 Layout.fillWidth: true
-                spacing: 10
+                spacing: 12
 
                 SoftButton {
                     neo: true
@@ -5311,7 +5230,7 @@ ApplicationWindow {
                     onClicked: dateFilterDialog.shiftMonth(-1)
                 }
 
-                Text {
+                EditorialLabel {
                     Layout.fillWidth: true
                     text: dateFilterCalendar.title
                     color: root.accent
@@ -5329,14 +5248,15 @@ ApplicationWindow {
             }
 
             DayOfWeekRow {
+                spacing: 4
                 Layout.fillWidth: true
                 locale: root.uiLocale()
 
-                delegate: Text {
+                delegate: EditorialLabel {
                     required property string shortName
                     text: shortName
                     color: root.muted
-                    font.pixelSize: 14
+                    font.pixelSize: 16
                     font.weight: Font.DemiBold
                     horizontalAlignment: Text.AlignHCenter
                     verticalAlignment: Text.AlignVCenter
@@ -5344,15 +5264,16 @@ ApplicationWindow {
             }
 
             MonthGrid {
+                spacing: 4
                 id: dateFilterCalendar
                 Layout.fillWidth: true
-                Layout.preferredHeight: 258
+                Layout.preferredHeight: Math.max(0, (width - spacing * 6) / 7 * 6 + spacing * 5)
                 month: dateFilterDialog.displayedMonth
                 year: dateFilterDialog.displayedYear
                 locale: root.uiLocale()
 
                 delegate: Button {
-                    id: filterDayButton
+                    id: filterDayButton; objectName: "filterDayButton"
                     required property var model
                     flat: true
                     hoverEnabled: true
@@ -5363,10 +5284,10 @@ ApplicationWindow {
                         dateFilterDialog.isSameDay(model.date, dateFilterDialog.pendingFrom)
                         || dateFilterDialog.isSameDay(model.date, dateFilterDialog.pendingTo)
 
-                    contentItem: Text {
+                    contentItem: EditorialLabel {
                         text: filterDayButton.model.day
                         color: filterDayButton.rangeEdge ? root.white : root.accent
-                        font.pixelSize: 14
+                        font.pixelSize: 16
                         font.weight: filterDayButton.model.today
                                      ? Font.DemiBold
                                      : Font.Normal
@@ -5375,7 +5296,7 @@ ApplicationWindow {
                     }
 
                     background: Rectangle {
-                        radius: 8
+                        radius: 0
                         color: filterDayButton.rangeEdge
                                ? root.accent
                                : dateFilterDialog.isInsideRange(filterDayButton.model.date)
@@ -5387,17 +5308,17 @@ ApplicationWindow {
                 }
             }
 
-            Text {
+            EditorialLabel {
                 Layout.fillWidth: true
                 text: (dateFilterDialog.pendingFrom && dateFilterDialog.pendingTo)
                     ? Qt.formatDate(dateFilterDialog.pendingFrom, "dd.MM.yyyy") + " — " + Qt.formatDate(dateFilterDialog.pendingTo, "dd.MM.yyyy")
                     : ""
                 color: root.muted
-                font.pixelSize: 14
+                font.pixelSize: 16
                 horizontalAlignment: Text.AlignHCenter
             }
 
-            RowLayout {
+            EditorialRowLayout {
                 Layout.fillWidth: true
 
                 Item {
@@ -5419,12 +5340,12 @@ ApplicationWindow {
         }
     }
 
-    Dialog {
-        id: operationDateDialog
-        width: 400
+    EditorialDialog {
+        id: operationDateDialog; objectName: "operationDateDialog"
+        width: Math.min(400, root.width - 48)
         modal: true
         anchors.centerIn: parent
-        padding: 22
+        padding: 24
         closePolicy: Popup.CloseOnEscape
         property int displayedMonth: new Date().getMonth()
         property int displayedYear: new Date().getFullYear()
@@ -5453,27 +5374,25 @@ ApplicationWindow {
         }
 
         background: Rectangle {
-            HardShadow { depth: 6; shadowColor: root.accent }
+
 
             color: root.panel
-            radius: 16
+            radius: 0
             border.width: root.outlineWidth
             border.color: root.accent
         }
 
-        contentItem: ColumnLayout {
-            spacing: 14
+        contentItem: EditorialDialogForm {
+            spacing: 16
 
-            Text {
+            EditorialDialogTitle {
                 text: qsTr("Дата операции")
                 color: root.accent
-                font.pixelSize: 21
-                font.weight: Font.Bold
-            }
+                }
 
-            RowLayout {
+            EditorialRowLayout {
                 Layout.fillWidth: true
-                spacing: 10
+                spacing: 12
 
                 SoftButton {
                     neo: true
@@ -5482,7 +5401,7 @@ ApplicationWindow {
                     onClicked: operationDateDialog.shiftMonth(-1)
                 }
 
-                Text {
+                EditorialLabel {
                     Layout.fillWidth: true
                     text: operationCalendar.title
                     color: root.accent
@@ -5500,14 +5419,15 @@ ApplicationWindow {
             }
 
             DayOfWeekRow {
+                spacing: 4
                 Layout.fillWidth: true
                 locale: root.uiLocale()
 
-                delegate: Text {
+                delegate: EditorialLabel {
                     required property string shortName
                     text: shortName
                     color: root.muted
-                    font.pixelSize: 14
+                    font.pixelSize: 16
                     font.weight: Font.DemiBold
                     horizontalAlignment: Text.AlignHCenter
                     verticalAlignment: Text.AlignVCenter
@@ -5515,22 +5435,23 @@ ApplicationWindow {
             }
 
             MonthGrid {
+                spacing: 4
                 id: operationCalendar
                 Layout.fillWidth: true
-                Layout.preferredHeight: 258
+                Layout.preferredHeight: Math.max(0, (width - spacing * 6) / 7 * 6 + spacing * 5)
                 month: operationDateDialog.displayedMonth
                 year: operationDateDialog.displayedYear
                 locale: root.uiLocale()
 
                 delegate: Button {
-                    id: dayButton
+                    id: dayButton; objectName: "dayButton"
                     required property var model
                     flat: true
                     hoverEnabled: true
                     opacity: model.month === operationCalendar.month ? 1 : 0.42
                     onClicked: operationDateDialog.chooseDate(model.date)
 
-                    contentItem: Text {
+                    contentItem: EditorialLabel {
                         text: dayButton.model.day
                         color: operationDateDialog.isSameDay(
                                    dayButton.model.date,
@@ -5538,14 +5459,14 @@ ApplicationWindow {
                                )
                                ? root.white
                                : root.accent
-                        font.pixelSize: 14
+                        font.pixelSize: 16
                         font.weight: dayButton.model.today ? Font.DemiBold : Font.Normal
                         horizontalAlignment: Text.AlignHCenter
                         verticalAlignment: Text.AlignVCenter
                     }
 
                     background: Rectangle {
-                        radius: 8
+                        radius: 0
                         color: operationDateDialog.isSameDay(
                                    dayButton.model.date,
                                    operationDialog.selectedDate
@@ -5566,7 +5487,7 @@ ApplicationWindow {
                 }
             }
 
-            RowLayout {
+            EditorialRowLayout {
                 Layout.fillWidth: true
                 Item {
                     Layout.fillWidth: true
@@ -5585,12 +5506,12 @@ ApplicationWindow {
         }
     }
 
-    Dialog {
-        id: categoryDialog
-        width: 560
+    EditorialDialog {
+        id: categoryDialog; objectName: "categoryDialog"
+        width: Math.min(560, root.width - 48)
         modal: true
         anchors.centerIn: parent
-        padding: 22
+        padding: 24
         property var editingData: null
         readonly property string editingId: editingData ? editingData.value : ""
 
@@ -5637,29 +5558,27 @@ ApplicationWindow {
         onClosed: editingData = null
 
         background: Rectangle {
-            HardShadow { depth: 6; shadowColor: root.accent }
+
 
             color: root.panel
-            radius: 16
+            radius: 0
             border.width: root.outlineWidth
             border.color: root.accent
         }
-        contentItem: ColumnLayout {
+        contentItem: EditorialDialogForm {
             spacing: 12
-            Text {
+            EditorialDialogTitle {
                 text: categoryDialog.editingId.length > 0
                       ? qsTr("Изменить категорию")
                       : qsTr("Категории")
                 color: root.accent
-                font.pixelSize: 21
-                font.weight: Font.Bold
-            }
-            RowLayout {
+                }
+            EditorialRowLayout {
                 Layout.fillWidth: true
                 AppTextField {
                     neo: true
                     appAccentColor: root.accent
-                    id: categoryNameField
+                    id: categoryNameField; objectName: "categoryNameField"
                     Layout.fillWidth: true
                     placeholderText: qsTr("Название категории")
                     onAccepted: categoryDialog.submit()
@@ -5667,17 +5586,17 @@ ApplicationWindow {
                 AppComboBox {
                     neo: true
                     appAccentColor: root.accent
-                    id: categoryType
+                    id: categoryType; objectName: "categoryType"
                     model: [qsTr("Доход"), qsTr("Расход")]
                     enabled: categoryDialog.editingId.length === 0
                 }
             }
-            Text {
+            EditorialLabel {
                 id: categoryError
                 color: root.red
-                font.pixelSize: 14
+                font.pixelSize: 16
             }
-            RowLayout {
+            EditorialRowLayout {
                 Item {
                     Layout.fillWidth: true
                 }

@@ -1,9 +1,11 @@
 import QtQuick
 import QtQuick.Controls
 import QtQuick.Layouts
+import "../common"
+import "../common/EditorialStyle.js" as Appearance
 
-Dialog {
-    id: dialog
+EditorialDialog {
+    id: dialog; objectName: "dialog"
     // A phone is narrower than the desktop dialog: the dialog and its form then shrink, two columns instead of four
     width: Math.min(920, parent ? parent.width - 24 : 920)
     height: Math.min(780, parent ? parent.height - 40 : 780)
@@ -17,12 +19,12 @@ Dialog {
 
     required property var controller
     property color panelColor: "white"
-    property color softColor: "#faf9ec"
+    property color softColor: (Appearance.desktop ? "#f3eddf" : "#faf9ec")
     property color textColor: "#031528"
-    property color mutedColor: "#687483"
-    property color lineColor: "#d8d7c7"
+    property color mutedColor: (Appearance.desktop ? "#59616a" : "#687483")
+    property color lineColor: (Appearance.desktop ? "#bbb5a8" : "#d8d7c7")
     property color accentColor: "#031528"
-    property color errorColor: "#b94f48"
+    property color errorColor: (Appearance.desktop ? "#b84932" : "#b94f48")
     property color successColor: "#3f735f"
 
     readonly property bool pdfFile: String(csvFile).toLowerCase().endsWith(".pdf")
@@ -38,7 +40,7 @@ Dialog {
     property var reviewData: ({})
     onOperationRowsChanged: syncReviewGroups()
     onShowReviewOnlyChanged: syncReviewGroups()
-    ListModel { id: reviewModel }
+    ListModel { id: reviewModel; objectName: "reviewModel" }
 
     function syncReviewGroups() {
         const groups = reviewGroups();
@@ -561,11 +563,11 @@ Dialog {
         open();
     }
 
-    component FormLabel: Text {
+    component FormLabel: EditorialLabel {
         Layout.preferredWidth: 180
         Layout.maximumWidth: 180
         color: dialog.mutedColor
-        font.pixelSize: 14
+        font.pixelSize: Appearance.desktop ? 16 : 14
         wrapMode: Text.WordWrap
     }
 
@@ -574,7 +576,7 @@ Dialog {
         Layout.minimumWidth: 0
         Layout.preferredWidth: dialog.formFieldWidth
         Layout.maximumWidth: Layout.preferredWidth
-        controlHeight: 42
+        controlHeight: Appearance.desktop ? 48 : 42
         appTextColor: dialog.textColor
         appMutedColor: dialog.mutedColor
         appPanelColor: dialog.panelColor
@@ -589,7 +591,7 @@ Dialog {
         Layout.minimumWidth: 0
         Layout.preferredWidth: dialog.formFieldWidth
         Layout.maximumWidth: Layout.preferredWidth
-        controlHeight: 42
+        controlHeight: Appearance.desktop ? 48 : 42
         textRole: "label"
         valueRole: "value"
         appTextColor: dialog.textColor
@@ -598,7 +600,7 @@ Dialog {
         appSoftColor: dialog.softColor
         appLineColor: dialog.lineColor
         appAccentColor: dialog.accentColor
-        appHoverColor: "#E4E8F1"
+        appHoverColor: (Appearance.desktop ? "#e9e4d8" : "#E4E8F1")
     }
 
     component FormCheckBox: StyledCheckBox {
@@ -608,7 +610,7 @@ Dialog {
         appSoftColor: dialog.softColor
         appLineColor: dialog.lineColor
         appAccentColor: dialog.accentColor
-        appHoverColor: "#E4E8F1"
+        appHoverColor: (Appearance.desktop ? "#e9e4d8" : "#E4E8F1")
         appOnAccentColor: dialog.panelColor
     }
 
@@ -622,12 +624,12 @@ Dialog {
         appSoftColor: dialog.softColor
         appLineColor: dialog.lineColor
         appAccentColor: dialog.accentColor
-        appHoverColor: "#E4E8F1"
+        appHoverColor: (Appearance.desktop ? "#e9e4d8" : "#E4E8F1")
         appOnAccentColor: dialog.panelColor
     }
 
-    component TransferFields: ColumnLayout {
-        id: transferFields
+    component TransferFields: EditorialColumnLayout {
+        id: transferFields; objectName: "transferFields"
         required property var row
         readonly property var existingChoice: dialog.choiceFor(row)
         readonly property string sourceCurrency: dialog.transferAccountCurrency(sourceBox.currentValue)
@@ -639,15 +641,15 @@ Dialog {
         readonly property var matchingItems: [{label: qsTr("Создать новый перевод"), value: ""}].concat(details.matches || [])
         readonly property string peerCurrency: row.signedMinor > 0 ? sourceCurrency : targetCurrency
         spacing: 8
-        Text {
+        EditorialLabel {
             Layout.fillWidth: true
             text: qsTr("Перевод перемещает деньги между вашими счетами и не входит в доходы и расходы. Счёт выписки уже выбран по направлению суммы.")
-            color: dialog.mutedColor; font.pixelSize: 13; wrapMode: Text.WordWrap
+            color: dialog.mutedColor; font.pixelSize: Appearance.desktop ? 16 : 13; wrapMode: Text.WordWrap
         }
         GridLayout {
             Layout.fillWidth: true; columns: 2; columnSpacing: 12
-            Text { text: qsTr("Со счёта"); color: dialog.mutedColor; font.pixelSize: 14 }
-            Text { text: qsTr("На счёт"); color: dialog.mutedColor; font.pixelSize: 14 }
+            EditorialLabel { text: qsTr("Со счёта"); color: dialog.mutedColor; font.pixelSize: Appearance.desktop ? 16 : 14 }
+            EditorialLabel { text: qsTr("На счёт"); color: dialog.mutedColor; font.pixelSize: Appearance.desktop ? 16 : 14 }
             FormCombo {
                 id: sourceBox; objectName: "transferSourceBox"
                 Layout.fillWidth: true; Layout.maximumWidth: 10000
@@ -667,12 +669,12 @@ Dialog {
                 onActivated: existingMatchBox.currentIndex = -1
             }
         }
-        Text {
+        EditorialLabel {
             visible: transferFields.differentCurrency
             Layout.fillWidth: true
             text: (transferFields.row.signedMinor > 0 ? qsTr("Фактически списано со второго счёта, %1")
                 : qsTr("Фактически зачислено на второй счёт, %1")).arg(transferFields.peerCurrency)
-            color: dialog.mutedColor; font.pixelSize: 14; wrapMode: Text.WordWrap
+            color: dialog.mutedColor; font.pixelSize: Appearance.desktop ? 16 : 14; wrapMode: Text.WordWrap
         }
         FormField {
             id: peerAmountField; objectName: "transferPeerAmountField"
@@ -683,11 +685,11 @@ Dialog {
             inputMethodHints: Qt.ImhFormattedNumbersOnly
             onTextEdited: existingMatchBox.currentIndex = -1
         }
-        Text {
+        EditorialLabel {
             visible: transferFields.matchingItems.length > 1
             Layout.fillWidth: true
             text: qsTr("Найдены похожие операции. Если это тот же перевод, выберите его, чтобы не учесть сумму дважды. Объединение с операцией второго счёта также сохранит связь с её выпиской.")
-            color: dialog.mutedColor; font.pixelSize: 13; wrapMode: Text.WordWrap
+            color: dialog.mutedColor; font.pixelSize: Appearance.desktop ? 16 : 13; wrapMode: Text.WordWrap
         }
         FormCombo {
             id: existingMatchBox; objectName: "transferMatchBox"
@@ -699,11 +701,11 @@ Dialog {
             emptyText: qsTr("Выберите совпадение или новый перевод")
             displayText: currentIndex < 0 ? emptyText : currentText
         }
-        Text {
+        EditorialLabel {
             visible: !!transferFields.details.error && !(transferFields.matchingItems.length > 1 && existingMatchBox.currentIndex >= 0)
             Layout.fillWidth: true
             text: transferFields.details.error || ""
-            color: dialog.mutedColor; font.pixelSize: 13; wrapMode: Text.WordWrap
+            color: dialog.mutedColor; font.pixelSize: Appearance.desktop ? 16 : 13; wrapMode: Text.WordWrap
         }
         FormButton {
             objectName: "confirmImportTransfer"
@@ -719,28 +721,27 @@ Dialog {
     }
 
     background: Rectangle {
-        HardShadow { depth: 6; shadowColor: dialog.accentColor }
+        HardShadow { visible: !Appearance.desktop;  depth: 6; shadowColor: dialog.accentColor }
 
         color: panelColor
-        radius: 16
+        radius: Appearance.desktop ? 0 : 16
         border.width: 1
         border.color: dialog.accentColor
     }
 
-    contentItem: ColumnLayout {
+    contentItem: EditorialColumnLayout {
         spacing: 0
 
-        RowLayout {
+        EditorialRowLayout {
             Layout.fillWidth: true
-            Layout.margins: 22
-            Text {
+            Layout.margins: Appearance.desktop ? 24 : 22
+            EditorialDialogTitle {
+                ruleVisible: false
                 Layout.fillWidth: true
                 wrapMode: Text.WordWrap
                 text: qsTr("Импорт банковской выписки")
                 color: dialog.textColor
-                font.pixelSize: 21
-                font.weight: Font.Bold
-            }
+                }
             Item { Layout.fillWidth: true }
             FormButton {
                 text: "×"
@@ -749,9 +750,9 @@ Dialog {
             }
         }
 
-        Rectangle { Layout.fillWidth: true; height: 1; color: dialog.lineColor }
+        Rectangle { Layout.fillWidth: true; Layout.leftMargin: 24; Layout.rightMargin: 24; height: 1; color: dialog.accentColor }
 
-        RowLayout {
+        EditorialRowLayout {
             visible: dialog.inspecting
             Layout.fillWidth: true
             Layout.leftMargin: 24
@@ -762,10 +763,10 @@ Dialog {
                 implicitWidth: 40
                 implicitHeight: 40
             }
-            Text {
+            EditorialLabel {
                 text: qsTr("Читаем выписку…")
                 color: dialog.mutedColor
-                font.pixelSize: 14
+                font.pixelSize: Appearance.desktop ? 16 : 14
             }
             Item { Layout.fillWidth: true }
         }
@@ -775,8 +776,8 @@ Dialog {
             objectName: "bankImportScroll"
             Layout.fillWidth: true
             Layout.fillHeight: true
-            Layout.leftMargin: 22
-            Layout.rightMargin: 22
+            Layout.leftMargin: Appearance.desktop ? 24 : 22
+            Layout.rightMargin: Appearance.desktop ? 24 : 22
             Layout.topMargin: 16
             Layout.bottomMargin: 16
             contentWidth: width
@@ -785,8 +786,8 @@ Dialog {
             boundsBehavior: Flickable.StopAtBounds
             clip: true
 
-            ColumnLayout {
-                id: importContent
+            EditorialColumnLayout {
+                id: importContent; objectName: "importContent"
                 width: importScroll.width
                 spacing: 12
 
@@ -794,26 +795,26 @@ Dialog {
                     enabled: !dialog.inspecting
                     Layout.fillWidth: true
                     columns: dialog.narrow ? 2 : 4
-                    columnSpacing: 10
+                    columnSpacing: Appearance.desktop ? 12 : 10
                     rowSpacing: 8
 
                     FormLabel { text: qsTr("Профиль"); color: dialog.mutedColor }
                     FormCombo {
-                        id: profileBox
+                        id: profileBox; objectName: "profileBox"
                         Layout.fillWidth: true
                         model: dialog.profileItems()
                         onActivated: dialog.loadProfile(currentValue)
                     }
                     FormLabel { text: qsTr("Название профиля"); color: dialog.mutedColor }
                     FormField {
-                        id: profileNameField
+                        id: profileNameField; objectName: "profileNameField"
                         Layout.fillWidth: true
                         placeholderText: qsTr("Например, Альфа-Банк")
                     }
 
                     FormLabel { text: qsTr("Кодировка"); color: dialog.mutedColor }
                     FormCombo {
-                        id: encodingBox
+                        id: encodingBox; objectName: "encodingBox"
                         enabled: !dialog.pdfFile
                         Layout.fillWidth: true
                         model: [
@@ -826,7 +827,7 @@ Dialog {
                     }
                     FormLabel { text: qsTr("Разделитель"); color: dialog.mutedColor }
                     FormCombo {
-                        id: delimiterBox
+                        id: delimiterBox; objectName: "delimiterBox"
                         enabled: !dialog.pdfFile
                         Layout.fillWidth: true
                         model: [
@@ -839,7 +840,7 @@ Dialog {
 
                     FormLabel { text: qsTr("Строка заголовков"); color: dialog.mutedColor }
                     FormField {
-                        id: headerRowField
+                        id: headerRowField; objectName: "headerRowField"
                         enabled: !dialog.pdfFile
                         Layout.fillWidth: true
                         text: "1"
@@ -853,14 +854,14 @@ Dialog {
                     }
                 }
 
-                Text {
+                EditorialLabel {
                     Layout.fillWidth: true
                     text: dialog.pdfFile
                           ? dialog.detectedInfo + "\n" + qsTr("Сверьте операции и итоговые суммы перед импортом. Поддерживаются PDF с текстом; сканы и выписки с паролем не поддерживаются.")
                           : dialog.detectedInfo
                     wrapMode: Text.WordWrap
                     color: dialog.mutedColor
-                    font.pixelSize: 14
+                    font.pixelSize: Appearance.desktop ? 16 : 14
                 }
 
                 Rectangle { Layout.fillWidth: true; height: 1; color: dialog.lineColor }
@@ -868,18 +869,18 @@ Dialog {
                 GridLayout {
                     Layout.fillWidth: true
                     columns: dialog.narrow ? 2 : 4
-                    columnSpacing: 10
+                    columnSpacing: Appearance.desktop ? 12 : 10
                     rowSpacing: 8
 
                     FormLabel { text: qsTr("Счёт"); color: dialog.mutedColor }
                     FormCombo {
-                        id: accountBox
+                        id: accountBox; objectName: "accountBox"
                         Layout.fillWidth: true
                         model: dialog.fiatAccounts()
                     }
                     FormLabel { text: qsTr("Формат даты"); color: dialog.mutedColor }
                     FormCombo {
-                        id: dateFormatBox
+                        id: dateFormatBox; objectName: "dateFormatBox"
                         enabled: !dialog.pdfFile
                         Layout.fillWidth: true
                         model: [
@@ -895,14 +896,14 @@ Dialog {
 
                     FormLabel { text: qsTr("Столбец даты"); color: dialog.mutedColor }
                     FormCombo {
-                        id: dateColumnBox
+                        id: dateColumnBox; objectName: "dateColumnBox"
                         enabled: !dialog.pdfFile
                         Layout.fillWidth: true
                         model: dialog.columnItems(false)
                     }
                     FormLabel { text: qsTr("Хранение суммы"); color: dialog.mutedColor }
                     FormCombo {
-                        id: amountModeBox
+                        id: amountModeBox; objectName: "amountModeBox"
                         enabled: !dialog.pdfFile
                         Layout.fillWidth: true
                         model: [
@@ -917,14 +918,14 @@ Dialog {
                         color: dialog.mutedColor
                     }
                     FormCombo {
-                        id: amountColumnBox
+                        id: amountColumnBox; objectName: "amountColumnBox"
                         enabled: !dialog.pdfFile
                         visible: amountModeBox.currentValue === "signed"
                         Layout.fillWidth: true
                         model: dialog.columnItems(false)
                     }
                     FormCheckBox {
-                        id: positiveIncomeCheck
+                        id: positiveIncomeCheck; objectName: "positiveIncomeCheck"
                         enabled: !dialog.pdfFile
                         visible: amountModeBox.currentValue === "signed"
                         Layout.columnSpan: 2
@@ -938,7 +939,7 @@ Dialog {
                         color: dialog.mutedColor
                     }
                     FormCombo {
-                        id: incomeColumnBox
+                        id: incomeColumnBox; objectName: "incomeColumnBox"
                         enabled: !dialog.pdfFile
                         visible: amountModeBox.currentValue === "separate"
                         Layout.fillWidth: true
@@ -950,7 +951,7 @@ Dialog {
                         color: dialog.mutedColor
                     }
                     FormCombo {
-                        id: expenseColumnBox
+                        id: expenseColumnBox; objectName: "expenseColumnBox"
                         enabled: !dialog.pdfFile
                         visible: amountModeBox.currentValue === "separate"
                         Layout.fillWidth: true
@@ -959,28 +960,28 @@ Dialog {
 
                     FormLabel { text: qsTr("Описание"); color: dialog.mutedColor }
                     FormCombo {
-                        id: descriptionColumnBox
+                        id: descriptionColumnBox; objectName: "descriptionColumnBox"
                         enabled: !dialog.pdfFile
                         Layout.fillWidth: true
                         model: dialog.columnItems(true)
                     }
                     FormLabel { text: qsTr("Получатель из файла"); color: dialog.mutedColor }
                     FormCombo {
-                        id: recipientColumnBox
+                        id: recipientColumnBox; objectName: "recipientColumnBox"
                         enabled: !dialog.pdfFile
                         Layout.fillWidth: true
                         model: dialog.columnItems(true)
                     }
                     FormLabel { text: qsTr("ИНН / ID получателя"); color: dialog.mutedColor }
                     FormCombo {
-                        id: recipientIdColumnBox
+                        id: recipientIdColumnBox; objectName: "recipientIdColumnBox"
                         enabled: !dialog.pdfFile
                         Layout.fillWidth: true
                         model: dialog.columnItems(true)
                     }
                     FormLabel { text: qsTr("Идентификатор операции"); color: dialog.mutedColor }
                     FormCombo {
-                        id: idColumnBox
+                        id: idColumnBox; objectName: "idColumnBox"
                         enabled: !dialog.pdfFile
                         Layout.fillWidth: true
                         model: dialog.columnItems(true)
@@ -988,28 +989,28 @@ Dialog {
 
                     FormLabel { text: qsTr("Категория из файла"); color: dialog.mutedColor }
                     FormCombo {
-                        id: categoryColumnBox
+                        id: categoryColumnBox; objectName: "categoryColumnBox"
                         enabled: !dialog.pdfFile
                         Layout.fillWidth: true
                         model: dialog.columnItems(true)
                     }
                     FormLabel { text: qsTr("Направление операции"); color: dialog.mutedColor }
                     FormCombo {
-                        id: directionColumnBox
+                        id: directionColumnBox; objectName: "directionColumnBox"
                         enabled: !dialog.pdfFile
                         Layout.fillWidth: true
                         model: dialog.columnItems(true)
                     }
                     FormLabel { text: qsTr("Валюта строки"); color: dialog.mutedColor }
                     FormCombo {
-                        id: currencyColumnBox
+                        id: currencyColumnBox; objectName: "currencyColumnBox"
                         enabled: !dialog.pdfFile
                         Layout.fillWidth: true
                         model: dialog.columnItems(true)
                     }
                     FormLabel { text: qsTr("Категория дохода по умолчанию"); color: dialog.mutedColor }
                     FormCombo {
-                        id: incomeCategoryBox
+                        id: incomeCategoryBox; objectName: "incomeCategoryBox"
                         Layout.fillWidth: true
                         model: dialog.categoryItems("income")
                     }
@@ -1018,7 +1019,7 @@ Dialog {
                     Item { Layout.preferredHeight: 1 }
                     FormLabel { text: qsTr("Категория расхода по умолчанию"); color: dialog.mutedColor }
                     FormCombo {
-                        id: expenseCategoryBox
+                        id: expenseCategoryBox; objectName: "expenseCategoryBox"
                         Layout.fillWidth: true
                         model: dialog.categoryItems("expense")
                     }
@@ -1026,7 +1027,7 @@ Dialog {
 
                 Rectangle { Layout.fillWidth: true; height: 1; color: dialog.lineColor }
 
-                Text {
+                EditorialLabel {
                     Layout.fillWidth: true
                     visible: dialog.operationRows.length > 0
                     wrapMode: Text.WordWrap
@@ -1055,12 +1056,12 @@ Dialog {
                         onClicked: dialog.acceptSuggestions()
                     }
                 }
-                Text {
+                EditorialLabel {
                     visible: dialog.operationRows.length > 0
                     Layout.fillWidth: true
                     text: qsTr("Проверьте группы: одно исправление применяется ко всем операциям группы. Без имени получателя можно импортировать, сохранив полное описание отдельно. Для движения между своими счетами выберите «Перевод» и укажите оба счёта. Возвраты, переводы другим людям и снятия проверьте по одному.")
                     color: dialog.mutedColor
-                    font.pixelSize: 14
+                    font.pixelSize: Appearance.desktop ? 16 : 14
                     wrapMode: Text.WordWrap
                 }
                 ListView {
@@ -1074,7 +1075,7 @@ Dialog {
                     model: reviewModel
                     ScrollBar.vertical: StyledScrollBar {}
                     delegate: Rectangle {
-                        id: reviewGroup
+                        id: reviewGroup; objectName: "reviewGroup"
                         required property string reviewKey
                         property var modelData: dialog.reviewData[reviewKey]
                         // Keep the delegate's last data while its key is being removed.
@@ -1123,20 +1124,20 @@ Dialog {
 
                         width: categoryReviewList.width
                         height: reviewContent.implicitHeight + 32
-                        radius: 8
+                        radius: Appearance.desktop ? 0 : 8
                         color: dialog.panelColor
                         border.width: 1
                         border.color: dialog.lineColor
-                        ColumnLayout {
-                            id: reviewContent
+                        EditorialColumnLayout {
+                            id: reviewContent; objectName: "reviewContent"
                             anchors.left: parent.left
                             anchors.right: parent.right
                             anchors.top: parent.top
                             anchors.margins: 16
-                            spacing: 10
-                            RowLayout {
+                            spacing: Appearance.desktop ? 12 : 10
+                            EditorialRowLayout {
                                 Layout.fillWidth: true
-                                Text {
+                                EditorialLabel {
                                     Layout.fillWidth: true
                                     text: reviewGroup.modelData.type === "transfer" ? qsTr("Перевод между счетами")
                                         : reviewGroup.modelData.merchant || qsTr("Получатель не определён")
@@ -1145,31 +1146,31 @@ Dialog {
                                     color: dialog.textColor
                                     elide: Text.ElideRight
                                 }
-                                Text {
+                                EditorialLabel {
                                     text: qsTr("Операций: %1 · %2").arg(reviewGroup.modelData.rows.length)
                                         .arg(dialog.formatMinor(reviewGroup.modelData.total, reviewGroup.modelData.currency))
                                     color: dialog.textColor
-                                    font.pixelSize: 14
+                                    font.pixelSize: Appearance.desktop ? 16 : 14
                                 }
                             }
-                            Text {
+                            EditorialLabel {
                                 Layout.fillWidth: true
                                 text: (reviewGroup.modelData.type === "transfer" ? "" : reviewGroup.modelData.recipientReason + " · ")
                                     + reviewGroup.modelData.reason
                                     + (reviewGroup.modelData.mixedCategory ? qsTr(" · Разные категории — сохраните исключения ниже") : "")
                                 color: dialog.mutedColor
-                                font.pixelSize: 13
+                                font.pixelSize: Appearance.desktop ? 16 : 13
                                 wrapMode: Text.WordWrap
                             }
                             Repeater {
                                 model: reviewGroup.modelData.rows.slice(0, 2)
-                                delegate: Text {
+                                delegate: EditorialLabel {
                                     required property var modelData
                                     Layout.fillWidth: true
                                     text: modelData.date + " · " + dialog.formatMinor(modelData.signedMinor, modelData.currency)
                                         + " · " + modelData.description
                                     color: dialog.mutedColor
-                                    font.pixelSize: 13
+                                    font.pixelSize: Appearance.desktop ? 16 : 13
                                     wrapMode: Text.WordWrap
                                     maximumLineCount: 3
                                     elide: Text.ElideRight
@@ -1179,10 +1180,10 @@ Dialog {
                                 Layout.fillWidth: true
                                 columns: dialog.narrow ? 1 : 2
                                 columnSpacing: 12
-                                rowSpacing: 6
-                                Text {
+                                rowSpacing: Appearance.desktop ? 8 : 6
+                                EditorialLabel {
                                     Layout.alignment: Qt.AlignVCenter
-                                    text: qsTr("Тип операции"); color: dialog.mutedColor; font.pixelSize: 14
+                                    text: qsTr("Тип операции"); color: dialog.mutedColor; font.pixelSize: Appearance.desktop ? 16 : 14
                                 }
                                 FormCombo {
                                     id: groupTypeBox
@@ -1236,7 +1237,7 @@ Dialog {
                                 columnSpacing: 16
                                 rowSpacing: 4
                                 FormCheckBox {
-                                    id: rememberCategoryCheck
+                                    id: rememberCategoryCheck; objectName: "rememberCategoryCheck"
                                     text: qsTr("Запомнить категорию получателя")
                                     checked: !!recipientNameField.text.trim() && !reviewGroup.modelData.special
                                     enabled: !!recipientNameField.text.trim()
@@ -1290,28 +1291,28 @@ Dialog {
                                         reviewGroup.ruleDrafts = drafts;
                                     }
                                 }
-                                Text {
+                                EditorialLabel {
                                     Layout.columnSpan: dialog.narrow ? 1 : 2
                                     Layout.fillWidth: true
                                     text: qsTr("Значение подставляется из операции. Отредактируйте его: для описания оставьте целые слова без даты, суммы и номера карты. Остальные поля должны совпасть целиком. Правило сразу применяется к этой выписке и сохраняется после импорта.")
                                     color: dialog.mutedColor
-                                    font.pixelSize: 13
+                                    font.pixelSize: Appearance.desktop ? 16 : 13
                                     wrapMode: Text.WordWrap
                                 }
                             }
-                            Text {
+                            EditorialLabel {
                                 visible: reviewGroup.modelData.type !== "transfer" && rememberRecipientCheck.checked && recipientPatternField.text.length > 240
                                 Layout.fillWidth: true
                                 text: qsTr("Сократите правило до 240 символов: оставьте слова, по которым узнаётся получатель.")
                                 color: dialog.errorColor
-                                font.pixelSize: 14
+                                font.pixelSize: Appearance.desktop ? 16 : 14
                                 wrapMode: Text.WordWrap
                             }
                             GridLayout {
                                 visible: reviewGroup.modelData.type !== "transfer"
                                 Layout.fillWidth: true
                                 columns: dialog.narrow ? 1 : 3
-                                columnSpacing: 10
+                                columnSpacing: Appearance.desktop ? 12 : 10
                                 rowSpacing: 8
                                 FormButton {
                                     objectName: "applyRecipientGroup"
@@ -1331,27 +1332,27 @@ Dialog {
                             }
                             Repeater {
                                 model: reviewGroup.expanded ? reviewGroup.modelData.rows : []
-                                delegate: ColumnLayout {
-                                    id: exceptionRow
+                                delegate: EditorialColumnLayout {
+                                    id: exceptionRow; objectName: "exceptionRow"
                                     required property var modelData
                                     Layout.fillWidth: true
                                     Rectangle { Layout.fillWidth: true; height: 1; color: dialog.lineColor }
-                                    Text {
+                                    EditorialLabel {
                                         Layout.fillWidth: true
                                         text: exceptionRow.modelData.date + " · " + dialog.formatMinor(
                                             exceptionRow.modelData.signedMinor, exceptionRow.modelData.currency)
                                             + " · " + exceptionRow.modelData.description
                                         color: dialog.mutedColor
-                                        font.pixelSize: 13
+                                        font.pixelSize: Appearance.desktop ? 16 : 13
                                         wrapMode: Text.WordWrap
                                     }
                                     GridLayout {
                                         Layout.fillWidth: true
                                         columns: dialog.narrow ? 1 : 3
-                                        columnSpacing: 10
+                                        columnSpacing: Appearance.desktop ? 12 : 10
                                         rowSpacing: 8
                                         FormCombo {
-                                            id: exceptionCategoryBox
+                                            id: exceptionCategoryBox; objectName: "exceptionCategoryBox"
                                             Layout.fillWidth: dialog.narrow
                                             Layout.preferredWidth: 240
                                             Layout.maximumWidth: dialog.narrow ? 10000 : 240
@@ -1375,12 +1376,12 @@ Dialog {
                         }
                     }
                 }
-                Text {
+                EditorialLabel {
                     visible: dialog.operationRows.length > 0 && dialog.showReviewOnly && dialog.reviewGroups().length === 0
                     Layout.fillWidth: true
                     text: qsTr("Все операции готовы к импорту. Снимите фильтр, чтобы посмотреть распознанных получателей.")
                     color: dialog.successColor
-                    font.pixelSize: 14
+                    font.pixelSize: Appearance.desktop ? 16 : 14
                     wrapMode: Text.WordWrap
                 }
                 FormButton {
@@ -1389,7 +1390,7 @@ Dialog {
                     onClicked: { dialog.reloadRules(); dialog.showSavedRules = !dialog.showSavedRules; }
                 }
                 ListView {
-                    id: savedRulesList
+                    id: savedRulesList; objectName: "savedRulesList"
                     visible: dialog.showSavedRules
                     Layout.fillWidth: true
                     Layout.preferredHeight: Math.min(180, contentHeight)
@@ -1397,18 +1398,18 @@ Dialog {
                     clip: true
                     spacing: 8
                     ScrollBar.vertical: StyledScrollBar { policy: ScrollBar.AlwaysOff }
-                    delegate: RowLayout {
+                    delegate: EditorialRowLayout {
                         required property var modelData
                         width: savedRulesList.width
                         spacing: 16
-                        Text {
+                        EditorialLabel {
                             Layout.fillWidth: true
                             text: (modelData.type === "income" ? qsTr("Доход: ") : qsTr("Расход: "))
                                 + (modelData.field === "description" ? qsTr("Описание «")
                                     : modelData.field === "legacy" ? qsTr("Имя / описание «") : qsTr("Получатель «"))
                                 + modelData.pattern + "» → " + modelData.categoryName
                             color: dialog.textColor
-                            font.pixelSize: 14
+                            font.pixelSize: Appearance.desktop ? 16 : 14
                             wrapMode: Text.WordWrap
                         }
                         FormButton {
@@ -1425,7 +1426,7 @@ Dialog {
                 }
 
                 ListView {
-                    id: savedRecipientRulesList
+                    id: savedRecipientRulesList; objectName: "savedRecipientRulesList"
                     visible: dialog.showSavedRules
                     Layout.fillWidth: true
                     Layout.preferredHeight: Math.min(180, contentHeight)
@@ -1433,15 +1434,15 @@ Dialog {
                     clip: true
                     spacing: 8
                     ScrollBar.vertical: StyledScrollBar {}
-                    delegate: RowLayout {
+                    delegate: EditorialRowLayout {
                         required property var modelData
                         width: savedRecipientRulesList.width
-                        Text {
+                        EditorialLabel {
                             Layout.fillWidth: true
                             text: qsTr("Имя получателя: «%1» → %2 (%3)").arg(modelData.pattern)
                                 .arg(modelData.recipientName).arg(modelData.type === "income" ? qsTr("доход") : qsTr("расход"))
                             color: dialog.textColor
-                            font.pixelSize: 14
+                            font.pixelSize: Appearance.desktop ? 16 : 14
                             wrapMode: Text.WordWrap
                         }
                         FormButton {
@@ -1456,9 +1457,9 @@ Dialog {
                     }
                 }
 
-                Text {
+                EditorialLabel {
                     text: qsTr("Предварительный просмотр")
-                    font.pixelSize: 14
+                    font.pixelSize: Appearance.desktop ? 16 : 14
                     color: dialog.textColor
                     font.weight: Font.DemiBold
                 }
@@ -1468,33 +1469,33 @@ Dialog {
                     clip: true
                     model: dialog.previewRows
                     ScrollBar.vertical: StyledScrollBar { policy: ScrollBar.AlwaysOff }
-                    delegate: Text {
+                    delegate: EditorialLabel {
                         required property string modelData
                         width: ListView.view.width - 12
                         height: 48
                         text: modelData
                         color: dialog.mutedColor
-                        font.pixelSize: 14
+                        font.pixelSize: Appearance.desktop ? 16 : 14
                         wrapMode: Text.WordWrap
                         elide: Text.ElideRight
                         maximumLineCount: 2
                     }
                 }
 
-                Text {
+                EditorialLabel {
                     Layout.fillWidth: true
                     visible: dialog.previewSummary.length > 0
                     text: dialog.previewSummary
-                    font.pixelSize: 14
+                    font.pixelSize: Appearance.desktop ? 16 : 14
                     color: dialog.textColor
                     wrapMode: Text.WordWrap
                 }
 
-                Text {
+                EditorialLabel {
                     Layout.fillWidth: true
                     visible: dialog.statusText.length > 0
                     text: dialog.statusText
-                    font.pixelSize: 14
+                    font.pixelSize: Appearance.desktop ? 16 : 14
                     color: dialog.statusOk ? dialog.successColor : dialog.errorColor
                     wrapMode: Text.WordWrap
                 }
@@ -1505,10 +1506,10 @@ Dialog {
 
         GridLayout {
             Layout.fillWidth: true
-            Layout.margins: 18
+            Layout.margins: Appearance.desktop ? 20 : 18
             columns: dialog.narrow ? 2 : 5
-            columnSpacing: 10
-            rowSpacing: 10
+            columnSpacing: Appearance.desktop ? 12 : 10
+            rowSpacing: Appearance.desktop ? 12 : 10
             FormButton {
                 text: qsTr("Удалить профиль")
                 enabled: !dialog.inspecting && dialog.editingProfileId.length > 0

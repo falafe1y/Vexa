@@ -1,14 +1,16 @@
 import QtQuick
 import QtQuick.Controls
 import QtQuick.Layouts
+import "../common"
+import "../common/EditorialStyle.js" as Appearance
 
 Item {
     id: panel
     property var risk: ({})
     property color ink: "#031528"
-    property color muted: "#687483"
-    property color line: "#D8D7C7"
-    property color negative: "#B94F48"
+    property color muted: (Appearance.desktop ? "#59616a" : "#687483")
+    property color line: (Appearance.desktop ? "#bbb5a8" : "#D8D7C7")
+    property color negative: (Appearance.desktop ? "#b84932" : "#B94F48")
     property color positive: "#3F735F"
     readonly property var points: risk.drawdowns || []
     implicitHeight: content.implicitHeight
@@ -20,13 +22,13 @@ Item {
     onLineChanged: chart.requestPaint()
     onNegativeChanged: chart.requestPaint()
 
-    ColumnLayout {
+    EditorialColumnLayout {
         id: content
         anchors.left: parent.left
         anchors.right: parent.right
         anchors.top: parent.top
         spacing: 16
-        Label { text: qsTr("Колебания и просадки"); color: panel.ink; font.pixelSize: 17; font.bold: true }
+        EditorialLabel { text: qsTr("Колебания и просадки"); color: panel.ink; font.pixelSize: 17; font.bold: true }
         GridLayout {
             Layout.fillWidth: true
             columns: panel.width < 700 ? 2 : 3
@@ -48,23 +50,23 @@ Item {
                     Layout.preferredHeight: 152
                     color: "transparent"
                     border.color: panel.line
-                    radius: 8
-                    ColumnLayout {
+                    radius: Appearance.desktop ? 0 : 8
+                    EditorialColumnLayout {
                         anchors.fill: parent
                         anchors.margins: 12
-                        spacing: 6
-                        RowLayout {
+                        spacing: Appearance.desktop ? 8 : 6
+                        EditorialRowLayout {
                             Layout.fillWidth: true
-                            Label { Layout.fillWidth: true; text: modelData.title; color: panel.muted; wrapMode: Text.WordWrap }
+                            EditorialLabel { Layout.fillWidth: true; text: modelData.title; color: panel.muted; wrapMode: Text.WordWrap }
                             InvestmentMetricHelp { metric: ["volatility","maximum_drawdown","current_drawdown","best_day","worst_day","risk_days"][index]; displayValue: modelData.value; ink: panel.ink; muted: panel.muted }
                         }
-                        Label { Layout.fillWidth: true; text: modelData.value; color: panel.ink; font.pixelSize: 22; font.bold: true; elide: Text.ElideRight }
-                        Label { Layout.fillWidth: true; Layout.fillHeight: true; text: modelData.hint; color: panel.muted; font.pixelSize: 12; wrapMode: Text.WordWrap }
+                        EditorialLabel { Layout.fillWidth: true; text: modelData.value; color: panel.ink; font.pixelSize: 22; font.bold: true; elide: Text.ElideRight }
+                        EditorialLabel { Layout.fillWidth: true; Layout.fillHeight: true; text: modelData.hint; color: panel.muted; font.pixelSize: 12; wrapMode: Text.WordWrap }
                     }
                 }
             }
         }
-        Label {
+        EditorialLabel {
             Layout.fillWidth: true
             wrapMode: Text.WordWrap
             color: panel.muted
@@ -72,7 +74,7 @@ Item {
                 : !panel.available(panel.risk.annualVolatilityPercent) ? qsTr("Для волатильности нужны минимум два дня доходности — три дневные оценки. Просадки и лучший/худший день уже доступны.")
                 : qsTr("Выборочное отклонение дневной доходности × √365,25. Дни с нулевым капиталом и без движений исключены из волатильности. Короткая история даёт менее устойчивую оценку.")
         }
-        Label {
+        EditorialLabel {
             visible: !!panel.risk.available && panel.risk.maximumDrawdownPercent > 0
             Layout.fillWidth: true
             wrapMode: Text.WordWrap
@@ -80,16 +82,16 @@ Item {
             text: panel.risk.recoveryDate ? qsTr("Максимальная просадка восстановилась: %1").arg(panel.date(panel.risk.recoveryDate))
                 : qsTr("Максимальная просадка не восстановилась к концу выбранного периода.")
         }
-        Label { text: qsTr("Просадка относительно предыдущего максимума"); color: panel.ink; font.bold: true; wrapMode: Text.WordWrap; Layout.fillWidth: true }
+        EditorialLabel { text: qsTr("Просадка относительно предыдущего максимума"); color: panel.ink; font.bold: true; wrapMode: Text.WordWrap; Layout.fillWidth: true }
         Item {
             id: plot
             Layout.fillWidth: true
             Layout.preferredHeight: 236
             visible: panel.points.length >= 2
-            readonly property real leftMargin: 65
+            readonly property real leftMargin: Appearance.desktop ? 68 : 65
             readonly property real rightMargin: 16
             readonly property real topMargin: 12
-            readonly property real bottomMargin: 30
+            readonly property real bottomMargin: Appearance.desktop ? 32 : 30
             readonly property real plotWidth: Math.max(1, width - leftMargin - rightMargin)
             readonly property real plotHeight: Math.max(1, height - topMargin - bottomMargin)
             readonly property real depth: Math.min(100, Math.max(1, (panel.risk.maximumDrawdownPercent || 0) < 5 ? Math.ceil(panel.risk.maximumDrawdownPercent || 0) : Math.ceil((panel.risk.maximumDrawdownPercent || 0) / 5) * 5))
@@ -129,7 +131,7 @@ Item {
             }
             Repeater {
                 model: 5
-                delegate: Label {
+                delegate: EditorialLabel {
                     required property int index
                     x: 0
                     y: plot.topMargin + plot.plotHeight * index / 4 - height / 2
@@ -140,8 +142,8 @@ Item {
                     text: Number(-plot.depth * index / 4).toLocaleString(Qt.locale(), 'f', 1) + " %"
                 }
             }
-            Label { x: plot.leftMargin; anchors.bottom: parent.bottom; text: panel.date(panel.points.length ? panel.points[0].date : ""); color: panel.muted; font.pixelSize: 12 }
-            Label { anchors.right: parent.right; anchors.rightMargin: plot.rightMargin; anchors.bottom: parent.bottom; text: panel.date(panel.points.length ? panel.points[panel.points.length - 1].date : ""); color: panel.muted; font.pixelSize: 12 }
+            EditorialLabel { x: plot.leftMargin; anchors.bottom: parent.bottom; text: panel.date(panel.points.length ? panel.points[0].date : ""); color: panel.muted; font.pixelSize: 12 }
+            EditorialLabel { anchors.right: parent.right; anchors.rightMargin: plot.rightMargin; anchors.bottom: parent.bottom; text: panel.date(panel.points.length ? panel.points[panel.points.length - 1].date : ""); color: panel.muted; font.pixelSize: 12 }
             MouseArea {
                 anchors.fill: parent
                 hoverEnabled: true
@@ -158,7 +160,7 @@ Item {
                     ? panel.date(panel.points[plot.hovered].date) + " · " + panel.percent(panel.points[plot.hovered].percent) : ""
             }
         }
-        Label {
+        EditorialLabel {
             Layout.fillWidth: true
             wrapMode: Text.WordWrap
             color: panel.muted

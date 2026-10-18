@@ -1,13 +1,15 @@
 import QtQuick
 import QtQuick.Controls
 import QtQuick.Layouts
+import "../common"
+import "../common/EditorialStyle.js" as Appearance
 
 ToolButton {
     id: help
     property string metric: ""
     property string displayValue: ""
     property color ink: "#031528"
-    property color muted: "#687483"
+    property color muted: (Appearance.desktop ? "#59616a" : "#687483")
     readonly property var entry: definitions[metric] || [qsTr("Показатель"), qsTr("Подробности приведены в пояснениях к расчёту."), "", ""]
     readonly property var definitions: ({
         deposit: [qsTr("Сравнение с условным вкладом"), qsTr("Что получилось бы с тем же начальным капиталом и внешними пополнениями/выводами при выбранной постоянной ставке. График показывает капитал в деньгах; карточки — прибыль без пополнений."), qsTr("Проценты за день = сумма вклада × годовая ставка / 100 / число дней в году. Ежедневная или ежемесячная капитализация добавляет целые копейки к сумме вклада. Разница = конечный капитал вложений − конечный капитал условного вклада."), qsTr("Используется валюта отчёта и исторические курсы внешних потоков. Пополнения учитываются до процентов, выводы после; их точное время внутри дня не взвешивается. Без капитализации проценты хранятся отдельно. Невыплаченные проценты входят в итог. Налоги, банковские ограничения и досрочное закрытие не моделируются. При неизвестной оценке, пропуске дня или невозможном выводе сравнение недоступно.")],
@@ -46,11 +48,16 @@ ToolButton {
     implicitWidth: 40; implicitHeight: 40
     font.pixelSize: 16
     palette.buttonText: ink
+    font.family: "Arimo"
+    background: Rectangle {
+        color: help.hovered || help.down ? "#e9e4d8" : "transparent"
+        border.color: help.ink
+    }
     Accessible.name: qsTr("Объяснение показателя: %1").arg(entry[0])
     ToolTip.visible: hovered
     ToolTip.text: qsTr("Как рассчитывается показатель")
     onClicked: explanation.open()
-    Dialog {
+    EditorialDialog {
         id: explanation
         objectName: "metricHelpDialog"
         parent: Overlay.overlay
@@ -60,19 +67,19 @@ ToolButton {
         modal: true; padding: 24
         title: help.entry[0]
         standardButtons: Dialog.Close
-        contentItem: ScrollView {
+        contentItem: EditorialScrollView {
             id: helpScroll
             implicitHeight: helpContent.implicitHeight
             contentWidth: availableWidth
-            ColumnLayout {
+            EditorialColumnLayout {
             id: helpContent
             width: helpScroll.availableWidth
             spacing: 16
-            Label { visible: help.displayValue.length > 0; Layout.fillWidth: true; wrapMode: Text.WordWrap; text: qsTr("Сейчас: %1").arg(help.displayValue); color: help.ink; font.bold: true }
-            Label { Layout.fillWidth: true; wrapMode: Text.WordWrap; text: help.entry[1]; color: help.ink }
-            Label { visible: help.entry[2].length > 0; Layout.fillWidth: true; wrapMode: Text.WordWrap; text: qsTr("Расчёт: %1").arg(help.entry[2]); color: help.ink }
-            Label { visible: help.entry[3].length > 0; Layout.fillWidth: true; wrapMode: Text.WordWrap; text: help.entry[3]; color: help.muted }
-            Label { Layout.fillWidth: true; wrapMode: Text.WordWrap; text: qsTr("Если показано «—», проверьте блок «Качество данных» и пояснения к расчёту."); color: help.muted; font.pixelSize: 12 }
+            EditorialLabel { visible: help.displayValue.length > 0; Layout.fillWidth: true; wrapMode: Text.WordWrap; text: qsTr("Сейчас: %1").arg(help.displayValue); color: help.ink; font.bold: true }
+            EditorialLabel { Layout.fillWidth: true; wrapMode: Text.WordWrap; text: help.entry[1]; color: help.ink }
+            EditorialLabel { visible: help.entry[2].length > 0; Layout.fillWidth: true; wrapMode: Text.WordWrap; text: qsTr("Расчёт: %1").arg(help.entry[2]); color: help.ink }
+            EditorialLabel { visible: help.entry[3].length > 0; Layout.fillWidth: true; wrapMode: Text.WordWrap; text: help.entry[3]; color: help.muted }
+            EditorialLabel { Layout.fillWidth: true; wrapMode: Text.WordWrap; text: qsTr("Если показано «—», проверьте блок «Качество данных» и пояснения к расчёту."); color: help.muted; font.pixelSize: 12 }
             }
         }
     }

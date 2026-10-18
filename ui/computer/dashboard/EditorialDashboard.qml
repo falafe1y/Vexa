@@ -175,24 +175,24 @@ Flickable {
         enabled: view.visible && view.selectedRows.length > 0 && !view.host.modalDialogVisible()
         onActivated: historySelection.clear()
     }
-    Menu {
+    EditorialMenu {
         id: selectionMenu
         objectName: "editorialHistorySelectionMenu"
         width: 224
         font.family: "Arimo"; font.pixelSize: 16
         closePolicy: Popup.CloseOnPressOutside
-        MenuItem {
+        EditorialMenuItem {
             objectName: "editorialHistorySelectAll"
             text: qsTr("Выделить все")
             onTriggered: historySelection.selectAll()
         }
-        MenuItem {
+        EditorialMenuItem {
             objectName: "editorialHistoryDeleteSelected"
             text: qsTr("Удалить")
             enabled: view.selectedRows.length > 0
             onTriggered: view.host.editorialDeleteHistory(historySelection)
         }
-        background: Rectangle { color: "#f3eddf"; border.color: "#031528" }
+
     }
     Component.onCompleted: { if (controller.selectedAsset !== "fiat" || selectedId) asset = controller.selectedAsset; if (host.editorialCategory !== undefined && host.editorialCategory !== "") { selectAsset("all"); category = host.editorialCategory; } }
     Connections {
@@ -517,11 +517,11 @@ Flickable {
                 text: view.controller.selectedAsset === "crypto" ? qsTr("ОБНОВИТЬ АКТИВЫ") : qsTr("+ НОВАЯ ОПЕРАЦИЯ")
                 underline: true
                 onClicked: { if (view.controller.selectedAsset === "crypto") view.controller.refreshCryptoWallets(); else if (view.controller.selectedAsset === "investment") investmentMenu.open(); else view.host.openNewOperationForSelectedAsset(); }
-                Menu {
+                EditorialMenu {
                     id: investmentMenu
                     y: parent.height; width: 256
-                    MenuItem { text: qsTr("Операция по счёту"); enabled: !!view.selectedId; onTriggered: view.host.openNewOperationForSelectedAsset() }
-                    MenuItem { text: qsTr("Добавить позицию"); enabled: view.controller.investmentAccounts.length > 0; onTriggered: view.host.editorialAddPosition() }
+                    EditorialMenuItem { text: qsTr("Операция по счёту"); enabled: !!view.selectedId; onTriggered: view.host.openNewOperationForSelectedAsset() }
+                    EditorialMenuItem { text: qsTr("Добавить позицию"); enabled: view.controller.investmentAccounts.length > 0; onTriggered: view.host.editorialAddPosition() }
                 }
             }
             TextField {

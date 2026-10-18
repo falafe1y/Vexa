@@ -1,12 +1,14 @@
 import QtQuick
 import QtQuick.Controls
 import QtQuick.Layouts
+import "../common"
+import "../common/EditorialStyle.js" as Appearance
 
 Item {
     id: panel
     property var controller
     property color ink: "#031528"
-    property color muted: "#687483"
+    property color muted: (Appearance.desktop ? "#59616a" : "#687483")
     property color line: "#D6D8D3"
     property color accent: "#39866B"
     readonly property var settings: controller ? (controller.performanceDeposit || ({})) : ({})
@@ -33,22 +35,22 @@ Item {
     Component.onCompleted: syncSettings()
     onPointsChanged: { plot.hovered=-1; graph.requestPaint() }
 
-    ColumnLayout {
+    EditorialColumnLayout {
         id: content
         anchors.left: parent.left; anchors.right: parent.right; anchors.top: parent.top
         spacing: 16
-        RowLayout {
+        EditorialRowLayout {
             Layout.fillWidth: true
-            Label { text:qsTr("А если бы деньги лежали на вкладе?"); color:panel.ink; font.pixelSize:17; font.bold:true; wrapMode:Text.WordWrap; Layout.fillWidth:true }
+            EditorialLabel { text:qsTr("А если бы деньги лежали на вкладе?"); color:panel.ink; font.pixelSize:17; font.bold:true; wrapMode:Text.WordWrap; Layout.fillWidth:true }
             InvestmentMetricHelp { metric:"deposit"; ink:panel.ink; muted:panel.muted }
         }
         GridLayout {
             Layout.fillWidth: true
             columns: panel.width<720 ? 2 : 4
             columnSpacing:16; rowSpacing:8
-            ColumnLayout {
+            EditorialColumnLayout {
                 Layout.fillWidth:true; spacing:8
-                Label { text:qsTr("Годовая ставка, %"); color:panel.muted; wrapMode:Text.WordWrap; Layout.fillWidth:true }
+                EditorialLabel { text:qsTr("Годовая ставка, %"); color:panel.muted; wrapMode:Text.WordWrap; Layout.fillWidth:true }
                 TextField {
                     id: rate; objectName:"depositRate"
                     Layout.fillWidth:true; Layout.minimumWidth:100
@@ -58,32 +60,32 @@ Item {
                     Accessible.name:qsTr("Годовая ставка условного вклада")
                 }
             }
-            ColumnLayout {
+            EditorialColumnLayout {
                 Layout.fillWidth:true; spacing:8
-                Label { text:qsTr("Капитализация процентов"); color:panel.muted; wrapMode:Text.WordWrap; Layout.fillWidth:true }
-                ComboBox {
+                EditorialLabel { text:qsTr("Капитализация процентов"); color:panel.muted; wrapMode:Text.WordWrap; Layout.fillWidth:true }
+                StyledComboBox {
                     id: capitalization; objectName:"depositCapitalization"
                     Layout.fillWidth:true; implicitHeight:40
                     model:[qsTr("Без капитализации"),qsTr("Ежемесячная капитализация"),qsTr("Ежедневная капитализация")]
                     Accessible.name:qsTr("Капитализация процентов")
                 }
             }
-            Button {
+            StyledButton {
                 objectName:"calculateDeposit"
                 text:qsTr("Рассчитать"); implicitHeight:40; Layout.minimumWidth:112; Layout.alignment:Qt.AlignBottom
                 enabled:!!panel.controller
                 onClicked:error.text=panel.controller.setPerformanceDeposit(rate.text,panel.modes[capitalization.currentIndex])
                     ? "" : qsTr("Введите ставку от 0 до 1000 %, до четырёх знаков после запятой.")
             }
-            Label { text:qsTr("Валюта отчёта: %1").arg(panel.comparison.currency || "RUB"); wrapMode:Text.WordWrap; color:panel.muted; Layout.fillWidth:true; Layout.alignment:Qt.AlignBottom }
+            EditorialLabel { text:qsTr("Валюта отчёта: %1").arg(panel.comparison.currency || "RUB"); wrapMode:Text.WordWrap; color:panel.muted; Layout.fillWidth:true; Layout.alignment:Qt.AlignBottom }
         }
-        Label { id:error; objectName:"depositError"; visible:text.length>0; color:"#B94F48"; wrapMode:Text.WordWrap; Layout.fillWidth:true }
-        Label {
+        EditorialLabel { id:error; objectName:"depositError"; visible:text.length>0; color:(Appearance.desktop ? "#b84932" : "#B94F48"); wrapMode:Text.WordWrap; Layout.fillWidth:true }
+        EditorialLabel {
             visible:!panel.comparison.available
             text:panel.comparison.reason || qsTr("Укажите ставку и накопите дневные оценки выбранных счетов.")
             color:panel.muted; wrapMode:Text.WordWrap; Layout.fillWidth:true
         }
-        Label {
+        EditorialLabel {
             visible:!!panel.comparison.available
             text:qsTr("%1 — %2 · Начальный капитал: %3").arg(panel.date(panel.comparison.from)).arg(panel.date(panel.comparison.to)).arg(panel.amount(panel.comparison.openingMinor))
                 + (panel.comparison.liveDay ? "\n"+qsTr("Оценка текущего дня ещё может измениться.") : "")
@@ -99,11 +101,11 @@ Item {
                 delegate:Rectangle {
                     required property var modelData
                     Layout.fillWidth:true; Layout.preferredHeight:104
-                    color:"transparent"; radius:8; border.color:panel.line
-                    ColumnLayout {
+                    color:"transparent"; radius: Appearance.desktop ? 0 : 8; border.color:panel.line
+                    EditorialColumnLayout {
                         anchors.fill:parent; anchors.margins:12
-                        Label { text:modelData.title; color:panel.muted; wrapMode:Text.WordWrap; Layout.fillWidth:true }
-                        Label { text:panel.amount(modelData.value); color:panel.ink; font.pixelSize:22; font.bold:true; elide:Text.ElideRight; Layout.fillWidth:true }
+                        EditorialLabel { text:modelData.title; color:panel.muted; wrapMode:Text.WordWrap; Layout.fillWidth:true }
+                        EditorialLabel { text:panel.amount(modelData.value); color:panel.ink; font.pixelSize:22; font.bold:true; elide:Text.ElideRight; Layout.fillWidth:true }
                     }
                 }
             }
@@ -143,7 +145,7 @@ Item {
             }
             Repeater {
                 model:5
-                delegate:Label {
+                delegate:EditorialLabel {
                     required property int index
                     x:0; y:plot.topMargin+plot.plotHeight*index/4-height/2; width:plot.leftMargin-8
                     text: {
@@ -154,8 +156,8 @@ Item {
                     horizontalAlignment:Text.AlignRight; color:panel.muted; font.pixelSize:12
                 }
             }
-            Label { x:plot.leftMargin; anchors.bottom:parent.bottom; text:panel.date(panel.comparison.from); color:panel.muted; font.pixelSize:12 }
-            Label { anchors.right:parent.right; anchors.rightMargin:plot.rightMargin; anchors.bottom:parent.bottom; text:panel.date(panel.comparison.to); color:panel.muted; font.pixelSize:12 }
+            EditorialLabel { x:plot.leftMargin; anchors.bottom:parent.bottom; text:panel.date(panel.comparison.from); color:panel.muted; font.pixelSize:12 }
+            EditorialLabel { anchors.right:parent.right; anchors.rightMargin:plot.rightMargin; anchors.bottom:parent.bottom; text:panel.date(panel.comparison.to); color:panel.muted; font.pixelSize:12 }
             MouseArea {
                 anchors.fill:parent; hoverEnabled:true; acceptedButtons:Qt.NoButton
                 onPositionChanged:function(mouse){plot.hovered=mouse.x>=plot.leftMargin && mouse.x<=width-plot.rightMargin && mouse.y>=plot.topMargin && mouse.y<=height-plot.bottomMargin ? Math.max(0,Math.min(panel.points.length-1,Math.round((mouse.x-plot.leftMargin)/plot.plotWidth*(panel.points.length-1)))) : -1;graph.requestPaint()}
@@ -164,15 +166,15 @@ Item {
                 ToolTip.text:plot.hovered>=0 && plot.hovered<panel.points.length ? panel.date(panel.points[plot.hovered].date)+"\n"+qsTr("Вложения: %1").arg(panel.amount(panel.points[plot.hovered].portfolioMinor))+"\n"+qsTr("Вклад: %1").arg(panel.amount(panel.points[plot.hovered].depositMinor)) : ""
             }
         }
-        RowLayout {
+        EditorialRowLayout {
             visible:!!panel.comparison.available; Layout.fillWidth:true
             Rectangle { implicitWidth:20; implicitHeight:3; color:panel.ink }
-            Label { text:qsTr("Вложения"); color:panel.ink }
+            EditorialLabel { text:qsTr("Вложения"); color:panel.ink }
             Rectangle { implicitWidth:20; implicitHeight:3; color:panel.accent }
-            Label { text:qsTr("Условный вклад"); color:panel.ink }
+            EditorialLabel { text:qsTr("Условный вклад"); color:panel.ink }
             Item { Layout.fillWidth:true }
         }
-        Label {
+        EditorialLabel {
             Layout.fillWidth:true; wrapMode:Text.WordWrap; color:panel.muted; font.pixelSize:12
             text:qsTr("Одинаковый начальный капитал и внешние пополнения/выводы. Ставка постоянная, вклад в валюте отчёта. Между дневными оценками пополнения считаются внесёнными до начисления процентов, выводы — после. Проценты: ставка / 365 или 366 за календарный день. Ежемесячная капитализация — в дату открытия, в коротком месяце в его последний день. Без капитализации проценты хранятся отдельно и не приносят доход; выводы сначала расходуют их. Начисленные, но ещё не выплаченные проценты включены в итог, но не доступны для вывода. Налоги, ограничения банка и потеря процентов при досрочном закрытии не учитываются.")
         }

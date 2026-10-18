@@ -1,9 +1,11 @@
 import QtQuick
 import QtQuick.Controls
 import QtQuick.Layouts
+import "../common"
+import "../common/EditorialStyle.js" as Appearance
 
-Dialog {
-    id: dialog
+EditorialDialog {
+    id: dialog; objectName: "dialog"
     width: Math.min(860, parent ? parent.width - 40 : 860)
     height: Math.min(720, parent ? parent.height - 40 : 720)
     modal: true
@@ -13,13 +15,13 @@ Dialog {
 
     required property var controller
     property var moneyFormatter
-    property color panelColor: "#FFFFF8"
-    property color softColor: "#FFFFF0"
+    property color panelColor: (Appearance.desktop ? "#f3eddf" : "#FFFFF8")
+    property color softColor: (Appearance.desktop ? "#f3eddf" : "#FFFFF0")
     property color textColor: "#031528"
-    property color mutedColor: "#687483"
-    property color lineColor: "#D8D7C7"
+    property color mutedColor: (Appearance.desktop ? "#59616a" : "#687483")
+    property color lineColor: (Appearance.desktop ? "#bbb5a8" : "#D8D7C7")
     property color accentColor: "#031528"
-    property color errorColor: "#B94F48"
+    property color errorColor: (Appearance.desktop ? "#b84932" : "#B94F48")
     property color successColor: "#3F735F"
     property int pageIndex: 0
     property string editingId: ""
@@ -220,41 +222,41 @@ Dialog {
         appSoftColor: dialog.softColor
         appLineColor: dialog.lineColor
         appAccentColor: dialog.accentColor
-        appHoverColor: "#E4E8F1"
+        appHoverColor: (Appearance.desktop ? "#e9e4d8" : "#E4E8F1")
     }
 
     component FormButton: StyledButton {
         neo: true
         cornerRadius: 8
         font.weight: Font.DemiBold
-        leftPadding: 14
-        rightPadding: 14
+        leftPadding: Appearance.desktop ? 16 : 14
+        rightPadding: Appearance.desktop ? 16 : 14
         appTextColor: dialog.textColor
         appMutedColor: dialog.mutedColor
         appPanelColor: dialog.panelColor
         appSoftColor: dialog.softColor
         appLineColor: dialog.lineColor
         appAccentColor: dialog.accentColor
-        appHoverColor: "#E4E8F1"
+        appHoverColor: (Appearance.desktop ? "#e9e4d8" : "#E4E8F1")
         appOnAccentColor: dialog.panelColor
         appErrorColor: dialog.errorColor
     }
 
     background: Rectangle {
-        HardShadow { depth: 6; shadowColor: dialog.accentColor }
+        HardShadow { visible: !Appearance.desktop;  depth: 6; shadowColor: dialog.accentColor }
 
         color: dialog.panelColor
-        radius: 16
+        radius: Appearance.desktop ? 0 : 16
         border.width: 1
         border.color: dialog.accentColor
     }
 
-    contentItem: ColumnLayout {
+    contentItem: EditorialColumnLayout {
         spacing: 0
 
-        RowLayout {
+        EditorialRowLayout {
             Layout.fillWidth: true
-            Layout.margins: 20
+            Layout.margins: Appearance.desktop ? 24 : 20
             spacing: 12
             FormButton {
                 Layout.preferredWidth: 40
@@ -264,7 +266,8 @@ Dialog {
                 text: "‹"
                 onClicked: dialog.pageIndex = 0
             }
-            Text {
+            EditorialDialogTitle {
+                ruleVisible: false
                 Layout.fillWidth: true
                 text: dialog.pageIndex === 0
                     ? qsTr("Запланированные операции")
@@ -272,12 +275,10 @@ Dialog {
                       ? qsTr("Редактирование расписания")
                       : qsTr("Новая запланированная операция")
                 color: dialog.textColor
-                font.pixelSize: 21
-                font.weight: Font.Bold
-            }
+                }
         }
 
-        Rectangle { Layout.fillWidth: true; height: 1; color: dialog.lineColor }
+        Rectangle { Layout.fillWidth: true; Layout.leftMargin: 24; Layout.rightMargin: 24; height: 1; color: dialog.accentColor }
 
         StackLayout {
             Layout.fillWidth: true
@@ -285,12 +286,12 @@ Dialog {
             currentIndex: dialog.pageIndex
 
             Item {
-                ColumnLayout {
+                EditorialColumnLayout {
                     anchors.fill: parent
-                    anchors.margins: 18
-                    spacing: 10
+                    anchors.margins: Appearance.desktop ? 20 : 18
+                    spacing: Appearance.desktop ? 12 : 10
 
-                    Text {
+                    EditorialLabel {
                         Layout.fillWidth: true
                         visible: dialog.statusText.length > 0
                         text: dialog.statusText
@@ -298,7 +299,7 @@ Dialog {
                     }
 
                     ListView {
-                        id: scheduleList
+                        id: scheduleList; objectName: "scheduleList"
                         Layout.fillWidth: true
                         Layout.fillHeight: true
                         spacing: 8
@@ -306,25 +307,25 @@ Dialog {
                         model: dialog.controller.scheduledTransactions
 
                         delegate: Rectangle {
-                            HardShadow { depth: 4; shadowColor: dialog.accentColor }
+                            HardShadow { visible: !Appearance.desktop;  depth: 4; shadowColor: dialog.accentColor }
 
                             required property var modelData
                             width: ListView.view.width
                             height: 98
-                            radius: 12
+                            radius: Appearance.desktop ? 0 : 12
                             color: dialog.softColor
                             border.width: 1
                             border.color: dialog.accentColor
 
-                            RowLayout {
+                            EditorialRowLayout {
                                 anchors.fill: parent
-                                anchors.margins: 13
+                                anchors.margins: Appearance.desktop ? 16 : 13
                                 spacing: 12
 
-                                ColumnLayout {
+                                EditorialColumnLayout {
                                     Layout.fillWidth: true
                                     spacing: 4
-                                    Text {
+                                    EditorialLabel {
                                         Layout.fillWidth: true
                                         text: modelData.name
                                         color: dialog.textColor
@@ -332,7 +333,7 @@ Dialog {
                                         font.weight: Font.DemiBold
                                         elide: Text.ElideRight
                                     }
-                                    Text {
+                                    EditorialLabel {
                                         Layout.fillWidth: true
                                         text: modelData.scheduleText
                                             + " · " + qsTr("следующая: %1")
@@ -340,25 +341,25 @@ Dialog {
                                                     dialog.dateFromIso(modelData.nextDate),
                                                     "dd.MM.yyyy"))
                                         color: dialog.mutedColor
-                                        font.pixelSize: 14
+                                        font.pixelSize: Appearance.desktop ? 16 : 14
                                         elide: Text.ElideRight
                                     }
-                                    Text {
+                                    EditorialLabel {
                                         Layout.fillWidth: true
                                         text: modelData.accountName
                                             + " · " + modelData.categoryName
                                         color: dialog.mutedColor
-                                        font.pixelSize: 14
+                                        font.pixelSize: Appearance.desktop ? 16 : 14
                                         elide: Text.ElideRight
                                     }
                                 }
 
-                                Text {
+                                EditorialLabel {
                                     text: (modelData.type === "income" ? "+" : "−")
                                         + dialog.formatAmount(modelData)
                                     color: modelData.type === "income"
                                          ? dialog.successColor : dialog.errorColor
-                                    font.pixelSize: 14
+                                    font.pixelSize: Appearance.desktop ? 16 : 14
                                     font.weight: Font.DemiBold
                                 }
                                 FormButton {
@@ -373,7 +374,7 @@ Dialog {
                             }
                         }
 
-                        Label {
+                        EditorialLabel {
                             anchors.centerIn: parent
                             visible: scheduleList.count === 0
                             text: qsTr("Запланированных операций пока нет")
@@ -383,32 +384,32 @@ Dialog {
                 }
             }
 
-            ScrollView {
+            EditorialScrollView {
                 clip: true
                 contentWidth: availableWidth
                 ScrollBar.horizontal.policy: ScrollBar.AlwaysOff
                 ScrollBar.vertical.policy: ScrollBar.AlwaysOff
 
-                ColumnLayout {
+                EditorialColumnLayout {
                     width: Math.max(0, parent.width - 40)
                     x: 20
-                    spacing: 11
+                    spacing: Appearance.desktop ? 12 : 11
 
-                    Text { text: qsTr("Название"); color: dialog.mutedColor }
+                    EditorialLabel { text: qsTr("Название"); color: dialog.mutedColor }
                     FormField {
-                        id: nameField
+                        id: nameField; objectName: "nameField"
                         Layout.fillWidth: true
                         placeholderText: qsTr("Например, аренда квартиры")
                     }
 
-                    RowLayout {
+                    EditorialRowLayout {
                         Layout.fillWidth: true
-                        spacing: 10
-                        ColumnLayout {
+                        spacing: Appearance.desktop ? 12 : 10
+                        EditorialColumnLayout {
                             Layout.fillWidth: true
-                            Text { text: qsTr("Тип"); color: dialog.mutedColor }
+                            EditorialLabel { text: qsTr("Тип"); color: dialog.mutedColor }
                             FormCombo {
-                                id: typeBox
+                                id: typeBox; objectName: "typeBox"
                                 Layout.fillWidth: true
                                 model: [
                                     { label: qsTr("Доход"), value: "income" },
@@ -421,11 +422,11 @@ Dialog {
                                 }
                             }
                         }
-                        ColumnLayout {
+                        EditorialColumnLayout {
                             Layout.fillWidth: true
-                            Text { text: qsTr("Сумма"); color: dialog.mutedColor }
+                            EditorialLabel { text: qsTr("Сумма"); color: dialog.mutedColor }
                             FormField {
-                                id: amountField
+                                id: amountField; objectName: "amountField"
                                 implicitWidth: 160
                                 Layout.minimumWidth: 0
                                 Layout.fillWidth: true
@@ -439,11 +440,11 @@ Dialog {
                                 }
                             }
                         }
-                        ColumnLayout {
+                        EditorialColumnLayout {
                             Layout.preferredWidth: 120
-                            Text { text: qsTr("Валюта"); color: dialog.mutedColor }
+                            EditorialLabel { text: qsTr("Валюта"); color: dialog.mutedColor }
                             FormCombo {
-                                id: currencyBox
+                                id: currencyBox; objectName: "currencyBox"
                                 Layout.fillWidth: true
                                 model: [
                                     { label: "RUB", value: "RUB" },
@@ -455,18 +456,18 @@ Dialog {
                         }
                     }
 
-                    Text { text: qsTr("Счёт"); color: dialog.mutedColor }
+                    EditorialLabel { text: qsTr("Счёт"); color: dialog.mutedColor }
                     FormCombo {
-                        id: accountBox
+                        id: accountBox; objectName: "accountBox"
                         Layout.fillWidth: true
                         onActivated: dialog.selectAccountCurrency()
                     }
-                    Text { text: qsTr("Категория"); color: dialog.mutedColor }
-                    FormCombo { id: categoryBox; Layout.fillWidth: true }
+                    EditorialLabel { text: qsTr("Категория"); color: dialog.mutedColor }
+                    FormCombo { id: categoryBox; objectName: "categoryBox"; Layout.fillWidth: true }
 
-                    Text { text: qsTr("Повторение"); color: dialog.mutedColor }
+                    EditorialLabel { text: qsTr("Повторение"); color: dialog.mutedColor }
                     FormCombo {
-                        id: recurrenceBox
+                        id: recurrenceBox; objectName: "recurrenceBox"
                         Layout.fillWidth: true
                         model: [
                             { label: qsTr("Ежедневно"), value: "daily" },
@@ -476,16 +477,16 @@ Dialog {
                         ]
                     }
 
-                    RowLayout {
+                    EditorialRowLayout {
                         visible: recurrenceBox.currentValue !== "daily"
                         Layout.fillWidth: true
-                        spacing: 10
-                        ColumnLayout {
+                        spacing: Appearance.desktop ? 12 : 10
+                        EditorialColumnLayout {
                             visible: recurrenceBox.currentValue === "monthly_weekday"
                             Layout.fillWidth: true
-                            Text { text: qsTr("Неделя месяца"); color: dialog.mutedColor }
+                            EditorialLabel { text: qsTr("Неделя месяца"); color: dialog.mutedColor }
                             FormCombo {
-                                id: weekBox
+                                id: weekBox; objectName: "weekBox"
                                 Layout.fillWidth: true
                                 model: [
                                     { label: qsTr("Первая"), value: 1 },
@@ -496,13 +497,13 @@ Dialog {
                                 ]
                             }
                         }
-                        ColumnLayout {
+                        EditorialColumnLayout {
                             visible: recurrenceBox.currentValue === "weekly"
                                   || recurrenceBox.currentValue === "monthly_weekday"
                             Layout.fillWidth: true
-                            Text { text: qsTr("День недели"); color: dialog.mutedColor }
+                            EditorialLabel { text: qsTr("День недели"); color: dialog.mutedColor }
                             FormCombo {
-                                id: weekdayBox
+                                id: weekdayBox; objectName: "weekdayBox"
                                 Layout.fillWidth: true
                                 model: [
                                     { label: qsTr("Понедельник"), value: 1 },
@@ -515,36 +516,36 @@ Dialog {
                                 ]
                             }
                         }
-                        ColumnLayout {
+                        EditorialColumnLayout {
                             visible: recurrenceBox.currentValue === "monthly_day"
                             Layout.fillWidth: true
-                            Text { text: qsTr("Число месяца"); color: dialog.mutedColor }
+                            EditorialLabel { text: qsTr("Число месяца"); color: dialog.mutedColor }
                             FormCombo {
-                                id: dayBox
+                                id: dayBox; objectName: "dayBox"
                                 Layout.fillWidth: true
                                 model: dialog.dayItems()
                             }
                         }
                     }
 
-                    Text { text: qsTr("Начать с"); color: dialog.mutedColor }
+                    EditorialLabel { text: qsTr("Начать с"); color: dialog.mutedColor }
                     FormButton {
-                        id: startDateButton
+                        id: startDateButton; objectName: "startDateButton"
                         Layout.fillWidth: true
                         text: Qt.formatDate(dialog.startsOn, "dd.MM.yyyy")
                         onClicked: dateDialog.openFor(dialog.startsOn)
                     }
 
-                    Text {
+                    EditorialLabel {
                         Layout.fillWidth: true
                         visible: recurrenceBox.currentValue === "monthly_day"
                         text: qsTr("Если выбранного числа нет в месяце, операция будет создана в последний день месяца.")
                         color: dialog.mutedColor
-                        font.pixelSize: 14
+                        font.pixelSize: Appearance.desktop ? 16 : 14
                         wrapMode: Text.WordWrap
                     }
-                    Text {
-                        id: formError
+                    EditorialLabel {
+                        id: formError; objectName: "formError"
                         Layout.fillWidth: true
                         color: dialog.errorColor
                         wrapMode: Text.WordWrap
@@ -554,7 +555,7 @@ Dialog {
             }
         }
 
-        RowLayout {
+        EditorialRowLayout {
             Layout.fillWidth: true
             Layout.margins: 20
             spacing: 12
@@ -571,13 +572,13 @@ Dialog {
                 onClicked: dialog.openForNew()
             }
             FormButton {
-                id: formCancelButton
+                id: formCancelButton; objectName: "formCancelButton"
                 visible: dialog.pageIndex === 1
                 text: qsTr("Отмена")
                 onClicked: dialog.pageIndex = 0
             }
             FormButton {
-                id: formSubmitButton
+                id: formSubmitButton; objectName: "formSubmitButton"
                 visible: dialog.pageIndex === 1
                 text: dialog.editingId.length > 0
                     ? qsTr("Сохранить") : qsTr("Добавить")
@@ -587,13 +588,13 @@ Dialog {
         }
     }
 
-    Dialog {
-        id: deleteDialog
+    EditorialDialog {
+        id: deleteDialog; objectName: "deleteDialog"
         parent: Overlay.overlay
         anchors.centerIn: parent
         width: 440
         modal: true
-        padding: 22
+        padding: Appearance.desktop ? 24 : 22
         property var row: null
         function openFor(value) {
             row = value;
@@ -617,43 +618,41 @@ Dialog {
             onActivated: deleteDialog.confirmDelete()
         }
         background: Rectangle {
-            HardShadow { depth: 6; shadowColor: dialog.accentColor }
+            HardShadow { visible: !Appearance.desktop;  depth: 6; shadowColor: dialog.accentColor }
 
             color: dialog.panelColor
-            radius: 16
+            radius: Appearance.desktop ? 0 : 16
             border.width: 1
             border.color: dialog.accentColor
         }
-        contentItem: ColumnLayout {
-            spacing: 13
-            Text {
+        contentItem: EditorialDialogForm {
+            spacing: Appearance.desktop ? 16 : 13
+            EditorialDialogTitle {
                 text: qsTr("Удалить расписание?")
                 color: dialog.textColor
-                font.pixelSize: 20
-                font.weight: Font.Bold
-            }
-            Text {
+                }
+            EditorialLabel {
                 Layout.fillWidth: true
                 text: qsTr("Будущие операции больше не будут создаваться. Уже добавленные в историю операции сохранятся.")
                 color: dialog.mutedColor
                 wrapMode: Text.WordWrap
             }
-            Text {
+            EditorialLabel {
                 Layout.fillWidth: true
                 text: deleteDialog.row ? deleteDialog.row.name : ""
                 color: dialog.textColor
                 font.weight: Font.DemiBold
             }
-            Text { id: deleteError; color: dialog.errorColor }
-            RowLayout {
+            EditorialLabel { id: deleteError; objectName: "deleteError"; color: dialog.errorColor }
+            EditorialRowLayout {
                 Item { Layout.fillWidth: true }
                 FormButton {
-                    id: deleteCancelButton
+                    id: deleteCancelButton; objectName: "deleteCancelButton"
                     text: qsTr("Отмена")
                     onClicked: deleteDialog.close()
                 }
                 FormButton {
-                    id: deleteSubmitButton
+                    id: deleteSubmitButton; objectName: "deleteSubmitButton"
                     text: qsTr("Удалить")
                     destructive: true
                     onClicked: deleteDialog.confirmDelete()
@@ -662,8 +661,8 @@ Dialog {
         }
     }
 
-    Dialog {
-        id: dateDialog
+    EditorialDialog {
+        id: dateDialog; objectName: "dateDialog"
         parent: Overlay.overlay
         anchors.centerIn: parent
         width: 400
@@ -682,22 +681,20 @@ Dialog {
             displayedYear = shifted.getFullYear();
         }
         background: Rectangle {
-            HardShadow { depth: 6; shadowColor: dialog.accentColor }
+            HardShadow { visible: !Appearance.desktop;  depth: 6; shadowColor: dialog.accentColor }
 
             color: dialog.panelColor
-            radius: 16
+            radius: Appearance.desktop ? 0 : 16
             border.width: 1
             border.color: dialog.accentColor
         }
-        contentItem: ColumnLayout {
+        contentItem: EditorialDialogForm {
             spacing: 12
-            Text {
+            EditorialDialogTitle {
                 text: qsTr("Дата начала")
                 color: dialog.textColor
-                font.pixelSize: 20
-                font.weight: Font.Bold
-            }
-            RowLayout {
+                }
+            EditorialRowLayout {
                 Layout.fillWidth: true
                 FormButton {
                     Layout.preferredWidth: 40
@@ -706,7 +703,7 @@ Dialog {
                     text: "‹"
                     onClicked: dateDialog.shiftMonth(-1)
                 }
-                Text {
+                EditorialLabel {
                     Layout.fillWidth: true
                     text: startCalendar.title
                     color: dialog.textColor
@@ -722,10 +719,11 @@ Dialog {
                 }
             }
             DayOfWeekRow {
+                spacing: 4
                 Layout.fillWidth: true
                 locale: Qt.locale(dialog.controller.uiLanguage === "en"
                                   ? "en_US" : "ru_RU")
-                delegate: Text {
+                delegate: EditorialLabel {
                     required property string shortName
                     text: shortName
                     color: dialog.mutedColor
@@ -733,15 +731,16 @@ Dialog {
                 }
             }
             MonthGrid {
-                id: startCalendar
+                spacing: 4
+                id: startCalendar; objectName: "startCalendar"
                 Layout.fillWidth: true
-                Layout.preferredHeight: 260
+                Layout.preferredHeight: Math.max(0, (width - spacing * 6) / 7 * 6 + spacing * 5)
                 month: dateDialog.displayedMonth
                 year: dateDialog.displayedYear
                 locale: Qt.locale(dialog.controller.uiLanguage === "en"
                                   ? "en_US" : "ru_RU")
                 delegate: Button {
-                    id: calendarDay
+                    id: calendarDay; objectName: "calendarDay"
                     required property var model
                     flat: true
                     opacity: model.month === startCalendar.month ? 1 : 0.42
@@ -751,7 +750,7 @@ Dialog {
                             model.date.getDate(), 12, 0, 0, 0);
                         dateDialog.close();
                     }
-                    contentItem: Text {
+                    contentItem: EditorialLabel {
                         text: calendarDay.model.day
                         color: dialog.textColor
                         horizontalAlignment: Text.AlignHCenter
@@ -760,13 +759,13 @@ Dialog {
                     background: Rectangle {
 
 
-                        radius: 8
+                        radius: Appearance.desktop ? 0 : 8
                         color: calendarDay.hovered
                              ? dialog.softColor : "transparent"
                     }
                 }
             }
-            RowLayout {
+            EditorialRowLayout {
                 Item { Layout.fillWidth: true }
                 FormButton {
                     text: qsTr("Сегодня")

@@ -1,17 +1,19 @@
 import QtQuick
 import QtQuick.Controls
 import QtQuick.Layouts
+import "../common"
+import "../common/EditorialStyle.js" as Appearance
 
-ColumnLayout {
+EditorialColumnLayout {
     id: panel
     property var allocation: ({})
     property var contributions: ({})
     property string currency: "RUB"
     property color ink: "#031528"
-    property color muted: "#687483"
-    property color line: "#D8D7C7"
+    property color muted: (Appearance.desktop ? "#59616a" : "#687483")
+    property color line: (Appearance.desktop ? "#bbb5a8" : "#D8D7C7")
     property color positive: "#3F735F"
-    property color negative: "#B94F48"
+    property color negative: (Appearance.desktop ? "#b84932" : "#B94F48")
     readonly property var colors: ["#3F735F", "#6B92AD", "#B68B4C", "#8B749F", "#597C8A", "#C08A7B", "#9AA766", "#66728B"]
     readonly property var holdings: (group.currentIndex === 1 ? allocation.types : group.currentIndex === 2 ? allocation.accounts : group.currentIndex === 3 ? allocation.currencies : allocation.items) || []
     readonly property var resultRows: contributions.items || []
@@ -32,22 +34,22 @@ ColumnLayout {
         columns: panel.width < 850 ? 1 : 2
         columnSpacing: 24
         rowSpacing: 20
-        ColumnLayout {
+        EditorialColumnLayout {
             Layout.fillWidth: true
             Layout.alignment: Qt.AlignTop
-            spacing: 10
-            RowLayout {
+            spacing: Appearance.desktop ? 12 : 10
+            EditorialRowLayout {
                 Layout.fillWidth: true
-                Label { text: qsTr("Структура вложений"); color: panel.ink; font.pixelSize: 17; font.bold: true; Layout.fillWidth: true }
+                EditorialLabel { text: qsTr("Структура вложений"); color: panel.ink; font.pixelSize: 17; font.bold: true; Layout.fillWidth: true }
                 InvestmentMetricHelp { metric: "structure"; displayValue: panel.amount(panel.allocation.capitalMinor); ink: panel.ink; muted: panel.muted }
             }
-            ComboBox { id: group; Layout.fillWidth: true; model: [qsTr("По активам"), qsTr("По типам активов"), qsTr("По счетам"), qsTr("По валютам счетов")] }
-            Label { Layout.fillWidth: true; wrapMode: Text.WordWrap; color: panel.muted; text: qsTr("На конец выбранного периода · Стоимость: %1").arg(panel.amount(panel.allocation.capitalMinor)) }
+            StyledComboBox { id: group; objectName: "group"; Layout.fillWidth: true; model: [qsTr("По активам"), qsTr("По типам активов"), qsTr("По счетам"), qsTr("По валютам счетов")] }
+            EditorialLabel { Layout.fillWidth: true; wrapMode: Text.WordWrap; color: panel.muted; text: qsTr("На конец выбранного периода · Стоимость: %1").arg(panel.amount(panel.allocation.capitalMinor)) }
             Canvas {
                 id: donut
                 visible: !!panel.allocation.pieAvailable
                 Layout.alignment: Qt.AlignHCenter
-                Layout.preferredWidth: 190
+                Layout.preferredWidth: Appearance.desktop ? 192 : 190
                 Layout.preferredHeight: 190
                 onPaint: {
                     var ctx = getContext("2d")
@@ -66,9 +68,9 @@ ColumnLayout {
                         start = end
                     }
                 }
-                Label { anchors.centerIn: parent; text: "100 %"; color: panel.ink; font.pixelSize: 22; font.bold: true }
+                EditorialLabel { anchors.centerIn: parent; text: "100 %"; color: panel.ink; font.pixelSize: 22; font.bold: true }
             }
-            Label {
+            EditorialLabel {
                 visible: !panel.allocation.pieAvailable
                 Layout.fillWidth: true
                 wrapMode: Text.WordWrap
@@ -77,49 +79,49 @@ ColumnLayout {
             }
             Repeater {
                 model: panel.holdings
-                delegate: RowLayout {
+                delegate: EditorialRowLayout {
                     required property var modelData
                     required property int index
                     Layout.fillWidth: true
                     Rectangle { width: 9; height: 9; radius: 3; color: panel.colors[index % panel.colors.length] }
-                    Label { Layout.fillWidth: true; text: modelData.label; color: panel.ink; wrapMode: Text.WordWrap }
-                    Label { text: panel.amount(modelData.amountMinor); color: panel.ink }
-                    Label { Layout.preferredWidth: 66; horizontalAlignment: Text.AlignRight; text: panel.percent(panel.allocation.pieAvailable ? modelData.percent : null); color: panel.muted }
+                    EditorialLabel { Layout.fillWidth: true; text: modelData.label; color: panel.ink; wrapMode: Text.WordWrap }
+                    EditorialLabel { text: panel.amount(modelData.amountMinor); color: panel.ink }
+                    EditorialLabel { Layout.preferredWidth: Appearance.desktop ? 68 : 66; horizontalAlignment: Text.AlignRight; text: panel.percent(panel.allocation.pieAvailable ? modelData.percent : null); color: panel.muted }
                 }
             }
-            Label { visible: (panel.allocation.adjustments || []).length > 0; color: panel.muted; Layout.fillWidth: true; wrapMode: Text.WordWrap; text: qsTr("Неучтённый в деньгах результат контрактов: %1. Это переоценка, а не стоимость вложенного капитала; в круговые доли она не входит.").arg(panel.amount(panel.allocation.adjustmentMinor)) }
+            EditorialLabel { visible: (panel.allocation.adjustments || []).length > 0; color: panel.muted; Layout.fillWidth: true; wrapMode: Text.WordWrap; text: qsTr("Неучтённый в деньгах результат контрактов: %1. Это переоценка, а не стоимость вложенного капитала; в круговые доли она не входит.").arg(panel.amount(panel.allocation.adjustmentMinor)) }
             Repeater {
                 model: panel.allocation.adjustments || []
-                delegate: RowLayout {
+                delegate: EditorialRowLayout {
                     required property var modelData
                     Layout.fillWidth: true
-                    Label { Layout.fillWidth: true; wrapMode: Text.WordWrap; text: modelData.label; color: panel.muted }
-                    Label { text: panel.amount(modelData.amountMinor); color: panel.ink }
+                    EditorialLabel { Layout.fillWidth: true; wrapMode: Text.WordWrap; text: modelData.label; color: panel.muted }
+                    EditorialLabel { text: panel.amount(modelData.amountMinor); color: panel.ink }
                 }
             }
-            Label { Layout.fillWidth: true; wrapMode: Text.WordWrap; font.pixelSize: 12; color: panel.muted; text: qsTr("Валюты — валюты оценки на счетах, а не валютная экспозиция компаний и фондов. Заблокированное обеспечение контрактов не добавляется повторно к деньгам.") }
+            EditorialLabel { Layout.fillWidth: true; wrapMode: Text.WordWrap; font.pixelSize: 12; color: panel.muted; text: qsTr("Валюты — валюты оценки на счетах, а не валютная экспозиция компаний и фондов. Заблокированное обеспечение контрактов не добавляется повторно к деньгам.") }
         }
-        ColumnLayout {
+        EditorialColumnLayout {
             Layout.fillWidth: true
             Layout.alignment: Qt.AlignTop
-            spacing: 10
-            RowLayout {
+            spacing: Appearance.desktop ? 12 : 10
+            EditorialRowLayout {
                 Layout.fillWidth: true
-                Label { text: qsTr("Вклад активов в результат"); color: panel.ink; font.pixelSize: 17; font.bold: true; Layout.fillWidth: true }
+                EditorialLabel { text: qsTr("Вклад активов в результат"); color: panel.ink; font.pixelSize: 17; font.bold: true; Layout.fillWidth: true }
                 InvestmentMetricHelp { metric: "contribution"; displayValue: panel.amount(panel.contributions.totalMinor); ink: panel.ink; muted: panel.muted }
             }
-            Label { Layout.fillWidth: true; wrapMode: Text.WordWrap; color: panel.muted; text: qsTr("За выбранный период, включая закрытые позиции, выплаты и учтённые расходы. Пополнения и выводы исключены.") }
-            Label { visible: !panel.contributions.available; Layout.fillWidth: true; wrapMode: Text.WordWrap; color: panel.muted; text: qsTr("Нужны достоверные начальная и конечная оценки, денежные потоки и курсы валют.") }
+            EditorialLabel { Layout.fillWidth: true; wrapMode: Text.WordWrap; color: panel.muted; text: qsTr("За выбранный период, включая закрытые позиции, выплаты и учтённые расходы. Пополнения и выводы исключены.") }
+            EditorialLabel { visible: !panel.contributions.available; Layout.fillWidth: true; wrapMode: Text.WordWrap; color: panel.muted; text: qsTr("Нужны достоверные начальная и конечная оценки, денежные потоки и курсы валют.") }
             Repeater {
                 model: panel.contributions.available ? panel.resultRows : []
-                delegate: ColumnLayout {
+                delegate: EditorialColumnLayout {
                     required property var modelData
                     Layout.fillWidth: true
                     spacing: 4
-                    RowLayout {
+                    EditorialRowLayout {
                         Layout.fillWidth: true
-                        Label { Layout.fillWidth: true; wrapMode: Text.WordWrap; text: modelData.label; color: panel.ink }
-                        Label { text: panel.amount(modelData.amountMinor); color: modelData.amountMinor < 0 ? panel.negative : panel.positive; font.bold: true }
+                        EditorialLabel { Layout.fillWidth: true; wrapMode: Text.WordWrap; text: modelData.label; color: panel.ink }
+                        EditorialLabel { text: panel.amount(modelData.amountMinor); color: modelData.amountMinor < 0 ? panel.negative : panel.positive; font.bold: true }
                     }
                     Item {
                         Layout.fillWidth: true
@@ -134,8 +136,8 @@ ColumnLayout {
                     }
                 }
             }
-            Label { visible: !!panel.contributions.available; Layout.fillWidth: true; wrapMode: Text.WordWrap; color: panel.muted; text: qsTr("Валютная переоценка счетов: %1\nНеобъяснённая разница: %2\nИтого: %3").arg(panel.amount(panel.contributions.fxMinor)).arg(panel.amount(panel.contributions.unexplainedMinor)).arg(panel.amount(panel.contributions.totalMinor)) }
-            Label { Layout.fillWidth: true; wrapMode: Text.WordWrap; color: panel.muted; font.pixelSize: 12; text: qsTr("Результат активов рассчитан при курсе валют счетов на начало периода. Валютная переоценка показана отдельно. Длина полос отражает сумму прибыли или убытка, а не долю вложений.") }
+            EditorialLabel { visible: !!panel.contributions.available; Layout.fillWidth: true; wrapMode: Text.WordWrap; color: panel.muted; text: qsTr("Валютная переоценка счетов: %1\nНеобъяснённая разница: %2\nИтого: %3").arg(panel.amount(panel.contributions.fxMinor)).arg(panel.amount(panel.contributions.unexplainedMinor)).arg(panel.amount(panel.contributions.totalMinor)) }
+            EditorialLabel { Layout.fillWidth: true; wrapMode: Text.WordWrap; color: panel.muted; font.pixelSize: 12; text: qsTr("Результат активов рассчитан при курсе валют счетов на начало периода. Валютная переоценка показана отдельно. Длина полос отражает сумму прибыли или убытка, а не долю вложений.") }
         }
     }
 }

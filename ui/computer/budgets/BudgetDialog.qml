@@ -1,9 +1,11 @@
 import QtQuick
 import QtQuick.Controls
 import QtQuick.Layouts
+import "../common"
+import "../common/EditorialStyle.js" as Appearance
 
-Dialog {
-    id: dialog
+EditorialDialog {
+    id: dialog; objectName: "dialog"
     width: Math.min(760, parent ? parent.width - 40 : 760)
     height: Math.min(780, parent ? parent.height - 40 : 780)
     modal: true
@@ -12,17 +14,17 @@ Dialog {
     closePolicy: Popup.CloseOnEscape
 
     required property var controller
-    property color panelColor: "#FFFFF8"
-    property color softColor: "#FFFFF0"
+    property color panelColor: (Appearance.desktop ? "#f3eddf" : "#FFFFF8")
+    property color softColor: (Appearance.desktop ? "#f3eddf" : "#FFFFF0")
     property color textColor: "#031528"
-    property color mutedColor: "#687483"
-    property color lineColor: "#D8D7C7"
+    property color mutedColor: (Appearance.desktop ? "#59616a" : "#687483")
+    property color lineColor: (Appearance.desktop ? "#bbb5a8" : "#D8D7C7")
     property color accentColor: "#031528"
-    property color errorColor: "#B94F48"
+    property color errorColor: (Appearance.desktop ? "#b84932" : "#B94F48")
     property string editingId: ""
 
-    ListModel { id: accountSelection }
-    ListModel { id: categorySelection }
+    ListModel { id: accountSelection; objectName: "accountSelection" }
+    ListModel { id: categorySelection; objectName: "categorySelection" }
 
     function contains(values, value) {
         if (!values)
@@ -156,10 +158,10 @@ Dialog {
     onClosed: editingId = ""
 
     background: Rectangle {
-        HardShadow { depth: 6; shadowColor: dialog.accentColor }
+        HardShadow { visible: !Appearance.desktop;  depth: 6; shadowColor: dialog.accentColor }
 
         color: dialog.panelColor
-        radius: 16
+        radius: Appearance.desktop ? 0 : 16
         border.width: 1
         border.color: dialog.accentColor
     }
@@ -185,7 +187,7 @@ Dialog {
         appSoftColor: dialog.softColor
         appLineColor: dialog.lineColor
         appAccentColor: dialog.accentColor
-        appHoverColor: "#E4E8F1"
+        appHoverColor: (Appearance.desktop ? "#e9e4d8" : "#E4E8F1")
     }
 
     component FormCheckBox: StyledCheckBox {
@@ -195,7 +197,7 @@ Dialog {
         appSoftColor: dialog.softColor
         appLineColor: dialog.lineColor
         appAccentColor: dialog.accentColor
-        appHoverColor: "#E4E8F1"
+        appHoverColor: (Appearance.desktop ? "#e9e4d8" : "#E4E8F1")
         appOnAccentColor: dialog.panelColor
     }
 
@@ -209,31 +211,32 @@ Dialog {
         appSoftColor: dialog.softColor
         appLineColor: dialog.lineColor
         appAccentColor: dialog.accentColor
-        appHoverColor: "#E4E8F1"
+        appHoverColor: (Appearance.desktop ? "#e9e4d8" : "#E4E8F1")
         appOnAccentColor: dialog.panelColor
         appErrorColor: dialog.errorColor
     }
 
-    contentItem: ColumnLayout {
+    contentItem: EditorialColumnLayout {
         spacing: 0
 
-        RowLayout {
+        EditorialRowLayout {
             Layout.fillWidth: true
-            Layout.margins: 20
-            Text {
+            Layout.margins: Appearance.desktop ? 24 : 20
+            EditorialDialogTitle {
+                ruleVisible: false
                 Layout.fillWidth: true
                 text: dialog.editingId.length > 0
                     ? qsTr("Редактирование бюджета") : qsTr("Новый бюджет")
                 color: dialog.textColor
-                font.pixelSize: 21
-                font.weight: Font.Bold
-            }
+                }
             ActionButton { text: qsTr("Закрыть"); onClicked: dialog.close() }
         }
 
-        Rectangle { Layout.fillWidth: true; height: 1; color: dialog.lineColor }
+        Rectangle { Layout.fillWidth: true; Layout.leftMargin: 24; Layout.rightMargin: 24; height: 1; color: dialog.accentColor }
 
-        ScrollView {
+        EditorialScrollView {
+            topPadding: Appearance.desktop ? 16 : 0
+            bottomPadding: Appearance.desktop ? 16 : 0
             Layout.fillWidth: true
             Layout.fillHeight: true
             clip: true
@@ -241,38 +244,38 @@ Dialog {
             ScrollBar.horizontal.policy: ScrollBar.AlwaysOff
             ScrollBar.vertical.policy: ScrollBar.AlwaysOff
 
-            ColumnLayout {
-                width: Math.max(0, parent.width - 40)
-                x: 20
+            EditorialColumnLayout {
+                width: Math.max(0, parent.width - (Appearance.desktop ? 48 : 40))
+                x: Appearance.desktop ? 24 : 20
                 spacing: 12
 
-                Text { text: qsTr("Название"); color: dialog.mutedColor }
+                EditorialLabel { text: qsTr("Название"); color: dialog.mutedColor }
                 Field {
-                    id: nameField
+                    id: nameField; objectName: "nameField"
                     Layout.fillWidth: true
                     placeholderText: qsTr("Например, общий бюджет")
                     maximumLength: 80
                 }
 
-                RowLayout {
+                EditorialRowLayout {
                     Layout.fillWidth: true
-                    spacing: 10
-                    ColumnLayout {
+                    spacing: Appearance.desktop ? 12 : 10
+                    EditorialColumnLayout {
                         Layout.fillWidth: true
-                        Text { text: qsTr("Лимит на месяц"); color: dialog.mutedColor }
+                        EditorialLabel { text: qsTr("Лимит на месяц"); color: dialog.mutedColor }
                         Field {
-                            id: amountField
+                            id: amountField; objectName: "amountField"
                             Layout.fillWidth: true
                             placeholderText: qsTr("0,00")
                             inputMethodHints: Qt.ImhFormattedNumbersOnly
                             validator: DoubleValidator { bottom: 0.01; decimals: 2 }
                         }
                     }
-                    ColumnLayout {
-                        Layout.preferredWidth: 130
-                        Text { text: qsTr("Валюта"); color: dialog.mutedColor }
+                    EditorialColumnLayout {
+                        Layout.preferredWidth: Appearance.desktop ? 132 : 130
+                        EditorialLabel { text: qsTr("Валюта"); color: dialog.mutedColor }
                         FormCombo {
-                            id: currencyBox
+                            id: currencyBox; objectName: "currencyBox"
                             Layout.fillWidth: true
                             implicitHeight: 44
                             model: ["RUB", "USD", "EUR", "CNY"]
@@ -282,11 +285,11 @@ Dialog {
 
                 Rectangle { Layout.fillWidth: true; height: 1; color: dialog.lineColor }
                 FormCheckBox {
-                    id: allAccountsBox
+                    id: allAccountsBox; objectName: "allAccountsBox"
                     text: qsTr("Учитывать все счета")
                     palette.text: dialog.textColor
                 }
-                Text {
+                EditorialLabel {
                     visible: !allAccountsBox.checked
                     text: qsTr("Выбранные счета")
                     color: dialog.mutedColor
@@ -307,22 +310,22 @@ Dialog {
 
                 Rectangle { Layout.fillWidth: true; height: 1; color: dialog.lineColor }
                 FormCheckBox {
-                    id: allCategoriesBox
+                    id: allCategoriesBox; objectName: "allCategoriesBox"
                     text: qsTr("Учитывать все категории расходов")
                     palette.text: dialog.textColor
                 }
-                Text {
+                EditorialLabel {
                     Layout.fillWidth: true
                     text: allCategoriesBox.checked
                         ? qsTr("Отметьте категории, если хотите задать им отдельные лимиты")
                         : qsTr("Отметьте категории, которые входят в бюджет")
                     color: dialog.mutedColor
-                    font.pixelSize: 14
+                    font.pixelSize: Appearance.desktop ? 16 : 14
                     wrapMode: Text.WordWrap
                 }
                 Repeater {
                     model: categorySelection
-                    delegate: RowLayout {
+                    delegate: EditorialRowLayout {
                         required property int index
                         required property string label
                         required property bool selected
@@ -348,11 +351,11 @@ Dialog {
                     }
                 }
 
-                Text {
-                    id: formError
+                EditorialLabel {
+                    id: formError; objectName: "formError"
                     Layout.fillWidth: true
                     color: dialog.errorColor
-                    font.pixelSize: 14
+                    font.pixelSize: Appearance.desktop ? 16 : 14
                     wrapMode: Text.WordWrap
                 }
                 Item { Layout.preferredHeight: 8 }
@@ -360,7 +363,7 @@ Dialog {
         }
 
         Rectangle { Layout.fillWidth: true; height: 1; color: dialog.lineColor }
-        RowLayout {
+        EditorialRowLayout {
             Layout.fillWidth: true
             Layout.margins: 16
             Item { Layout.fillWidth: true }

@@ -1,6 +1,8 @@
 import QtQuick
 import QtQuick.Controls
 import QtQuick.Layouts
+import "../computer/common"
+import "../computer/common/EditorialStyle.js" as Appearance
 
 ApplicationWindow {
     id: window
@@ -10,36 +12,44 @@ ApplicationWindow {
     minimumHeight: 540
     visible: appAccess.locked
     title: "Vexa"
-    color: "#F5F3E4"
-    font.family: "Commissioner"
-    font.pixelSize: 14
+    palette.window: "#f3eddf"
+    palette.base: "#f3eddf"
+    palette.button: "#f3eddf"
+    palette.text: "#031528"
+    palette.windowText: "#031528"
+    palette.buttonText: "#031528"
+    palette.highlight: "#031528"
+    palette.highlightedText: "#f3eddf"
+    palette.toolTipBase: "#031528"
+    palette.toolTipText: "#f3eddf"
+    color: (Appearance.desktop ? "#f3eddf" : "#F5F3E4")
+    font.family: "Arimo"
+    font.pixelSize: Appearance.desktop ? 16 : 14
     onClosing: Qt.quit()
     property bool recovering: false
     onVisibleChanged: if (visible) { proof.clear(); password.clear(); confirmation.clear(); proof.forceActiveFocus() }
 
-    ScrollView {
+    EditorialScrollView {
         anchors.fill: parent
         contentWidth: availableWidth
-        ColumnLayout {
+        EditorialColumnLayout {
             width: Math.min(400, window.width - 48)
             x: (window.width - width) / 2
             y: 40
             spacing: 16
-            Text { text: "Vexa"; color: "#031528"; font.pixelSize: 32; font.bold: true }
-            Text {
+            EditorialLabel { text: "Vexa."; color: "#031528"; font.family: "PT Serif"; font.pixelSize: 48; font.italic: true }
+            EditorialDialogTitle {
                 Layout.fillWidth: true
                 text: appAccess.recoveryCode.length > 0 ? qsTr("Сохраните код восстановления")
                       : window.recovering ? qsTr("Восстановление доступа") : qsTr("Вход в приложение")
-                font.pixelSize: 20
-                font.bold: true
                 color: "#031528"
                 wrapMode: Text.WordWrap
             }
-            Text {
+            EditorialLabel {
                 visible: appAccess.recoveryCode.length > 0
                 Layout.fillWidth: true
                 text: qsTr("Код позволит войти и установить новый пароль, если вы забудете текущий. При смене пароля выдаётся новый код.")
-                color: "#687483"
+                color: (Appearance.desktop ? "#59616a" : "#687483")
                 wrapMode: Text.WordWrap
             }
             TextArea {
@@ -51,10 +61,10 @@ ApplicationWindow {
                 wrapMode: TextEdit.WrapAnywhere
                 color: "#031528"
                 font.pixelSize: 19
-                background: Rectangle { color: "#FFFFF8"; radius: 12; border.color: "#D8D7C7" }
+                background: Rectangle { color: (Appearance.desktop ? "#f3eddf" : "#FFFFF8"); radius: Appearance.desktop ? 0 : 12; border.color: (Appearance.desktop ? "#bbb5a8" : "#D8D7C7") }
             }
             StyledCheckBox {
-                id: savedCode
+                id: savedCode; objectName: "savedCode"
                 Layout.fillWidth: true
                 visible: appAccess.recoveryCode.length > 0
                 text: qsTr("Я сохранил код восстановления")
@@ -68,12 +78,12 @@ ApplicationWindow {
                 enabled: savedCode.checked
                 onClicked: { savedCode.checked = false; window.recovering = false; appAccess.acknowledgeRecovery(); proof.forceActiveFocus() }
             }
-            ColumnLayout {
+            EditorialColumnLayout {
                 visible: appAccess.ready && appAccess.recoveryCode.length === 0
                 Layout.fillWidth: true
                 spacing: 16
                 StyledTextField {
-                    id: proof
+                    id: proof; objectName: "proof"
                     Layout.fillWidth: true
                     placeholderText: window.recovering ? qsTr("Код восстановления") : qsTr("Пароль")
                     echoMode: TextInput.Password
@@ -82,7 +92,7 @@ ApplicationWindow {
                     onAccepted: if (!window.recovering && !appAccess.busy && !appAccess.retryAfter) { appAccess.unlock(text); clear() }
                 }
                 StyledTextField {
-                    id: password
+                    id: password; objectName: "password"
                     visible: window.recovering
                     Layout.fillWidth: true
                     placeholderText: qsTr("Новый пароль: 1–1024 символа")
@@ -91,7 +101,7 @@ ApplicationWindow {
                     enabled: !appAccess.busy
                 }
                 StyledTextField {
-                    id: confirmation
+                    id: confirmation; objectName: "confirmation"
                     visible: window.recovering
                     Layout.fillWidth: true
                     placeholderText: qsTr("Повторите новый пароль")
@@ -120,17 +130,17 @@ ApplicationWindow {
                     onClicked: { window.recovering = !window.recovering; proof.clear(); password.clear(); confirmation.clear() }
                 }
             }
-            Text {
+            EditorialLabel {
                 visible: appAccess.error.length > 0
                 Layout.fillWidth: true
                 text: appAccess.error
-                color: "#B94F48"
+                color: (Appearance.desktop ? "#b84932" : "#B94F48")
                 wrapMode: Text.WordWrap
             }
-            Text {
+            EditorialLabel {
                 visible: appAccess.retryAfter > 0
                 text: qsTr("Повторить через %1 с").arg(appAccess.retryAfter)
-                color: "#687483"
+                color: (Appearance.desktop ? "#59616a" : "#687483")
             }
             BusyIndicator { running: appAccess.busy; visible: running; Layout.alignment: Qt.AlignHCenter }
             StyledButton {

@@ -2,20 +2,21 @@ import QtQuick
 import QtQuick.Controls
 import QtQuick.Layouts
 import "../common"
+import "../common/EditorialStyle.js" as Appearance
 
-ColumnLayout {
+EditorialColumnLayout {
     function openConfirmation() { confirmation.open(); }
     spacing: 16
-    Text { text: qsTr("Шифрование базы"); color: "#031528"; font.pixelSize: 17; font.bold: true }
-    Text {
+    EditorialLabel { text: qsTr("Шифрование базы"); color: "#031528"; font.pixelSize: 17; font.bold: true }
+    EditorialLabel {
         Layout.fillWidth: true
         text: databaseProtection.encrypted
             ? qsTr("Локальная база зашифрована. Ключ хранится в учётной записи Windows.")
             : qsTr("Шифрование защищает файл базы. Оно независимо от пароля входа в Vexa.")
-        color: "#687483"
+        color: (Appearance.desktop ? "#59616a" : "#687483")
         wrapMode: Text.WordWrap
     }
-    Text {
+    EditorialLabel {
         visible: !appAccess.storeAvailable || !databaseProtection.supported
         Layout.fillWidth: true
         text: (!appAccess.storeAvailable
@@ -23,7 +24,7 @@ ColumnLayout {
                   : (appAccess.storeError || qsTr("Системное хранилище недоступно."))) : "")
               + ((!appAccess.storeAvailable && !databaseProtection.supported) ? "\n" : "")
               + (!databaseProtection.supported ? qsTr("Шифрование базы на этой платформе пока не поддерживается.") : "")
-        color: "#687483"
+        color: (Appearance.desktop ? "#59616a" : "#687483")
         wrapMode: Text.WordWrap
     }
     StyledButton {
@@ -31,27 +32,27 @@ ColumnLayout {
         enabled: databaseProtection.supported && appAccess.storeChecked && appAccess.storeAvailable && databaseProtection.ready && !databaseProtection.busy
         onClicked: confirmation.open()
     }
-    Dialog {
-        id: confirmation
+    EditorialDialog {
+        id: confirmation; objectName: "confirmation"
         parent: Overlay.overlay
         anchors.centerIn: parent
         width: Math.min(480, parent.width - 32)
         padding: 24
         modal: true
         title: databaseProtection.encrypted ? qsTr("Отключить шифрование базы?") : qsTr("Зашифровать базу?")
-        background: Rectangle { color: "#FFFFF8"; radius: 12; border.color: "#D8D7C7" }
-        contentItem: ColumnLayout {
+        background: Rectangle { color: (Appearance.desktop ? "#f3eddf" : "#FFFFF8"); radius: Appearance.desktop ? 0 : 12; border.color: (Appearance.desktop ? "#bbb5a8" : "#D8D7C7") }
+        contentItem: EditorialDialogForm {
             spacing: 16
-            Text {
+            EditorialLabel {
                 Layout.fillWidth: true
                 text: databaseProtection.encrypted
                     ? qsTr("После отключения файл базы будет доступен без ключа. Ключ сохранится для чтения ранее зашифрованных копий. Vexa перезапустится.")
                     : qsTr("База будет зашифрована ключом из системного хранилища Windows. Для её открытия потребуется этот ключ. Старые копии останутся без изменений. Vexa перезапустится.")
                 color: "#031528"
-                font.pixelSize: 14
+                font.pixelSize: Appearance.desktop ? 16 : 14
                 wrapMode: Text.WordWrap
             }
-            RowLayout {
+            EditorialRowLayout {
                 Layout.fillWidth: true
                 StyledButton { text: qsTr("Отмена"); onClicked: confirmation.close() }
                 Item { Layout.fillWidth: true }
