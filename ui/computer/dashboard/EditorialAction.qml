@@ -15,6 +15,7 @@ Button {
     rightPadding: outlined ? 16 : 0
     topPadding: 0; bottomPadding: 0
     hoverEnabled: true
+    opacity: enabled ? 1 : 0.45
     font.family: mono ? "Cousine" : "Arimo"
     font.pixelSize: textSize
     font.bold: true

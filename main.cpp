@@ -22,6 +22,7 @@
 
 #include "interface/FinanceController.h"
 #include "ui/computer/common/WindowScrollInput.h"
+#include "ui/computer/notes/NotebookLayout.h"
 
 // VEXA_APP_VERSION is normally defined by CMake (target_compile_definitions).
 // Fallback keeps the build working when a stale build directory lacks the define.
@@ -88,6 +89,7 @@ int main(int argc, char *argv[])
     };
     QObject::connect(&appAccess, &AppAccess::changed, &app, syncSystemLock);
     WindowScrollInput windowScrollInput;
+    NotebookLayout notebookLayout;
     QTranslator translator;
     std::unique_ptr<FinanceController> financeController;
     std::unique_ptr<QQmlApplicationEngine> financeEngine;
@@ -145,6 +147,7 @@ int main(int argc, char *argv[])
         financeEngine->rootContext()->setContextProperty("appAccess", &appAccess);
         financeEngine->rootContext()->setContextProperty("databaseProtection", &databaseProtection);
         financeEngine->rootContext()->setContextProperty("windowScrollInput", &windowScrollInput);
+        financeEngine->rootContext()->setContextProperty("notebookLayout", &notebookLayout);
         financeEngine->rootContext()->setContextProperty("financeController", financeController.get());
         QObject::connect(financeController.get(), &FinanceController::uiLanguageChanged,
                          financeEngine.get(), applyUiLanguage);

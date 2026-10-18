@@ -4,6 +4,7 @@
 #include <QLocale>
 #include <QQmlEngine>
 #include <QQmlContext>
+#include "../ui/computer/notes/NotebookLayout.h"
 
 class UiTestSetup : public QObject
 {
@@ -18,6 +19,7 @@ public slots:
     }
     void qmlEngineAvailable(QQmlEngine* engine)
     {
+        engine->rootContext()->setContextProperty(QStringLiteral("notebookLayout"), new NotebookLayout(engine));
         engine->rootContext()->setContextProperty(QStringLiteral("uiCaptureDirectory"),
             qEnvironmentVariable("VEXA_UI_CAPTURE_DIR"));
     }

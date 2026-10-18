@@ -85,6 +85,25 @@ qt_add_qml_module(vexa
         ui/mobile/MobileInvestmentPayments.qml
         ui/mobile/MobileInvestmentPerformance.qml
         ui/mobile/MobileAnalyticsPage.qml
+        ui/computer/analytics/EditorialAnalyticsPage.qml
+        ui/computer/analytics/EditorialAverageReturn.qml
+        ui/computer/categories/EditorialCategoriesPage.qml
+        ui/computer/common/EditorialChart.qml
+        ui/computer/common/EditorialCheck.qml
+        ui/computer/common/EditorialChoice.qml
+        ui/computer/common/EditorialDonut.qml
+        ui/computer/common/EditorialField.qml
+        ui/computer/common/EditorialLedgerPage.qml
+        ui/computer/common/EditorialLegend.qml
+        ui/computer/common/EditorialMasthead.qml
+        ui/computer/common/EditorialMetrics.qml
+        ui/computer/common/EditorialOperations.qml
+        ui/computer/common/EditorialPage.qml
+        ui/computer/common/EditorialReportSection.qml
+        ui/computer/common/EditorialSection.qml
+        ui/computer/common/EditorialSettingRow.qml
+        ui/computer/notes/EditorialNotesPage.qml
+        ui/computer/settings/EditorialSettingsPage.qml
         ui/computer/common/AutoScrollController.qml
         ui/computer/common/CachedPages.qml
         ui/computer/common/HardShadow.qml
@@ -126,6 +145,7 @@ qt_add_qml_module(vexa
         ui/computer/settings/PasswordSettings.qml
         # BankComboBox.qml
         # CategoryPicker.qml
+        SOURCES ui/computer/notes/NotebookLayout.h
         SOURCES ui/computer/common/WindowScrollInput.h
         SOURCES ui/computer/common/WindowScrollInput.cpp
         SOURCES core/Account.h
@@ -757,7 +777,7 @@ add_test(NAME InvestmentBenchmarkControllerTest COMMAND InvestmentBenchmarkContr
 
 find_package(Qt6 QUIET COMPONENTS QuickTest)
 if(TARGET Qt6::QuickTest)
-    add_executable(UiNavigationTest tests/UiNavigationTest.cpp)
+    add_executable(UiNavigationTest tests/UiNavigationTest.cpp ui/computer/notes/NotebookLayout.h)
     target_link_libraries(UiNavigationTest PRIVATE Qt6::QuickTest Qt6::QuickControls2)
     target_compile_definitions(UiNavigationTest PRIVATE QUICK_TEST_SOURCE_DIR="${CMAKE_CURRENT_SOURCE_DIR}/tests/qml")
     add_test(NAME UiNavigationTest COMMAND UiNavigationTest)

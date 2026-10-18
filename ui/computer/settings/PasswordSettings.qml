@@ -1,9 +1,11 @@
 import QtQuick
 import QtQuick.Controls
 import QtQuick.Layouts
+import "../common"
 
 ColumnLayout {
     id: settings
+    function openEditor(removing) { dialog.removing = removing; dialog.open(); }
     spacing: 16
     Text { text: qsTr("Защита паролем"); color: "#031528"; font.pixelSize: 17; font.bold: true }
     Text {

@@ -1,6 +1,7 @@
 import QtQuick
 import QtQuick.Controls
 import "DashboardData.js" as Data
+import "../common"
 
 Flickable {
     id: view
@@ -20,6 +21,11 @@ Flickable {
     readonly property string selectedId: controller.selectedAsset === "crypto" ? controller.selectedCryptoWalletId : controller.selectedAccountId
     property string asset: "fiat"
     property string category: ""
+    Connections {
+        target: view.host
+        ignoreUnknownSignals: true
+        function onEditorialCategoryChanged() { view.selectAsset("all"); view.category = view.host.editorialCategory; view.host.searchText = ""; }
+    }
     property string sortField: "date"
     property int sortDirection: -1
     readonly property var accountRows: controller.selectedAsset === "crypto" ? controller.cryptoWallets : controller.accounts
@@ -188,7 +194,7 @@ Flickable {
         }
         background: Rectangle { color: "#f3eddf"; border.color: "#031528" }
     }
-    Component.onCompleted: { if (controller.selectedAsset !== "fiat" || selectedId) asset = controller.selectedAsset; }
+    Component.onCompleted: { if (controller.selectedAsset !== "fiat" || selectedId) asset = controller.selectedAsset; if (host.editorialCategory !== undefined && host.editorialCategory !== "") { selectAsset("all"); category = host.editorialCategory; } }
     Connections {
         target: view.controller
         function onSelectedAssetChanged() {
@@ -220,79 +226,11 @@ Flickable {
         objectName: "editorialPaper"
         x: view.pad; y: 24; width: view.mainWidth
         height: historyFooter.y + historyFooter.height
-        Item {
+        EditorialMasthead {
             id: masthead
-            width: parent.width; height: view.narrow ? 196 : view.compact ? 104 : 128
-            Item {
-                id: titleBlock
-                y: view.narrow ? 12 : parent.height - height - 8
-                width: view.narrow ? parent.width : Math.max(0, filters.x - 16)
-                height: view.narrow ? 64 : view.small ? 72 : view.compact ? 88 : view.medium ? 80 : 96
-                EditorialText {
-                    height: parent.height; width: parent.width
-                    text: qsTr("Мои финансы."); font.family: "PT Serif"; font.italic: true
-                    font.pixelSize: view.narrow ? 52 : view.small ? Math.min(56, Math.max(40, view.host.width * .048)) : view.compact ? Math.min(72, Math.max(40, parent.width / 5.5)) : view.medium ? 64 : 80
-                    font.letterSpacing: view.small ? -1 : -2
-                }
-            }
-            Item {
-                id: filters
-                objectName: "editorialFilters"
-                anchors.right: parent.right
-                y: view.narrow ? 92 : parent.height - height - 8
-                width: view.narrow ? parent.width : view.small ? 400 : view.medium ? 496 : 592
-                height: 80
-                readonly property int gap: view.small ? 12 : 16
-                readonly property int planWidth: view.small ? 128 : 144
-                readonly property int currencyWidth: view.small ? 96 : view.medium ? 128 : 160
-                EditorialAction {
-                    anchors.bottom: parent.bottom; width: filters.planWidth; height: 40
-                    leftPadding: 8; rightPadding: 8
-                    text: qsTr("ПЛАНОВЫЕ"); mono: false; textSize: view.small ? 14 : 16; outlined: true
-                    onClicked: view.host.editorialSchedule(null)
-                }
-                Item {
-                    x: filters.planWidth + filters.gap; height: 72; anchors.bottom: parent.bottom
-                    width: filters.width - x - filters.currencyWidth - filters.gap
-                    Mono { height: 24; text: qsTr("ПЕРИОД") }
-                    EditorialAction {
-                        objectName: "editorialPeriod"
-                        y: 24; width: parent.width; height: 48
-                        text: view.host.dateFilterLabel(); mono: false; textSize: 16; arrow: false; underline: true
-                        onClicked: periodMenu.open()
-                        Mono { anchors.right: parent.right; height: 48; text: "⌄"; color: "#031528" }
-                        Menu {
-                            id: periodMenu
-                            y: parent.height; width: Math.max(parent.width, 240)
-                            font.family: "Arimo"; font.pixelSize: 16
-                            background: Rectangle { color: "#f3eddf"; border.color: "#031528" }
-                            MenuItem { text: qsTr("Всё время"); onTriggered: view.controller.clearDateFilter() }
-                            MenuItem { text: qsTr("Текущий месяц"); onTriggered: { const now = new Date(); view.controller.setDateFilter(new Date(now.getFullYear(), now.getMonth(), 1), now); } }
-                            MenuItem { text: qsTr("Последние 7 дней"); onTriggered: { const end = new Date(); const start = new Date(); start.setDate(start.getDate() - 6); view.controller.setDateFilter(start, end); } }
-                            MenuItem { text: qsTr("Последние 30 дней"); onTriggered: { const end = new Date(); const start = new Date(); start.setDate(start.getDate() - 29); view.controller.setDateFilter(start, end); } }
-                            MenuItem { text: qsTr("Выбрать даты…"); onTriggered: view.host.editorialDateFilter() }
-                        }
-                    }
-                }
-                Item {
-                    anchors.right: parent.right; anchors.bottom: parent.bottom
-                    width: filters.currencyWidth; height: 72
-                    Mono { height: 24; text: qsTr("ВАЛЮТА") }
-                    ComboBox {
-                        id: currency
-                        objectName: "editorialCurrency"
-                        y: 24; width: parent.width; height: 48; padding: 0; rightPadding: 20
-                        model: ["RUB", "USD", "EUR", "CNY"]
-                        currentIndex: Math.max(0, model.indexOf(view.controller.appCurrency))
-                        font.family: "Arimo"; font.pixelSize: 16; font.bold: true
-                        contentItem: EditorialText { text: currency.displayText; font: currency.font }
-                        indicator: Mono { x: currency.width - 16; height: 48; text: "⌄"; color: "#031528" }
-                        background: Item { Rule { y: parent.height - 1; width: parent.width } }
-                        popup.background: Rectangle { color: "#f3eddf"; border.color: "#031528" }
-                        onActivated: view.controller.appCurrency = currentText
-                    }
-                }
-            }
+            width: parent.width; height: implicitHeight
+            host: view.host; controller: view.controller
+            title: qsTr("Мои финансы."); planned: true; period: true
         }
         Item {
             id: summary

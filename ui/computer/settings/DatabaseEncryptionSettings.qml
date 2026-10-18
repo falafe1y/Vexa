@@ -1,8 +1,10 @@
 import QtQuick
 import QtQuick.Controls
 import QtQuick.Layouts
+import "../common"
 
 ColumnLayout {
+    function openConfirmation() { confirmation.open(); }
     spacing: 16
     Text { text: qsTr("Шифрование базы"); color: "#031528"; font.pixelSize: 17; font.bold: true }
     Text {
