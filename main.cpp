@@ -48,7 +48,6 @@ int main(int argc, char *argv[])
         return 1;
     }
 
-#if !defined(Q_OS_ANDROID) && !defined(Q_OS_IOS)
     const QDir editorialFonts(QStringLiteral(":/fonts/editorial"));
     for (const QString& name : editorialFonts.entryList({QStringLiteral("*.ttf")}, QDir::Files)) {
         if (QFontDatabase::addApplicationFont(editorialFonts.filePath(name)) < 0) {
@@ -56,7 +55,6 @@ int main(int argc, char *argv[])
             return 1;
         }
     }
-#endif
 
     QFont interfaceFont = app.font();
     interfaceFont.setFamily(QStringLiteral("Commissioner"));

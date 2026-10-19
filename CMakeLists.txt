@@ -9,12 +9,14 @@ set(CMAKE_AUTORCC ON)
 
 find_package(Qt6 REQUIRED COMPONENTS Quick QuickControls2 QuickDialogs2 Sql Network Concurrent LinguistTools Svg)
 find_package(ZLIB REQUIRED)
+if(ANDROID)
+    include(cmake/VexaAndroidOpenSSL.cmake)
+endif()
 add_subdirectory(security)
 add_subdirectory(storage)
 
 qt_standard_project_setup(REQUIRES 6.10)
 
-# Content of downloaded design from Figma to Qt or similar
 if (EXISTS "${CMAKE_CURRENT_LIST_DIR}/importedcontent/CMakeLists.txt")
     add_subdirectory(${CMAKE_CURRENT_LIST_DIR}/importedcontent)
 endif()
@@ -25,9 +27,7 @@ qt_add_executable(vexa
     services/BankRecipients.qrc
 )
 
-if(NOT ANDROID AND NOT IOS)
-    target_sources(vexa PRIVATE editorial-fonts.qrc)
-endif()
+target_sources(vexa PRIVATE editorial-fonts.qrc)
 
 set_source_files_properties(
     ui/mobile/MobileTheme.qml
@@ -300,10 +300,8 @@ target_link_libraries(vexa
         vexa_storage
 )
 
-if(ANDROID AND OPENSSL_ROOT_DIR)
-    set_property(TARGET vexa APPEND PROPERTY QT_ANDROID_EXTRA_LIBS
-        "${OPENSSL_ROOT_DIR}/${ANDROID_ABI}/libcrypto_3.so"
-        "${OPENSSL_ROOT_DIR}/${ANDROID_ABI}/libssl_3.so")
+if(ANDROID)
+    vexa_deploy_android_openssl(vexa)
 endif()
 # Full debug information of the Qt Quick UI does not fit the 32-bit relocations of the Android linker;
 # the APK ships without it, so the linker drops it.
@@ -746,9 +744,9 @@ add_test(NAME InvestmentPerformanceTest COMMAND InvestmentPerformanceTest)
 add_executable(AverageReturnTest tests/AverageReturnTest.cpp services/InvestmentReturn.cpp)
 target_link_libraries(AverageReturnTest PRIVATE Qt6::Core Qt6::Test)
 add_test(NAME AverageReturnTest COMMAND AverageReturnTest)
-add_executable(AverageReturnControllerTest tests/AverageReturnControllerTest.cpp ${investment_controller_test_sources} services/BankRecipients.qrc)
+add_executable(AverageReturnControllerTest tests/AverageReturnControllerTest.cpp ${investment_controller_test_sources} services/BankRecipients.qrc)
 target_link_libraries(AverageReturnControllerTest PRIVATE vexa_storage Qt6::Core Qt6::Gui Qt6::Sql Qt6::Network Qt6::Concurrent Qt6::Test ZLIB::ZLIB)
-add_test(NAME AverageReturnControllerTest COMMAND AverageReturnControllerTest)
+add_test(NAME AverageReturnControllerTest COMMAND AverageReturnControllerTest)
 
 add_executable(CryptoCostBasisTest tests/CryptoCostBasisTest.cpp services/CryptoCostBasis.cpp services/InvestmentReturn.cpp)
 target_link_libraries(CryptoCostBasisTest PRIVATE Qt6::Core Qt6::Test)
