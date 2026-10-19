@@ -4,6 +4,10 @@ import QtQuick.Layouts
 Item {
     id: page
 
+    function create() {
+        projectSheet.openFor(null);
+    }
+
     signal navigate(string key)
 
     function openProject(projectId) {
@@ -36,7 +40,7 @@ Item {
                 readonly property var row: modelData
 
                 width: list.width
-                gap: 6
+                gap: 8
 
                 TapHandler {
                     onTapped: page.openProject(projectCard.row.id)
@@ -46,20 +50,21 @@ Item {
                     Layout.fillWidth: true
                     spacing: 8
 
-                    Text {
+                    MobileText {
+                        font.family: MobileTheme.serif
                         Layout.fillWidth: true
                         text: projectCard.row.name
                         elide: Text.ElideRight
                         color: MobileTheme.accent
                         font.pixelSize: MobileTheme.sizeHeading
-                        font.weight: Font.DemiBold
+                        font.weight: Font.Normal
                     }
-                    Text {
-                        text: MobileFormat.money(projectCard.row.resultMinor, financeController.appCurrency, true)
-                        color: projectCard.row.resultMinor < 0 ? MobileTheme.red
-                             : projectCard.row.resultMinor > 0 ? MobileTheme.income : MobileTheme.accent
+                    MobileText {
+                        font.family: MobileTheme.sans
+                        text: MobileFormat.displayMoney(projectCard.row.resultMinor, financeController.appCurrency, true)
+                        color: projectCard.row.resultMinor < 0 ? MobileTheme.red : projectCard.row.resultMinor > 0 ? MobileTheme.income : MobileTheme.accent
                         font.pixelSize: MobileTheme.sizeBody
-                        font.weight: Font.DemiBold
+                        font.weight: Font.Normal
                     }
                 }
 
@@ -67,22 +72,25 @@ Item {
                     Layout.fillWidth: true
                     spacing: 8
 
-                    Text {
+                    MobileText {
+                        font.family: MobileTheme.mono
                         Layout.fillWidth: true
-                        text: qsTr("Доходы %1").arg(MobileFormat.money(projectCard.row.incomeMinor, financeController.appCurrency, false))
+                        text: qsTr("Доходы %1").arg(MobileFormat.displayMoney(projectCard.row.incomeMinor, financeController.appCurrency, false))
                         color: MobileTheme.muted
                         font.pixelSize: MobileTheme.sizeCaption
                         elide: Text.ElideRight
                     }
-                    Text {
-                        text: qsTr("Расходы %1").arg(MobileFormat.money(projectCard.row.expenseMinor, financeController.appCurrency, false))
+                    MobileText {
+                        font.family: MobileTheme.mono
+                        text: qsTr("Расходы %1").arg(MobileFormat.displayMoney(projectCard.row.expenseMinor, financeController.appCurrency, false))
                         color: MobileTheme.muted
                         font.pixelSize: MobileTheme.sizeCaption
                         elide: Text.ElideRight
                     }
                 }
 
-                Text {
+                MobileText {
+                    font.family: MobileTheme.mono
                     Layout.fillWidth: true
                     text: qsTr("Операций: %1").arg(projectCard.row.operationCount)
                     color: MobileTheme.muted
@@ -99,15 +107,8 @@ Item {
         svg: "qrc:/icons/projects.svg"
         title: qsTr("Проектов пока нет")
         text: qsTr("Проект объединяет операции одной задачи или поездки в отдельную сводку.")
-        actionText: qsTr("Создать проект")
+        actionText: ""
         onAction: projectSheet.openFor(null)
-    }
-
-    MobileFab {
-        anchors.right: parent.right
-        anchors.bottom: parent.bottom
-        anchors.bottomMargin: 8
-        onClicked: projectSheet.openFor(null)
     }
 
     MobileSheet {
@@ -132,7 +133,8 @@ Item {
             placeholder: qsTr("Например, ремонт")
         }
 
-        Text {
+        MobileText {
+            font.family: MobileTheme.mono
             Layout.fillWidth: true
             visible: projectSheet.errorText.length > 0
             text: projectSheet.errorText
@@ -146,9 +148,7 @@ Item {
             variant: "primary"
             text: qsTr("Сохранить")
             onClicked: {
-                const ok = projectSheet.editingId.length > 0
-                    ? financeController.renameProject(projectSheet.editingId, nameField.text)
-                    : financeController.addProject(nameField.text);
+                const ok = projectSheet.editingId.length > 0 ? financeController.renameProject(projectSheet.editingId, nameField.text) : financeController.addProject(nameField.text);
                 if (ok)
                     projectSheet.close();
                 else

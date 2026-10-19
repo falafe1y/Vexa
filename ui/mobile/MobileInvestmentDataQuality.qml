@@ -12,14 +12,9 @@ ColumnLayout {
     readonly property var items: quality.items || []
     readonly property var filtered: {
         const needle = panel.query.trim().toLocaleLowerCase();
-        const severity = panel.severityIndex === 1 ? "error"
-                       : panel.severityIndex === 2 ? "warning"
-                       : panel.severityIndex === 3 ? "info" : "";
-        return panel.items.filter(function(row) {
-            return (!severity || row.severity === severity)
-                && (!needle || [row.label, row.account, row.asset, row.impact, row.action,
-                                row.dateFrom, row.dateTo, (row.dates || []).join(" ")]
-                        .join(" ").toLocaleLowerCase().indexOf(needle) >= 0);
+        const severity = panel.severityIndex === 1 ? "error" : panel.severityIndex === 2 ? "warning" : panel.severityIndex === 3 ? "info" : "";
+        return panel.items.filter(function (row) {
+            return (!severity || row.severity === severity) && (!needle || [row.label, row.account, row.asset, row.impact, row.action, row.dateFrom, row.dateTo, (row.dates || []).join(" ")].join(" ").toLocaleLowerCase().indexOf(needle) >= 0);
         });
     }
 
@@ -40,13 +35,14 @@ ColumnLayout {
         return parts.join(" · ");
     }
 
-    spacing: 10
+    spacing: 12
 
     RowLayout {
         Layout.fillWidth: true
         spacing: 8
 
-        Text {
+        MobileText {
+            font.family: MobileTheme.serif
             Layout.fillWidth: true
             text: qsTr("Качество данных")
             color: MobileTheme.accent
@@ -62,17 +58,17 @@ ColumnLayout {
         }
     }
 
-    Text {
+    MobileText {
+        font.family: MobileTheme.mono
         Layout.fillWidth: true
-        text: qsTr("Проверено строк оценок: %1 · Препятствуют расчёту: %2 · Ограничивают разбор: %3 · Особенности: %4")
-            .arg(panel.quality.checkedRows || 0).arg(panel.quality.errors || 0)
-            .arg(panel.quality.warnings || 0).arg(panel.quality.notes || 0)
+        text: qsTr("Проверено строк оценок: %1 · Препятствуют расчёту: %2 · Ограничивают разбор: %3 · Особенности: %4").arg(panel.quality.checkedRows || 0).arg(panel.quality.errors || 0).arg(panel.quality.warnings || 0).arg(panel.quality.notes || 0)
         wrapMode: Text.Wrap
         color: MobileTheme.muted
         font.pixelSize: MobileTheme.sizeCaption
     }
 
-    Text {
+    MobileText {
+        font.family: MobileTheme.mono
         visible: panel.items.length === 0
         Layout.fillWidth: true
         text: qsTr("В проверенных оценках и операциях выбранного периода проблем не найдено. Это проверка записанных данных, а не полный аудит.")
@@ -113,9 +109,10 @@ ColumnLayout {
             required property var modelData
 
             Layout.fillWidth: true
-            gap: 6
+            gap: 8
 
-            Text {
+            MobileText {
+                font.family: MobileTheme.sans
                 Layout.fillWidth: true
                 text: modelData.label
                 wrapMode: Text.Wrap
@@ -123,7 +120,8 @@ ColumnLayout {
                 font.pixelSize: MobileTheme.sizeBody
                 font.weight: Font.Bold
             }
-            Text {
+            MobileText {
+                font.family: MobileTheme.mono
                 Layout.fillWidth: true
                 visible: text.length > 0
                 text: panel.context(modelData)
@@ -131,21 +129,24 @@ ColumnLayout {
                 color: MobileTheme.muted
                 font.pixelSize: MobileTheme.sizeCaption
             }
-            Text {
+            MobileText {
+                font.family: MobileTheme.sans
                 Layout.fillWidth: true
                 text: modelData.impact
                 wrapMode: Text.Wrap
                 color: MobileTheme.accent
                 font.pixelSize: MobileTheme.sizeBody
             }
-            Text {
+            MobileText {
+                font.family: MobileTheme.mono
                 Layout.fillWidth: true
                 text: qsTr("Что проверить: %1").arg(modelData.action)
                 wrapMode: Text.Wrap
                 color: MobileTheme.muted
                 font.pixelSize: MobileTheme.sizeCaption
             }
-            Text {
+            MobileText {
+                font.family: MobileTheme.mono
                 Layout.fillWidth: true
                 visible: modelData.code !== "missing_days" && (modelData.dates || []).length > 2
                 text: qsTr("Даты записей: %1").arg((modelData.dates || []).map(panel.date).join(", "))
@@ -156,7 +157,8 @@ ColumnLayout {
         }
     }
 
-    Text {
+    MobileText {
+        font.family: MobileTheme.mono
         visible: panel.detailsOpen && panel.items.length > 0 && panel.filtered.length === 0
         Layout.fillWidth: true
         text: qsTr("По выбранному фильтру проблем не найдено.")

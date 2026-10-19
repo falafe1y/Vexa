@@ -53,7 +53,9 @@ MobileSheet {
             const category = categories[j];
             if (category.type !== "expense")
                 continue;
-            const limit = limits.find(function(item) { return item.categoryId === category.value; });
+            const limit = limits.find(function (item) {
+                return item.categoryId === category.value;
+            });
             const configured = !!limit && limit.configured;
             categoryModel.append({
                 categoryId: category.value,
@@ -107,13 +109,27 @@ MobileSheet {
     MobileSegmented {
         Layout.fillWidth: true
         options: [
-            { label: "RUB", value: "RUB" },
-            { label: "USD", value: "USD" },
-            { label: "EUR", value: "EUR" },
-            { label: "CNY", value: "CNY" }
+            {
+                label: "RUB",
+                value: "RUB"
+            },
+            {
+                label: "USD",
+                value: "USD"
+            },
+            {
+                label: "EUR",
+                value: "EUR"
+            },
+            {
+                label: "CNY",
+                value: "CNY"
+            }
         ]
         value: sheet.currencyCode
-        onActivated: function(chosen) { sheet.currencyCode = chosen; }
+        onActivated: function (chosen) {
+            sheet.currencyCode = chosen;
+        }
     }
 
     MobileField {
@@ -128,7 +144,9 @@ MobileSheet {
         Layout.fillWidth: true
         label: qsTr("Все счета")
         checked: sheet.allAccountsChecked
-        onToggled: function(nowChecked) { sheet.allAccountsChecked = nowChecked; }
+        onToggled: function (nowChecked) {
+            sheet.allAccountsChecked = nowChecked;
+        }
     }
 
     ColumnLayout {
@@ -147,7 +165,9 @@ MobileSheet {
                 Layout.fillWidth: true
                 label: title
                 checked: selected
-                onToggled: function(nowChecked) { accountModel.setProperty(index, "selected", nowChecked); }
+                onToggled: function (nowChecked) {
+                    accountModel.setProperty(index, "selected", nowChecked);
+                }
             }
         }
     }
@@ -156,7 +176,9 @@ MobileSheet {
         Layout.fillWidth: true
         label: qsTr("Все категории расходов")
         checked: sheet.allCategoriesChecked
-        onToggled: function(nowChecked) { sheet.allCategoriesChecked = nowChecked; }
+        onToggled: function (nowChecked) {
+            sheet.allCategoriesChecked = nowChecked;
+        }
     }
 
     ColumnLayout {
@@ -180,7 +202,9 @@ MobileSheet {
                     Layout.fillWidth: true
                     label: title
                     checked: selected
-                    onToggled: function(nowChecked) { categoryModel.setProperty(index, "selected", nowChecked); }
+                    onToggled: function (nowChecked) {
+                        categoryModel.setProperty(index, "selected", nowChecked);
+                    }
                 }
 
                 MobileField {
@@ -195,7 +219,8 @@ MobileSheet {
         }
     }
 
-    Text {
+    MobileText {
+        font.family: MobileTheme.mono
         Layout.fillWidth: true
         visible: sheet.errorText.length > 0
         text: sheet.errorText
@@ -228,7 +253,8 @@ MobileSheet {
         }
     }
 
-    Text {
+    MobileText {
+        font.family: MobileTheme.serif
         Layout.fillWidth: true
         visible: sheet.editingId.length > 0
         text: qsTr("Операции бюджета")
@@ -244,20 +270,22 @@ MobileSheet {
             required property var modelData
 
             Layout.fillWidth: true
-            spacing: 10
+            spacing: 12
 
             ColumnLayout {
                 Layout.fillWidth: true
                 spacing: 2
 
-                Text {
+                MobileText {
+                    font.family: MobileTheme.sans
                     Layout.fillWidth: true
                     text: modelData.description
                     color: MobileTheme.accent
                     font.pixelSize: MobileTheme.sizeBody
                     elide: Text.ElideRight
                 }
-                Text {
+                MobileText {
+                    font.family: MobileTheme.mono
                     Layout.fillWidth: true
                     text: Qt.formatDate(new Date(modelData.date), "dd.MM.yyyy") + " · " + modelData.categoryName
                     color: MobileTheme.muted
@@ -265,7 +293,8 @@ MobileSheet {
                     elide: Text.ElideRight
                 }
             }
-            Text {
+            MobileText {
+                font.family: MobileTheme.sans
                 text: MobileFormat.money(modelData.budgetAmountMinor, modelData.budgetCurrency, false)
                 color: MobileTheme.accent
                 font.pixelSize: MobileTheme.sizeBody

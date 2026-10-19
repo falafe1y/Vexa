@@ -74,13 +74,27 @@ MobileSheet {
     MobileSegmented {
         Layout.fillWidth: true
         options: [
-            { label: "RUB", value: "RUB" },
-            { label: "USD", value: "USD" },
-            { label: "EUR", value: "EUR" },
-            { label: "CNY", value: "CNY" }
+            {
+                label: "RUB",
+                value: "RUB"
+            },
+            {
+                label: "USD",
+                value: "USD"
+            },
+            {
+                label: "EUR",
+                value: "EUR"
+            },
+            {
+                label: "CNY",
+                value: "CNY"
+            }
         ]
         value: sheet.currencyCode
-        onActivated: function(chosen) { sheet.currencyCode = chosen; }
+        onActivated: function (chosen) {
+            sheet.currencyCode = chosen;
+        }
     }
 
     MobileField {
@@ -95,7 +109,9 @@ MobileSheet {
         Layout.fillWidth: true
         label: qsTr("Указать срок")
         checked: sheet.hasDeadline
-        onToggled: function(nowChecked) { sheet.hasDeadline = nowChecked; }
+        onToggled: function (nowChecked) {
+            sheet.hasDeadline = nowChecked;
+        }
     }
 
     MobileField {
@@ -110,7 +126,9 @@ MobileSheet {
         Layout.fillWidth: true
         label: qsTr("Все счета и кошельки")
         checked: sheet.allSourcesChecked
-        onToggled: function(nowChecked) { sheet.allSourcesChecked = nowChecked; }
+        onToggled: function (nowChecked) {
+            sheet.allSourcesChecked = nowChecked;
+        }
     }
 
     ColumnLayout {
@@ -129,12 +147,15 @@ MobileSheet {
                 Layout.fillWidth: true
                 label: title
                 checked: selected
-                onToggled: function(nowChecked) { sourceModel.setProperty(index, "selected", nowChecked); }
+                onToggled: function (nowChecked) {
+                    sourceModel.setProperty(index, "selected", nowChecked);
+                }
             }
         }
     }
 
-    Text {
+    MobileText {
+        font.family: MobileTheme.mono
         Layout.fillWidth: true
         visible: sheet.errorText.length > 0
         text: sheet.errorText

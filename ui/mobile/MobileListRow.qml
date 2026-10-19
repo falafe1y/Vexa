@@ -15,9 +15,9 @@ Item {
     property bool marked: false
     property bool first: false
 
-    signal clicked()
+    signal clicked
 
-    implicitHeight: Math.max(60, content.implicitHeight + 20)
+    implicitHeight: Math.max(60, content.implicitHeight + 24)
 
     Rectangle {
         visible: !row.first
@@ -36,10 +36,10 @@ Item {
         id: content
 
         anchors.fill: parent
-        anchors.leftMargin: 16
-        anchors.rightMargin: 16
-        anchors.topMargin: 10
-        anchors.bottomMargin: 10
+        anchors.leftMargin: 0
+        anchors.rightMargin: 0
+        anchors.topMargin: 12
+        anchors.bottomMargin: 12
         spacing: 12
 
         Rectangle {
@@ -47,10 +47,11 @@ Item {
             Layout.preferredWidth: 36
             Layout.preferredHeight: 36
             Layout.alignment: Qt.AlignVCenter
-            radius: 10
+            radius: 0
             color: MobileTheme.pale
 
-            Text {
+            MobileText {
+                font.family: MobileTheme.sans
                 anchors.centerIn: parent
                 visible: row.glyph.length > 0
                 text: row.glyph
@@ -79,9 +80,10 @@ Item {
         ColumnLayout {
             Layout.fillWidth: true
             Layout.minimumWidth: 0
-            spacing: 2
+            spacing: 4
 
-            Text {
+            MobileText {
+                font.family: MobileTheme.sans
                 Layout.fillWidth: true
                 text: row.title
                 elide: Text.ElideRight
@@ -90,7 +92,8 @@ Item {
                 font.weight: Font.DemiBold
             }
 
-            Text {
+            MobileText {
+                font.family: MobileTheme.mono
                 Layout.fillWidth: true
                 visible: row.subtitle.length > 0
                 text: row.subtitle
@@ -100,7 +103,8 @@ Item {
             }
         }
 
-        Text {
+        MobileText {
+            font.family: MobileTheme.sans
             visible: row.amount.length > 0
             Layout.alignment: Qt.AlignVCenter
             text: row.amount

@@ -7,11 +7,17 @@ ColumnLayout {
     property var risk: ({})
 
     readonly property var points: risk.drawdowns || []
-    readonly property var xFractions: points.map(function(row, index) {
+    readonly property var xFractions: points.map(function (row, index) {
         return points.length > 1 ? index / (points.length - 1) : 0.5;
     })
     readonly property var chartSeries: [
-        { values: points.map(function(row) { return -Number(row.percent); }), color: MobileTheme.red, width: 2 }
+        {
+            values: points.map(function (row) {
+                return -Number(row.percent);
+            }),
+            color: MobileTheme.red,
+            width: 2
+        }
     ]
 
     function available(value) {
@@ -26,7 +32,8 @@ ColumnLayout {
 
     spacing: 12
 
-    Text {
+    MobileText {
+        font.family: MobileTheme.serif
         Layout.fillWidth: true
         text: qsTr("Колебания и просадки")
         color: MobileTheme.accent
@@ -37,17 +44,47 @@ ColumnLayout {
     GridLayout {
         Layout.fillWidth: true
         columns: 2
-        columnSpacing: 10
-        rowSpacing: 10
+        columnSpacing: 12
+        rowSpacing: 12
 
         Repeater {
             model: [
-                { title: qsTr("Годовая волатильность"), value: panel.percent(panel.risk.annualVolatilityPercent), hint: qsTr("Разброс дневной доходности, приведённый к году"), metric: "volatility" },
-                { title: qsTr("Максимальная просадка"), value: panel.percent(panel.risk.maximumDrawdownPercent), hint: panel.risk.peakDate ? panel.date(panel.risk.peakDate) + " → " + panel.date(panel.risk.troughDate) : qsTr("Падение от предыдущего максимума за выбранный период"), metric: "maximum_drawdown" },
-                { title: qsTr("Просадка на конец периода"), value: panel.percent(panel.risk.currentDrawdownPercent), hint: qsTr("Ниже максимума, достигнутого в этом периоде"), metric: "current_drawdown" },
-                { title: qsTr("Лучший день"), value: panel.percent(panel.risk.bestDayPercent), hint: panel.date(panel.risk.bestDay), metric: "best_day" },
-                { title: qsTr("Худший день"), value: panel.percent(panel.risk.worstDayPercent), hint: panel.date(panel.risk.worstDay), metric: "worst_day" },
-                { title: qsTr("Дней доходности в расчёте"), value: panel.risk.available ? String(panel.risk.returnDays || 0) : "—", hint: qsTr("Дни, когда была положительная база для расчёта"), metric: "risk_days" }
+                {
+                    title: qsTr("Годовая волатильность"),
+                    value: panel.percent(panel.risk.annualVolatilityPercent),
+                    hint: qsTr("Разброс дневной доходности, приведённый к году"),
+                    metric: "volatility"
+                },
+                {
+                    title: qsTr("Максимальная просадка"),
+                    value: panel.percent(panel.risk.maximumDrawdownPercent),
+                    hint: panel.risk.peakDate ? panel.date(panel.risk.peakDate) + " → " + panel.date(panel.risk.troughDate) : qsTr("Падение от предыдущего максимума за выбранный период"),
+                    metric: "maximum_drawdown"
+                },
+                {
+                    title: qsTr("Просадка на конец периода"),
+                    value: panel.percent(panel.risk.currentDrawdownPercent),
+                    hint: qsTr("Ниже максимума, достигнутого в этом периоде"),
+                    metric: "current_drawdown"
+                },
+                {
+                    title: qsTr("Лучший день"),
+                    value: panel.percent(panel.risk.bestDayPercent),
+                    hint: panel.date(panel.risk.bestDay),
+                    metric: "best_day"
+                },
+                {
+                    title: qsTr("Худший день"),
+                    value: panel.percent(panel.risk.worstDayPercent),
+                    hint: panel.date(panel.risk.worstDay),
+                    metric: "worst_day"
+                },
+                {
+                    title: qsTr("Дней доходности в расчёте"),
+                    value: panel.risk.available ? String(panel.risk.returnDays || 0) : "—",
+                    hint: qsTr("Дни, когда была положительная база для расчёта"),
+                    metric: "risk_days"
+                }
             ]
 
             delegate: MobileCard {
@@ -55,11 +92,12 @@ ColumnLayout {
 
                 Layout.fillWidth: true
                 cardPadding: 12
-                gap: 6
+                gap: 8
 
                 RowLayout {
                     Layout.fillWidth: true
-                    Text {
+                    MobileText {
+                        font.family: MobileTheme.mono
                         Layout.fillWidth: true
                         text: modelData.title
                         wrapMode: Text.Wrap
@@ -71,7 +109,8 @@ ColumnLayout {
                         displayValue: modelData.value
                     }
                 }
-                Text {
+                MobileText {
+                    font.family: MobileTheme.serif
                     Layout.fillWidth: true
                     text: modelData.value
                     elide: Text.ElideRight
@@ -79,7 +118,8 @@ ColumnLayout {
                     font.pixelSize: MobileTheme.sizeTitle
                     font.weight: Font.Bold
                 }
-                Text {
+                MobileText {
+                    font.family: MobileTheme.mono
                     Layout.fillWidth: true
                     text: modelData.hint
                     wrapMode: Text.Wrap
@@ -90,30 +130,27 @@ ColumnLayout {
         }
     }
 
-    Text {
+    MobileText {
+        font.family: MobileTheme.mono
         Layout.fillWidth: true
         wrapMode: Text.Wrap
         color: MobileTheme.muted
         font.pixelSize: MobileTheme.sizeCaption
-        text: !panel.risk.available
-            ? qsTr("Для расчёта нужна непрерывная история оценок и известные денежные потоки. Причины пропусков указаны в пояснениях к расчёту.")
-            : !panel.available(panel.risk.annualVolatilityPercent)
-                ? qsTr("Для волатильности нужны минимум два дня доходности — три дневные оценки. Просадки и лучший/худший день уже доступны.")
-                : qsTr("Выборочное отклонение дневной доходности × √365,25. Дни с нулевым капиталом и без движений исключены из волатильности. Короткая история даёт менее устойчивую оценку.")
+        text: !panel.risk.available ? qsTr("Для расчёта нужна непрерывная история оценок и известные денежные потоки. Причины пропусков указаны в пояснениях к расчёту.") : !panel.available(panel.risk.annualVolatilityPercent) ? qsTr("Для волатильности нужны минимум два дня доходности — три дневные оценки. Просадки и лучший/худший день уже доступны.") : qsTr("Выборочное отклонение дневной доходности × √365,25. Дни с нулевым капиталом и без движений исключены из волатильности. Короткая история даёт менее устойчивую оценку.")
     }
 
-    Text {
+    MobileText {
+        font.family: MobileTheme.mono
         Layout.fillWidth: true
         visible: !!panel.risk.available && panel.risk.maximumDrawdownPercent > 0
         wrapMode: Text.Wrap
         color: MobileTheme.muted
         font.pixelSize: MobileTheme.sizeCaption
-        text: panel.risk.recoveryDate
-            ? qsTr("Максимальная просадка восстановилась: %1").arg(panel.date(panel.risk.recoveryDate))
-            : qsTr("Максимальная просадка не восстановилась к концу выбранного периода.")
+        text: panel.risk.recoveryDate ? qsTr("Максимальная просадка восстановилась: %1").arg(panel.date(panel.risk.recoveryDate)) : qsTr("Максимальная просадка не восстановилась к концу выбранного периода.")
     }
 
-    Text {
+    MobileText {
+        font.family: MobileTheme.sans
         Layout.fillWidth: true
         text: qsTr("Просадка относительно предыдущего максимума")
         wrapMode: Text.Wrap
@@ -125,7 +162,7 @@ ColumnLayout {
     MobileCard {
         visible: panel.points.length >= 2
         Layout.fillWidth: true
-        gap: 6
+        gap: 8
 
         MobileSeriesChart {
             Layout.fillWidth: true
@@ -133,17 +170,28 @@ ColumnLayout {
             series: panel.chartSeries
             xFractions: panel.xFractions
             xLabels: [
-                { fraction: 0, text: panel.date(panel.points.length ? panel.points[0].date : ""), align: "left" },
-                { fraction: 1, text: panel.date(panel.points.length ? panel.points[panel.points.length - 1].date : ""), align: "right" }
+                {
+                    fraction: 0,
+                    text: panel.date(panel.points.length ? panel.points[0].date : ""),
+                    align: "left"
+                },
+                {
+                    fraction: 1,
+                    text: panel.date(panel.points.length ? panel.points[panel.points.length - 1].date : ""),
+                    align: "right"
+                }
             ]
-            tooltips: panel.points.map(function(row) {
+            tooltips: panel.points.map(function (row) {
                 return panel.date(row.date) + " · " + panel.percent(row.percent);
             })
-            formatValue: function(value) { return Number(value).toLocaleString(MobileFormat.locale(), "f", 1) + " %"; }
+            formatValue: function (value) {
+                return Number(value).toLocaleString(MobileFormat.locale(), "f", 1) + " %";
+            }
         }
     }
 
-    Text {
+    MobileText {
+        font.family: MobileTheme.mono
         Layout.fillWidth: true
         wrapMode: Text.Wrap
         color: MobileTheme.muted

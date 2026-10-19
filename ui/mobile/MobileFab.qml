@@ -4,7 +4,7 @@ Item {
     id: fab
 
     property string icon: "plus"
-    signal clicked()
+    signal clicked
 
     implicitWidth: 56
     implicitHeight: 56
@@ -14,14 +14,14 @@ Item {
         y: MobileTheme.shadowDepth
         width: 52
         height: 52
-        radius: 16
+        radius: 0
         color: MobileTheme.accentSoft
     }
 
     Rectangle {
         width: 52
         height: 52
-        radius: 16
+        radius: 0
         color: tap.pressed ? MobileTheme.navSelected : MobileTheme.accent
 
         MobileIcon {

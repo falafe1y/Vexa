@@ -3,28 +3,26 @@ import QtQuick.Controls
 
 Button {
     id: chip
-
     property bool selected: false
-
-    implicitHeight: 32
+    implicitHeight: 48
     leftPadding: 12
     rightPadding: 12
-    font.pixelSize: MobileTheme.sizeCaption
-    font.weight: Font.Medium
-
-    contentItem: Text {
+    font.family: MobileTheme.sans
+    font.pixelSize: 16
+    contentItem: MobileText {
         text: chip.text
         font: chip.font
-        color: chip.selected ? MobileTheme.accentText : MobileTheme.accent
         horizontalAlignment: Text.AlignHCenter
         verticalAlignment: Text.AlignVCenter
         elide: Text.ElideRight
     }
-
     background: Rectangle {
-        radius: 16
-        color: chip.selected ? MobileTheme.accent : MobileTheme.panel
-        border.width: 1
-        border.color: chip.selected ? MobileTheme.accent : MobileTheme.line
+        color: chip.selected || chip.down ? MobileTheme.pale : "transparent"
+        Rectangle {
+            anchors.bottom: parent.bottom
+            width: parent.width
+            height: chip.selected ? 2 : 1
+            color: chip.selected ? MobileTheme.accent : MobileTheme.line
+        }
     }
 }

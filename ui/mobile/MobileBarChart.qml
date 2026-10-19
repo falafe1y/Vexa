@@ -10,6 +10,13 @@ Item {
     onPointsChanged: canvas.requestPaint()
     onAverageMinorChanged: canvas.requestPaint()
 
+    Connections {
+        target: MobileTheme
+        function onHideAmountsChanged() {
+            canvas.requestPaint();
+        }
+    }
+
     Canvas {
         id: canvas
 
@@ -34,7 +41,7 @@ Item {
             const tickStep = MobileAnalytics.niceChartStep(paddedMaximum, tickIntervals);
             maximum = tickIntervals * tickStep;
 
-            ctx.font = "12px Commissioner";
+            ctx.font = "12px Cousine";
             for (let tick = 0; tick <= tickIntervals; ++tick) {
                 const y = top + tick / tickIntervals * plotHeight;
                 ctx.strokeStyle = MobileTheme.line;
@@ -75,8 +82,7 @@ Item {
             ctx.textBaseline = "top";
             ctx.textAlign = "center";
             for (let index = 0; index < data.length; ++index)
-                ctx.fillText(MobileAnalytics.expenseMonthLabel(data[index].monthIndex),
-                             left + (index + 0.5) * slot, top + plotHeight + 6);
+                ctx.fillText(MobileAnalytics.expenseMonthLabel(data[index].monthIndex), left + (index + 0.5) * slot, top + plotHeight + 6);
         }
     }
 }

@@ -6,12 +6,13 @@ Rectangle {
     property string metric: ""
     property string displayValue: ""
 
-    implicitWidth: 28
-    implicitHeight: 28
-    radius: 14
-    color: tap.pressed ? MobileTheme.hover : MobileTheme.pale
+    implicitWidth: 44
+    implicitHeight: 44
+    radius: 0
+    color: tap.pressed ? MobileTheme.hover : "transparent"
 
-    Text {
+    MobileText {
+        font.family: MobileTheme.sans
         anchors.centerIn: parent
         text: "?"
         color: MobileTheme.navSelected

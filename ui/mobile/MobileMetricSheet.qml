@@ -6,8 +6,7 @@ MobileSheet {
 
     property string metric: ""
     property string displayValue: ""
-    readonly property var entry: MobileMetricDefinitions.entries[metric]
-        || [qsTr("Показатель"), qsTr("Подробности приведены в пояснениях к расчёту."), "", ""]
+    readonly property var entry: MobileMetricDefinitions.entries[metric] || [qsTr("Показатель"), qsTr("Подробности приведены в пояснениях к расчёту."), "", ""]
 
     title: entry[0]
 
@@ -17,7 +16,8 @@ MobileSheet {
         open();
     }
 
-    Text {
+    MobileText {
+        font.family: MobileTheme.sans
         Layout.fillWidth: true
         visible: sheet.displayValue.length > 0
         text: qsTr("Сейчас: %1").arg(sheet.displayValue)
@@ -26,14 +26,16 @@ MobileSheet {
         font.pixelSize: MobileTheme.sizeBody
         font.weight: Font.DemiBold
     }
-    Text {
+    MobileText {
+        font.family: MobileTheme.sans
         Layout.fillWidth: true
         text: sheet.entry[1]
         wrapMode: Text.Wrap
         color: MobileTheme.accent
         font.pixelSize: MobileTheme.sizeBody
     }
-    Text {
+    MobileText {
+        font.family: MobileTheme.sans
         Layout.fillWidth: true
         visible: sheet.entry[2].length > 0
         text: qsTr("Расчёт: %1").arg(sheet.entry[2])
@@ -41,7 +43,8 @@ MobileSheet {
         color: MobileTheme.accent
         font.pixelSize: MobileTheme.sizeBody
     }
-    Text {
+    MobileText {
+        font.family: MobileTheme.mono
         Layout.fillWidth: true
         visible: sheet.entry[3].length > 0
         text: sheet.entry[3]
@@ -49,7 +52,8 @@ MobileSheet {
         color: MobileTheme.muted
         font.pixelSize: MobileTheme.sizeCaption
     }
-    Text {
+    MobileText {
+        font.family: MobileTheme.mono
         Layout.fillWidth: true
         text: qsTr("Если показано «—», проверьте блок «Качество данных» и пояснения к расчёту.")
         wrapMode: Text.Wrap

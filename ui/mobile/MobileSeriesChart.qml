@@ -7,7 +7,9 @@ Item {
     property var xFractions: []
     property var xLabels: []
     property var tooltips: []
-    property var formatValue: function(value) { return String(Math.round(value)); }
+    property var formatValue: function (value) {
+        return String(Math.round(value));
+    }
     property int selectedIndex: -1
 
     readonly property real leftMargin: 64
@@ -30,7 +32,12 @@ Item {
             }
         }
         if (!Number.isFinite(minimum))
-            return { minimum: 0, maximum: 1, step: 0.2, intervals: 5 };
+            return {
+                minimum: 0,
+                maximum: 1,
+                step: 0.2,
+                intervals: 5
+            };
         return MobileAnalytics.niceChartAxis(minimum, maximum);
     }
 
@@ -59,6 +66,13 @@ Item {
     onXLabelsChanged: canvas.requestPaint()
     onSelectedIndexChanged: canvas.requestPaint()
 
+    Connections {
+        target: MobileTheme
+        function onHideAmountsChanged() {
+            canvas.requestPaint();
+        }
+    }
+
     Canvas {
         id: canvas
 
@@ -73,14 +87,14 @@ Item {
             const plotHeight = Math.max(1, height - chart.topMargin - chart.bottomMargin);
             const axis = chart.axis;
             const range = Math.max(1e-9, axis.maximum - axis.minimum);
-            const yFor = function(value) {
+            const yFor = function (value) {
                 return chart.topMargin + (axis.maximum - value) / range * plotHeight;
             };
-            const xFor = function(index) {
+            const xFor = function (index) {
                 return chart.leftMargin + (chart.xFractions[index] || 0) * plotWidth;
             };
 
-            ctx.font = "12px Commissioner";
+            ctx.font = "12px Cousine";
             ctx.lineWidth = 1;
             for (let tick = 0; tick <= axis.intervals; ++tick) {
                 const y = chart.topMargin + tick / axis.intervals * plotHeight;
@@ -140,8 +154,12 @@ Item {
 
     MouseArea {
         anchors.fill: parent
-        onPressed: function(mouse) { chart.selectFromX(mouse.x); }
-        onPositionChanged: function(mouse) { chart.selectFromX(mouse.x); }
+        onPressed: function (mouse) {
+            chart.selectFromX(mouse.x);
+        }
+        onPositionChanged: function (mouse) {
+            chart.selectFromX(mouse.x);
+        }
         onReleased: chart.selectedIndex = -1
         onCanceled: chart.selectedIndex = -1
     }
@@ -157,8 +175,9 @@ Item {
         border.width: 1
         border.color: MobileTheme.accent
 
-        Text {
+        MobileText {
             id: tooltipText
+            font.family: MobileTheme.mono
             anchors.centerIn: parent
             text: chart.selectedIndex >= 0 && chart.selectedIndex < chart.tooltips.length ? chart.tooltips[chart.selectedIndex] : ""
             color: MobileTheme.accent

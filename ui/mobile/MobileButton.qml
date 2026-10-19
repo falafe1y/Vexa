@@ -9,14 +9,14 @@ Button {
     implicitHeight: MobileTheme.touchHeight
     leftPadding: 16
     rightPadding: 16
+    font.family: MobileTheme.sans
     font.pixelSize: MobileTheme.sizeBody
-    font.weight: Font.DemiBold
+    font.weight: Font.Normal
 
-    contentItem: Text {
+    contentItem: MobileText {
         text: control.text
         font: control.font
-        color: control.variant === "primary" ? MobileTheme.accentText
-             : control.variant === "danger" ? MobileTheme.red : MobileTheme.accent
+        color: control.variant === "primary" ? MobileTheme.accentText : control.variant === "danger" ? MobileTheme.red : MobileTheme.accent
         horizontalAlignment: Text.AlignHCenter
         verticalAlignment: Text.AlignVCenter
         elide: Text.ElideRight
@@ -24,11 +24,9 @@ Button {
 
     background: Rectangle {
         radius: MobileTheme.radiusControl
-        color: control.variant === "primary" ? MobileTheme.accent
-             : control.down ? MobileTheme.hover : MobileTheme.panel
+        color: control.variant === "primary" ? MobileTheme.accent : control.down ? MobileTheme.hover : MobileTheme.panel
         border.width: 1
-        border.color: control.variant === "primary" ? MobileTheme.accent
-                    : control.variant === "danger" ? MobileTheme.red : MobileTheme.line
+        border.color: control.variant === "primary" ? MobileTheme.accent : control.variant === "danger" ? MobileTheme.red : MobileTheme.line
         opacity: control.enabled ? 1 : 0.4
     }
 }

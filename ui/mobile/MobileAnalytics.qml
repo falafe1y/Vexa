@@ -34,13 +34,7 @@ QtObject {
         const raw = range / Math.max(1, targetIntervals);
         const magnitude = Math.pow(10, Math.floor(Math.log(raw) / Math.LN10));
         const normalized = raw / magnitude;
-        const factor = normalized <= 1 ? 1
-                     : normalized <= 2 ? 2
-                     : normalized <= 2.5 ? 2.5
-                     : normalized <= 3 ? 3
-                     : normalized <= 4 ? 4
-                     : normalized <= 5 ? 5
-                     : normalized <= 7.5 ? 7.5 : 10;
+        const factor = normalized <= 1 ? 1 : normalized <= 2 ? 2 : normalized <= 2.5 ? 2.5 : normalized <= 3 ? 3 : normalized <= 4 ? 4 : normalized <= 5 ? 5 : normalized <= 7.5 ? 7.5 : 10;
         return factor * magnitude;
     }
 
@@ -49,7 +43,12 @@ QtObject {
         let high = Number(maximum);
         const intervals = Math.max(1, chartPriceLevels - 1);
         if (!Number.isFinite(low) || !Number.isFinite(high))
-            return { minimum: 0, maximum: intervals, step: 1, intervals: intervals };
+            return {
+                minimum: 0,
+                maximum: intervals,
+                step: 1,
+                intervals: intervals
+            };
         if (low > high) {
             const swap = low;
             low = high;
@@ -63,8 +62,7 @@ QtObject {
         let axisMinimum;
         while (true) {
             const lowerStart = Math.floor((low - padding) / step + 1e-9) * step;
-            const upperStart = Math.ceil((high + padding) / step - 1e-9) * step
-                             - intervals * step;
+            const upperStart = Math.ceil((high + padding) / step - 1e-9) * step - intervals * step;
             axisMinimum = Math.max(lowerStart, upperStart);
             if (axisMinimum <= low + step * 1e-9)
                 break;
@@ -79,6 +77,8 @@ QtObject {
     }
 
     function capitalAxisMoney(minor, code) {
+        if (MobileTheme.hideAmounts)
+            return "***";
         const amount = Math.abs(Number(minor)) < 0.5 ? 0 : Number(minor) / 100;
         const absolute = Math.abs(amount);
         let divisor = 1;
@@ -98,10 +98,8 @@ QtObject {
             const scaledWestern = amount / divisor;
             const roundedWestern = Math.round(scaledWestern);
             const wholeWestern = Math.abs(scaledWestern - roundedWestern) < 0.000001;
-            const westernDigits = wholeWestern || Math.abs(scaledWestern) >= 100 ? 0
-                                : Math.abs(scaledWestern) >= 10 ? 1 : 2;
-            const westernNumber = Math.abs(scaledWestern).toFixed(westernDigits)
-                .replace(/\.0+$/, "").replace(/(\.\d*[1-9])0+$/, "$1");
+            const westernDigits = wholeWestern || Math.abs(scaledWestern) >= 100 ? 0 : Math.abs(scaledWestern) >= 10 ? 1 : 2;
+            const westernNumber = Math.abs(scaledWestern).toFixed(westernDigits).replace(/\.0+$/, "").replace(/(\.\d*[1-9])0+$/, "$1");
             return (scaledWestern < 0 ? "−" : "") + MobileFormat.symbol(code) + westernNumber + suffix;
         }
         if (divisor === 1)
@@ -109,18 +107,12 @@ QtObject {
         const scaled = amount / divisor;
         const roundedScaled = Math.round(scaled);
         const whole = Math.abs(scaled - roundedScaled) < 0.000001;
-        const digits = whole || Math.abs(scaled) >= 100 ? 0
-                     : Math.abs(scaled) >= 10 ? 1 : 2;
-        return scaled.toLocaleString(MobileFormat.locale(), "f", digits)
-            + " " + suffix + " " + MobileFormat.symbol(code);
+        const digits = whole || Math.abs(scaled) >= 100 ? 0 : Math.abs(scaled) >= 10 ? 1 : 2;
+        return scaled.toLocaleString(MobileFormat.locale(), "f", digits) + " " + suffix + " " + MobileFormat.symbol(code);
     }
 
     function expenseMonthLabel(month) {
-        return [
-            qsTr("Янв."), qsTr("Фев."), qsTr("Мар."), qsTr("Апр."),
-            qsTr("Май"), qsTr("Июн."), qsTr("Июл."), qsTr("Авг."),
-            qsTr("Сен."), qsTr("Окт."), qsTr("Ноя."), qsTr("Дек.")
-        ][month];
+        return [qsTr("Янв."), qsTr("Фев."), qsTr("Мар."), qsTr("Апр."), qsTr("Май"), qsTr("Июн."), qsTr("Июл."), qsTr("Авг."), qsTr("Сен."), qsTr("Окт."), qsTr("Ноя."), qsTr("Дек.")][month];
     }
 
     function averageCompletedMonthExpense(rows) {

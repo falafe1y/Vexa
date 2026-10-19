@@ -10,9 +10,7 @@ ColumnLayout {
     property int groupIndex: 0
 
     readonly property var colors: ["#3F735F", "#6B92AD", "#B68B4C", "#8B749F", "#597C8A", "#C08A7B", "#9AA766", "#66728B"]
-    readonly property var holdings: (groupIndex === 1 ? allocation.types
-        : groupIndex === 2 ? allocation.accounts
-        : groupIndex === 3 ? allocation.currencies : allocation.items) || []
+    readonly property var holdings: (groupIndex === 1 ? allocation.types : groupIndex === 2 ? allocation.accounts : groupIndex === 3 ? allocation.currencies : allocation.items) || []
     readonly property var resultRows: contributions.items || []
     readonly property real maximumResult: {
         let maximum = 0;
@@ -37,7 +35,8 @@ ColumnLayout {
         Layout.fillWidth: true
         spacing: 8
 
-        Text {
+        MobileText {
+            font.family: MobileTheme.serif
             Layout.fillWidth: true
             text: qsTr("Структура вложений")
             color: MobileTheme.accent
@@ -68,7 +67,8 @@ ColumnLayout {
         }
     }
 
-    Text {
+    MobileText {
+        font.family: MobileTheme.mono
         Layout.fillWidth: true
         text: qsTr("На конец выбранного периода · Стоимость: %1").arg(panel.amount(panel.allocation.capitalMinor))
         wrapMode: Text.Wrap
@@ -105,7 +105,8 @@ ColumnLayout {
             }
         }
 
-        Text {
+        MobileText {
+            font.family: MobileTheme.serif
             anchors.centerIn: parent
             text: "100 %"
             color: MobileTheme.accent
@@ -116,12 +117,11 @@ ColumnLayout {
     onHoldingsChanged: donut.requestPaint()
     onAllocationChanged: donut.requestPaint()
 
-    Text {
+    MobileText {
+        font.family: MobileTheme.mono
         Layout.fillWidth: true
         visible: !panel.allocation.pieAvailable
-        text: !panel.allocation.available
-            ? qsTr("Для долей нужна полная оценка всех активов на конец периода.")
-            : qsTr("При нулевой или отрицательной стоимости круговые доли не рассчитываются. Суммы приведены ниже.")
+        text: !panel.allocation.available ? qsTr("Для долей нужна полная оценка всех активов на конец периода.") : qsTr("При нулевой или отрицательной стоимости круговые доли не рассчитываются. Суммы приведены ниже.")
         wrapMode: Text.Wrap
         color: MobileTheme.muted
         font.pixelSize: MobileTheme.sizeCaption
@@ -143,19 +143,22 @@ ColumnLayout {
                 radius: 3
                 color: panel.colors[index % panel.colors.length]
             }
-            Text {
+            MobileText {
+                font.family: MobileTheme.mono
                 Layout.fillWidth: true
                 text: modelData.label
                 wrapMode: Text.Wrap
                 color: MobileTheme.accent
                 font.pixelSize: MobileTheme.sizeCaption
             }
-            Text {
+            MobileText {
+                font.family: MobileTheme.mono
                 text: panel.amount(modelData.amountMinor)
                 color: MobileTheme.accent
                 font.pixelSize: MobileTheme.sizeCaption
             }
-            Text {
+            MobileText {
+                font.family: MobileTheme.mono
                 Layout.preferredWidth: 66
                 horizontalAlignment: Text.AlignRight
                 text: panel.percent(panel.allocation.pieAvailable ? modelData.percent : null)
@@ -165,7 +168,8 @@ ColumnLayout {
         }
     }
 
-    Text {
+    MobileText {
+        font.family: MobileTheme.mono
         Layout.fillWidth: true
         visible: (panel.allocation.adjustments || []).length > 0
         text: qsTr("Неучтённый в деньгах результат контрактов: %1. Это переоценка, а не стоимость вложенного капитала; в круговые доли она не входит.").arg(panel.amount(panel.allocation.adjustmentMinor))
@@ -183,14 +187,16 @@ ColumnLayout {
             Layout.fillWidth: true
             spacing: 8
 
-            Text {
+            MobileText {
+                font.family: MobileTheme.mono
                 Layout.fillWidth: true
                 text: modelData.label
                 wrapMode: Text.Wrap
                 color: MobileTheme.muted
                 font.pixelSize: MobileTheme.sizeCaption
             }
-            Text {
+            MobileText {
+                font.family: MobileTheme.mono
                 text: panel.amount(modelData.amountMinor)
                 color: MobileTheme.accent
                 font.pixelSize: MobileTheme.sizeCaption
@@ -198,7 +204,8 @@ ColumnLayout {
         }
     }
 
-    Text {
+    MobileText {
+        font.family: MobileTheme.mono
         Layout.fillWidth: true
         text: qsTr("Валюты — валюты оценки на счетах, а не валютная экспозиция компаний и фондов. Заблокированное обеспечение контрактов не добавляется повторно к деньгам.")
         wrapMode: Text.Wrap
@@ -211,7 +218,8 @@ ColumnLayout {
         Layout.topMargin: 8
         spacing: 8
 
-        Text {
+        MobileText {
+            font.family: MobileTheme.serif
             Layout.fillWidth: true
             text: qsTr("Вклад активов в результат")
             color: MobileTheme.accent
@@ -225,7 +233,8 @@ ColumnLayout {
         }
     }
 
-    Text {
+    MobileText {
+        font.family: MobileTheme.mono
         Layout.fillWidth: true
         text: qsTr("За выбранный период, включая закрытые позиции, выплаты и учтённые расходы. Пополнения и выводы исключены.")
         wrapMode: Text.Wrap
@@ -233,7 +242,8 @@ ColumnLayout {
         font.pixelSize: MobileTheme.sizeCaption
     }
 
-    Text {
+    MobileText {
+        font.family: MobileTheme.mono
         Layout.fillWidth: true
         visible: !panel.contributions.available
         text: qsTr("Нужны достоверные начальная и конечная оценки, денежные потоки и курсы валют.")
@@ -254,14 +264,16 @@ ColumnLayout {
             RowLayout {
                 Layout.fillWidth: true
                 spacing: 8
-                Text {
+                MobileText {
+                    font.family: MobileTheme.mono
                     Layout.fillWidth: true
                     text: modelData.label
                     wrapMode: Text.Wrap
                     color: MobileTheme.accent
                     font.pixelSize: MobileTheme.sizeCaption
                 }
-                Text {
+                MobileText {
+                    font.family: MobileTheme.mono
                     text: panel.amount(modelData.amountMinor)
                     color: modelData.amountMinor < 0 ? MobileTheme.red : MobileTheme.income
                     font.pixelSize: MobileTheme.sizeCaption
@@ -290,19 +302,18 @@ ColumnLayout {
         }
     }
 
-    Text {
+    MobileText {
+        font.family: MobileTheme.mono
         Layout.fillWidth: true
         visible: !!panel.contributions.available
-        text: qsTr("Валютная переоценка счетов: %1\nНеобъяснённая разница: %2\nИтого: %3")
-            .arg(panel.amount(panel.contributions.fxMinor))
-            .arg(panel.amount(panel.contributions.unexplainedMinor))
-            .arg(panel.amount(panel.contributions.totalMinor))
+        text: qsTr("Валютная переоценка счетов: %1\nНеобъяснённая разница: %2\nИтого: %3").arg(panel.amount(panel.contributions.fxMinor)).arg(panel.amount(panel.contributions.unexplainedMinor)).arg(panel.amount(panel.contributions.totalMinor))
         wrapMode: Text.Wrap
         color: MobileTheme.muted
         font.pixelSize: MobileTheme.sizeCaption
     }
 
-    Text {
+    MobileText {
+        font.family: MobileTheme.mono
         Layout.fillWidth: true
         text: qsTr("Результат активов рассчитан при курсе валют счетов на начало периода. Валютная переоценка показана отдельно. Длина полос отражает сумму прибыли или убытка, а не долю вложений.")
         wrapMode: Text.Wrap

@@ -4,27 +4,79 @@ import QtQuick.Layouts
 Item {
     id: page
 
+    function create() {
+        sheet.openFor(null);
+    }
+
     readonly property var recurrenceOptions: [
-        { label: qsTr("Ежедневно"), value: "daily" },
-        { label: qsTr("Каждую неделю"), value: "weekly" },
-        { label: qsTr("Каждый месяц"), value: "monthly_day" },
-        { label: qsTr("День недели месяца"), value: "monthly_weekday" }
+        {
+            label: qsTr("Ежедневно"),
+            value: "daily"
+        },
+        {
+            label: qsTr("Каждую неделю"),
+            value: "weekly"
+        },
+        {
+            label: qsTr("Каждый месяц"),
+            value: "monthly_day"
+        },
+        {
+            label: qsTr("День недели месяца"),
+            value: "monthly_weekday"
+        }
     ]
     readonly property var weekdayOptions: [
-        { label: qsTr("Пн"), value: 1 },
-        { label: qsTr("Вт"), value: 2 },
-        { label: qsTr("Ср"), value: 3 },
-        { label: qsTr("Чт"), value: 4 },
-        { label: qsTr("Пт"), value: 5 },
-        { label: qsTr("Сб"), value: 6 },
-        { label: qsTr("Вс"), value: 7 }
+        {
+            label: qsTr("Пн"),
+            value: 1
+        },
+        {
+            label: qsTr("Вт"),
+            value: 2
+        },
+        {
+            label: qsTr("Ср"),
+            value: 3
+        },
+        {
+            label: qsTr("Чт"),
+            value: 4
+        },
+        {
+            label: qsTr("Пт"),
+            value: 5
+        },
+        {
+            label: qsTr("Сб"),
+            value: 6
+        },
+        {
+            label: qsTr("Вс"),
+            value: 7
+        }
     ]
     readonly property var weekOfMonthOptions: [
-        { label: qsTr("Первая"), value: 1 },
-        { label: qsTr("Вторая"), value: 2 },
-        { label: qsTr("Третья"), value: 3 },
-        { label: qsTr("Четвёртая"), value: 4 },
-        { label: qsTr("Последняя"), value: 5 }
+        {
+            label: qsTr("Первая"),
+            value: 1
+        },
+        {
+            label: qsTr("Вторая"),
+            value: 2
+        },
+        {
+            label: qsTr("Третья"),
+            value: 3
+        },
+        {
+            label: qsTr("Четвёртая"),
+            value: 4
+        },
+        {
+            label: qsTr("Последняя"),
+            value: 5
+        }
     ]
 
     function fiatAccounts() {
@@ -37,7 +89,9 @@ Item {
     }
 
     function categoriesFor(kind) {
-        return financeController.categories.filter(function(item) { return item.type === kind; });
+        return financeController.categories.filter(function (item) {
+            return item.type === kind;
+        });
     }
 
     function accountCurrency(accountId) {
@@ -73,7 +127,7 @@ Item {
                 readonly property var row: modelData
 
                 width: list.width
-                gap: 6
+                gap: 8
 
                 TapHandler {
                     onTapped: sheet.openFor(scheduleCard.row)
@@ -83,24 +137,26 @@ Item {
                     Layout.fillWidth: true
                     spacing: 8
 
-                    Text {
+                    MobileText {
+                        font.family: MobileTheme.serif
                         Layout.fillWidth: true
                         text: scheduleCard.row.name
                         elide: Text.ElideRight
                         color: MobileTheme.accent
                         font.pixelSize: MobileTheme.sizeHeading
-                        font.weight: Font.DemiBold
+                        font.weight: Font.Normal
                     }
-                    Text {
-                        text: MobileFormat.money(scheduleCard.row.type === "income" ? scheduleCard.row.amount : -scheduleCard.row.amount,
-                                                 scheduleCard.row.currency, true)
+                    MobileText {
+                        font.family: MobileTheme.sans
+                        text: MobileFormat.displayMoney(scheduleCard.row.type === "income" ? scheduleCard.row.amount : -scheduleCard.row.amount, scheduleCard.row.currency, true)
                         color: scheduleCard.row.type === "income" ? MobileTheme.income : MobileTheme.red
                         font.pixelSize: MobileTheme.sizeBody
-                        font.weight: Font.DemiBold
+                        font.weight: Font.Normal
                     }
                 }
 
-                Text {
+                MobileText {
+                    font.family: MobileTheme.mono
                     Layout.fillWidth: true
                     text: scheduleCard.row.scheduleText
                     wrapMode: Text.Wrap
@@ -108,10 +164,10 @@ Item {
                     font.pixelSize: MobileTheme.sizeCaption
                 }
 
-                Text {
+                MobileText {
+                    font.family: MobileTheme.mono
                     Layout.fillWidth: true
-                    text: qsTr("Следующая: %1").arg(MobileFormat.isoDate(scheduleCard.row.nextDate))
-                        + " · " + scheduleCard.row.accountName
+                    text: qsTr("Следующая: %1").arg(MobileFormat.isoDate(scheduleCard.row.nextDate)) + " · " + scheduleCard.row.accountName
                     elide: Text.ElideRight
                     color: MobileTheme.muted
                     font.pixelSize: MobileTheme.sizeCaption
@@ -127,15 +183,8 @@ Item {
         icon: "calendar"
         title: qsTr("Регулярных операций пока нет")
         text: qsTr("Зарплата, аренда или подписки будут попадать в операции автоматически.")
-        actionText: qsTr("Добавить регулярную операцию")
+        actionText: ""
         onAction: sheet.openFor(null)
-    }
-
-    MobileFab {
-        anchors.right: parent.right
-        anchors.bottom: parent.bottom
-        anchors.bottomMargin: 8
-        onClicked: sheet.openFor(null)
     }
 
     MobileSheet {
@@ -197,13 +246,6 @@ Item {
                 errorText = result.error || qsTr("Не удалось сохранить операцию");
         }
 
-        component SheetLabel: Text {
-            Layout.fillWidth: true
-            color: MobileTheme.muted
-            font.pixelSize: MobileTheme.sizeCaption
-            font.weight: Font.Medium
-        }
-
         MobileField {
             id: nameField
             Layout.fillWidth: true
@@ -214,11 +256,17 @@ Item {
         MobileSegmented {
             Layout.fillWidth: true
             options: [
-                { label: qsTr("Расход"), value: "expense" },
-                { label: qsTr("Доход"), value: "income" }
+                {
+                    label: qsTr("Расход"),
+                    value: "expense"
+                },
+                {
+                    label: qsTr("Доход"),
+                    value: "income"
+                }
             ]
             value: sheet.operationKind
-            onActivated: function(chosen) {
+            onActivated: function (chosen) {
                 if (sheet.operationKind !== chosen) {
                     sheet.operationKind = chosen;
                     sheet.categoryId = "";
@@ -340,7 +388,8 @@ Item {
             placeholder: qsTr("дд.мм.гггг")
         }
 
-        Text {
+        MobileText {
+            font.family: MobileTheme.mono
             Layout.fillWidth: true
             visible: sheet.errorText.length > 0
             text: sheet.errorText
@@ -372,5 +421,13 @@ Item {
                     sheet.errorText = qsTr("Не удалось удалить расписание");
             }
         }
+    }
+
+    component SheetLabel: MobileText {
+        font.family: MobileTheme.mono
+        Layout.fillWidth: true
+        color: MobileTheme.muted
+        font.pixelSize: MobileTheme.sizeCaption
+        font.weight: Font.Medium
     }
 }

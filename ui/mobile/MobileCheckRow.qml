@@ -8,15 +8,15 @@ Item {
     signal toggled(bool nowChecked)
 
     implicitWidth: 200
-    implicitHeight: 44
+    implicitHeight: Math.max(48, labelText.implicitHeight + 16)
 
     Rectangle {
         id: box
 
         anchors.verticalCenter: parent.verticalCenter
-        width: 22
-        height: 22
-        radius: 6
+        width: 24
+        height: 24
+        radius: 0
         color: row.checked ? MobileTheme.accent : MobileTheme.panel
         border.width: 1
         border.color: row.checked ? MobileTheme.accent : MobileTheme.accentSoft
@@ -31,7 +31,9 @@ Item {
         }
     }
 
-    Text {
+    MobileText {
+        id: labelText
+        font.family: MobileTheme.sans
         anchors.left: box.right
         anchors.leftMargin: 12
         anchors.right: parent.right

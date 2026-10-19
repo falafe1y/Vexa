@@ -9,7 +9,7 @@ ColumnLayout {
     property string title: ""
     property string text: ""
     property string actionText: ""
-    signal action()
+    signal action
 
     spacing: 8
 
@@ -30,7 +30,8 @@ ColumnLayout {
         color: MobileTheme.accentSoft
     }
 
-    Text {
+    MobileText {
+        font.family: MobileTheme.serif
         Layout.fillWidth: true
         horizontalAlignment: Text.AlignHCenter
         text: empty.title
@@ -40,7 +41,8 @@ ColumnLayout {
         font.weight: Font.DemiBold
     }
 
-    Text {
+    MobileText {
+        font.family: MobileTheme.mono
         Layout.fillWidth: true
         horizontalAlignment: Text.AlignHCenter
         text: empty.text

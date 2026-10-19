@@ -26,9 +26,7 @@ Flickable {
         onAccepted: {
             const result = financeController.exportTransactionsCsv(selectedFile);
             page.statusOk = result.ok;
-            page.statusText = result.ok
-                ? qsTr("Экспортировано операций: %1").arg(result.count)
-                : qsTr("Не удалось экспортировать: %1").arg(result.error);
+            page.statusText = result.ok ? qsTr("Экспортировано операций: %1").arg(result.count) : qsTr("Не удалось экспортировать: %1").arg(result.error);
         }
     }
 
@@ -41,9 +39,7 @@ Flickable {
         onAccepted: {
             const result = financeController.importTransactionsCsv(selectedFile);
             page.statusOk = result.ok;
-            page.statusText = result.ok
-                ? qsTr("Импортировано: %1, пропущено дубликатов: %2").arg(result.imported).arg(result.skipped)
-                : qsTr("Не удалось импортировать: %1").arg(result.error);
+            page.statusText = result.ok ? qsTr("Импортировано: %1, пропущено дубликатов: %2").arg(result.imported).arg(result.skipped) : qsTr("Не удалось импортировать: %1").arg(result.error);
         }
     }
 
@@ -61,7 +57,7 @@ Flickable {
     // Backup and restore are the computer dialogs, used as they are
     BackupDialogs {
         id: backupFlow
-        onExported: function(path) {
+        onExported: function (path) {
             page.statusOk = true;
             page.statusText = qsTr("Резервная копия сохранена: %1").arg(path);
         }
@@ -73,7 +69,8 @@ Flickable {
         width: page.width
         spacing: 16
 
-        Text {
+        MobileText {
+            font.family: MobileTheme.mono
             text: qsTr("Операции в CSV")
             color: MobileTheme.muted
             font.pixelSize: MobileTheme.sizeLabel
@@ -86,7 +83,8 @@ Flickable {
             Layout.fillWidth: true
             gap: 12
 
-            Text {
+            MobileText {
+                font.family: MobileTheme.mono
                 Layout.fillWidth: true
                 text: qsTr("Экспорт сохраняет все операции в файл. Импорт добавляет операции из файла и пропускает уже существующие.")
                 wrapMode: Text.Wrap
@@ -120,7 +118,8 @@ Flickable {
                 onClicked: backupFlow.openImport()
             }
 
-            Text {
+            MobileText {
+                font.family: MobileTheme.mono
                 Layout.fillWidth: true
                 visible: page.statusText.length > 0
                 text: page.statusText
@@ -130,7 +129,8 @@ Flickable {
             }
         }
 
-        Text {
+        MobileText {
+            font.family: MobileTheme.mono
             text: qsTr("Опасная зона")
             color: MobileTheme.muted
             font.pixelSize: MobileTheme.sizeLabel
@@ -143,7 +143,8 @@ Flickable {
             Layout.fillWidth: true
             gap: 12
 
-            Text {
+            MobileText {
+                font.family: MobileTheme.mono
                 Layout.fillWidth: true
                 text: qsTr("Удаляет все счета, операции, бюджеты, цели и заметки. Восстановить данные после этого нельзя.")
                 wrapMode: Text.Wrap
@@ -163,9 +164,7 @@ Flickable {
                     page.confirmingClear = false;
                     const result = financeController.clearAllData();
                     page.statusOk = result.ok;
-                    page.statusText = result.ok
-                        ? qsTr("Все данные удалены")
-                        : qsTr("Не удалось очистить данные: %1").arg(result.error);
+                    page.statusText = result.ok ? qsTr("Все данные удалены") : qsTr("Не удалось очистить данные: %1").arg(result.error);
                 }
             }
         }

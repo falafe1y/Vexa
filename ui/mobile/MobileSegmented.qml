@@ -8,7 +8,7 @@ Rectangle {
     property var value
     signal activated(var chosen)
 
-    implicitHeight: 40
+    implicitHeight: 48
     radius: MobileTheme.radiusControl
     color: MobileTheme.tableHeader
     border.width: 1
@@ -16,8 +16,8 @@ Rectangle {
 
     RowLayout {
         anchors.fill: parent
-        anchors.margins: 3
-        spacing: 3
+        anchors.margins: 0
+        spacing: 0
 
         Repeater {
             model: control.options
@@ -30,16 +30,22 @@ Rectangle {
 
                 Layout.fillWidth: true
                 Layout.fillHeight: true
-                radius: 7
-                color: segment.current ? MobileTheme.panel : "transparent"
-                border.width: segment.current ? 1 : 0
+                radius: 0
+                color: segment.current ? MobileTheme.pale : "transparent"
+                border.width: 0
                 border.color: MobileTheme.line
 
-                Text {
-                    anchors.centerIn: parent
+                MobileText {
+                    font.family: MobileTheme.mono
+                    anchors.left: parent.left
+                    anchors.right: parent.right
+                    anchors.verticalCenter: parent.verticalCenter
+                    anchors.margins: 4
+                    horizontalAlignment: Text.AlignHCenter
+                    wrapMode: Text.Wrap
                     text: segment.modelData.label
                     color: segment.current ? MobileTheme.accent : MobileTheme.muted
-                    font.pixelSize: 13
+                    font.pixelSize: 12
                     font.weight: segment.current ? Font.DemiBold : Font.Medium
                 }
 

@@ -43,6 +43,12 @@ qt_add_qml_module(vexa
         ui/security/AccessWindow.qml
         ui/security/DatabaseWindow.qml
         ui/mobile/Mobile.qml
+        ui/mobile/MobileText.qml
+        ui/mobile/MobilePageHeader.qml
+        ui/mobile/MobileDisclosure.qml
+        ui/mobile/MobileAverageReturnPanel.qml
+        ui/mobile/MobileEditorialOverview.qml
+        ui/mobile/MobileCategoriesPage.qml
         ui/mobile/MobileTheme.qml
         ui/mobile/MobileFormat.qml
         ui/mobile/MobileIcon.qml

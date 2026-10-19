@@ -18,9 +18,21 @@ Item {
 
     function scenario(kind) {
         const presets = {
-            safe: { spread: 0, incomeChangePercent: 0, expenseChangePercent: 0 },
-            base: { spread: 3, incomeChangePercent: 10, expenseChangePercent: 5 },
-            growth: { spread: 8, incomeChangePercent: 30, expenseChangePercent: 15 }
+            safe: {
+                spread: 0,
+                incomeChangePercent: 0,
+                expenseChangePercent: 0
+            },
+            base: {
+                spread: 3,
+                incomeChangePercent: 10,
+                expenseChangePercent: 5
+            },
+            growth: {
+                spread: 8,
+                incomeChangePercent: 30,
+                expenseChangePercent: 15
+            }
         };
         const preset = presets[kind];
         applySettings({
@@ -31,7 +43,9 @@ Item {
             incomeChangePercent: preset.incomeChangePercent,
             expenseChangePercent: preset.expenseChangePercent,
             purchaseMinor: trajectory.purchaseMinor,
-            purchaseMonth: trajectory.purchaseMonth
+            purchaseMonth: trajectory.purchaseMonth,
+            allSources: trajectory.allSources,
+            sourceIds: trajectory.sourceIds
         });
     }
 
@@ -71,24 +85,6 @@ Item {
             width: flick.width
             spacing: 12
 
-            RowLayout {
-                Layout.fillWidth: true
-                spacing: 8
-
-                MobileChip {
-                    text: qsTr("Осторожный")
-                    onClicked: page.scenario("safe")
-                }
-                MobileChip {
-                    text: qsTr("Базовый")
-                    onClicked: page.scenario("base")
-                }
-                MobileChip {
-                    text: qsTr("Рост")
-                    onClicked: page.scenario("growth")
-                }
-            }
-
             GridLayout {
                 Layout.fillWidth: true
                 columns: 2
@@ -97,33 +93,47 @@ Item {
 
                 Repeater {
                     model: [
-                        { label: qsTr("Текущий капитал"), value: MobileFormat.money(page.trajectory.currentMinor, page.trajectory.currency, false) },
-                        { label: qsTr("Накопления в месяц"), value: MobileFormat.money(page.trajectory.averageSavingMinor, page.trajectory.currency, false) },
-                        { label: qsTr("К концу прогноза"), value: page.forecast.length > 0 ? MobileFormat.money(page.forecast[page.forecast.length - 1].valueMinor, page.trajectory.currency, false) : "—" },
-                        { label: qsTr("Доля накоплений"), value: Number(page.trajectory.savingRate).toFixed(1) + "%" }
+                        {
+                            label: qsTr("Текущий капитал"),
+                            value: MobileFormat.displayMoney(page.trajectory.currentMinor, page.trajectory.currency, false)
+                        },
+                        {
+                            label: qsTr("Накопления в месяц"),
+                            value: MobileFormat.displayMoney(page.trajectory.averageSavingMinor, page.trajectory.currency, false)
+                        },
+                        {
+                            label: qsTr("К концу прогноза"),
+                            value: page.forecast.length > 0 ? MobileFormat.displayMoney(page.forecast[page.forecast.length - 1].valueMinor, page.trajectory.currency, false) : "—"
+                        },
+                        {
+                            label: qsTr("Доля накоплений"),
+                            value: Number(page.trajectory.savingRate).toFixed(1) + "%"
+                        }
                     ]
 
                     delegate: MobileCard {
                         required property var modelData
 
                         Layout.fillWidth: true
-                        cardPadding: 14
-                        gap: 6
+                        cardPadding: 16
+                        gap: 8
 
-                        Text {
+                        MobileText {
+                            font.family: MobileTheme.mono
                             Layout.fillWidth: true
                             text: modelData.label
                             wrapMode: Text.Wrap
                             color: MobileTheme.muted
                             font.pixelSize: MobileTheme.sizeCaption
                         }
-                        Text {
+                        MobileText {
+                            font.family: MobileTheme.serif
                             Layout.fillWidth: true
                             text: modelData.value
                             elide: Text.ElideRight
                             color: MobileTheme.accent
                             font.pixelSize: MobileTheme.sizeHeading
-                            font.weight: Font.Bold
+                            font.weight: Font.Normal
                         }
                     }
                 }
@@ -134,16 +144,18 @@ Item {
                 hard: true
                 gap: 8
 
-                Text {
+                MobileText {
+                    font.family: MobileTheme.serif
                     Layout.fillWidth: true
                     text: qsTr("Финансовая траектория")
                     color: MobileTheme.accent
                     font.pixelSize: MobileTheme.sizeHeading
-                    font.weight: Font.DemiBold
+                    font.weight: Font.Normal
                 }
-                Text {
+                MobileText {
+                    font.family: MobileTheme.mono
                     Layout.fillWidth: true
-                    text: qsTr("Сплошная линия — история, пунктир — прогноз, точки — прогноз с учётом инфляции, штрих-пунктир — со сложным процентом")
+                    text: qsTr("Сплошная — капитал и прогноз · Пунктир — с инфляцией · Штрих-пунктир — со сложным процентом")
                     wrapMode: Text.Wrap
                     color: MobileTheme.muted
                     font.pixelSize: MobileTheme.sizeCaption
@@ -178,12 +190,14 @@ Item {
                         const top = 8;
                         const bottom = height - 8;
                         const total = Math.max(1, page.history.length + page.forecast.length - 1);
-                        const xOf = function(index) { return left + (right - left) * index / total; };
-                        const yOf = function(value) {
+                        const xOf = function (index) {
+                            return left + (right - left) * index / total;
+                        };
+                        const yOf = function (value) {
                             return top + (bottom - top) * (1 - (value - axis.minimum) / (axis.maximum - axis.minimum));
                         };
 
-                        ctx.font = "11px Commissioner";
+                        ctx.font = "12px Cousine";
                         ctx.textAlign = "right";
                         ctx.textBaseline = "middle";
                         ctx.lineWidth = 1;
@@ -199,7 +213,7 @@ Item {
                             ctx.fillText(MobileFormat.compactValue(value), left - 6, y);
                         }
 
-                        const drawSeries = function(rows, key, color, dash, offset) {
+                        const drawSeries = function (rows, key, color, dash, offset) {
                             if (!rows || rows.length === 0)
                                 return;
                             ctx.beginPath();
@@ -219,14 +233,58 @@ Item {
                         };
 
                         const forecastOffset = Math.max(0, page.history.length - 1);
-                        drawSeries(page.history, "valueMinor", MobileTheme.accentSoft, [], 0);
-                        drawSeries(page.forecast, "valueMinor", MobileTheme.income, [8, 5], forecastOffset);
-                        drawSeries(page.forecast, "realMinor", MobileTheme.muted, [2, 4], forecastOffset);
+                        drawSeries(page.history, "valueMinor", MobileTheme.accent, [], 0);
+                        drawSeries(page.forecast, "valueMinor", MobileTheme.accent, [], forecastOffset);
+                        drawSeries(page.forecast, "realMinor", MobileTheme.accent, [8, 4], forecastOffset);
                         drawSeries(page.forecast, "compoundMinor", MobileTheme.accent, [12, 4, 2, 4], forecastOffset);
                     }
                 }
 
-                Text {
+                Flow {
+                    Layout.fillWidth: true
+                    spacing: 16
+                    Repeater {
+                        model: [
+                            {
+                                label: qsTr("Прогноз"),
+                                dash: []
+                            },
+                            {
+                                label: qsTr("С инфляцией"),
+                                dash: [8, 4]
+                            },
+                            {
+                                label: qsTr("Сложный процент"),
+                                dash: [12, 4, 2, 4]
+                            }
+                        ]
+                        delegate: Row {
+                            required property var modelData
+                            spacing: 8
+                            Canvas {
+                                width: 32
+                                height: 20
+                                onPaint: {
+                                    const c = getContext("2d");
+                                    c.strokeStyle = MobileTheme.accent;
+                                    c.lineWidth = 2;
+                                    c.setLineDash(modelData.dash);
+                                    c.beginPath();
+                                    c.moveTo(0, 10);
+                                    c.lineTo(32, 10);
+                                    c.stroke();
+                                }
+                            }
+                            MobileText {
+                                font.family: MobileTheme.mono
+                                text: modelData.label
+                                font.pixelSize: 12
+                            }
+                        }
+                    }
+                }
+                MobileText {
+                    font.family: MobileTheme.mono
                     Layout.fillWidth: true
                     visible: page.history.length <= 1
                     text: qsTr("История начнёт расти со следующего дня: снимок капитала сохраняется один раз в день.")
@@ -236,7 +294,8 @@ Item {
                 }
             }
 
-            Text {
+            MobileText {
+                font.family: MobileTheme.mono
                 Layout.fillWidth: true
                 visible: !page.trajectory.complete
                 text: qsTr("Часть котировок недоступна: прогноз построен по известным активам, снимок за сегодня не сохранён.")
@@ -245,7 +304,8 @@ Item {
                 font.pixelSize: MobileTheme.sizeCaption
             }
 
-            Text {
+            MobileText {
+                font.family: MobileTheme.mono
                 Layout.fillWidth: true
                 visible: page.saveError.length > 0
                 text: page.saveError
@@ -260,7 +320,8 @@ Item {
                 onClicked: settingsSheet.openFor()
             }
 
-            Text {
+            MobileText {
+                font.family: MobileTheme.mono
                 Layout.fillWidth: true
                 text: qsTr("Прогноз не является инвестиционной рекомендацией. Доходность применяется только к текущей стоимости инвестиций; будущие накопления автоматически не считаются вложенными. Линия со сложным процентом вкладывает накопления и тоже начисляет на них доходность.")
                 wrapMode: Text.Wrap
@@ -270,6 +331,12 @@ Item {
         }
     }
 
+    Connections {
+        target: MobileTheme
+        function onHideAmountsChanged() {
+            chart.requestPaint();
+        }
+    }
     onTrajectoryChanged: chart.requestPaint()
 
     MobileSheet {
@@ -284,7 +351,9 @@ Item {
         property var sourceSelection: []
 
         function toggleSource(id, on) {
-            const list = sourceSelection.filter(function (item) { return item !== id; });
+            const list = sourceSelection.filter(function (item) {
+                return item !== id;
+            });
             if (on)
                 list.push(id);
             sourceSelection = list;
@@ -328,11 +397,22 @@ Item {
                 errorText = page.saveError;
         }
 
-        component SheetLabel: Text {
+        RowLayout {
             Layout.fillWidth: true
-            color: MobileTheme.muted
-            font.pixelSize: MobileTheme.sizeCaption
-            font.weight: Font.Medium
+            spacing: 8
+
+            MobileChip {
+                text: qsTr("Осторожный")
+                onClicked: page.scenario("safe")
+            }
+            MobileChip {
+                text: qsTr("Базовый")
+                onClicked: page.scenario("base")
+            }
+            MobileChip {
+                text: qsTr("Рост")
+                onClicked: page.scenario("growth")
+            }
         }
 
         SheetLabel {
@@ -341,12 +421,23 @@ Item {
         MobileSegmented {
             Layout.fillWidth: true
             options: [
-                { label: qsTr("3 мес"), value: 3 },
-                { label: qsTr("6 мес"), value: 6 },
-                { label: qsTr("12 мес"), value: 12 }
+                {
+                    label: qsTr("3 мес"),
+                    value: 3
+                },
+                {
+                    label: qsTr("6 мес"),
+                    value: 6
+                },
+                {
+                    label: qsTr("12 мес"),
+                    value: 12
+                }
             ]
             value: settingsSheet.analysisMonths
-            onActivated: function(chosen) { settingsSheet.analysisMonths = chosen; }
+            onActivated: function (chosen) {
+                settingsSheet.analysisMonths = chosen;
+            }
         }
 
         SheetLabel {
@@ -355,13 +446,27 @@ Item {
         MobileSegmented {
             Layout.fillWidth: true
             options: [
-                { label: qsTr("6 мес"), value: 6 },
-                { label: qsTr("1 год"), value: 12 },
-                { label: qsTr("3 года"), value: 36 },
-                { label: qsTr("5 лет"), value: 60 }
+                {
+                    label: qsTr("6 мес"),
+                    value: 6
+                },
+                {
+                    label: qsTr("1 год"),
+                    value: 12
+                },
+                {
+                    label: qsTr("3 года"),
+                    value: 36
+                },
+                {
+                    label: qsTr("5 лет"),
+                    value: 60
+                }
             ]
             value: settingsSheet.horizonMonths
-            onActivated: function(chosen) { settingsSheet.horizonMonths = chosen; }
+            onActivated: function (chosen) {
+                settingsSheet.horizonMonths = chosen;
+            }
         }
 
         MobileField {
@@ -393,7 +498,9 @@ Item {
             Layout.fillWidth: true
             label: qsTr("Разовая покупка")
             checked: settingsSheet.purchaseEnabled
-            onToggled: function(nowChecked) { settingsSheet.purchaseEnabled = nowChecked; }
+            onToggled: function (nowChecked) {
+                settingsSheet.purchaseEnabled = nowChecked;
+            }
         }
         MobileField {
             id: purchaseField
@@ -410,14 +517,31 @@ Item {
             visible: settingsSheet.purchaseEnabled
             Layout.fillWidth: true
             options: [
-                { label: qsTr("1 мес"), value: 1 },
-                { label: qsTr("3 мес"), value: 3 },
-                { label: qsTr("6 мес"), value: 6 },
-                { label: qsTr("12 мес"), value: 12 },
-                { label: qsTr("3 года"), value: 36 }
+                {
+                    label: qsTr("1 мес"),
+                    value: 1
+                },
+                {
+                    label: qsTr("3 мес"),
+                    value: 3
+                },
+                {
+                    label: qsTr("6 мес"),
+                    value: 6
+                },
+                {
+                    label: qsTr("12 мес"),
+                    value: 12
+                },
+                {
+                    label: qsTr("3 года"),
+                    value: 36
+                }
             ]
             value: settingsSheet.purchaseMonth
-            onActivated: function(chosen) { settingsSheet.purchaseMonth = chosen; }
+            onActivated: function (chosen) {
+                settingsSheet.purchaseMonth = chosen;
+            }
         }
 
         SheetLabel {
@@ -427,7 +551,9 @@ Item {
             Layout.fillWidth: true
             label: qsTr("Все счета и кошельки")
             checked: settingsSheet.allSources
-            onToggled: function(nowChecked) { settingsSheet.allSources = nowChecked; }
+            onToggled: function (nowChecked) {
+                settingsSheet.allSources = nowChecked;
+            }
         }
         Repeater {
             model: financeController.goalSources
@@ -437,10 +563,13 @@ Item {
                 label: modelData.name
                 enabled: !settingsSheet.allSources
                 checked: settingsSheet.allSources || settingsSheet.sourceSelection.indexOf(modelData.id) >= 0
-                onToggled: function(nowChecked) { settingsSheet.toggleSource(modelData.id, nowChecked); }
+                onToggled: function (nowChecked) {
+                    settingsSheet.toggleSource(modelData.id, nowChecked);
+                }
             }
         }
-        Text {
+        MobileText {
+            font.family: MobileTheme.mono
             Layout.fillWidth: true
             visible: settingsSheet.errorText.length > 0
             text: settingsSheet.errorText
@@ -455,5 +584,13 @@ Item {
             text: qsTr("Пересчитать и сохранить")
             onClicked: settingsSheet.save()
         }
+    }
+
+    component SheetLabel: MobileText {
+        font.family: MobileTheme.mono
+        Layout.fillWidth: true
+        color: MobileTheme.muted
+        font.pixelSize: MobileTheme.sizeCaption
+        font.weight: Font.Medium
     }
 }

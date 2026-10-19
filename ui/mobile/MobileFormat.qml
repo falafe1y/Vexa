@@ -11,19 +11,32 @@ QtObject {
     }
 
     function money(minor, code, sign) {
+        if (MobileTheme.hideAmounts)
+            return "******";
         const roundedMinor = Math.round(Number(minor));
         const value = roundedMinor / 100;
         const decimals = Math.abs(roundedMinor) % 100 === 0 ? 0 : 2;
         const prefix = value < 0 ? "−" : (sign && value > 0 ? "+" : "");
-        return prefix + Math.abs(value).toLocaleString(locale(), "f", decimals)
-             + " " + symbol(code || financeController.appCurrency);
+        return prefix + Math.abs(value).toLocaleString(locale(), "f", decimals) + " " + symbol(code || financeController.appCurrency);
     }
 
+    function displayMoney(minor, code, sign) {
+        const target = financeController.appCurrency;
+        if (!code || code === target)
+            return money(minor, target, sign);
+        let sourceRate = code === "RUB" ? 1 : 0, targetRate = target === "RUB" ? 1 : 0;
+        financeController.currentCurrencyRates.forEach(function (row) {
+            if (row.code === code)
+                sourceRate = Number(row.rate);
+            if (row.code === target)
+                targetRate = Number(row.rate);
+        });
+        return sourceRate > 0 && targetRate > 0 ? money(Math.round(minor * sourceRate / targetRate), target, sign) : money(minor, code, sign);
+    }
     function transactionText(row) {
         if (row.type === "transfer")
             return money(row.displayAmount, financeController.appCurrency, false);
-        return money(row.type === "income" ? row.displayAmount : -row.displayAmount,
-                     financeController.appCurrency, true);
+        return money(row.type === "income" ? row.displayAmount : -row.displayAmount, financeController.appCurrency, true);
     }
 
     function amountText(minor) {
@@ -37,6 +50,8 @@ QtObject {
     }
 
     function compactValue(minor) {
+        if (MobileTheme.hideAmounts)
+            return "***";
         const value = Number(minor) / 100;
         const abs = Math.abs(value);
         if (abs >= 1000000)
@@ -72,8 +87,7 @@ QtObject {
         const month = Number(parts[1]);
         const year = Number(parts[2]);
         const date = new Date(year, month - 1, day);
-        return date.getFullYear() === year && date.getMonth() === month - 1 && date.getDate() === day
-             ? date : null;
+        return date.getFullYear() === year && date.getMonth() === month - 1 && date.getDate() === day ? date : null;
     }
 
     function monthLabel(key) {

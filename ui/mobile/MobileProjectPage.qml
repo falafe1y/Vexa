@@ -4,7 +4,11 @@ import QtQuick.Layouts
 Item {
     id: page
 
-    signal done()
+    function create() {
+        operationSheet.openNew();
+    }
+
+    signal done
 
     property bool confirmingDelete: false
 
@@ -27,13 +31,15 @@ Item {
             hard: true
             gap: 8
 
-            Text {
+            MobileText {
+                font.family: MobileTheme.mono
                 text: qsTr("Результат проекта")
                 color: MobileTheme.muted
                 font.pixelSize: MobileTheme.sizeCaption
             }
-            Text {
-                text: MobileFormat.money(page.project ? page.project.resultMinor : 0, financeController.appCurrency, true)
+            MobileText {
+                font.family: MobileTheme.serif
+                text: MobileFormat.displayMoney(page.project ? page.project.resultMinor : 0, financeController.appCurrency, true)
                 color: page.project && page.project.resultMinor < 0 ? MobileTheme.red : MobileTheme.accent
                 font.pixelSize: MobileTheme.sizeDisplay
                 font.weight: Font.Bold
@@ -47,13 +53,15 @@ Item {
                     Layout.fillWidth: true
                     spacing: 2
 
-                    Text {
+                    MobileText {
+                        font.family: MobileTheme.mono
                         text: qsTr("Доходы")
                         color: MobileTheme.muted
                         font.pixelSize: MobileTheme.sizeCaption
                     }
-                    Text {
-                        text: MobileFormat.money(page.project ? page.project.incomeMinor : 0, financeController.appCurrency, false)
+                    MobileText {
+                        font.family: MobileTheme.sans
+                        text: MobileFormat.displayMoney(page.project ? page.project.incomeMinor : 0, financeController.appCurrency, false)
                         color: MobileTheme.income
                         font.pixelSize: MobileTheme.sizeBody
                         font.weight: Font.DemiBold
@@ -64,13 +72,15 @@ Item {
                     Layout.fillWidth: true
                     spacing: 2
 
-                    Text {
+                    MobileText {
+                        font.family: MobileTheme.mono
                         text: qsTr("Расходы")
                         color: MobileTheme.muted
                         font.pixelSize: MobileTheme.sizeCaption
                     }
-                    Text {
-                        text: MobileFormat.money(page.project ? page.project.expenseMinor : 0, financeController.appCurrency, false)
+                    MobileText {
+                        font.family: MobileTheme.sans
+                        text: MobileFormat.displayMoney(page.project ? page.project.expenseMinor : 0, financeController.appCurrency, false)
                         color: MobileTheme.red
                         font.pixelSize: MobileTheme.sizeBody
                         font.weight: Font.DemiBold
@@ -103,7 +113,8 @@ Item {
             }
         }
 
-        Text {
+        MobileText {
+            font.family: MobileTheme.mono
             text: qsTr("Операции")
             color: MobileTheme.muted
             font.pixelSize: MobileTheme.sizeLabel
@@ -132,11 +143,9 @@ Item {
                 width: transactions.width
                 first: index === 0
                 title: modelData.categoryName || modelData.description || qsTr("Без категории")
-                subtitle: Qt.formatDateTime(new Date(modelData.date), "dd.MM.yyyy")
-                    + (modelData.description && modelData.categoryName ? " · " + modelData.description : "")
+                subtitle: Qt.formatDateTime(new Date(modelData.date), "dd.MM.yyyy") + (modelData.description && modelData.categoryName ? " · " + modelData.description : "")
                 amount: MobileFormat.transactionText(modelData)
-                amountColor: modelData.type === "income" ? MobileTheme.income
-                           : modelData.type === "transfer" ? MobileTheme.muted : MobileTheme.red
+                amountColor: modelData.type === "income" ? MobileTheme.income : modelData.type === "transfer" ? MobileTheme.muted : MobileTheme.red
             }
         }
     }
@@ -148,15 +157,8 @@ Item {
         svg: "qrc:/icons/projects.svg"
         title: qsTr("Операций пока нет")
         text: qsTr("Добавьте доход или расход, и они попадут в сводку проекта.")
-        actionText: qsTr("Добавить операцию")
+        actionText: ""
         onAction: operationSheet.openNew()
-    }
-
-    MobileFab {
-        anchors.right: parent.right
-        anchors.bottom: parent.bottom
-        anchors.bottomMargin: 8
-        onClicked: operationSheet.openNew()
     }
 
     MobileSheet {
@@ -180,7 +182,8 @@ Item {
             label: qsTr("Название")
         }
 
-        Text {
+        MobileText {
+            font.family: MobileTheme.mono
             Layout.fillWidth: true
             visible: renameSheet.errorText.length > 0
             text: renameSheet.errorText
@@ -213,7 +216,9 @@ Item {
         title: qsTr("Операция проекта")
 
         function categoriesFor(kind) {
-            return financeController.categories.filter(function(item) { return item.type === kind; });
+            return financeController.categories.filter(function (item) {
+                return item.type === kind;
+            });
         }
 
         function setKind(kind) {
@@ -249,8 +254,7 @@ Item {
                 errorText = qsTr("Выберите категорию и счёт");
                 return;
             }
-            if (page.project && financeController.addProjectTransaction(
-                    page.project.id, minor, descriptionField.text, categoryId, accountId, operationKind, date))
+            if (page.project && financeController.addProjectTransaction(page.project.id, minor, descriptionField.text, categoryId, accountId, operationKind, date))
                 close();
             else
                 errorText = qsTr("Не удалось сохранить операцию");
@@ -259,11 +263,19 @@ Item {
         MobileSegmented {
             Layout.fillWidth: true
             options: [
-                { label: qsTr("Расход"), value: "expense" },
-                { label: qsTr("Доход"), value: "income" }
+                {
+                    label: qsTr("Расход"),
+                    value: "expense"
+                },
+                {
+                    label: qsTr("Доход"),
+                    value: "income"
+                }
             ]
             value: operationSheet.operationKind
-            onActivated: function(chosen) { operationSheet.setKind(chosen); }
+            onActivated: function (chosen) {
+                operationSheet.setKind(chosen);
+            }
         }
 
         MobileField {
@@ -281,7 +293,8 @@ Item {
             placeholder: qsTr("Необязательно")
         }
 
-        Text {
+        MobileText {
+            font.family: MobileTheme.mono
             text: qsTr("Категория")
             color: MobileTheme.muted
             font.pixelSize: MobileTheme.sizeCaption
@@ -304,7 +317,8 @@ Item {
             }
         }
 
-        Text {
+        MobileText {
+            font.family: MobileTheme.mono
             text: qsTr("Счёт")
             color: MobileTheme.muted
             font.pixelSize: MobileTheme.sizeCaption
@@ -334,7 +348,8 @@ Item {
             placeholder: qsTr("дд.мм.гггг")
         }
 
-        Text {
+        MobileText {
+            font.family: MobileTheme.mono
             Layout.fillWidth: true
             visible: operationSheet.errorText.length > 0
             text: operationSheet.errorText

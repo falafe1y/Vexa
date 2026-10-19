@@ -4,13 +4,13 @@ Rectangle {
     id: button
 
     property string icon: ""
-    signal clicked()
+    signal clicked
 
-    implicitWidth: 40
-    implicitHeight: 40
+    implicitWidth: 44
+    implicitHeight: 44
     radius: MobileTheme.radiusControl
     color: tap.pressed ? MobileTheme.hover : MobileTheme.panel
-    border.width: 1
+    border.width: 0
     border.color: MobileTheme.line
 
     MobileIcon {

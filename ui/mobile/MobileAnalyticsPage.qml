@@ -16,7 +16,7 @@ Flickable {
         const first = MobileAnalytics.dateFromIso(rows[0].date).getTime();
         const last = MobileAnalytics.dateFromIso(rows[rows.length - 1].date).getTime();
         const span = Math.max(1, last - first);
-        return rows.map(function(row) {
+        return rows.map(function (row) {
             if (rows.length === 1 || last === first)
                 return 0.5;
             return (MobileAnalytics.dateFromIso(row.date).getTime() - first) / span;
@@ -29,17 +29,35 @@ Flickable {
         const first = MobileAnalytics.dateFromIso(rows[0].date);
         const last = MobileAnalytics.dateFromIso(rows[rows.length - 1].date);
         if (rows.length === 1 || first.getTime() === last.getTime())
-            return [{ fraction: 0.5, text: Qt.formatDate(first, "dd.MM.yyyy"), align: "center" }];
+            return [
+                {
+                    fraction: 0.5,
+                    text: Qt.formatDate(first, "dd.MM.yyyy"),
+                    align: "center"
+                }
+            ];
         const middle = new Date((first.getTime() + last.getTime()) / 2);
         return [
-            { fraction: 0, text: Qt.formatDate(first, "dd.MM.yyyy"), align: "left" },
-            { fraction: 0.5, text: Qt.formatDate(middle, "dd.MM.yyyy"), align: "center" },
-            { fraction: 1, text: Qt.formatDate(last, "dd.MM.yyyy"), align: "right" }
+            {
+                fraction: 0,
+                text: Qt.formatDate(first, "dd.MM.yyyy"),
+                align: "left"
+            },
+            {
+                fraction: 0.5,
+                text: Qt.formatDate(middle, "dd.MM.yyyy"),
+                align: "center"
+            },
+            {
+                fraction: 1,
+                text: Qt.formatDate(last, "dd.MM.yyyy"),
+                align: "right"
+            }
         ];
     }
 
     function capitalTooltips(rows, currency) {
-        return rows.map(function(row) {
+        return rows.map(function (row) {
             return MobileAnalytics.capitalDateLabel(row) + " · " + MobileFormat.money(row.totalMinor, currency, false);
         });
     }
@@ -53,172 +71,268 @@ Flickable {
         id: layout
 
         width: page.width
-        spacing: 14
+        spacing: 16
 
-        MobileInvestmentPerformance {
+        MobileDisclosure {
             Layout.fillWidth: true
-        }
-
-        AverageReturnPanel {
-            Layout.fillWidth: true
-            controller: financeController
-            surface: MobileTheme.panel
-            ink: MobileTheme.accent
-            muted: MobileTheme.muted
-            line: MobileTheme.line
-            positive: MobileTheme.income
-            negative: MobileTheme.red
-        }
-
-        MobileCard {
-            Layout.fillWidth: true
-            gap: 8
-
-            Text {
+            title: qsTr("Доходность")
+            MobileInvestmentPerformance {
                 Layout.fillWidth: true
-                text: qsTr("История расходов по месяцам")
-                color: MobileTheme.accent
-                font.pixelSize: MobileTheme.sizeHeading
-                font.weight: Font.DemiBold
-                wrapMode: Text.Wrap
             }
+        }
 
-            RowLayout {
+        MobileDisclosure {
+            Layout.fillWidth: true
+            title: qsTr("Средняя годовая доходность")
+            MobileAverageReturnPanel {
                 Layout.fillWidth: true
-                spacing: 8
+            }
+        }
 
-                MobileIconButton {
-                    icon: "chevronLeft"
-                    enabled: page.expenseYear > MobileAnalytics.expenseHistoryFirstYear()
-                    onClicked: page.expenseYear -= 1
-                }
-                Text {
+        MobileDisclosure {
+            Layout.fillWidth: true
+            title: qsTr("История расходов")
+            MobileCard {
+                Layout.fillWidth: true
+                gap: 8
+
+                MobileText {
+                    font.family: MobileTheme.serif
                     Layout.fillWidth: true
-                    horizontalAlignment: Text.AlignHCenter
-                    text: page.expenseYear
-                    color: MobileTheme.accent
-                    font.pixelSize: MobileTheme.sizeHeading
-                    font.weight: Font.DemiBold
-                }
-                MobileIconButton {
-                    icon: "chevronRight"
-                    enabled: page.expenseYear < MobileAnalytics.expenseHistoryLastYear()
-                    onClicked: page.expenseYear += 1
-                }
-            }
-
-            Text {
-                Layout.fillWidth: true
-                text: qsTr("В среднем %1").arg(MobileFormat.money(MobileAnalytics.averageCompletedMonthExpense(page.expenseRows), "RUB", false))
-                color: MobileTheme.muted
-                font.pixelSize: MobileTheme.sizeBody
-                horizontalAlignment: Text.AlignHCenter
-                wrapMode: Text.Wrap
-            }
-
-            MobileBarChart {
-                Layout.fillWidth: true
-                Layout.preferredHeight: 220
-                points: page.expenseRows
-                currency: "RUB"
-                averageMinor: MobileAnalytics.averageCompletedMonthExpense(page.expenseRows)
-            }
-        }
-
-        MobileCard {
-            Layout.fillWidth: true
-            gap: 8
-
-            RowLayout {
-                Layout.fillWidth: true
-                spacing: 8
-
-                Text {
-                    Layout.fillWidth: true
-                    text: qsTr("История капитала в рублях")
+                    text: qsTr("История расходов по месяцам")
                     color: MobileTheme.accent
                     font.pixelSize: MobileTheme.sizeHeading
                     font.weight: Font.DemiBold
                     wrapMode: Text.Wrap
                 }
-                Text {
-                    text: MobileAnalytics.historyResolutionLabel(page.capitalRub)
-                    color: MobileTheme.muted
-                    font.pixelSize: MobileTheme.sizeCaption
-                }
-            }
 
-            MobileSeriesChart {
-                Layout.fillWidth: true
-                Layout.preferredHeight: 220
-                visible: page.capitalRub.length > 0
-                series: [{ values: page.capitalRub.map(function(row) { return Number(row.totalMinor); }), color: MobileTheme.chartColors[2], width: 2.5 }]
-                xFractions: page.timeFractions(page.capitalRub)
-                xLabels: page.timeLabels(page.capitalRub)
-                tooltips: page.capitalTooltips(page.capitalRub, "RUB")
-                formatValue: function(value) { return MobileAnalytics.capitalAxisMoney(value, "RUB"); }
-            }
-            Text {
-                Layout.fillWidth: true
-                visible: page.capitalRub.length === 0
-                text: qsTr("Добавьте операцию — здесь появится история капитала")
-                color: MobileTheme.muted
-                font.pixelSize: MobileTheme.sizeCaption
-                wrapMode: Text.Wrap
-            }
-        }
-
-        MobileCard {
-            Layout.fillWidth: true
-            gap: 8
-
-            RowLayout {
-                Layout.fillWidth: true
-                spacing: 8
-
-                Text {
+                RowLayout {
                     Layout.fillWidth: true
-                    text: qsTr("Капитал в выбранной валюте")
-                    color: MobileTheme.accent
-                    font.pixelSize: MobileTheme.sizeHeading
-                    font.weight: Font.DemiBold
-                    wrapMode: Text.Wrap
-                }
-            }
+                    spacing: 8
 
-            Flow {
-                Layout.fillWidth: true
-                spacing: 8
-
-                Repeater {
-                    model: ["USD", "EUR", "CNY"]
-
-                    delegate: MobileChip {
-                        required property string modelData
-                        text: modelData
-                        selected: financeController.analyticsCurrency === modelData
-                        onClicked: financeController.analyticsCurrency = modelData
+                    MobileIconButton {
+                        icon: "chevronLeft"
+                        enabled: page.expenseYear > MobileAnalytics.expenseHistoryFirstYear()
+                        onClicked: page.expenseYear -= 1
+                    }
+                    MobileText {
+                        font.family: MobileTheme.serif
+                        Layout.fillWidth: true
+                        horizontalAlignment: Text.AlignHCenter
+                        text: page.expenseYear
+                        color: MobileTheme.accent
+                        font.pixelSize: MobileTheme.sizeHeading
+                        font.weight: Font.DemiBold
+                    }
+                    MobileIconButton {
+                        icon: "chevronRight"
+                        enabled: page.expenseYear < MobileAnalytics.expenseHistoryLastYear()
+                        onClicked: page.expenseYear += 1
                     }
                 }
-            }
 
-            MobileSeriesChart {
-                Layout.fillWidth: true
-                Layout.preferredHeight: 220
-                visible: page.capitalCurrency.length > 0
-                series: [{ values: page.capitalCurrency.map(function(row) { return Number(row.totalMinor); }), color: MobileTheme.chartColors[2], width: 2.5 }]
-                xFractions: page.timeFractions(page.capitalCurrency)
-                xLabels: page.timeLabels(page.capitalCurrency)
-                tooltips: page.capitalTooltips(page.capitalCurrency, financeController.analyticsCurrency)
-                formatValue: function(value) { return MobileAnalytics.capitalAxisMoney(value, financeController.analyticsCurrency); }
+                MobileText {
+                    font.family: MobileTheme.sans
+                    Layout.fillWidth: true
+                    text: qsTr("В среднем %1").arg(MobileFormat.money(MobileAnalytics.averageCompletedMonthExpense(page.expenseRows), "RUB", false))
+                    color: MobileTheme.muted
+                    font.pixelSize: MobileTheme.sizeBody
+                    horizontalAlignment: Text.AlignHCenter
+                    wrapMode: Text.Wrap
+                }
+
+                MobileBarChart {
+                    Layout.fillWidth: true
+                    Layout.preferredHeight: 220
+                    points: page.expenseRows
+                    currency: "RUB"
+                    averageMinor: MobileAnalytics.averageCompletedMonthExpense(page.expenseRows)
+                }
             }
-            Text {
+        }
+
+        MobileDisclosure {
+            Layout.fillWidth: true
+            title: qsTr("История капитала в рублях")
+            MobileCard {
                 Layout.fillWidth: true
-                visible: page.capitalCurrency.length === 0
-                text: qsTr("Добавьте операцию — здесь появится история капитала")
-                color: MobileTheme.muted
-                font.pixelSize: MobileTheme.sizeCaption
-                wrapMode: Text.Wrap
+                gap: 8
+
+                RowLayout {
+                    Layout.fillWidth: true
+                    spacing: 8
+
+                    MobileText {
+                        font.family: MobileTheme.serif
+                        Layout.fillWidth: true
+                        text: qsTr("История капитала в рублях")
+                        color: MobileTheme.accent
+                        font.pixelSize: MobileTheme.sizeHeading
+                        font.weight: Font.DemiBold
+                        wrapMode: Text.Wrap
+                    }
+                    MobileText {
+                        font.family: MobileTheme.mono
+                        text: MobileAnalytics.historyResolutionLabel(page.capitalRub)
+                        color: MobileTheme.muted
+                        font.pixelSize: MobileTheme.sizeCaption
+                    }
+                }
+
+                MobileSeriesChart {
+                    Layout.fillWidth: true
+                    Layout.preferredHeight: 220
+                    visible: page.capitalRub.length > 0
+                    series: [
+                        {
+                            values: page.capitalRub.map(function (row) {
+                                return Number(row.totalMinor);
+                            }),
+                            color: MobileTheme.chartColors[2],
+                            width: 2.5
+                        }
+                    ]
+                    xFractions: page.timeFractions(page.capitalRub)
+                    xLabels: page.timeLabels(page.capitalRub)
+                    tooltips: page.capitalTooltips(page.capitalRub, "RUB")
+                    formatValue: function (value) {
+                        return MobileAnalytics.capitalAxisMoney(value, "RUB");
+                    }
+                }
+                MobileText {
+                    font.family: MobileTheme.mono
+                    Layout.fillWidth: true
+                    visible: page.capitalRub.length === 0
+                    text: qsTr("Добавьте операцию — здесь появится история капитала")
+                    color: MobileTheme.muted
+                    font.pixelSize: MobileTheme.sizeCaption
+                    wrapMode: Text.Wrap
+                }
+            }
+        }
+
+        MobileDisclosure {
+            Layout.fillWidth: true
+            title: qsTr("Капитал в выбранной валюте")
+            MobileCard {
+                Layout.fillWidth: true
+                gap: 8
+
+                RowLayout {
+                    Layout.fillWidth: true
+                    spacing: 8
+
+                    MobileText {
+                        font.family: MobileTheme.serif
+                        Layout.fillWidth: true
+                        text: qsTr("Капитал в выбранной валюте")
+                        color: MobileTheme.accent
+                        font.pixelSize: MobileTheme.sizeHeading
+                        font.weight: Font.DemiBold
+                        wrapMode: Text.Wrap
+                    }
+                }
+
+                Flow {
+                    Layout.fillWidth: true
+                    spacing: 8
+
+                    Repeater {
+                        model: ["USD", "EUR", "CNY"]
+
+                        delegate: MobileChip {
+                            required property string modelData
+                            text: modelData
+                            selected: financeController.analyticsCurrency === modelData
+                            onClicked: financeController.analyticsCurrency = modelData
+                        }
+                    }
+                }
+
+                MobileSeriesChart {
+                    Layout.fillWidth: true
+                    Layout.preferredHeight: 220
+                    visible: page.capitalCurrency.length > 0
+                    series: [
+                        {
+                            values: page.capitalCurrency.map(function (row) {
+                                return Number(row.totalMinor);
+                            }),
+                            color: MobileTheme.chartColors[2],
+                            width: 2.5
+                        }
+                    ]
+                    xFractions: page.timeFractions(page.capitalCurrency)
+                    xLabels: page.timeLabels(page.capitalCurrency)
+                    tooltips: page.capitalTooltips(page.capitalCurrency, financeController.analyticsCurrency)
+                    formatValue: function (value) {
+                        return MobileAnalytics.capitalAxisMoney(value, financeController.analyticsCurrency);
+                    }
+                }
+                MobileText {
+                    font.family: MobileTheme.mono
+                    Layout.fillWidth: true
+                    visible: page.capitalCurrency.length === 0
+                    text: qsTr("Добавьте операцию — здесь появится история капитала")
+                    color: MobileTheme.muted
+                    font.pixelSize: MobileTheme.sizeCaption
+                    wrapMode: Text.Wrap
+                }
+            }
+        }
+
+        MobileDisclosure {
+            Layout.fillWidth: true
+            title: qsTr("Качество данных")
+            MobileInvestmentDataQuality {
+                Layout.fillWidth: true
+                quality: financeController.investmentPerformance.dataQuality || ({})
+            }
+        }
+
+        MobileDisclosure {
+            Layout.fillWidth: true
+            title: qsTr("Сравнение с индексным фондом")
+            MobileInvestmentBenchmark {
+                Layout.fillWidth: true
+            }
+        }
+
+        MobileDisclosure {
+            Layout.fillWidth: true
+            title: qsTr("Сравнение с вкладом")
+            MobileInvestmentDeposit {
+                Layout.fillWidth: true
+            }
+        }
+
+        MobileDisclosure {
+            Layout.fillWidth: true
+            title: qsTr("Волатильность")
+            MobileInvestmentRisk {
+                Layout.fillWidth: true
+                risk: financeController.investmentPerformance.risk || ({})
+            }
+        }
+
+        MobileDisclosure {
+            Layout.fillWidth: true
+            title: qsTr("Структура вложений")
+            MobileInvestmentStructure {
+                Layout.fillWidth: true
+                allocation: financeController.investmentPerformance.allocation || ({})
+                contributions: financeController.investmentPerformance.contributions || ({})
+                currency: financeController.investmentPerformance.currency || "RUB"
+            }
+        }
+
+        MobileDisclosure {
+            Layout.fillWidth: true
+            title: qsTr("Аналитика выплат")
+            MobileInvestmentPayments {
+                Layout.fillWidth: true
+                payments: financeController.investmentPerformance.payments || ({})
+                currency: financeController.investmentPerformance.currency || "RUB"
             }
         }
     }
