@@ -13,6 +13,7 @@ Flickable {
 
     clip: true
     boundsBehavior: Flickable.StopAtBounds
+    pixelAligned: true
     contentWidth: width
     contentHeight: layout.implicitHeight + 16
 

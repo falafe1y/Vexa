@@ -10,6 +10,7 @@ Flickable {
     readonly property var historyRows: host.historyRows()
     clip: true
     boundsBehavior: Flickable.StopAtBounds
+    pixelAligned: true
     contentWidth: width
     contentHeight: layout.implicitHeight + 24
     ScrollBar.vertical: ScrollBar {
@@ -173,6 +174,7 @@ Flickable {
                 Layout.preferredHeight: Math.min(224, Math.max(72, contentHeight))
                 clip: true
                 boundsBehavior: Flickable.StopAtBounds
+                pixelAligned: true
                 model: dashboard.accounts
                 ScrollBar.vertical: ScrollBar {
                     policy: ScrollBar.AsNeeded

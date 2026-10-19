@@ -8,7 +8,10 @@ Dialog {
     padding: 24
     font.family: editorial ? "Arimo" : "Commissioner"
     font.pixelSize: editorial ? 16 : 14
-    height: Math.min(implicitHeight, parent ? Math.max(0, parent.height - 48) : implicitHeight)
+    // Zero on desktop. On mobile the dialog is centred between the status bar/cutout and the gesture bar.
+    readonly property real insetTop: parent ? parent.SafeArea.margins.top : 0
+    readonly property real insetBottom: parent ? parent.SafeArea.margins.bottom : 0
+    height: Math.min(implicitHeight, parent ? Math.max(0, parent.height - insetTop - insetBottom - 48) : implicitHeight)
     palette.window: "#f3eddf"
     palette.base: "#f3eddf"
     palette.button: "#f3eddf"

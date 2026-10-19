@@ -7,6 +7,7 @@ Flickable {
     signal navigate(string key)
     clip: true
     boundsBehavior: Flickable.StopAtBounds
+    pixelAligned: true
     contentWidth: width
     contentHeight: layout.implicitHeight + 24
     ColumnLayout {

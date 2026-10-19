@@ -57,7 +57,8 @@ ApplicationWindow {
     onPageChanged: {
         root.clearTransactionSelection();
         browserScroll.stop();
-        Qt.inputMethod.hide();
+        if (Qt.inputMethod.visible)
+            Qt.inputMethod.hide();
     }
     readonly property var scrollController: browserScroll
     AutoScrollController {
@@ -416,6 +417,27 @@ ApplicationWindow {
         appLineColor: root.line
         appAccentColor: root.navSelected
         appHoverColor: root.controlHovered
+        Connections {
+            target: popup
+            function onAboutToShow() { MobileBackStack.push(popup) }
+            function onAboutToHide() { MobileBackStack.remove(popup) }
+        }
+    }
+    // Dialogs are centred between the status bar/cutout and the gesture bar. Popup anchors cannot offset the
+    // centre, so x and y are computed here. Popups register with MobileBackStack, so Back closes them first.
+    component MobileDialog: EditorialDialog {
+        id: mobileDialog
+        x: parent ? Math.round((parent.width - width) / 2) : 0
+        y: parent ? insetTop + Math.round((parent.height - insetTop - insetBottom - height) / 2) : 0
+        onAboutToShow: MobileBackStack.push(mobileDialog)
+        onAboutToHide: MobileBackStack.remove(mobileDialog)
+        Component.onDestruction: MobileBackStack.remove(mobileDialog)
+    }
+    component MobileMenu: Menu {
+        id: mobileMenu
+        onAboutToShow: MobileBackStack.push(mobileMenu)
+        onAboutToHide: MobileBackStack.remove(mobileMenu)
+        Component.onDestruction: MobileBackStack.remove(mobileMenu)
     }
     readonly property var createPages: ["overview", "categories", "scheduled", "budgets", "goals", "projects", "project"]
     signal createRequested(string key)
@@ -433,8 +455,7 @@ ApplicationWindow {
         {
             key: "add",
             title: qsTr("Добавить"),
-            icon: "plus",
-            disabled: createPages.indexOf(page) < 0 || (page === "overview" && (financeController.selectedAsset === "crypto" || (financeController.selectedAsset === "investment" && financeController.accounts.length === 0)))
+            icon: "plus"
         },
         {
             key: "scheduled",
@@ -447,6 +468,9 @@ ApplicationWindow {
             icon: "more"
         }
     ]
+    // Kept apart from tabItems: a page-dependent binding there gives the tab bar a new model on every page change,
+    // which rebuilds all tab buttons and icons on each tap.
+    readonly property var disabledTabKeys: (createPages.indexOf(page) < 0 || (page === "overview" && (financeController.selectedAsset === "crypto" || (financeController.selectedAsset === "investment" && financeController.accounts.length === 0)))) ? ["add"] : []
     readonly property var pageTitles: ({
             overview: qsTr("Мои финансы"),
             analytics: qsTr("Аналитика"),
@@ -658,17 +682,31 @@ ApplicationWindow {
         return false;
     }
 
+    // Android Back has to be a window-level shortcut: Keys.onBackPressed only works while an item holds focus,
+    // and touch screens usually leave none focused. A press that no shortcut takes sends the app to the background.
+    readonly property bool canGoBack: MobileBackStack.count > 0 || transactionSelectionCount > 0 || page !== "overview" || pageHistory.length > 0
+    function handleBack() {
+        if (MobileBackStack.closeTop())
+            return;
+        if (transactionSelectionCount > 0)
+            clearTransactionSelection();
+        else
+            goBack();
+    }
     Item {
         id: shell
         anchors.fill: parent
         readonly property real safeTop: SafeArea.margins.top
+        readonly property real safeBottom: SafeArea.margins.bottom
+        readonly property real safeLeft: SafeArea.margins.left
+        readonly property real safeRight: SafeArea.margins.right
         focus: true
-        Keys.onBackPressed: function (event) {
-            if (root.transactionSelectionCount) {
-                root.clearTransactionSelection();
-                event.accepted = true;
-            } else
-                event.accepted = root.goBack();
+        // Shortcut context is the window of its parent item, so the Back press reaches it from any focus.
+        Shortcut {
+            sequences: ["Back"]
+            autoRepeat: false
+            enabled: root.canGoBack
+            onActivated: root.handleBack()
         }
         Keys.onEscapePressed: root.clearTransactionSelection()
         ColumnLayout {
@@ -676,8 +714,8 @@ ApplicationWindow {
             anchors.right: parent.right
             anchors.top: parent.top
             anchors.bottom: tabBar.top
-            anchors.leftMargin: root.pageMargin
-            anchors.rightMargin: root.pageMargin
+            anchors.leftMargin: root.pageMargin + shell.safeLeft
+            anchors.rightMargin: root.pageMargin + shell.safeRight
             anchors.topMargin: shell.safeTop + 16
             anchors.bottomMargin: root.transactionSelectionCount ? 60 : 0
             spacing: 24
@@ -761,8 +799,8 @@ ApplicationWindow {
             }
             RowLayout {
                 anchors.fill: parent
-                anchors.leftMargin: root.pageMargin
-                anchors.rightMargin: root.pageMargin
+                anchors.leftMargin: root.pageMargin + shell.safeLeft
+                anchors.rightMargin: root.pageMargin + shell.safeRight
                 spacing: 8
                 MobileText {
                     font.family: MobileTheme.mono
@@ -794,6 +832,7 @@ ApplicationWindow {
             anchors.bottom: parent.bottom
             height: implicitHeight
             items: root.tabItems
+            disabledKeys: root.disabledTabKeys
             activeKey: root.tabKey
             onSelected: function (key) {
                 if (key === "add")
@@ -803,7 +842,7 @@ ApplicationWindow {
             }
         }
     }
-    Menu {
+    MobileMenu {
         id: selectionMenu
         width: Math.min(280, root.width - 32)
         AppMenuItem {
@@ -1435,6 +1474,7 @@ ApplicationWindow {
                     anchors.fill: parent
                     visible: !transactionTable.expandToContent
                     clip: true
+                    pixelAligned: true
                     ScrollBar.horizontal: ScrollBar {
                         policy: ScrollBar.AlwaysOff
                     }
@@ -1702,6 +1742,7 @@ ApplicationWindow {
             anchors.fill: parent
             visible: !mobileTransactionList.expandToContent
             clip: true
+            pixelAligned: true
             spacing: 8
             model: mobileTransactionList.rows
             ScrollBar.horizontal: ScrollBar {
@@ -1971,6 +2012,7 @@ ApplicationWindow {
                 Layout.preferredHeight: financeController.selectedAsset === "investment" ? Math.min(contentHeight, 300) : -1
                 Layout.minimumHeight: financeController.selectedAsset === "investment" ? Math.min(Math.max(contentHeight, 148), 300) : 0
                 clip: true
+                pixelAligned: true
                 spacing: 12
                 // Scrollbars intentionally hidden application-wide.
                 ScrollBar.horizontal: ScrollBar {
@@ -2547,11 +2589,10 @@ ApplicationWindow {
         errorColor: root.red
     }
 
-    EditorialDialog {
+    MobileDialog {
         id: cryptoWalletDialog
         width: Math.min(500, root.width - 20)
         modal: true
-        anchors.centerIn: parent
         padding: root.width < 380 ? 16 : 20
         property string editingId: ""
 
@@ -2710,12 +2751,11 @@ ApplicationWindow {
         }
     }
 
-    EditorialDialog {
+    MobileDialog {
         id: accountDialog
         width: Math.min(500, root.width - 20)
-        height: Math.min(700, root.height - 24)
+        height: Math.min(700, root.height - shell.safeTop - shell.safeBottom - 24)
         modal: true
-        anchors.centerIn: parent
         padding: root.width < 380 ? 16 : 20
         property var accountTypes: []
         property string editingId: ""
@@ -3041,7 +3081,7 @@ ApplicationWindow {
         }
     }
 
-    Menu {
+    MobileMenu {
         id: accountContextMenu
         width: 224
         padding: 6
@@ -3091,11 +3131,10 @@ ApplicationWindow {
         }
     }
 
-    EditorialDialog {
+    MobileDialog {
         id: deleteAccountDialog
         width: Math.min(460, root.width - 20)
         modal: true
-        anchors.centerIn: parent
         padding: root.width < 380 ? 16 : 20
         closePolicy: Popup.CloseOnEscape
         property var accountData: null
@@ -3198,7 +3237,7 @@ ApplicationWindow {
         }
     }
 
-    Menu {
+    MobileMenu {
         id: transactionContextMenu
         width: 224
         padding: 6
@@ -3246,11 +3285,10 @@ ApplicationWindow {
         }
     }
 
-    EditorialDialog {
+    MobileDialog {
         id: deleteTransactionDialog
         width: Math.min(460, root.width - 20)
         modal: true
-        anchors.centerIn: parent
         padding: root.width < 380 ? 16 : 20
         closePolicy: Popup.CloseOnEscape
         property var transactionData: null
@@ -3352,12 +3390,11 @@ ApplicationWindow {
         }
     }
 
-    EditorialDialog {
+    MobileDialog {
         id: operationDialog
         width: Math.min(520, root.width - 20)
-        height: Math.min(720, root.height - 24)
+        height: Math.min(720, root.height - shell.safeTop - shell.safeBottom - 24)
         modal: true
-        anchors.centerIn: parent
         padding: root.width < 380 ? 16 : 20
         property string editingId: ""
         property var editingTransaction: null
@@ -3677,12 +3714,11 @@ ApplicationWindow {
         }
     }
 
-    EditorialDialog {
+    MobileDialog {
         id: dateFilterDialog
         width: Math.min(450, root.width - 20)
-        height: Math.min(650, root.height - 24)
+        height: Math.min(650, root.height - shell.safeTop - shell.safeBottom - 24)
         modal: true
-        anchors.centerIn: parent
         padding: root.width < 380 ? 14 : 18
         closePolicy: Popup.CloseOnEscape
 
@@ -3903,12 +3939,11 @@ ApplicationWindow {
         }
     }
 
-    EditorialDialog {
+    MobileDialog {
         id: operationDateDialog
         width: Math.min(400, root.width - 20)
-        height: Math.min(540, root.height - 24)
+        height: Math.min(540, root.height - shell.safeTop - shell.safeBottom - 24)
         modal: true
-        anchors.centerIn: parent
         padding: root.width < 380 ? 14 : 18
         closePolicy: Popup.CloseOnEscape
         property int displayedMonth: new Date().getMonth()
@@ -4048,11 +4083,10 @@ ApplicationWindow {
         }
     }
 
-    EditorialDialog {
+    MobileDialog {
         id: categoryDialog
         width: Math.min(560, root.width - 20)
         modal: true
-        anchors.centerIn: parent
         padding: root.width < 380 ? 14 : 18
         property var editingData: null
         property bool confirmingDelete: false

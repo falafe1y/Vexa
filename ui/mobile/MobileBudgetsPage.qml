@@ -51,6 +51,7 @@ Item {
             clip: true
             spacing: 12
             boundsBehavior: Flickable.StopAtBounds
+            pixelAligned: true
             model: financeController.budgets
             footer: Item {
                 width: list.width

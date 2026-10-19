@@ -33,6 +33,7 @@ ColumnLayout {
         Layout.fillHeight: true
         clip: true
         boundsBehavior: Flickable.StopAtBounds
+        pixelAligned: true
         model: financeController.categories.filter(function (row) {
             return row.type === page.categoryType;
         })

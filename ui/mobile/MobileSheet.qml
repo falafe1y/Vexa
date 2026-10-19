@@ -8,6 +8,11 @@ Popup {
     default property alias content: body.data
     readonly property real keyboardTop: Qt.inputMethod.visible && Qt.inputMethod.keyboardRectangle.height > 0 ? Math.min(parent ? parent.height : 0, Qt.inputMethod.keyboardRectangle.y) : (parent ? parent.height : 0)
     readonly property real usableHeight: Math.max(0, keyboardTop)
+    // Insets come from the overlay, which stays at the window origin. The sheet's own margins change while it slides.
+    readonly property real insetTop: parent ? parent.SafeArea.margins.top : 0
+    readonly property real insetBottom: parent ? parent.SafeArea.margins.bottom : 0
+    readonly property real insetLeft: parent ? parent.SafeArea.margins.left : 0
+    readonly property real insetRight: parent ? parent.SafeArea.margins.right : 0
     property real revealFactor: 0
     parent: Overlay.overlay
     modal: true
@@ -15,10 +20,14 @@ Popup {
     dim: true
     padding: 0
     closePolicy: Popup.CloseOnEscape | Popup.CloseOnPressOutside
-    width: parent ? parent.width : 360
-    height: Math.min(Math.max(0, usableHeight - 16), body.implicitHeight + 48 + SafeArea.margins.bottom)
-    x: 0
+    x: insetLeft
+    width: (parent ? parent.width : 360) - insetLeft - insetRight
+    // The top edge stays below the status bar and camera cutout, with the same 16 px gap as before.
+    height: Math.min(Math.max(0, usableHeight - insetTop - 16), body.implicitHeight + 48 + insetBottom)
     y: usableHeight - height * revealFactor
+    onAboutToShow: MobileBackStack.push(sheet)
+    onAboutToHide: MobileBackStack.remove(sheet)
+    Component.onDestruction: MobileBackStack.remove(sheet)
     enter: Transition {
         NumberAnimation {
             property: "revealFactor"
@@ -81,12 +90,9 @@ Popup {
         clip: true
         focus: true
         boundsBehavior: Flickable.StopAtBounds
+        pixelAligned: true
         contentWidth: width
-        contentHeight: body.implicitHeight + 48 + SafeArea.margins.bottom
-        Keys.onBackPressed: function (event) {
-            sheet.close();
-            event.accepted = true;
-        }
+        contentHeight: body.implicitHeight + 48 + sheet.insetBottom
         ScrollBar.vertical: ScrollBar {
             policy: ScrollBar.AsNeeded
         }

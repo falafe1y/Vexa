@@ -31,6 +31,7 @@ target_sources(vexa PRIVATE editorial-fonts.qrc)
 
 set_source_files_properties(
     ui/mobile/MobileTheme.qml
+    ui/mobile/MobileBackStack.qml
     ui/mobile/MobileFormat.qml
     ui/mobile/MobileAnalytics.qml
     ui/mobile/MobileMetricDefinitions.qml
@@ -50,6 +51,7 @@ qt_add_qml_module(vexa
         ui/mobile/MobileEditorialOverview.qml
         ui/mobile/MobileCategoriesPage.qml
         ui/mobile/MobileTheme.qml
+        ui/mobile/MobileBackStack.qml
         ui/mobile/MobileFormat.qml
         ui/mobile/MobileIcon.qml
         ui/mobile/MobileSvgIcon.qml

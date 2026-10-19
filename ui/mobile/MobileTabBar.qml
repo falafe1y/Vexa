@@ -4,11 +4,15 @@ import QtQuick.Layouts
 
 Rectangle {
     id: bar
+    // items must stay stable across page changes; the Repeater rebuilds every tab when it gets a new array.
     property var items: []
+    property var disabledKeys: []
     property string activeKey: "overview"
     property string centerKey: "add"
     signal selected(string key)
     readonly property real safeBottom: SafeArea.margins.bottom
+    readonly property real safeLeft: SafeArea.margins.left
+    readonly property real safeRight: SafeArea.margins.right
     implicitHeight: 72 + safeBottom
     color: MobileTheme.canvas
     Rectangle {
@@ -19,6 +23,8 @@ Rectangle {
     RowLayout {
         anchors.left: parent.left
         anchors.right: parent.right
+        anchors.leftMargin: bar.safeLeft
+        anchors.rightMargin: bar.safeRight
         height: 72
         spacing: 0
         Repeater {
@@ -31,7 +37,7 @@ Rectangle {
                 Layout.fillWidth: true
                 Layout.fillHeight: true
                 Layout.minimumWidth: 0
-                enabled: !modelData.disabled
+                enabled: bar.disabledKeys.indexOf(modelData.key) < 0
                 padding: 0
                 Accessible.name: modelData.title
                 background: Item {
@@ -40,8 +46,14 @@ Rectangle {
                         anchors.horizontalCenter: parent.horizontalCenter
                         width: 32
                         height: 2
-                        visible: tab.current
+                        opacity: tab.current ? 1 : 0
                         color: MobileTheme.accent
+                        Behavior on opacity {
+                            NumberAnimation {
+                                duration: 180
+                                easing.type: Easing.OutCubic
+                            }
+                        }
                     }
                 }
                 contentItem: Item {
@@ -51,12 +63,25 @@ Rectangle {
                         width: tab.central ? 48 : 28
                         height: tab.central ? 48 : 28
                         color: tab.central ? (tab.enabled ? MobileTheme.accent : MobileTheme.line) : "transparent"
+                        // Colour changes fade over a short time instead of snapping when the active tab or the enabled state changes.
+                        Behavior on color {
+                            ColorAnimation {
+                                duration: 180
+                                easing.type: Easing.OutCubic
+                            }
+                        }
                         MobileIcon {
                             anchors.centerIn: parent
                             width: 24
                             height: 24
                             name: tab.modelData.icon
                             color: tab.central ? MobileTheme.canvas : tab.current ? MobileTheme.copper : MobileTheme.accent
+                            Behavior on color {
+                                ColorAnimation {
+                                    duration: 180
+                                    easing.type: Easing.OutCubic
+                                }
+                            }
                         }
                     }
                     MobileText {

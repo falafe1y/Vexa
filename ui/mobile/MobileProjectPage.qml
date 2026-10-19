@@ -130,6 +130,7 @@ Item {
             Layout.fillHeight: true
             clip: true
             boundsBehavior: Flickable.StopAtBounds
+            pixelAligned: true
             model: financeController.projectTransactions
             footer: Item {
                 width: transactions.width
