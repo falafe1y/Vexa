@@ -16,6 +16,9 @@ bool readAll(const QUrl& url, QByteArray& bytes, QString& error);
 bool writeAll(const QUrl& url, const QByteArray& bytes, QString& error);
 // Writes a local file over a document chosen in a save dialog
 bool copyFileTo(const QString& path, const QUrl& destination, QString& error);
+// Renames a picked document so that its name ends with the suffix. The picker does not add suffixes on Android,
+// so the name is checked here. `url` is updated to the renamed document.
+bool ensureSuffix(QUrl& url, const QString& suffix, QString& error);
 // A private folder in the cache; it and its files are removed with the returned object
 std::unique_ptr<QTemporaryDir> temporaryDirectory(QString& error);
 

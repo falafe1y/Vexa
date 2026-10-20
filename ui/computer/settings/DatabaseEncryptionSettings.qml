@@ -6,13 +6,16 @@ import "../common/EditorialStyle.js" as Appearance
 
 EditorialColumnLayout {
     function openConfirmation() { confirmation.open(); }
+    readonly property bool onAndroid: Qt.platform.os === "android"
+    readonly property string keyPlace: onAndroid ? qsTr("Android Keystore этого устройства") : qsTr("системного хранилища Windows")
     spacing: 16
     EditorialLabel { text: qsTr("Шифрование базы"); color: "#031528"; font.pixelSize: 17; font.bold: true }
     EditorialLabel {
         Layout.fillWidth: true
-        text: databaseProtection.encrypted
-            ? qsTr("Локальная база зашифрована. Ключ хранится в учётной записи Windows.")
-            : qsTr("Шифрование защищает файл базы. Оно независимо от пароля входа в Vexa.")
+        text: (databaseProtection.encrypted
+            ? qsTr("Локальная база зашифрована. Ключ хранится в %1.").arg(keyPlace)
+            : qsTr("Шифрование защищает файл базы. Оно независимо от пароля входа в Vexa."))
+            + ((onAndroid && databaseProtection.encrypted) ? qsTr(" При удалении Vexa ключ пропадёт: храните копию .vexabackup.") : "")
         color: (Appearance.desktop ? "#59616a" : "#687483")
         wrapMode: Text.WordWrap
     }
@@ -45,9 +48,11 @@ EditorialColumnLayout {
             spacing: 16
             EditorialLabel {
                 Layout.fillWidth: true
-                text: databaseProtection.encrypted
-                    ? qsTr("После отключения файл базы будет доступен без ключа. Ключ сохранится для чтения ранее зашифрованных копий. Vexa перезапустится.")
-                    : qsTr("База будет зашифрована ключом из системного хранилища Windows. Для её открытия потребуется этот ключ. Старые копии останутся без изменений. Vexa перезапустится.")
+                text: (databaseProtection.encrypted
+                    ? qsTr("После отключения файл базы будет доступен без ключа. Ключ сохранится для чтения ранее зашифрованных копий.")
+                    : qsTr("База будет зашифрована ключом из %1. Для её открытия потребуется этот ключ. Старые копии останутся без изменений.").arg(keyPlace))
+                    + (onAndroid ? qsTr(" Нужен перезапуск: закройте Vexa и откройте её снова.") : qsTr(" Vexa перезапустится."))
+                    + ((onAndroid && !databaseProtection.encrypted) ? qsTr(" При удалении Vexa ключ пропадёт: храните копию .vexabackup.") : "")
                 color: "#031528"
                 font.pixelSize: Appearance.desktop ? 16 : 14
                 wrapMode: Text.WordWrap

@@ -1,4 +1,5 @@
 #include "PasswordStore.h"
+#include "AndroidVault.h"
 #include <QCoreApplication>
 #include <QProcess>
 #include <QStandardPaths>
@@ -13,6 +14,8 @@
 #endif
 
 namespace {
+// Android keeps the access record sealed by Android Keystore, in the application data directory.
+const QString AndroidAccessRecord = QStringLiteral("vexa-application-access-v1.bin");
 QString unavailable()
 {
     return QCoreApplication::translate("AppAccess", "Системное хранилище учётных данных недоступно. Разблокируйте его и повторите попытку.");
@@ -62,6 +65,8 @@ public:
             return false;
         }
         return true;
+#elif defined(Q_OS_ANDROID)
+        return AndroidVault::available(error);
 #else
         error = unavailable();return false;
 #endif
@@ -81,6 +86,11 @@ public:
         return true;
 #elif defined(Q_OS_LINUX) && !defined(Q_OS_ANDROID)
         return run({"lookup", "application", "Vexa", "purpose", "application-access-v1"}, {}, value, error);
+#elif defined(Q_OS_ANDROID)
+        bool found = false;
+        if (!AndroidVault::read(AndroidAccessRecord, value, found, error)) return false;
+        if (!found) { error = unavailable(); return false; }
+        return true;
 #else
         Q_UNUSED(value);
         error = unavailable();
@@ -103,6 +113,8 @@ public:
 #elif defined(Q_OS_LINUX) && !defined(Q_OS_ANDROID)
         QByteArray output;
         return run({"store", "--label=Vexa", "application", "Vexa", "purpose", "application-access-v1"}, value, output, error);
+#elif defined(Q_OS_ANDROID)
+        return AndroidVault::write(AndroidAccessRecord, value, error);
 #else
         Q_UNUSED(value);
         error = unavailable();

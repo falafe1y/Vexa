@@ -10,9 +10,59 @@
 #include <QRegularExpression>
 #include <algorithm>
 #include <cmath>
+#ifdef Q_OS_ANDROID
+#include <QJniEnvironment>
+#include <QJniObject>
+#include <QtCore/qnativeinterface.h>
+#endif
 
 namespace {
 struct Line { QVector<PdfStatementReader::Word> words; double y = 0; };
+#ifdef Q_OS_ANDROID
+// Android has no pdftotext: PdfWords.java (PDFBox-Android, Apache-2.0) returns the same positioned words.
+bool extractWithPdfBox(const QString& path, QVector<PdfStatementReader::Page>& pages, QString& error)
+{
+    const QJniObject context = QNativeInterface::QAndroidApplication::context();
+    const auto text = QJniObject::callStaticObjectMethod(
+        "org/qtproject/example/vexa/PdfWords", "extract",
+        "(Landroid/content/Context;Ljava/lang/String;)Ljava/lang/String;",
+        context.object(), QJniObject::fromString(path).object<jstring>());
+    QJniEnvironment env;
+    if (env.checkAndClearExceptions() || !text.isValid()) {
+        error = QStringLiteral("Не удалось прочитать текстовый слой PDF. Проверьте файл и снимите защиту паролем, если она установлена.");
+        return false;
+    }
+    qsizetype words = 0;
+    const auto lines = text.toString().split(QLatin1Char('\n'), Qt::SkipEmptyParts);
+    for (const auto& line : lines) {
+        const auto fields = line.split(QLatin1Char('\t'));
+        if (fields.first() == QLatin1String("P")) {
+            if (pages.size() >= 200) {
+                error = QStringLiteral("В PDF больше 200 страниц. Разделите выписку на несколько периодов.");
+                return false;
+            }
+            pages.append(PdfStatementReader::Page{});
+        } else if (fields.first() == QLatin1String("W") && fields.size() >= 6 && !pages.isEmpty()) {
+            bool valid[4];
+            const double x = fields.at(1).toDouble(&valid[0]);
+            const double y = fields.at(2).toDouble(&valid[1]);
+            const double w = fields.at(3).toDouble(&valid[2]);
+            const double h = fields.at(4).toDouble(&valid[3]);
+            if (!valid[0] || !valid[1] || !valid[2] || !valid[3] || !std::isfinite(x) || !std::isfinite(y)
+                || !std::isfinite(w) || !std::isfinite(h) || w < 0 || h < 0 || ++words > 1000000) {
+                error = QStringLiteral("Некорректный или слишком большой текстовый слой PDF.");
+                return false;
+            }
+            pages.last().append(PdfStatementReader::Word{fields.at(5), QRectF(x, y, w, h)});
+        }
+    }
+    if (pages.isEmpty()) {
+        error = QStringLiteral("Не удалось разобрать текстовый слой PDF.");
+        return false;
+    }
+    return true;
+}
+#endif
 QVector<Line> lines(PdfStatementReader::Page page)
 {
     std::sort(page.begin(), page.end(), [](const auto& a, const auto& b) {
@@ -64,6 +114,11 @@ CsvCodec::ReadResult PdfStatementReader::read(const QString& path)
         failure.error = QStringLiteral("PDF больше 32 МБ. Сформируйте выписку за меньший период.");
         return failure;
     }
+#ifdef Q_OS_ANDROID
+    QVector<Page> androidPages;
+    if (!extractWithPdfBox(QFileInfo(path).absoluteFilePath(), androidPages, failure.error)) return failure;
+    return parsePages(androidPages);
+#endif
     QString executable = QDir(QCoreApplication::applicationDirPath()).filePath(
 #ifdef Q_OS_WIN
         QStringLiteral("pdftotext.exe")

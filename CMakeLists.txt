@@ -61,6 +61,7 @@ qt_add_qml_module(vexa
         ui/mobile/MobileSegmented.qml
         ui/mobile/MobileField.qml
         ui/mobile/MobileCheckRow.qml
+        ui/mobile/MobileAutoBackupSettings.qml
         ui/mobile/MobileListRow.qml
         ui/mobile/MobileIconButton.qml
         ui/mobile/MobileFab.qml
@@ -160,6 +161,7 @@ qt_add_qml_module(vexa
         ui/computer/analytics/InvestmentStructurePanel.qml
         ui/computer/settings/BackupDialogs.qml
         ui/computer/settings/DatabaseEncryptionSettings.qml
+        ui/computer/settings/AutoBackupSettings.qml
         ui/computer/settings/PasswordSettings.qml
         # BankComboBox.qml
         # CategoryPicker.qml

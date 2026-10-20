@@ -11,7 +11,8 @@ set_target_properties(vexa_argon2 PROPERTIES POSITION_INDEPENDENT_CODE ON)
 
 add_library(vexa_access STATIC
     PasswordStore.cpp PasswordStore.h PasswordLock.cpp PasswordLock.h
-    AppAccess.cpp AppAccess.h SystemLockMonitor.cpp SystemLockMonitor.h)
+    AppAccess.cpp AppAccess.h SystemLockMonitor.cpp SystemLockMonitor.h
+    AndroidVault.cpp AndroidVault.h)
 set_target_properties(vexa_access PROPERTIES AUTOMOC ON POSITION_INDEPENDENT_CODE ON)
 target_compile_features(vexa_access PUBLIC cxx_std_17)
 target_include_directories(vexa_access PUBLIC ${CMAKE_CURRENT_LIST_DIR}/..)

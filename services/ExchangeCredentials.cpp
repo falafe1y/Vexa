@@ -6,6 +6,7 @@
 #include <QSaveFile>
 #include <QStandardPaths>
 #include <QProcess>
+#include "../security/AndroidVault.h"
 #ifdef Q_OS_WIN
 #include <windows.h>
 #include <wincrypt.h>
@@ -16,7 +17,13 @@ QString path(const QString& id) {
     QDir().mkpath(directory);
     return directory + "/" + id + ".bin";
 }
-#ifndef Q_OS_WIN
+#ifdef Q_OS_ANDROID
+// Account ids are hex-encoded so that no id can change the file name.
+QString vaultName(const QString& id) {
+    return QStringLiteral("exchange-") + QString::fromLatin1(id.toUtf8().toHex()) + QStringLiteral(".bin");
+}
+#endif
+#if !defined(Q_OS_WIN) && !defined(Q_OS_ANDROID)
 QByteArray secretTool(const QStringList& arguments, const QByteArray& input = {}, bool* succeeded = nullptr) {
     const QString program = QStandardPaths::findExecutable("secret-tool");
     if (program.isEmpty()) { if (succeeded) *succeeded = false; return {}; }
@@ -41,6 +48,10 @@ QPair<QString, QString> ExchangeCredentials::load(const QString& id) {
     if (!CryptUnprotectData(&source, nullptr, nullptr, nullptr, nullptr, CRYPTPROTECT_UI_FORBIDDEN, &output)) return {};
     bytes = QByteArray(reinterpret_cast<char*>(output.pbData), static_cast<int>(output.cbData));
     SecureZeroMemory(output.pbData, output.cbData); LocalFree(output.pbData);
+#elif defined(Q_OS_ANDROID)
+    bool found = false;
+    QString error;
+    if (!AndroidVault::read(vaultName(id), bytes, found, error) || !found) return {};
 #else
     bytes = secretTool({"lookup", "application", "vexa", "exchange", "Bybit", "account", id});
 #endif
@@ -59,6 +70,9 @@ bool ExchangeCredentials::save(const QString& id, const QString& apiKey, const Q
         file.setPermissions(QFileDevice::ReadOwner | QFileDevice::WriteOwner);
         SecureZeroMemory(output.pbData, output.cbData); LocalFree(output.pbData);
     }
+#elif defined(Q_OS_ANDROID)
+    QString error;
+    succeeded = AndroidVault::write(vaultName(id), bytes, error);
 #else
     secretTool({"store", "--label=Vexa Bybit", "application", "vexa", "exchange", "Bybit", "account", id}, bytes, &succeeded);
 #endif
@@ -67,6 +81,8 @@ bool ExchangeCredentials::save(const QString& id, const QString& apiKey, const Q
 void ExchangeCredentials::remove(const QString& id) {
 #ifdef Q_OS_WIN
     QFile::remove(path(id));
+#elif defined(Q_OS_ANDROID)
+    AndroidVault::remove(vaultName(id));
 #else
     secretTool({"clear", "application", "vexa", "exchange", "Bybit", "account", id});
 #endif

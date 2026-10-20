@@ -96,6 +96,30 @@ bool writeAll(const QUrl& url, const QByteArray& bytes, QString& error)
     return ok;
 }
 
+bool ensureSuffix(QUrl& url, const QString& suffix, QString& error)
+{
+    const QString name = displayName(url);
+    if (name.isEmpty()) {
+        error = QCoreApplication::translate("ContentUriIo", "Не удалось узнать имя выбранного файла");
+        return false;
+    }
+    if (name.endsWith(suffix, Qt::CaseInsensitive)) {
+        return true;
+    }
+    QJniEnvironment env;
+    const QJniObject renamed = QJniObject::callStaticObjectMethod(
+        "android/provider/DocumentsContract", "renameDocument",
+        "(Landroid/content/ContentResolver;Landroid/net/Uri;Ljava/lang/String;)Landroid/net/Uri;",
+        contentResolver().object(), uriOf(url).object(),
+        QJniObject::fromString(name + suffix).object<jstring>());
+    if (env.checkAndClearExceptions() || !renamed.isValid()) {
+        error = QCoreApplication::translate("ContentUriIo", "Хранилище не позволило переименовать файл в %1").arg(name + suffix);
+        return false;
+    }
+    url = QUrl(renamed.toString());
+    return true;
+}
+
 QString displayName(const QUrl& url)
 {
     QJniEnvironment env;
@@ -135,6 +159,12 @@ bool writeAll(const QUrl&, const QByteArray&, QString& error)
 QString displayName(const QUrl&)
 {
     return {};
+}
+
+bool ensureSuffix(QUrl&, const QString&, QString& error)
+{
+    error = QCoreApplication::translate("ContentUriIo", "Этот адрес файла поддерживается только на Android");
+    return false;
 }
 #endif
 

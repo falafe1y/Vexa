@@ -1,4 +1,5 @@
 #include "DatabaseEncryption.h"
+#include "../security/AndroidVault.h"
 #include <QDir>
 #include <QFile>
 #include <QFileInfo>
@@ -38,6 +39,8 @@ DatabaseAccess& DatabaseAccess::operator=(DatabaseAccess&& other) noexcept {
 
 namespace {
 constexpr qint64 Headroom = 16 * 1024 * 1024;
+// Android keeps the database key as a record sealed by Android Keystore, beside the database file.
+const QString AndroidKeyRecord = QStringLiteral("vexa-database-key-v1.bin");
 QString marker(const QString& path) { return path + ".encrypted"; }
 QString sqlError(sqlite3* db) { return QString::fromUtf8(sqlite3_errmsg(db)); }
 struct Connection {
@@ -77,8 +80,14 @@ public:
         SecureZeroMemory(credential->CredentialBlob, credential->CredentialBlobSize); CredFree(credential);
         if (value.size() != 32) { error = QStringLiteral("Сохранённый ключ базы повреждён."); value.fill('\0'); return {}; }
         return value;
+#elif defined(Q_OS_ANDROID)
+        QByteArray value;
+        bool found = false;
+        if (!AndroidVault::read(AndroidKeyRecord, value, found, error) || !found) return {};
+        if (value.size() != 32) { error = QStringLiteral("Сохранённый ключ базы повреждён."); value.fill('\0'); return {}; }
+        return value;
 #else
-        error = QStringLiteral("Хранилище ключа базы реализовано для Windows."); return {};
+        error = QStringLiteral("Хранилище ключа базы реализовано для Windows и Android."); return {};
 #endif
     }
     bool save(const QByteArray& key, QString& error) override {
@@ -91,6 +100,9 @@ public:
         credential.CredentialBlobSize = DWORD(key.size());
         credential.CredentialBlob = reinterpret_cast<LPBYTE>(const_cast<char*>(key.constData()));
         if (CredWriteW(&credential, 0)) return true;
+#elif defined(Q_OS_ANDROID)
+        if (AndroidVault::write(AndroidKeyRecord, key, error)) return true;
+        if (!error.isEmpty()) return false;
 #else
         Q_UNUSED(key);
 #endif

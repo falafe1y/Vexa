@@ -10,6 +10,9 @@ Item {
     readonly property bool active: exportDialog.visible || importDialog.visible || saveFile.visible || openFile.visible
     property string localError: ""
     property bool recoveryMode: false
+    // On Android the app is not restarted by itself: the user closes it and opens it again.
+    readonly property string restartNote: Qt.platform.os === "android"
+        ? qsTr("Нужен перезапуск: закройте Vexa и откройте её снова.") : qsTr("Vexa перезапустится.")
     signal exported(string path)
     function openExport() {
         if (databaseProtection.busy) return
@@ -176,8 +179,8 @@ Item {
                 Layout.fillWidth: true
                 visible: databaseProtection.hasBackupPreview
                 text: flow.recoveryMode
-                    ? qsTr("Недоступная база будет заменена данными из копии. Исходные файлы сохраним отдельно. Если прежняя база была зашифрована, восстановленная база также будет зашифрована системным ключом. Vexa перезапустится.")
-                    : qsTr("Текущие счета, операции, настройки и заметки будут заменены. Перед заменой сохраним копию текущего состояния. Настройка шифрования этой установки сохранится. Vexa перезапустится.")
+                    ? qsTr("Недоступная база будет заменена данными из копии. Исходные файлы сохраним отдельно. Если прежняя база была зашифрована, восстановленная база также будет зашифрована системным ключом. %1").arg(flow.restartNote)
+                    : qsTr("Текущие счета, операции, настройки и заметки будут заменены. Перед заменой сохраним копию текущего состояния. Настройка шифрования этой установки сохранится. %1").arg(flow.restartNote)
                 color: "#031528"; font.pixelSize: Appearance.desktop ? 16 : 14; wrapMode: Text.WordWrap
             }
             EditorialLabel {

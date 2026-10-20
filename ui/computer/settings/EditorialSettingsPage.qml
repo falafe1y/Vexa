@@ -19,6 +19,12 @@ EditorialPage {
         width: 0
         height: 0
     }
+    AutoBackupSettings {
+        id: autoBackupSettings
+        visible: false
+        width: 0
+        height: 0
+    }
     EditorialSettingRow {
         width: parent.width
         height: implicitHeight
@@ -224,6 +230,11 @@ EditorialPage {
                 text: qsTr("ВОССТАНОВИТЬ")
                 enabled: !databaseProtection.busy
                 onClicked: page.host.editorialBackup(true)
+            }
+            EditorialAction {
+                text: qsTr("АВТОКОПИИ")
+                enabled: !databaseProtection.busy
+                onClicked: autoBackupSettings.openSettings()
             }
         }
         EditorialText {

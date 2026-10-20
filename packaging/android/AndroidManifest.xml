@@ -17,7 +17,8 @@
         android:hardwareAccelerated="true"
         android:label="Vexa"
         android:icon="@mipmap/vexa"
-        android:enableOnBackInvokedCallback="true">
+        android:enableOnBackInvokedCallback="true"
+        android:allowBackup="false">
         <activity
             android:name="org.qtproject.qt.android.bindings.QtActivity"
             android:configChanges="orientation|uiMode|screenLayout|screenSize|smallestScreenSize|layoutDirection|locale|fontScale|keyboard|keyboardHidden|navigation|mcc|mnc|density"

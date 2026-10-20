@@ -11,10 +11,22 @@ DatabaseProtection::DatabaseProtection(QString path, QObject* parent)
     workspaceRoot_ = QFileInfo(path_).absolutePath() + "/.vexa-portable";
     // The application owns the installation lock before constructing this object.
     PortableBackup::cleanAbandoned(workspaceRoot_);
+    autoFile_ = QFileInfo(path_).absolutePath() + QStringLiteral("/auto-backup.json");
+    QString error;
+    if (!AutoBackup::load(autoFile_, autoState_, error)) autoError_ = error;
+    QString secretError;
+    autoSupported_ = AutoBackup::Target::supported() && AutoBackup::Secret::available(secretError);
+    QByteArray secret;
+    bool found = false;
+    autoPasswordSet_ = autoSupported_ && AutoBackup::Secret::read(secret, found, secretError) && found;
+    secret.fill('\0');
+    autoTimer_.setInterval(10 * 60 * 1000);
+    connect(&autoTimer_, &QTimer::timeout, this, &DatabaseProtection::autoBackupCheck);
+    autoTimer_.start();
 }
 DatabaseProtection::~DatabaseProtection() { worker_.waitForFinished(); backupWorker_.waitForFinished(); }
 bool DatabaseProtection::supported() const {
-#ifdef Q_OS_WIN
+#if defined(Q_OS_WIN) || defined(Q_OS_ANDROID)
     return true;
 #else
     return false;
@@ -70,7 +82,11 @@ void DatabaseProtection::launch(bool conversion, bool encrypted, std::shared_ptr
             access_ = result.access; ready_ = true;
         }
         emit changed();
-        if (ready_ && admitted_) emit available();
+        if (ready_ && admitted_) {
+            emit available();
+            // A little later, so that startup is not slowed down by a copy
+            QTimer::singleShot(3000, this, [this] { autoBackupCheck(); });
+        }
     });
     const auto path = path_; const auto store = store_;
     const bool recovery = recovery_;
@@ -112,22 +128,26 @@ void DatabaseProtection::exportBackup(const QUrl& destination, const QString& pa
     if (!plaintext && !PortableBackup::validPassword(password)) {
         backupError_ = tr("Пароль копии должен содержать от 12 до 1024 символов."); emit backupChanged(); return;
     }
+    const QString suffix = plaintext ? QStringLiteral(".sqlite3") : QStringLiteral(".vexabackup");
+    QUrl target = destination;
     QString path = destination.toLocalFile();
     if (ContentUriIo::isContentUri(destination)) {
-        // A picked document has no path on Android: the backup is written to a temporary folder and copied over later
+        // The picker does not add the suffix on Android, so the picked document is renamed before anything is written
         QString error;
+        if (!ContentUriIo::ensureSuffix(target, suffix, error)) { backupError_ = error; emit backupChanged(); return; }
+        // A picked document has no path on Android: the backup is written to a temporary folder and copied over later
         backupDirectory_ = ContentUriIo::temporaryDirectory(error);
         if (!backupDirectory_) { backupError_ = error; emit backupChanged(); return; }
         path = backupDirectory_->filePath(QStringLiteral("backup"));
     }
     if (path.isEmpty()) { backupError_ = tr("Выберите место сохранения копии."); emit backupChanged(); return; }
-    if (QFileInfo(path).suffix().isEmpty()) path += plaintext ? ".sqlite3" : ".vexabackup";
+    if (QFileInfo(path).suffix().isEmpty()) path += suffix;
     busy_ = true; emit changed(); emit backupChanged();
     const auto generation = generation_; const auto source = access_; const auto root = workspaceRoot_;
     const auto version = QCoreApplication::applicationVersion();
     disconnect(&backupWorker_, nullptr, this, nullptr);
     connect(&backupWorker_, &QFutureWatcher<PortableBackup::Result>::finished, this,
-            [this, path, generation, destination] { finishBackup(true, path, generation, destination); });
+            [this, path, generation, target] { finishBackup(true, path, generation, target); });
     backupWorker_.setFuture(QtConcurrent::run([source, path, root, password, plaintext, version] {
         return PortableBackup::exportFile(source, path, root, password, plaintext, version);
     }));
@@ -175,4 +195,138 @@ void DatabaseProtection::restart() {
     if (!restartRequired_ || busy_) return;
     // Quit first so the next process can acquire the installation ownership lock.
     QCoreApplication::exit(42);
+}
+
+QString DatabaseProtection::autoBackupLast() const
+{
+    return autoState_.lastBackup.isValid() ? autoState_.lastBackup.toString(QStringLiteral("dd.MM.yyyy HH:mm")) : QString();
+}
+
+void DatabaseProtection::saveAutoState()
+{
+    QString error;
+    if (!AutoBackup::save(autoFile_, autoState_, error)) autoError_ = error;
+    emit autoBackupChanged();
+}
+
+void DatabaseProtection::setAutoBackupEnabled(bool enabled)
+{
+    autoError_.clear();
+    if (!autoSupported_) {
+        autoError_ = tr("Автокопии на этой платформе недоступны.");
+        emit autoBackupChanged();
+        return;
+    }
+    if (enabled) {
+        if (autoState_.folder.isEmpty()) { autoError_ = tr("Сначала выберите папку для автокопий."); emit autoBackupChanged(); return; }
+        if (!autoPasswordSet_) { autoError_ = tr("Сначала задайте пароль автокопий."); emit autoBackupChanged(); return; }
+        QString error;
+        if (!AutoBackup::Target::grant(autoState_.folder, error)) { autoError_ = error; emit autoBackupChanged(); return; }
+    }
+    autoState_.enabled = enabled;
+    autoState_.lastError.clear();
+    saveAutoState();
+    // Enabling makes a copy at once when none has been made yet
+    if (enabled) QTimer::singleShot(0, this, [this] { autoBackupCheck(); });
+}
+
+void DatabaseProtection::chooseAutoBackupFolder(const QUrl& folder)
+{
+    autoError_.clear();
+    // Windows gives a local path; Android gives a document-tree URI, which is kept as text
+    const QString path = folder.scheme() == QStringLiteral("content") ? folder.toString() : folder.toLocalFile();
+    if (path.isEmpty()) { autoError_ = tr("Выберите папку."); emit autoBackupChanged(); return; }
+    QString error;
+    if (!AutoBackup::Target::grant(path, error)) { autoError_ = error; emit autoBackupChanged(); return; }
+    if (path != autoState_.folder) {
+        // A new folder has no copies, so the next copy is made in it at once
+        autoState_.folder = path;
+        autoState_.lastBackup = QDateTime();
+        autoState_.lastAttempt = QDateTime();
+        autoState_.lastError.clear();
+    }
+    saveAutoState();
+    if (autoState_.enabled) QTimer::singleShot(0, this, [this] { autoBackupCheck(); });
+}
+
+void DatabaseProtection::setAutoBackupPassword(const QString& password)
+{
+    autoError_.clear();
+    if (!PortableBackup::validPassword(password)) {
+        autoError_ = tr("Пароль автокопий должен содержать от 12 до 1024 символов.");
+        emit autoBackupChanged();
+        return;
+    }
+    QString error;
+    if (!AutoBackup::Secret::write(password.toUtf8(), error)) { autoError_ = error; emit autoBackupChanged(); return; }
+    autoPasswordSet_ = true;
+    emit autoBackupChanged();
+}
+
+void DatabaseProtection::autoBackupCheck()
+{
+    if (!autoSupported_ || !admitted_ || !ready_ || busy_ || restartRequired_) return;
+    if (!AutoBackup::isDue(autoState_, QDateTime::currentDateTime(), autoPasswordSet_)) return;
+    QByteArray secret;
+    bool found = false;
+    QString readError;
+    if (!AutoBackup::Secret::read(secret, found, readError)) {
+        finishAutoBackup(PortableBackup::Result{false, readError, {}});
+        return;
+    }
+    if (!found) {
+        autoPasswordSet_ = false;
+        autoError_ = tr("Пароль автокопий не найден. Задайте его заново.");
+        emit autoBackupChanged();
+        return;
+    }
+    const auto password = QString::fromUtf8(secret);
+    secret.fill('\0');
+    busy_ = true; emit changed(); emit autoBackupChanged();
+    const auto source = access_; const auto root = workspaceRoot_; const auto folder = autoState_.folder;
+    const auto name = AutoBackup::fileName(QDateTime::currentDateTime());
+    const auto version = QCoreApplication::applicationVersion();
+    disconnect(&backupWorker_, nullptr, this, nullptr);
+    connect(&backupWorker_, &QFutureWatcher<PortableBackup::Result>::finished, this, [this] {
+        busy_ = false;
+        finishAutoBackup(backupWorker_.result());
+    });
+    backupWorker_.setFuture(QtConcurrent::run([source, root, password, folder, name, version] {
+        PortableBackup::Result result;
+        if (!QDir().mkpath(root)) { result.error = QStringLiteral("Не удалось подготовить папку для копии."); return result; }
+        QTemporaryDir staging(root + QStringLiteral("/auto-XXXXXX"));
+        if (!staging.isValid()) { result.error = QStringLiteral("Не удалось подготовить копию."); return result; }
+        const auto local = staging.filePath(QStringLiteral("copy.vexabackup"));
+        result = PortableBackup::exportFile(source, local, root, password, false, version);
+        if (!result.ok) return result;
+        QString error;
+        if (!AutoBackup::Target::write(folder, local, name, error)) {
+            result.ok = false;
+            result.error = error;
+            return result;
+        }
+        // Only copies made by this feature are removed, and failing to remove one does not fail the copy
+        QString listError;
+        const auto copies = AutoBackup::Target::list(folder, listError);
+        for (const auto& old : AutoBackup::expired(copies.keys(), AutoBackup::KeepCopies)) {
+            QString removeError;
+            AutoBackup::Target::remove(copies.value(old), removeError);
+        }
+        return result;
+    }));
+}
+
+void DatabaseProtection::finishAutoBackup(const PortableBackup::Result& result)
+{
+    const auto now = QDateTime::currentDateTime();
+    autoState_.lastAttempt = now;
+    if (result.ok) {
+        autoState_.lastBackup = now;
+        autoState_.lastError.clear();
+    } else {
+        // A failed attempt is retried after an hour; the message stays visible in settings
+        autoState_.lastError = result.error;
+    }
+    saveAutoState();
+    emit changed();
 }
