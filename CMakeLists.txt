@@ -659,6 +659,14 @@ add_executable(PdfStatementReaderTest
 target_link_libraries(PdfStatementReaderTest PRIVATE Qt6::Core Qt6::Gui Qt6::Test ZLIB::ZLIB)
 add_test(NAME PdfStatementReaderTest COMMAND PdfStatementReaderTest)
 
+# Scheduling, names and retention of automatic copies; no platform store is touched.
+add_executable(AutoBackupTest
+    tests/AutoBackupTest.cpp
+    storage/AutoBackup.cpp
+)
+target_link_libraries(AutoBackupTest PRIVATE Qt6::Core Qt6::Test)
+add_test(NAME AutoBackupTest COMMAND AutoBackupTest)
+
 # Bank PDF statements are always read with Poppler's pdftotext.
 
 add_executable(BybitProviderTest
