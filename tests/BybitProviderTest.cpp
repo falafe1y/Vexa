@@ -10,10 +10,10 @@
 
 class Reply : public QNetworkReply {
 public:
-    Reply(const QNetworkRequest& request, const QJsonObject& object, QObject* parent)
+    Reply(const QNetworkRequest& request, const QJsonObject& object, QObject* parent, int status = 200)
         : QNetworkReply(parent), data_(QJsonDocument(object).toJson()) {
         setRequest(request); setUrl(request.url()); open(QIODevice::ReadOnly);
-        setAttribute(QNetworkRequest::HttpStatusCodeAttribute, 200);
+        setAttribute(QNetworkRequest::HttpStatusCodeAttribute, status);
         QTimer::singleShot(0, this, [this] { setFinished(true); emit readyRead(); emit finished(); });
     }
     void abort() override {}
@@ -30,6 +30,7 @@ private:
 class Network : public QNetworkAccessManager {
 public:
     bool readOnly = true, apiError = false, repeatingCursor = false, validSignatures = true;
+    int failedRequests = 0;   // the next transaction-log requests answer with HTTP 503
     int authenticatedRequests = 0, utaPages = 0, fundingPages = 0;
     bool encodedCursorSeen = false;
     qint64 firstStartMs = 0;
@@ -66,7 +67,10 @@ protected:
                     {"ioDirection", "I"}, {"createTime", "1700000000"}, {"descriptionEn", "Deposit"}}}}, {"nextPageCursor", ""}};
             } else validSignatures = false;
         }
-        return new Reply(request, {{"retCode", apiError && path != "/v5/market/time" ? 10003 : 0}, {"result", result}}, this);
+        // While failedRequests is positive, transaction-log requests answer with HTTP 503
+        const bool failing = path == "/v5/account/transaction-log" && failedRequests > 0;
+        if (failing) --failedRequests;
+        return new Reply(request, {{"retCode", apiError && path != "/v5/market/time" ? 10003 : 0}, {"result", result}}, this, failing ? 503 : 200);
     }
 };
 class BybitProviderTest : public QObject {
@@ -136,6 +140,25 @@ private slots:
             QVERIFY(provider.refresh("a", "test-key", "test-secret", QDateTime::currentMSecsSinceEpoch() - 86400000));
             QVERIFY(finished.count() == 1 || finished.wait(5000)); QCOMPARE(finished.count(), 1); QVERIFY(!finished[0][1].toString().isEmpty()); QCOMPARE(snapshots.count(), 0);
             if (mode < 2) QCOMPARE(network.authenticatedRequests, 1);
+        }
+    }
+    void retriesTransientFailuresThenGivesUp() {
+        {
+            Network network; network.failedRequests = 2; BybitProvider provider(nullptr, &network);
+            QSignalSpy snapshots(&provider, &BybitProvider::snapshotReady), finished(&provider, &BybitProvider::finished);
+            QSignalSpy progress(&provider, &BybitProvider::progress);
+            QVERIFY(provider.refresh("a", "test-key", "test-secret", QDateTime::currentMSecsSinceEpoch() - 86400000));
+            QVERIFY(finished.count() == 1 || finished.wait(15000)); QCOMPARE(finished.count(), 1);
+            QCOMPARE(finished[0][1].toString(), QString()); QCOMPARE(snapshots.count(), 1);
+            QCOMPARE(progress.last()[1].toInt(), 100);
+        }
+        {
+            // Four attempts in all, then the sync reports the failure
+            Network network; network.failedRequests = 100; BybitProvider provider(nullptr, &network);
+            QSignalSpy finished(&provider, &BybitProvider::finished);
+            QVERIFY(provider.refresh("a", "test-key", "test-secret", QDateTime::currentMSecsSinceEpoch() - 86400000));
+            QVERIFY(finished.count() == 1 || finished.wait(20000)); QCOMPARE(finished.count(), 1);
+            QVERIFY(!finished[0][1].toString().isEmpty());
         }
     }
     void cachesMergesAndClearsWithoutSecrets() {

@@ -43,15 +43,30 @@ QString operationName(const QString& type, const QString& side) {
     return QObject::tr("Операция") + " · " + type;
 }
 }
+namespace {
+// Bybit accepts at most seven days in one history request
+constexpr qint64 kWindowMs = 7LL * 86400000;
+// Windows loaded at the same time
+constexpr int kConcurrentWindows = 4;
+// A transient failure (network, server, rate limit) is sent again after 1 s, 2 s and 4 s
+constexpr int kAttempts = 4;
+}
+struct BybitProvider::Window {
+    qint64 from = 0, to = 0;
+    QString cursor;
+    QSet<QString> cursors;
+    int pages = 0;
+};
 struct BybitProvider::Sync {
     QString id;
     QByteArray key, secret;
     QVariantList holdings, operations;
-    QSet<QString> operationIds, cursors;
-    qint64 fromMs = 0, untilMs = 0, windowFrom = 0, windowTo = 0, offsetMs = 0;
-    QString cursor;
+    QSet<QString> operationIds;
+    qint64 fromMs = 0, untilMs = 0, offsetMs = 0;
     bool funding = false, canceled = false;
-    int pages = 0;
+    QList<QSharedPointer<Window>> pending;   // windows of the current phase that have not started
+    int running = 0;                         // windows with a request in flight
+    int windowsTotal = 0, windowsDone = 0, lastPercent = -1;
     QElapsedTimer elapsed;
 };
 BybitProvider::BybitProvider(QObject* parent, QNetworkAccessManager* manager)
@@ -115,9 +130,7 @@ bool BybitProvider::refresh(const QString& id, const QString& key, const QString
                         row.insert("priceUsd", validDecimal(price) ? decimal(price) : QString());
                         value = row;
                     }
-                    sync->windowFrom = sync->fromMs;
-                    sync->windowTo = std::min(sync->untilMs, sync->windowFrom + 7LL * 86400000 - 1);
-                    history(sync);
+                    startPhase(sync);
                 }, false);
             });
         });
@@ -136,7 +149,7 @@ void BybitProvider::finish(const QSharedPointer<Sync>& sync, const QString& erro
 }
 void BybitProvider::get(const QSharedPointer<Sync>& sync, const QString& path,
                         const QUrlQuery& query, std::function<void(const QJsonObject&)> done,
-                        bool authenticated) {
+                        bool authenticated, int attempt) {
     if (sync->canceled) return;
     if (sync->elapsed.elapsed() > 600000) { finish(sync, tr("Загрузка Bybit заняла слишком много времени. Повторите обновление")); return; }
     QUrl url("https://api.bybit.com" + path); url.setQuery(query);
@@ -152,12 +165,21 @@ void BybitProvider::get(const QSharedPointer<Sync>& sync, const QString& path,
         request.setRawHeader("X-BAPI-SIGN", signature(timestamp, sync->key, sync->secret, url.query(QUrl::FullyEncoded).toUtf8()));
         qWarning().noquote() << "Bybit signed request" << path << "key header length:" << sync->key.size();
     }
+    // The same request again, for a failure that may pass
+    const auto again = [this, sync, path, query, done, authenticated, attempt] {
+        get(sync, path, query, done, authenticated, attempt + 1);
+    };
     auto* reply = network_->get(request);
-    connect(reply, &QNetworkReply::finished, this, [this, sync, reply, done = std::move(done)] {
+    connect(reply, &QNetworkReply::finished, this, [this, sync, reply, done, again, attempt] {
         const QByteArray bytes = reply->readAll();
         const int status = reply->attribute(QNetworkRequest::HttpStatusCodeAttribute).toInt();
         const auto networkError = reply->error(); reply->deleteLater();
         if (sync->canceled) return;
+        const bool transient = networkError != QNetworkReply::NoError || status == 0 || status == 429 || status >= 500;
+        if (transient && attempt + 1 < kAttempts) {
+            QTimer::singleShot(1000 << attempt, this, [sync, again] { if (!sync->canceled) again(); });
+            return;
+        }
         if (networkError != QNetworkReply::NoError || status != 200) {
             finish(sync, tr("Не удалось получить данные Bybit (HTTP %1). Проверьте подключение и доступность биржи").arg(status)); return;
         }
@@ -168,6 +190,11 @@ void BybitProvider::get(const QSharedPointer<Sync>& sync, const QString& path,
             finish(sync, tr("Некорректный ответ Bybit")); return;
         }
         const int code = root.value("retCode").toInt(-1);
+        // Rate limit: wait longer than for a network failure
+        if (code == 10006 && attempt + 1 < kAttempts) {
+            QTimer::singleShot(2000 << attempt, this, [sync, again] { if (!sync->canceled) again(); });
+            return;
+        }
         if (code != 0) {
             // Do not expose the response: it may contain API key information.
             QString message = tr("Ошибка Bybit: %1").arg(code);
@@ -242,21 +269,43 @@ QVariantMap BybitProvider::parseOperation(const QJsonObject& row, bool funding) 
     }
     return operation;
 }
-void BybitProvider::history(const QSharedPointer<Sync>& sync) {
+// The transaction log is loaded first, then the funding history; each phase covers the same windows.
+void BybitProvider::startPhase(const QSharedPointer<Sync>& sync) {
+    sync->pending.clear();
+    for (qint64 from = sync->fromMs; from <= sync->untilMs; from += kWindowMs) {
+        auto window = QSharedPointer<Window>::create();
+        window->from = from; window->to = std::min(sync->untilMs, from + kWindowMs - 1);
+        sync->pending.append(window);
+    }
+    // Progress counts the windows of both phases
+    if (!sync->funding) sync->windowsTotal = 2 * int(sync->pending.size());
+    launchWindows(sync);
+}
+void BybitProvider::launchWindows(const QSharedPointer<Sync>& sync) {
+    while (!sync->canceled && sync->running < kConcurrentWindows && !sync->pending.isEmpty()) {
+        ++sync->running;
+        fetchWindow(sync, sync->pending.takeFirst());
+    }
+    if (sync->canceled || sync->running > 0 || !sync->pending.isEmpty()) return;
+    if (!sync->funding) { sync->funding = true; startPhase(sync); return; }
+    emit snapshotReady(sync->id, sync->holdings, sync->operations, sync->untilMs);
+    finish(sync);
+}
+void BybitProvider::fetchWindow(const QSharedPointer<Sync>& sync, const QSharedPointer<Window>& window) {
     QUrlQuery query;
     if (sync->funding) {
-        query.addQueryItem("createTimeFrom", QString::number(sync->windowFrom / 1000));
-        query.addQueryItem("createTimeTo", QString::number(sync->windowTo / 1000));
+        query.addQueryItem("createTimeFrom", QString::number(window->from / 1000));
+        query.addQueryItem("createTimeTo", QString::number(window->to / 1000));
         query.addQueryItem("limit", "100");
     } else {
         query.addQueryItem("accountType", "UNIFIED");
-        query.addQueryItem("startTime", QString::number(sync->windowFrom));
-        query.addQueryItem("endTime", QString::number(sync->windowTo));
+        query.addQueryItem("startTime", QString::number(window->from));
+        query.addQueryItem("endTime", QString::number(window->to));
         query.addQueryItem("limit", "50");
     }
-    if (!sync->cursor.isEmpty()) query.addQueryItem("cursor", sync->cursor);
+    if (!window->cursor.isEmpty()) query.addQueryItem("cursor", window->cursor);
     get(sync, sync->funding ? "/v5/asset/fundinghistory" : "/v5/account/transaction-log", query,
-        [this, sync](const QJsonObject& result) {
+        [this, sync, window](const QJsonObject& result) {
         if (!result.value("list").isArray()) { finish(sync, tr("Bybit вернул некорректную историю")); return; }
         for (const auto& value : result.value("list").toArray()) {
             auto row = parseOperation(value.toObject(), sync->funding);
@@ -265,25 +314,24 @@ void BybitProvider::history(const QSharedPointer<Sync>& sync) {
             if (sync->operationIds.contains(id)) continue;
             sync->operationIds.insert(id); sync->operations.append(row);
         }
-        sync->cursor = result.value("nextPageCursor").toString();
-        if (!sync->cursor.isEmpty()) {
-            if (++sync->pages > 200 || sync->cursors.contains(sync->cursor)) {
+        window->cursor = result.value("nextPageCursor").toString();
+        if (!window->cursor.isEmpty()) {
+            if (++window->pages > 200 || window->cursors.contains(window->cursor)) {
                 finish(sync, tr("История Bybit слишком велика или биржа повторяет страницу. Сохранённая история не изменена")); return;
             }
-            sync->cursors.insert(sync->cursor);
-        } else {
-            sync->cursors.clear(); sync->pages = 0;
-            if (sync->windowTo < sync->untilMs) {
-                sync->windowFrom = sync->windowTo + 1;
-                sync->windowTo = std::min(sync->untilMs, sync->windowFrom + 7LL * 86400000 - 1);
-            } else if (!sync->funding) {
-                sync->funding = true; sync->windowFrom = sync->fromMs;
-                sync->windowTo = std::min(sync->untilMs, sync->windowFrom + 7LL * 86400000 - 1);
-            } else {
-                emit snapshotReady(sync->id, sync->holdings, sync->operations, sync->untilMs);
-                finish(sync); return;
-            }
+            window->cursors.insert(window->cursor);
+            fetchWindow(sync, window);
+            return;
         }
-        QTimer::singleShot(120, this, [this, sync] { if (!sync->canceled) history(sync); });
+        ++sync->windowsDone; --sync->running;
+        reportProgress(sync);
+        launchWindows(sync);
     });
+}
+void BybitProvider::reportProgress(const QSharedPointer<Sync>& sync) {
+    if (sync->windowsTotal <= 0) return;
+    const int percent = std::min(100, sync->windowsDone * 100 / sync->windowsTotal);
+    if (percent == sync->lastPercent) return;
+    sync->lastPercent = percent;
+    emit progress(sync->id, percent);
 }

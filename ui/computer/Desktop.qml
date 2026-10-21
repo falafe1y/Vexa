@@ -233,7 +233,7 @@ ApplicationWindow {
     }
 
     function accountPrimaryAmount(row) {
-        if (row && row.isExchange) return row.hasSnapshot ? root.money(row.valueMinor, row.currency, false) : row.refreshing ? qsTr("Загрузка…") : qsTr("Нет данных");
+        if (row && row.isExchange) return row.hasSnapshot ? root.money(row.valueMinor, row.currency, false) : row.refreshing ? (row.syncProgress >= 0 ? qsTr("Загрузка %1%").arg(row.syncProgress) : qsTr("Загрузка…")) : qsTr("Нет данных");
         if (row && row.isCrypto)
             return row.balanceText + " " + row.symbol;
         if (row && row.isCreditCard)
@@ -244,7 +244,7 @@ ApplicationWindow {
     }
 
     function accountCompactAmount(row) {
-        if (row && row.isExchange) return row.hasSnapshot ? root.money(row.valueMinor, row.currency, false) : row.refreshing ? qsTr("Загрузка…") : qsTr("Нет данных");
+        if (row && row.isExchange) return row.hasSnapshot ? root.money(row.valueMinor, row.currency, false) : row.refreshing ? (row.syncProgress >= 0 ? qsTr("Загрузка %1%").arg(row.syncProgress) : qsTr("Загрузка…")) : qsTr("Нет данных");
         if (row && row.isCrypto)
             return row.balanceText + " " + row.symbol;
         if (row && row.isCreditCard)
@@ -274,7 +274,7 @@ ApplicationWindow {
         if (!row || !row.isCrypto)
             return "";
         if (row.refreshing)
-            return qsTr("Обновление баланса…");
+            return row.syncProgress >= 0 ? qsTr("Загрузка истории: %1%").arg(row.syncProgress) : qsTr("Обновление баланса…");
         if (row.connectionError) return row.connectionError;
         if (!row.hasSnapshot)
             return qsTr("Баланс ещё не обновлён");

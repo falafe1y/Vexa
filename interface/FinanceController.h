@@ -810,6 +810,7 @@ private:
     BybitProvider bybitProvider_;
     QVariantList cryptoExchanges_;
     QHash<QString, qint64> cryptoBackfillFromMs_;
+    QHash<QString, int> exchangeProgress_;   // percent of the running Bybit sync, by account
     QDateTime rateHistoryRequestedUtc_;
     QHash<QString, QString> cryptoWalletNames_;
     QHash<QString, QPair<QString, QString>> exchangeCredentials_;

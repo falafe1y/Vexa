@@ -23,12 +23,17 @@ signals:
     void snapshotReady(const QString& id, const QVariantList& holdings,
                        const QVariantList& operations, qint64 fetchedAtMs);
     void finished(const QString& id, const QString& error);
+    void progress(const QString& id, int percent);
 private:
+    struct Window;
     struct Sync;
     void get(const QSharedPointer<Sync>& sync, const QString& path,
              const QUrlQuery& query, std::function<void(const QJsonObject&)> done,
-             bool authenticated = true);
-    void history(const QSharedPointer<Sync>& sync);
+             bool authenticated = true, int attempt = 0);
+    void startPhase(const QSharedPointer<Sync>& sync);
+    void launchWindows(const QSharedPointer<Sync>& sync);
+    void fetchWindow(const QSharedPointer<Sync>& sync, const QSharedPointer<Window>& window);
+    void reportProgress(const QSharedPointer<Sync>& sync);
     void finish(const QSharedPointer<Sync>& sync, const QString& error = {});
     QNetworkAccessManager defaultNetwork_;
     QNetworkAccessManager* network_;

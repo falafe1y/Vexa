@@ -540,8 +540,12 @@ FinanceController::FinanceController(QObject* parent, const QString& databasePat
         emit performanceChanged();
         emit cryptoWalletsChanged(); emit cryptoTransactionsChanged(); emit balanceChanged();
     });
+    connect(&bybitProvider_, &BybitProvider::progress, this, [this](const QString& id, int percent) {
+        exchangeProgress_[id] = percent; emit cryptoWalletsChanged();
+    });
     connect(&bybitProvider_, &BybitProvider::finished, this, [this](const QString& id, const QString& error) {
         finishCryptoWalletRequest(id); finishCryptoRequest();
+        exchangeProgress_.remove(id);
         if (!error.isEmpty()) { exchangeErrors_[id] = error; setCryptoLastError(error); }
         emit cryptoWalletsChanged();
     });
@@ -3180,7 +3184,8 @@ QVariantList FinanceController::cryptoWallets() const
             {"balanceText", QString::number(usd / 100.0, 'f', 2)}, {"balanceMinor", converted},
             {"valueMinor", converted}, {"currency", currencyCode(appCurrency_)}, {"hasSnapshot", fetched > 0},
             {"updatedAt", fetched > 0 ? QVariant(QDateTime::fromMSecsSinceEpoch(fetched, QTimeZone::UTC)) : QVariant()},
-            {"refreshing", refreshingCryptoWalletIds_.contains(id)}, {"priceHasSnapshot", false},
+            {"refreshing", refreshingCryptoWalletIds_.contains(id)}, {"syncProgress", exchangeProgress_.value(id, -1)},
+            {"priceHasSnapshot", false},
             {"connectionError", exchangeErrors_.value(id).isEmpty() ? exchangeCredentialWarnings_.value(id) : exchangeErrors_.value(id)}};
         result.append(item);
     }
@@ -4440,6 +4445,7 @@ bool FinanceController::deleteCryptoWallet(const QString& id)
         if (!repository_.deleteCryptoExchange(id)) return false;
         if (refreshingCryptoWalletIds_.contains(id)) { bybitProvider_.cancel(id); finishCryptoWalletRequest(id); finishCryptoRequest(); }
         exchangeCredentials_.remove(id); exchangeErrors_.remove(id); exchangeCredentialWarnings_.remove(id);
+        exchangeProgress_.remove(id);
         (void)QtConcurrent::run([id] { ExchangeCredentials::remove(id); });
         cryptoExchanges_ = repository_.loadCryptoExchanges();
         if (selectedCryptoWalletId_ == id) {
