@@ -51,11 +51,15 @@ QPair<QString, QString> ExchangeCredentials::load(const QString& id) {
 #elif defined(Q_OS_ANDROID)
     bool found = false;
     QString error;
-    if (!AndroidVault::read(vaultName(id), bytes, found, error) || !found) return {};
+    if (!AndroidVault::read(vaultName(id), bytes, found, error) || !found) {
+        qWarning().noquote() << "Bybit key record for" << id << "not loaded:" << (error.isEmpty() ? QStringLiteral("no record") : error);
+        return {};
+    }
 #else
     bytes = secretTool({"lookup", "application", "vexa", "exchange", "Bybit", "account", id});
 #endif
     const auto object = QJsonDocument::fromJson(bytes).object(); bytes.fill('\0');
+    if (object.isEmpty()) qWarning().noquote() << "Bybit key record for" << id << "is empty or unreadable";
     return {object.value("key").toString(), object.value("secret").toString()};
 }
 bool ExchangeCredentials::save(const QString& id, const QString& apiKey, const QString& secret) {
@@ -76,6 +80,7 @@ bool ExchangeCredentials::save(const QString& id, const QString& apiKey, const Q
 #else
     secretTool({"store", "--label=Vexa Bybit", "application", "vexa", "exchange", "Bybit", "account", id}, bytes, &succeeded);
 #endif
+    if (!succeeded) qWarning().noquote() << "Bybit key record for" << id << "could not be saved";
     bytes.fill('\0'); return succeeded;
 }
 void ExchangeCredentials::remove(const QString& id) {

@@ -4326,7 +4326,7 @@ void FinanceController::startExchangeRefresh(const QString& id)
     const qint64 fetched = account->toMap().value("fetchedAtMs").toLongLong();
     qint64 from = now - 2LL * 86400000;
     if (repository_.loadCryptoHistoryFromMs(id) == 0) {
-        from = now - 730LL * 86400000;
+        from = now - 729LL * 86400000;
         cryptoBackfillFromMs_.insert(id, from);
     } else if (fetched > 0) {
         from = fetched - 2LL * 86400000;
@@ -4336,6 +4336,10 @@ void FinanceController::startExchangeRefresh(const QString& id)
         ++pendingCryptoRequests_; beginCryptoWalletRequest(id);
         if (!cryptoRefreshing_) { cryptoRefreshing_ = true; emit cryptoRefreshingChanged(); }
         emit cryptoWalletsChanged();
+    } else if (credentials.first.isEmpty() || credentials.second.isEmpty()) {
+        // Without keys nothing is sent; say so instead of staying silent
+        exchangeErrors_[id] = tr("Ключи API не найдены. Введите их заново через «Редактировать»");
+        setCryptoLastError(exchangeErrors_[id]); emit cryptoWalletsChanged();
     }
 }
 

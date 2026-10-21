@@ -62,12 +62,18 @@ QByteArray BybitProvider::signature(const QByteArray& timestamp, const QByteArra
                                             secret, QCryptographicHash::Sha256).toHex();
 }
 bool BybitProvider::refresh(const QString& id, const QString& key, const QString& secret, qint64 fromMs) {
-    if (active_.contains(id) || key.isEmpty() || secret.isEmpty()) return false;
+    if (active_.contains(id) || key.isEmpty() || secret.isEmpty()) {
+        // Lengths only: the keys themselves must never reach a log
+        qWarning().noquote() << "Bybit refresh not started for" << id << "active:" << active_.contains(id)
+                             << "key length:" << key.size() << "secret length:" << secret.size();
+        return false;
+    }
     auto sync = QSharedPointer<Sync>::create();
     sync->id = id; sync->key = key.toUtf8(); sync->secret = secret.toUtf8();
     sync->untilMs = QDateTime::currentMSecsSinceEpoch();
     // The exchange keeps two years of its transaction log; the cost of a coin may be in any of its trades.
-    sync->fromMs = std::max(fromMs, sync->untilMs - 730LL * 86400000);
+    // It refuses a start that is older than two years by the time the request arrives, so one day is kept as a margin.
+    sync->fromMs = std::max(fromMs, sync->untilMs - 729LL * 86400000);
     sync->elapsed.start(); active_.insert(id, sync);
     const qint64 sentAt = QDateTime::currentMSecsSinceEpoch();
     get(sync, "/v5/market/time", {}, [this, sync, sentAt](const QJsonObject& result) {
@@ -123,6 +129,7 @@ void BybitProvider::cancel(const QString& id) {
 }
 void BybitProvider::finish(const QSharedPointer<Sync>& sync, const QString& error) {
     if (sync->canceled) return;
+    qWarning().noquote() << "Bybit sync" << sync->id << "finished with:" << (error.isEmpty() ? QStringLiteral("success") : error);
     sync->canceled = true;
     active_.remove(sync->id); sync->secret.fill('\0'); sync->key.clear();
     emit finished(sync->id, error);
@@ -143,6 +150,7 @@ void BybitProvider::get(const QSharedPointer<Sync>& sync, const QString& path,
         request.setRawHeader("X-BAPI-TIMESTAMP", timestamp);
         request.setRawHeader("X-BAPI-RECV-WINDOW", "10000");
         request.setRawHeader("X-BAPI-SIGN", signature(timestamp, sync->key, sync->secret, url.query(QUrl::FullyEncoded).toUtf8()));
+        qWarning().noquote() << "Bybit signed request" << path << "key header length:" << sync->key.size();
     }
     auto* reply = network_->get(request);
     connect(reply, &QNetworkReply::finished, this, [this, sync, reply, done = std::move(done)] {

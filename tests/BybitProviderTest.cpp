@@ -110,7 +110,7 @@ private slots:
         QVERIFY(provider.refresh("a", "test-key", "test-secret", 0));
         QTRY_VERIFY(network.utaPages >= 1);
         provider.cancel("a");
-        QVERIFY(qAbs(network.firstStartMs - (now - 730LL * 86400000)) < 60000);
+        QVERIFY(qAbs(network.firstStartMs - (now - 729LL * 86400000)) < 60000);
     }
     void spotTradeKeepsItsPriceAndQuantity() {
         const QJsonObject trade{{"id", "t1"}, {"type", "TRADE"}, {"category", "spot"}, {"side", "Sell"}, {"symbol", "BTCUSDT"}, {"currency", "BTC"},
