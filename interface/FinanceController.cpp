@@ -5,6 +5,7 @@
 #include <QFutureWatcher>
 #include <QSignalBlocker>
 #include <QScopedValueRollback>
+#include <QRandomGenerator>
 
 #include "../services/BankCsvImporter.h"
 #include "../services/BankCategoryMatcher.h"
@@ -729,7 +730,7 @@ FinanceController::FinanceController(QObject* parent, const QString& databasePat
         &cryptoRefreshTimer_,
         &QTimer::timeout,
         this,
-        &FinanceController::refreshCryptoWallets);
+        &FinanceController::requestCryptoRefresh);
 
     recurringTimer_.setSingleShot(true);
     QObject::connect(
@@ -813,6 +814,9 @@ FinanceController::FinanceController(QObject* parent, const QString& databasePat
         cryptoPricesUsdMicros_.insert(QStringLiteral("USDT"), 1'000'000);
     }
     lastCryptoRefreshAttemptUtc_ = repository_.loadCryptoRefreshAttemptUtc();
+    // Kept in the database, so that a restart neither resets the cooldown nor refreshes prices at once
+    lastCryptoPriceAttemptUtc_ = repository_.loadCryptoPriceAttemptUtc();
+    loadManualCryptoState(repository_.loadCryptoManualState());
     archivedCategoryIds_ = repository_.loadArchivedCategoryIds();
     summary_ = repository_.loadSummary();
     for (const FinanceRepository::BankCsvProfileRecord& record :
@@ -1392,6 +1396,8 @@ QVariantMap FinanceController::restoreDatabase(const QUrl& fileUrl)
     if (!cryptoPricesUsdMicros_.contains(QStringLiteral("USDT")))
         cryptoPricesUsdMicros_.insert(QStringLiteral("USDT"), 1'000'000);
     lastCryptoRefreshAttemptUtc_ = repository_.loadCryptoRefreshAttemptUtc();
+    lastCryptoPriceAttemptUtc_ = repository_.loadCryptoPriceAttemptUtc();
+    loadManualCryptoState(repository_.loadCryptoManualState());
     refreshBudgetMonthLimits();
     emit accountsChanged();
     emit categoriesChanged();
@@ -3165,6 +3171,7 @@ QVariantList FinanceController::cryptoWallets() const
         item[QStringLiteral("updatedAt")] = wallet.balanceFetchedAtUtc();
         item[QStringLiteral("refreshing")] =
             refreshingCryptoWalletIds_.contains(wallet.id());
+        item[QStringLiteral("awaitingRefresh")] = cryptoJitterWaiting_;
         item[QStringLiteral("priceUsd")] =
             static_cast<double>(cryptoPricesUsdMicros_.value(wallet.symbol())) /
             1'000'000.0;
@@ -3184,7 +3191,7 @@ QVariantList FinanceController::cryptoWallets() const
             {"balanceText", QString::number(usd / 100.0, 'f', 2)}, {"balanceMinor", converted},
             {"valueMinor", converted}, {"currency", currencyCode(appCurrency_)}, {"hasSnapshot", fetched > 0},
             {"updatedAt", fetched > 0 ? QVariant(QDateTime::fromMSecsSinceEpoch(fetched, QTimeZone::UTC)) : QVariant()},
-            {"refreshing", refreshingCryptoWalletIds_.contains(id)}, {"syncProgress", exchangeProgress_.value(id, -1)},
+            {"refreshing", refreshingCryptoWalletIds_.contains(id)}, {"syncProgress", exchangeProgress_.value(id, -1)}, {"awaitingRefresh", cryptoJitterWaiting_},
             {"priceHasSnapshot", false},
             {"connectionError", exchangeErrors_.value(id).isEmpty() ? exchangeCredentialWarnings_.value(id) : exchangeErrors_.value(id)}};
         result.append(item);
@@ -3195,6 +3202,55 @@ QVariantList FinanceController::cryptoWallets() const
 bool FinanceController::cryptoRefreshing() const
 {
     return cryptoRefreshing_;
+}
+
+bool FinanceController::cryptoManualRefreshReady() const
+{
+    if (!cryptoManualLockUntilUtc_.isValid()) {
+        return true;
+    }
+    const QDateTime now = QDateTime::currentDateTimeUtc();
+    // A lock never lasts longer than one full lock period, even if the clock was turned back
+    const QDateTime lockEnd = std::min(
+        cryptoManualLockUntilUtc_,
+        now.addMSecs(kManualCryptoLockMs));
+    return now >= lockEnd;
+}
+
+void FinanceController::loadManualCryptoState(const QString& state)
+{
+    // Format: "<lock end in ms, 0 when none>;<times of the counted clicks in ms, comma separated>"
+    manualCryptoRefreshes_.clear();
+    cryptoManualLockUntilUtc_ = {};
+    const QStringList parts = state.split(QLatin1Char(';'));
+    if (parts.isEmpty()) {
+        return;
+    }
+    bool ok = false;
+    const qint64 lockMs = parts.first().toLongLong(&ok);
+    if (ok && lockMs > 0) {
+        cryptoManualLockUntilUtc_ = QDateTime::fromMSecsSinceEpoch(lockMs, QTimeZone::UTC);
+    }
+    if (parts.size() > 1) {
+        for (const QString& item : parts.at(1).split(QLatin1Char(','), Qt::SkipEmptyParts)) {
+            const qint64 clickMs = item.toLongLong(&ok);
+            if (ok && clickMs > 0) {
+                manualCryptoRefreshes_.append(QDateTime::fromMSecsSinceEpoch(clickMs, QTimeZone::UTC));
+            }
+        }
+    }
+}
+
+QString FinanceController::manualCryptoStateText() const
+{
+    const qint64 lockMs = cryptoManualLockUntilUtc_.isValid()
+        ? cryptoManualLockUntilUtc_.toMSecsSinceEpoch()
+        : 0;
+    QStringList clicks;
+    for (const QDateTime& click : manualCryptoRefreshes_) {
+        clicks << QString::number(click.toMSecsSinceEpoch());
+    }
+    return QString::number(lockMs) + QStringLiteral(";") + clicks.join(QStringLiteral(","));
 }
 
 QString FinanceController::cryptoLastError() const
@@ -4428,11 +4484,14 @@ QVariantMap FinanceController::addCryptoWallet(
         cryptoPricesFetchedAtUtc_.value(spec.symbol);
     const qint64 priceAgeMs = priceFetchedAtUtc.isValid()
         ? priceFetchedAtUtc.msecsTo(QDateTime::currentDateTimeUtc())
-        : kCryptoRefreshIntervalMs;
-    if (priceAgeMs < 0 || priceAgeMs >= kCryptoRefreshIntervalMs) {
+        : kCryptoPriceIntervalMs;
+    if (priceAgeMs < 0 || priceAgeMs >= kCryptoPriceIntervalMs) {
+        lastCryptoPriceAttemptUtc_ = QDateTime::currentDateTimeUtc();
+        repository_.saveCryptoPriceAttemptUtc(lastCryptoPriceAttemptUtc_);
         startCryptoPriceRequest();
     }
-    scheduleNextCryptoRefresh(kCryptoRefreshIntervalMs);
+    scheduleNextCryptoRefresh(
+        msUntilNextCryptoRequest(QDateTime::currentDateTimeUtc()));
 
     result[QStringLiteral("ok")] = true;
     return result;
@@ -4500,6 +4559,89 @@ bool FinanceController::deleteCryptoWallet(const QString& id)
 
 void FinanceController::refreshCryptoWallets()
 {
+    // The button forces a refresh of both prices and wallets, whatever the timers say.
+    // kManualCryptoRefreshLimit clicks are allowed in one window; the click after them is refused
+    // and locks the button for kManualCryptoLockMs from that moment.
+    if (!cryptoManualRefreshReady()) {
+        return;
+    }
+    const QDateTime now = QDateTime::currentDateTimeUtc();
+    // Only the clicks inside the window count; a click made with a clock set ahead stays counted
+    manualCryptoRefreshes_.erase(
+        std::remove_if(
+            manualCryptoRefreshes_.begin(),
+            manualCryptoRefreshes_.end(),
+            [&now](const QDateTime& clickUtc) {
+                return clickUtc.msecsTo(now) >= kManualCryptoRefreshWindowMs;
+            }),
+        manualCryptoRefreshes_.end());
+
+    if (manualCryptoRefreshes_.size() >= kManualCryptoRefreshLimit) {
+        cryptoManualLockUntilUtc_ = now.addMSecs(kManualCryptoLockMs);
+        manualCryptoRefreshes_.clear();
+        if (!repository_.saveCryptoManualState(manualCryptoStateText())) {
+            qWarning() << "Failed to save manual crypto refresh state:"
+                       << repository_.lastError();
+        }
+        emit cryptoWalletsChanged();
+        QTimer::singleShot(
+            kManualCryptoLockMs,
+            this,
+            [this] { emit cryptoWalletsChanged(); });
+        return;
+    }
+
+    manualCryptoRefreshes_.append(now);
+    if (!repository_.saveCryptoManualState(manualCryptoStateText())) {
+        qWarning() << "Failed to save manual crypto refresh state:"
+                   << repository_.lastError();
+    }
+    lastCryptoPriceAttemptUtc_ = QDateTime();
+    lastCryptoRefreshAttemptUtc_ = QDateTime();
+    emit cryptoWalletsChanged();
+    requestCryptoRefresh();
+}
+
+void FinanceController::requestCryptoRefresh()
+{
+    // A random pause of up to a minute before each crypto refresh: devices behind one router
+    // do not call the exchanges and price services at the same moment. Only the crypto refresh waits.
+    if (cryptoJitterWaiting_) {
+        return;
+    }
+    cryptoJitterWaiting_ = true;
+    emit cryptoWalletsChanged();
+    constexpr int kCryptoJitterMaxMs = 60'000;
+    QTimer::singleShot(
+        QRandomGenerator::global()->bounded(kCryptoJitterMaxMs + 1),
+        this,
+        [this] {
+            cryptoJitterWaiting_ = false;
+            emit cryptoWalletsChanged();
+            refreshCryptoWalletsNow();
+        });
+}
+
+qint64 FinanceController::msUntilNextCryptoRequest(const QDateTime& now) const
+{
+    // Time left until a part is due; 0 when it is due or its last attempt is unknown
+    const auto left = [&now](const QDateTime& attemptUtc, qint64 intervalMs) -> qint64 {
+        if (!attemptUtc.isValid()) {
+            return 0;
+        }
+        const qint64 ageMs = attemptUtc.msecsTo(now);
+        if (ageMs < 0 || ageMs >= intervalMs) {
+            return 0;
+        }
+        return intervalMs - ageMs;
+    };
+    return std::min(
+        left(lastCryptoPriceAttemptUtc_, kCryptoPriceIntervalMs),
+        left(lastCryptoRefreshAttemptUtc_, kCryptoRefreshIntervalMs));
+}
+
+void FinanceController::refreshCryptoWalletsNow()
+{
     setCryptoLastError(QString());
     refreshCryptoExchanges();
     if (cryptoWallets_.isEmpty()) {
@@ -4507,18 +4649,37 @@ void FinanceController::refreshCryptoWallets()
     }
 
     setCryptoLastError(QString());
-    lastCryptoRefreshAttemptUtc_ = QDateTime::currentDateTimeUtc();
-    if (!repository_.saveCryptoRefreshAttemptUtc(
-            lastCryptoRefreshAttemptUtc_)) {
-        qWarning() << "Failed to save crypto refresh time:"
-                   << repository_.lastError();
+    const QDateTime now = QDateTime::currentDateTimeUtc();
+    // Prices every 30 minutes, wallets every 6 hours: each part runs only when its own time has come
+    const auto due = [&now](const QDateTime& attemptUtc, qint64 intervalMs) {
+        if (!attemptUtc.isValid()) {
+            return true;
+        }
+        const qint64 ageMs = attemptUtc.msecsTo(now);
+        return ageMs < 0 || ageMs >= intervalMs;
+    };
+    if (due(lastCryptoPriceAttemptUtc_, kCryptoPriceIntervalMs)) {
+        lastCryptoPriceAttemptUtc_ = now;
+        if (!repository_.saveCryptoPriceAttemptUtc(lastCryptoPriceAttemptUtc_)) {
+            qWarning() << "Failed to save crypto price time:"
+                       << repository_.lastError();
+        }
+        startCryptoPriceRequest();
     }
-    startCryptoPriceRequest();
-    for (const CryptoWallet& wallet : std::as_const(cryptoWallets_)) {
-        startCryptoBalanceRequest(wallet);
-        startCryptoTransactionRequest(wallet);
+    if (due(lastCryptoRefreshAttemptUtc_, kCryptoRefreshIntervalMs)) {
+        lastCryptoRefreshAttemptUtc_ = now;
+        if (!repository_.saveCryptoRefreshAttemptUtc(
+                lastCryptoRefreshAttemptUtc_)) {
+            qWarning() << "Failed to save crypto refresh time:"
+                       << repository_.lastError();
+        }
+        for (const CryptoWallet& wallet : std::as_const(cryptoWallets_)) {
+            startCryptoBalanceRequest(wallet);
+            startCryptoTransactionRequest(wallet);
+        }
     }
-    scheduleNextCryptoRefresh(kCryptoRefreshIntervalMs);
+    scheduleNextCryptoRefresh(
+        msUntilNextCryptoRequest(QDateTime::currentDateTimeUtc()));
 }
 
 void FinanceController::searchInvestmentInstruments(const QString& query)
@@ -5887,53 +6048,9 @@ void FinanceController::scheduleInitialCryptoRefresh()
     if (cryptoWallets_.isEmpty() || pendingCryptoRequests_ > 0) {
         return;
     }
-
-    const QDateTime now = QDateTime::currentDateTimeUtc();
-    qint64 nextDelayMs = kCryptoRefreshIntervalMs;
-    bool hasStaleSnapshot = false;
-    const auto considerTimestamp = [&](const QDateTime& fetchedAtUtc)
-    {
-        if (!fetchedAtUtc.isValid()) {
-            hasStaleSnapshot = true;
-            return;
-        }
-        const qint64 ageMs = fetchedAtUtc.msecsTo(now);
-        if (ageMs < 0) {
-            return;
-        }
-        if (ageMs >= kCryptoRefreshIntervalMs) {
-            hasStaleSnapshot = true;
-            return;
-        }
-        nextDelayMs = std::min(
-            nextDelayMs,
-            kCryptoRefreshIntervalMs - ageMs);
-    };
-
-    for (const CryptoWallet& wallet : std::as_const(cryptoWallets_)) {
-        considerTimestamp(cryptoPricesFetchedAtUtc_.value(wallet.symbol()));
-        considerTimestamp(wallet.balanceFetchedAtUtc());
-        considerTimestamp(wallet.historyFetchedAtUtc());
-    }
-
-    if (hasStaleSnapshot) {
-        if (lastCryptoRefreshAttemptUtc_.isValid()) {
-            const qint64 attemptAgeMs =
-                lastCryptoRefreshAttemptUtc_.msecsTo(now);
-            if (attemptAgeMs >= 0 &&
-                attemptAgeMs < kCryptoRefreshIntervalMs) {
-                scheduleNextCryptoRefresh(
-                    kCryptoRefreshIntervalMs - attemptAgeMs);
-                return;
-            }
-        }
-        QTimer::singleShot(
-            0,
-            this,
-            &FinanceController::refreshCryptoWallets);
-    } else {
-        scheduleNextCryptoRefresh(nextDelayMs);
-    }
+    // Zero when a part is already due: the timer then refreshes at once
+    scheduleNextCryptoRefresh(
+        msUntilNextCryptoRequest(QDateTime::currentDateTimeUtc()));
 }
 
 void FinanceController::scheduleNextCryptoRefresh(const qint64 delayMs)

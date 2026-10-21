@@ -3,6 +3,7 @@
 #include "CryptoParser.h"
 #include "TronUsdtParser.h"
 
+#include <QJsonArray>
 #include <QJsonDocument>
 #include <QJsonObject>
 #include <QNetworkReply>
@@ -10,10 +11,47 @@
 #include <QUrl>
 #include <QUrlQuery>
 
+#include <cmath>
+
 namespace
 {
 
 constexpr qsizetype kMaximumResponseSize = 2 * 1024 * 1024;
+
+// A price as text ("83448.5") to millionths of a dollar; 0 when the text is not a positive number
+qint64 priceToMicros(const QString& text)
+{
+    bool ok = false;
+    const double price = text.toDouble(&ok);
+    const double scaled = price * 1'000'000.0;
+    if (!ok || !std::isfinite(scaled) || price <= 0.0) {
+        return 0;
+    }
+    return std::llround(scaled);
+}
+
+// Bybit public tickers: {"retCode":0,"result":{"list":[{"symbol":"BTCUSDT","lastPrice":"83448.5",...}]}}
+qint64 bybitLastPriceMicros(const QByteArray& response)
+{
+    const QJsonObject root = QJsonDocument::fromJson(response).object();
+    if (root.value(QStringLiteral("retCode")).toInt(-1) != 0) {
+        return 0;
+    }
+    const QJsonArray list = root.value(QStringLiteral("result")).toObject()
+        .value(QStringLiteral("list")).toArray();
+    if (list.isEmpty()) {
+        return 0;
+    }
+    return priceToMicros(list.first().toObject()
+        .value(QStringLiteral("lastPrice")).toString());
+}
+
+// Binance public ticker: {"symbol":"BTCUSDT","price":"83450.01000000"}
+qint64 binanceLastPriceMicros(const QByteArray& response)
+{
+    return priceToMicros(QJsonDocument::fromJson(response).object()
+        .value(QStringLiteral("price")).toString());
+}
 const QString kUsdtContract =
     QStringLiteral("TR7NHqjeKQxGTCi8q8ZY4pL8otSzgjLj6t");
 
@@ -177,46 +215,88 @@ bool CryptoProvider::requestBalance(const CryptoWallet& wallet)
     return true;
 }
 
+// The prices of BTC and ETH come from the public tickers of Bybit (no key, no account);
+// Binance answers for a coin when Bybit does not. USDT is a stablecoin and counts as one dollar.
+struct CryptoProvider::PriceJob {
+    QHash<QString, qint64> prices;
+    int pending = 0;
+    bool failed = false;
+};
+
 bool CryptoProvider::requestPrices()
 {
     if (priceRequestActive_) {
         return false;
     }
-    const QByteArray proApiKey = qgetenv(
-        "VEXA_COINGECKO_PRO_API_KEY").trimmed();
-    const QByteArray demoApiKey = qgetenv(
-        "VEXA_COINGECKO_DEMO_API_KEY").trimmed();
-    QUrl url(proApiKey.isEmpty()
-        ? QStringLiteral("https://api.coingecko.com/api/v3/simple/price")
-        : QStringLiteral("https://pro-api.coingecko.com/api/v3/simple/price"));
+    priceRequestActive_ = true;
+    auto job = QSharedPointer<PriceJob>::create();
+    job->prices.insert(QStringLiteral("USDT"), 1'000'000);
+    for (const QString& symbol : {QStringLiteral("BTC"), QStringLiteral("ETH")}) {
+        ++job->pending;
+        fetchPrice(job, symbol, false);
+    }
+    return true;
+}
+
+void CryptoProvider::fetchPrice(
+    const QSharedPointer<PriceJob>& job,
+    const QString& symbol,
+    const bool fromBinance
+    )
+{
+    const QString pair = symbol + QStringLiteral("USDT");
+    QUrl url(fromBinance
+        ? QStringLiteral("https://api.binance.com/api/v3/ticker/price")
+        : QStringLiteral("https://api.bybit.com/v5/market/tickers"));
     QUrlQuery query;
-    query.addQueryItem(
-        QStringLiteral("ids"),
-        QStringLiteral("tether,bitcoin,ethereum"));
-    query.addQueryItem(QStringLiteral("vs_currencies"), QStringLiteral("usd"));
-    query.addQueryItem(
-        QStringLiteral("include_last_updated_at"),
-        QStringLiteral("true"));
+    if (!fromBinance) {
+        query.addQueryItem(QStringLiteral("category"), QStringLiteral("spot"));
+    }
+    query.addQueryItem(QStringLiteral("symbol"), pair);
     url.setQuery(query);
 
-    QNetworkRequest request = makeRequest(url);
-    if (!proApiKey.isEmpty()) {
-        request.setRawHeader(QByteArrayLiteral("x-cg-pro-api-key"), proApiKey);
-    } else if (!demoApiKey.isEmpty()) {
-        request.setRawHeader(
-            QByteArrayLiteral("x-cg-demo-api-key"), demoApiKey);
-    }
-    priceRequestActive_ = true;
-    QNetworkReply* reply = networkAccessManager_.get(request);
+    QNetworkReply* reply = networkAccessManager_.get(makeRequest(url));
     QObject::connect(
         reply,
         &QNetworkReply::finished,
         this,
-        [this, reply]()
+        [this, job, symbol, fromBinance, reply]()
         {
-            finishPriceRequest(reply);
+            const QByteArray response = reply->readAll();
+            const qint64 micros = successfulResponse(reply, response)
+                ? (fromBinance
+                       ? binanceLastPriceMicros(response)
+                       : bybitLastPriceMicros(response))
+                : 0;
+            reply->deleteLater();
+            if (micros > 0) {
+                job->prices.insert(symbol, micros);
+            } else if (!fromBinance) {
+                // Bybit did not answer for this coin: ask Binance, the job stays pending
+                fetchPrice(job, symbol, true);
+                return;
+            } else {
+                job->failed = true;
+            }
+            if (--job->pending == 0) {
+                finishPriceJob(job);
+            }
         });
-    return true;
+}
+
+void CryptoProvider::finishPriceJob(const QSharedPointer<PriceJob>& job)
+{
+    priceRequestActive_ = false;
+    const QDateTime fetchedAtUtc = QDateTime::currentDateTimeUtc();
+    for (auto iterator = job->prices.cbegin(); iterator != job->prices.cend(); ++iterator) {
+        emit priceUpdated(iterator.key(), iterator.value(), fetchedAtUtc);
+    }
+    if (job->failed) {
+        emit requestFailed(
+            QString(),
+            QStringLiteral("Не удалось получить цены BTC или ETH ни с Bybit, ни с Binance"));
+    }
+    emit requestFinished();
 }
 
 bool CryptoProvider::requestTransactions(const CryptoWallet& wallet)
@@ -302,29 +382,6 @@ void CryptoProvider::finishBalanceRequest(
             error = responseError(reply, response);
         }
         emit requestFailed(wallet.id(), error);
-    }
-
-    reply->deleteLater();
-    emit requestFinished();
-}
-
-void CryptoProvider::finishPriceRequest(QNetworkReply* reply)
-{
-    priceRequestActive_ = false;
-    const QByteArray response = reply->readAll();
-    QHash<QString, qint64> prices;
-    QString error;
-    if (successfulResponse(reply, response) &&
-        parseCoinGeckoPricesResponse(response, prices, &error)) {
-        const QDateTime fetchedAtUtc = QDateTime::currentDateTimeUtc();
-        for (auto iterator = prices.cbegin(); iterator != prices.cend(); ++iterator) {
-            emit priceUpdated(iterator.key(), iterator.value(), fetchedAtUtc);
-        }
-    } else {
-        if (error.isEmpty()) {
-            error = responseError(reply, response);
-        }
-        emit requestFailed(QString(), error);
     }
 
     reply->deleteLater();

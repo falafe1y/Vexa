@@ -154,6 +154,12 @@ class FinanceController final : public QObject
         )
 
     Q_PROPERTY(
+        bool cryptoManualRefreshReady
+            READ cryptoManualRefreshReady
+                NOTIFY cryptoWalletsChanged
+        )
+
+    Q_PROPERTY(
         QString cryptoLastError
             READ cryptoLastError
                 NOTIFY cryptoLastErrorChanged
@@ -415,6 +421,7 @@ public:
     QVariantList assetSummaries() const;
     QVariantList cryptoWallets() const;
     bool cryptoRefreshing() const;
+    bool cryptoManualRefreshReady() const;
     QString cryptoLastError() const;
     QString selectedCryptoWalletId() const;
     void setSelectedCryptoWalletId(const QString& walletId);
@@ -775,6 +782,9 @@ private:
         ) const;
     void scheduleInitialCryptoRefresh();
     void scheduleNextCryptoRefresh(qint64 delayMs);
+    void requestCryptoRefresh();
+    void refreshCryptoWalletsNow();
+    qint64 msUntilNextCryptoRequest(const QDateTime& now) const;
     void startCryptoBalanceRequest(const CryptoWallet& wallet);
     void startCryptoTransactionRequest(const CryptoWallet& wallet);
     void startCryptoPriceRequest();
@@ -893,7 +903,8 @@ private:
 
     QHash<QString, qint64> cryptoPricesUsdMicros_;
     QHash<QString, QDateTime> cryptoPricesFetchedAtUtc_;
-    QDateTime lastCryptoRefreshAttemptUtc_;
+    QDateTime lastCryptoRefreshAttemptUtc_;   // wallets: balances and transactions
+    QDateTime lastCryptoPriceAttemptUtc_;     // prices of BTC, ETH and USDT
     QTimer cryptoRefreshTimer_;
     QTimer recurringTimer_;
     QTimer notesSaveTimer_;
@@ -908,6 +919,8 @@ private:
     QHash<QString, int> pendingCryptoWalletRequests_;
     int pendingCryptoRequests_ = 0;
     bool cryptoRefreshing_ = false;
+    // A crypto refresh is waiting for its random start delay (0–60 s)
+    bool cryptoJitterWaiting_ = false;
     QString cryptoLastError_;
 
     QSet<QString> refreshingInvestmentIds_;
@@ -920,4 +933,17 @@ private:
 
     static constexpr qint64 kCryptoRefreshIntervalMs =
         6LL * 60LL * 60LL * 1000LL;
+    static constexpr qint64 kCryptoPriceIntervalMs =
+        30LL * 60LL * 1000LL;
+    // Manual refresh of crypto prices: kManualCryptoRefreshLimit clicks are allowed in one window;
+    // the click after them locks the button for kManualCryptoLockMs from that moment
+    static constexpr int kManualCryptoRefreshLimit = 3;
+    static constexpr qint64 kManualCryptoRefreshWindowMs =
+        5LL * 60LL * 1000LL;
+    static constexpr qint64 kManualCryptoLockMs =
+        5LL * 60LL * 1000LL;
+    QVector<QDateTime> manualCryptoRefreshes_;
+    QDateTime cryptoManualLockUntilUtc_;
+    void loadManualCryptoState(const QString& state);
+    QString manualCryptoStateText() const;
 };

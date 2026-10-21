@@ -358,8 +358,8 @@ Flickable {
             }
             MobileButton {
                 Layout.fillWidth: true
-                text: qsTr("Обновить криптоданные")
-                enabled: !financeController.cryptoRefreshing
+                text: qsTr("Обновить цены")
+                enabled: !financeController.cryptoRefreshing && financeController.cryptoManualRefreshReady
                 onClicked: financeController.refreshCryptoWallets()
             }
             Repeater {

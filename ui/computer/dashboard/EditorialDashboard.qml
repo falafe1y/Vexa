@@ -514,7 +514,8 @@ Flickable {
                 objectName: "editorialAddOperation"
                 anchors.right: parent.right; y: view.narrow ? 56 : 12
                 width: view.small ? 160 : view.medium ? 176 : 192
-                text: view.controller.selectedAsset === "crypto" ? qsTr("ОБНОВИТЬ АКТИВЫ") : qsTr("+ НОВАЯ ОПЕРАЦИЯ")
+                text: view.controller.selectedAsset === "crypto" ? qsTr("ОБНОВИТЬ ЦЕНЫ") : qsTr("+ НОВАЯ ОПЕРАЦИЯ")
+                enabled: view.controller.selectedAsset !== "crypto" || view.controller.cryptoManualRefreshReady
                 underline: true
                 onClicked: { if (view.controller.selectedAsset === "crypto") view.controller.refreshCryptoWallets(); else if (view.controller.selectedAsset === "investment") investmentMenu.open(); else view.host.openNewOperationForSelectedAsset(); }
                 EditorialMenu {

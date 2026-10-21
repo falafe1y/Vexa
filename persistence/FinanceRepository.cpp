@@ -1332,6 +1332,35 @@ FinanceRepository::CryptoPriceSnapshot FinanceRepository::loadCryptoPrice(
     return result;
 }
 
+QDateTime FinanceRepository::loadCryptoPriceAttemptUtc() const
+{
+    QSqlQuery query(database_);
+    if (query.exec(QStringLiteral(
+            "SELECT value FROM settings "
+            "WHERE key = 'crypto_price_attempt_utc'")) &&
+        query.next()) {
+        bool ok = false;
+        const qint64 milliseconds = query.value(0).toString().toLongLong(&ok);
+        if (ok && milliseconds > 0) {
+            return QDateTime::fromMSecsSinceEpoch(
+                milliseconds, QTimeZone::UTC);
+        }
+    }
+    return {};
+}
+
+QString FinanceRepository::loadCryptoManualState() const
+{
+    QSqlQuery query(database_);
+    if (query.exec(QStringLiteral(
+            "SELECT value FROM settings "
+            "WHERE key = 'crypto_manual_refresh_state'")) &&
+        query.next()) {
+        return query.value(0).toString();
+    }
+    return {};
+}
+
 QDateTime FinanceRepository::loadCryptoRefreshAttemptUtc() const
 {
     QSqlQuery query(database_);
@@ -2633,6 +2662,43 @@ bool FinanceRepository::saveCryptoRefreshAttemptUtc(
         "ON CONFLICT(key) DO UPDATE SET value = excluded.value"));
     query.addBindValue(QString::number(
         attemptedAtUtc.toUTC().toMSecsSinceEpoch()));
+    if (!query.exec()) {
+        setLastError(query.lastError().text());
+        return false;
+    }
+    return true;
+}
+
+bool FinanceRepository::saveCryptoPriceAttemptUtc(
+    const QDateTime& attemptedAtUtc
+    )
+{
+    if (!attemptedAtUtc.isValid()) {
+        setLastError(QStringLiteral("Invalid crypto price timestamp"));
+        return false;
+    }
+    QSqlQuery query(database_);
+    query.prepare(QStringLiteral(
+        "INSERT INTO settings(key, value) "
+        "VALUES('crypto_price_attempt_utc', ?) "
+        "ON CONFLICT(key) DO UPDATE SET value = excluded.value"));
+    query.addBindValue(QString::number(
+        attemptedAtUtc.toUTC().toMSecsSinceEpoch()));
+    if (!query.exec()) {
+        setLastError(query.lastError().text());
+        return false;
+    }
+    return true;
+}
+
+bool FinanceRepository::saveCryptoManualState(const QString& state)
+{
+    QSqlQuery query(database_);
+    query.prepare(QStringLiteral(
+        "INSERT INTO settings(key, value) "
+        "VALUES('crypto_manual_refresh_state', ?) "
+        "ON CONFLICT(key) DO UPDATE SET value = excluded.value"));
+    query.addBindValue(state);
     if (!query.exec()) {
         setLastError(query.lastError().text());
         return false;

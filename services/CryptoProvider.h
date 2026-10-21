@@ -7,6 +7,7 @@
 #include <QNetworkAccessManager>
 #include <QObject>
 #include <QSet>
+#include <QSharedPointer>
 #include <QVector>
 
 class QNetworkReply;
@@ -55,7 +56,13 @@ private:
         QNetworkReply* reply,
         const CryptoWallet& wallet
         );
-    void finishPriceRequest(QNetworkReply* reply);
+    struct PriceJob;
+    void fetchPrice(
+        const QSharedPointer<PriceJob>& job,
+        const QString& symbol,
+        bool fromBinance
+        );
+    void finishPriceJob(const QSharedPointer<PriceJob>& job);
     void finishTransactionRequest(
         QNetworkReply* reply,
         const CryptoWallet& wallet

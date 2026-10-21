@@ -233,7 +233,7 @@ ApplicationWindow {
     }
 
     function accountPrimaryAmount(row) {
-        if (row && row.isExchange) return row.hasSnapshot ? root.money(row.valueMinor, row.currency, false) : row.refreshing ? (row.syncProgress >= 0 ? qsTr("Загрузка %1%").arg(row.syncProgress) : qsTr("Загрузка…")) : qsTr("Нет данных");
+        if (row && row.isExchange) return row.awaitingRefresh ? qsTr("Загружается") : row.hasSnapshot ? root.money(row.valueMinor, row.currency, false) : row.refreshing ? (row.syncProgress >= 0 ? qsTr("Загрузка %1%").arg(row.syncProgress) : qsTr("Загрузка…")) : qsTr("Нет данных");
         if (row && row.isCrypto)
             return row.balanceText + " " + row.symbol;
         if (row && row.isCreditCard)
@@ -244,7 +244,7 @@ ApplicationWindow {
     }
 
     function accountCompactAmount(row) {
-        if (row && row.isExchange) return row.hasSnapshot ? root.money(row.valueMinor, row.currency, false) : row.refreshing ? (row.syncProgress >= 0 ? qsTr("Загрузка %1%").arg(row.syncProgress) : qsTr("Загрузка…")) : qsTr("Нет данных");
+        if (row && row.isExchange) return row.awaitingRefresh ? qsTr("Загружается") : row.hasSnapshot ? root.money(row.valueMinor, row.currency, false) : row.refreshing ? (row.syncProgress >= 0 ? qsTr("Загрузка %1%").arg(row.syncProgress) : qsTr("Загрузка…")) : qsTr("Нет данных");
         if (row && row.isCrypto)
             return row.balanceText + " " + row.symbol;
         if (row && row.isCreditCard)
@@ -2453,6 +2453,8 @@ ApplicationWindow {
                 SoftButton {
                     neo: true
                     visible: !financeController.cryptoRefreshing
+                    enabled: financeController.cryptoManualRefreshReady
+                    dimWhenDisabled: true
                     text: qsTr("Повторить")
                     onClicked: financeController.refreshCryptoWallets()
                 }

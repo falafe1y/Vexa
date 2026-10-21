@@ -149,6 +149,8 @@ public:
     QVector<InvestmentQuote> loadInvestmentQuotes();
     CryptoPriceSnapshot loadCryptoPrice(const QString& symbol) const;
     QDateTime loadCryptoRefreshAttemptUtc() const;
+    QDateTime loadCryptoPriceAttemptUtc() const;
+    QString loadCryptoManualState() const;
     QSet<QString> loadArchivedCategoryIds();
     Summary loadSummary();
     bool insertTransaction(const Transaction& transaction);
@@ -231,6 +233,8 @@ public:
         const QDateTime& fetchedAtUtc
         );
     bool saveCryptoRefreshAttemptUtc(const QDateTime& attemptedAtUtc);
+    bool saveCryptoPriceAttemptUtc(const QDateTime& attemptedAtUtc);
+    bool saveCryptoManualState(const QString& state);
     bool insertInvestmentInstrument(const InvestmentInstrument& instrument);
     bool updateInvestmentInstrument(const InvestmentInstrument& instrument);
     bool archiveInvestmentInstrument(const QString& id);
