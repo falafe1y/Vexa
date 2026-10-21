@@ -782,14 +782,29 @@ ApplicationWindow {
         return selectedInvestmentAccount() !== null;
     }
 
+    function firstAccountOfType(type) {
+        const rows = financeController.accounts;
+        for (let i = 0; i < rows.length; ++i)
+            if (rows[i].type === type)
+                return rows[i];
+        return null;
+    }
+
     function openNewOperationForSelectedAsset() {
         if (financeController.selectedAsset === "fiat") {
             operationDialog.openForNew();
             return;
         }
-        const account = selectedInvestmentAccount();
-        if (financeController.selectedAsset !== "investment" || !account)
+        if (financeController.selectedAsset !== "investment")
             return;
+        const account = selectedInvestmentAccount();
+        // Nothing is picked on the investment tab: the user first chooses a brokerage or a deposit
+        if (!account) {
+            investmentOperationChooser.broker = firstAccountOfType("brokerage");
+            investmentOperationChooser.deposit = firstAccountOfType("deposit");
+            investmentOperationChooser.open();
+            return;
+        }
         // A brokerage account takes purchases, sales and transfers; a deposit takes the same operations as fiat
         if (account.type === "brokerage")
             brokerOperationDialog.openFor(account.id);
@@ -4611,6 +4626,67 @@ ApplicationWindow {
         }
     }
 
+    // "Операция по счёту" on the investment tab without a picked account: the kind of account comes first
+    EditorialDialog {
+        id: investmentOperationChooser; objectName: "investmentOperationChooser"
+        width: Math.min(420, root.width - 48)
+        modal: true
+        anchors.centerIn: parent
+        padding: 24
+        property var broker: null
+        property var deposit: null
+
+        contentItem: EditorialDialogForm {
+            spacing: 16
+            EditorialDialogTitle {
+                text: qsTr("Операция по счёту")
+                color: root.accent
+            }
+            EditorialColumnLayout {
+                Layout.fillWidth: true
+                spacing: 6
+                EditorialAction {
+                    objectName: "investmentChooseBroker"
+                    text: qsTr("Брокер")
+                    enabled: investmentOperationChooser.broker !== null
+                    onClicked: {
+                        investmentOperationChooser.close();
+                        brokerOperationDialog.openFor(investmentOperationChooser.broker.id);
+                    }
+                }
+                EditorialLabel {
+                    Layout.fillWidth: true
+                    text: investmentOperationChooser.broker
+                          ? investmentOperationChooser.broker.name
+                          : qsTr("Брокерского счёта нет")
+                    color: root.muted
+                    font.pixelSize: 14
+                }
+            }
+            EditorialColumnLayout {
+                Layout.fillWidth: true
+                spacing: 6
+                EditorialAction {
+                    objectName: "investmentChooseDeposit"
+                    text: qsTr("Вклад")
+                    enabled: investmentOperationChooser.deposit !== null
+                    onClicked: {
+                        investmentOperationChooser.close();
+                        operationDialog.openForNew("", investmentOperationChooser.deposit.id);
+                    }
+                }
+                EditorialLabel {
+                    Layout.fillWidth: true
+                    text: investmentOperationChooser.deposit
+                          ? investmentOperationChooser.deposit.name
+                          : qsTr("Вклада нет")
+                    color: root.muted
+                    font.pixelSize: 14
+                }
+            }
+        }
+    }
+
     EditorialDialog {
         id: operationDialog; objectName: "operationDialog"
         width: Math.min(520, root.width - 48)
@@ -4622,6 +4698,9 @@ ApplicationWindow {
         property string editingSourceAccountId: ""
         property string editingTargetAccountId: ""
         property string editingProjectId: ""
+        // The accounts the user picked, by id: the account lists differ between income/expense and transfer
+        property string pickedSourceId: ""
+        property string pickedTargetId: ""
         property date selectedDate: new Date()
 
         function selectDate(day) {
@@ -4663,9 +4742,22 @@ ApplicationWindow {
                 }
             }
             transferTargetAccount.currentIndex = targetIndex;
+            pickedSourceId = sourceIndex >= 0 ? rows[sourceIndex].id : "";
+            pickedTargetId = targetIndex >= 0 ? rows[targetIndex].id : "";
         }
 
-        function openForNew(projectId) {
+        function selectSourceAccount(sourceId) {
+            const rows = editingProjectId.length > 0
+                       ? financeController.allAccounts
+                       : financeController.accounts;
+            let index = root.indexByRole(rows, "id", sourceId);
+            if (index < 0 && rows.length > 0)
+                index = 0;
+            operationAccount.currentIndex = index;
+            pickedSourceId = index >= 0 ? rows[index].id : "";
+        }
+
+        function openForNew(projectId, accountId) {
             editingId = "";
             editingTransaction = null;
             editingSourceAccountId = "";
@@ -4682,15 +4774,16 @@ ApplicationWindow {
             operationAccount.currentIndex = root.indexByRole(
                 availableAccounts,
                 "id",
-                financeController.selectedAccountId
+                accountId || financeController.selectedAccountId
             );
             if (operationAccount.currentIndex < 0
                 && availableAccounts.length > 0)
                 operationAccount.currentIndex = 0;
             operationCategory.currentIndex = 0;
             const source = operationAccount.currentIndex >= 0
-                         ? financeController.accounts[operationAccount.currentIndex]
+                         ? availableAccounts[operationAccount.currentIndex]
                          : null;
+            pickedSourceId = source ? source.id : "";
             const allAccounts = financeController.allAccounts;
             transferTargetAccount.currentIndex = -1;
             for (let i = 0; i < allAccounts.length; ++i) {
@@ -4699,6 +4792,9 @@ ApplicationWindow {
                     break;
                 }
             }
+            pickedTargetId = transferTargetAccount.currentIndex >= 0
+                           ? allAccounts[transferTargetAccount.currentIndex].id
+                           : "";
             open();
             Qt.callLater(function() { operationAmount.forceActiveFocus(); });
         }
@@ -4723,6 +4819,8 @@ ApplicationWindow {
             } else {
                 editingSourceAccountId = row.accountId;
                 editingTargetAccountId = "";
+                pickedSourceId = row.accountId;
+                pickedTargetId = "";
                 operationType.currentIndex = row.type === "income" ? 0 : 1;
                 operationAccount.currentIndex = root.indexByRole(
                     editingProjectId.length > 0
@@ -4760,6 +4858,11 @@ ApplicationWindow {
             }
             if (isTransfer && transferTargetAccount.currentIndex < 0) {
                 operationError.text = qsTr("Выберите счёт назначения");
+                return;
+            }
+            if (isTransfer && operationAccount.model[operationAccount.currentIndex].id
+                    === transferTargetAccount.model[transferTargetAccount.currentIndex].id) {
+                operationError.text = qsTr("Выберите разные счета");
                 return;
             }
             if (!isTransfer && !operationCategory.model.length) {
@@ -4892,23 +4995,13 @@ ApplicationWindow {
                      : [qsTr("Доход"), qsTr("Расход"), qsTr("Перевод")]
                 onActivated: {
                     operationCategory.currentIndex = 0;
-                    if (!operationDialog.editingTransaction)
-                        return;
-
-                    if (currentIndex === 2) {
+                    if (currentIndex === 2)
                         operationDialog.selectTransferAccounts(
-                            operationDialog.editingSourceAccountId,
-                            operationDialog.editingTargetAccountId
+                            operationDialog.pickedSourceId,
+                            operationDialog.pickedTargetId
                         );
-                    } else {
-                        operationAccount.currentIndex = root.indexByRole(
-                            operationDialog.editingProjectId.length > 0
-                            ? financeController.allAccounts
-                            : financeController.accounts,
-                            "id",
-                            operationDialog.editingTransaction.accountId
-                        );
-                    }
+                    else
+                        operationDialog.selectSourceAccount(operationDialog.pickedSourceId);
                 }
             }
             EditorialLabel {
@@ -4932,6 +5025,7 @@ ApplicationWindow {
                         ? "displayName" : "name"
                 enabled: count > 0
                 emptyText: qsTr("Добавьте счёт")
+                onActivated: operationDialog.pickedSourceId = model[currentIndex].id
             }
             EditorialLabel {
                 visible: operationType.currentIndex === 2
@@ -4949,6 +5043,7 @@ ApplicationWindow {
                 textRole: "displayName"
                 enabled: count > 0
                 emptyText: qsTr("Добавьте счёт")
+                onActivated: operationDialog.pickedTargetId = model[currentIndex].id
             }
             AppComboBox {
                 neo: true

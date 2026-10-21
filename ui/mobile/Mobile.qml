@@ -625,6 +625,14 @@ ApplicationWindow {
         return null;
     }
 
+    function firstAccountOfType(type) {
+        const rows = financeController.accounts;
+        for (let i = 0; i < rows.length; ++i)
+            if (rows[i].type === type)
+                return rows[i];
+        return null;
+    }
+
     // The same routing as on the computer: a brokerage account takes purchases, sales, transfers and charges
     function openNewOperation() {
         if (financeController.selectedAsset === "crypto")
@@ -633,13 +641,14 @@ ApplicationWindow {
             operationDialog.openForNew();
             return;
         }
-        let account = selectedInvestmentAccount();
-        if (!account && financeController.accounts.length > 0) {
-            account = financeController.accounts[0];
-            financeController.selectedAccountId = account.id;
-        }
-        if (!account)
+        const account = selectedInvestmentAccount();
+        // Nothing is picked on the investment tab: the user first chooses a brokerage or a deposit
+        if (!account) {
+            investmentOperationChooser.broker = firstAccountOfType("brokerage");
+            investmentOperationChooser.deposit = firstAccountOfType("deposit");
+            investmentOperationChooser.open();
             return;
+        }
         if (account.type === "brokerage")
             brokerOperationDialog.openFor(account.id);
         else
@@ -3007,8 +3016,83 @@ ApplicationWindow {
         }
     }
 
+    // "Операция по счёту" on the investment tab without a picked account: the kind of account comes first
     MobileDialog {
-        id: operationDialog
+        id: investmentOperationChooser; objectName: "investmentOperationChooser"
+        width: Math.min(420, root.width - 20)
+        modal: true
+        padding: root.width < 380 ? 16 : 20
+        closePolicy: Popup.CloseOnEscape
+        property var broker: null
+        property var deposit: null
+
+        background: Rectangle {
+            HardShadow {}
+
+            color: root.panel
+            radius: 0
+            border.width: 1
+            border.color: root.line
+        }
+
+        contentItem: EditorialDialogForm {
+            spacing: 16
+
+            EditorialDialogTitle {
+                text: qsTr("Операция по счёту")
+                color: root.accent
+            }
+            ColumnLayout {
+                Layout.fillWidth: true
+                spacing: 6
+                SoftButton {
+                    objectName: "investmentChooseBroker"
+                    Layout.fillWidth: true
+                    text: qsTr("Брокер")
+                    highlighted: true
+                    enabled: investmentOperationChooser.broker !== null
+                    onClicked: {
+                        investmentOperationChooser.close();
+                        brokerOperationDialog.openFor(investmentOperationChooser.broker.id);
+                    }
+                }
+                MobileText {
+                    Layout.fillWidth: true
+                    font.family: MobileTheme.sans
+                    text: investmentOperationChooser.broker ? investmentOperationChooser.broker.name : qsTr("Брокерского счёта нет")
+                    color: root.muted
+                    font.pixelSize: 14
+                    wrapMode: Text.WordWrap
+                }
+            }
+            ColumnLayout {
+                Layout.fillWidth: true
+                spacing: 6
+                SoftButton {
+                    objectName: "investmentChooseDeposit"
+                    Layout.fillWidth: true
+                    text: qsTr("Вклад")
+                    highlighted: true
+                    enabled: investmentOperationChooser.deposit !== null
+                    onClicked: {
+                        investmentOperationChooser.close();
+                        operationDialog.openForNew(investmentOperationChooser.deposit.id);
+                    }
+                }
+                MobileText {
+                    Layout.fillWidth: true
+                    font.family: MobileTheme.sans
+                    text: investmentOperationChooser.deposit ? investmentOperationChooser.deposit.name : qsTr("Вклада нет")
+                    color: root.muted
+                    font.pixelSize: 14
+                    wrapMode: Text.WordWrap
+                }
+            }
+        }
+    }
+
+    MobileDialog {
+        id: operationDialog; objectName: "operationDialog"
         width: Math.min(520, root.width - 20)
         height: Math.min(720, root.height - shell.safeTop - shell.safeBottom - 24)
         modal: true
@@ -3017,6 +3101,9 @@ ApplicationWindow {
         property var editingTransaction: null
         property string editingSourceAccountId: ""
         property string editingTargetAccountId: ""
+        // The accounts the user picked, by id: the account lists differ between income/expense and transfer
+        property string pickedSourceId: ""
+        property string pickedTargetId: ""
         property date selectedDate: new Date()
 
         function selectDate(day) {
@@ -3050,9 +3137,20 @@ ApplicationWindow {
                 }
             }
             transferTargetAccount.currentIndex = targetIndex;
+            pickedSourceId = sourceIndex >= 0 ? rows[sourceIndex].id : "";
+            pickedTargetId = targetIndex >= 0 ? rows[targetIndex].id : "";
         }
 
-        function openForNew() {
+        function selectSourceAccount(sourceId) {
+            const rows = financeController.accounts;
+            let index = root.indexByRole(rows, "id", sourceId);
+            if (index < 0 && rows.length > 0)
+                index = 0;
+            operationAccount.currentIndex = index;
+            pickedSourceId = index >= 0 ? rows[index].id : "";
+        }
+
+        function openForNew(accountId) {
             editingId = "";
             editingTransaction = null;
             editingSourceAccountId = "";
@@ -3062,7 +3160,7 @@ ApplicationWindow {
             operationDescription.clear();
             selectedDate = new Date();
             operationType.currentIndex = 1;
-            operationAccount.currentIndex = root.indexByRole(financeController.accounts, "id", financeController.selectedAccountId);
+            operationAccount.currentIndex = root.indexByRole(financeController.accounts, "id", accountId || financeController.selectedAccountId);
             // No account is picked on the overview: the new operation goes to the first account of the active asset
             if (operationAccount.currentIndex < 0 && financeController.accounts.length > 0)
                 operationAccount.currentIndex = 0;
@@ -3076,6 +3174,8 @@ ApplicationWindow {
                     break;
                 }
             }
+            pickedSourceId = source ? source.id : "";
+            pickedTargetId = transferTargetAccount.currentIndex >= 0 ? allAccounts[transferTargetAccount.currentIndex].id : "";
             open();
         }
 
@@ -3095,6 +3195,8 @@ ApplicationWindow {
             } else {
                 editingSourceAccountId = row.accountId;
                 editingTargetAccountId = "";
+                pickedSourceId = row.accountId;
+                pickedTargetId = "";
                 operationType.currentIndex = row.type === "income" ? 0 : 1;
                 operationAccount.currentIndex = root.indexByRole(financeController.accounts, "id", row.accountId);
                 operationCategory.currentIndex = root.indexByRole(operationCategory.model, "value", row.categoryId);
@@ -3140,19 +3242,16 @@ ApplicationWindow {
                     color: root.accent
                 }
                 AppComboBox {
-                    id: operationType
+                    id: operationType; objectName: "operationType"
                     Layout.fillWidth: true
                     model: [qsTr("Доход"), qsTr("Расход"), qsTr("Перевод")]
                     onActivated: {
                         operationCategory.currentIndex = 0;
-                        if (!operationDialog.editingTransaction)
-                            return;
-
-                        if (currentIndex === 2) {
-                            operationDialog.selectTransferAccounts(operationDialog.editingSourceAccountId, operationDialog.editingTargetAccountId);
-                        } else {
-                            operationAccount.currentIndex = root.indexByRole(financeController.accounts, "id", operationDialog.editingTransaction.accountId);
-                        }
+                        // The account lists differ by type, so the picked accounts are found again by id
+                        if (currentIndex === 2)
+                            operationDialog.selectTransferAccounts(operationDialog.pickedSourceId, operationDialog.pickedTargetId);
+                        else
+                            operationDialog.selectSourceAccount(operationDialog.pickedSourceId);
                     }
                 }
                 MobileText {
@@ -3163,12 +3262,13 @@ ApplicationWindow {
                     font.pixelSize: 16
                 }
                 AppComboBox {
-                    id: operationAccount
+                    id: operationAccount; objectName: "operationAccount"
                     Layout.fillWidth: true
                     model: operationType.currentIndex === 2 ? financeController.allAccounts : financeController.accounts
                     textRole: operationType.currentIndex === 2 ? "displayName" : "name"
                     enabled: count > 0
                     emptyText: qsTr("Добавьте счёт")
+                    onActivated: operationDialog.pickedSourceId = model[currentIndex].id
                 }
                 MobileText {
                     font.family: MobileTheme.sans
@@ -3178,13 +3278,14 @@ ApplicationWindow {
                     font.pixelSize: 16
                 }
                 AppComboBox {
-                    id: transferTargetAccount
+                    id: transferTargetAccount; objectName: "transferTargetAccount"
                     Layout.fillWidth: true
                     visible: operationType.currentIndex === 2
                     model: financeController.allAccounts
                     textRole: "displayName"
                     enabled: count > 0
                     emptyText: qsTr("Добавьте счёт")
+                    onActivated: operationDialog.pickedTargetId = model[currentIndex].id
                 }
                 AppComboBox {
                     id: operationCategory
@@ -3214,7 +3315,7 @@ ApplicationWindow {
                     emptyText: qsTr("Добавьте категорию")
                 }
                 AppTextField {
-                    id: operationAmount
+                    id: operationAmount; objectName: "operationAmount"
                     Layout.fillWidth: true
                     placeholderText: qsTr("Сумма")
                     validator: DoubleValidator {
@@ -3308,6 +3409,10 @@ ApplicationWindow {
                             }
                             if (isTransfer && transferTargetAccount.currentIndex < 0) {
                                 operationError.text = qsTr("Выберите счёт назначения");
+                                return;
+                            }
+                            if (isTransfer && operationAccount.model[operationAccount.currentIndex].id === transferTargetAccount.model[transferTargetAccount.currentIndex].id) {
+                                operationError.text = qsTr("Выберите разные счета");
                                 return;
                             }
                             if (!isTransfer && !operationCategory.model.length) {

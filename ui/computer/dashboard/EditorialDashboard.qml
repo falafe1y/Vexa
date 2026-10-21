@@ -521,7 +521,7 @@ Flickable {
                 EditorialMenu {
                     id: investmentMenu
                     y: parent.height; width: 256
-                    EditorialMenuItem { text: qsTr("Операция по счёту"); enabled: !!view.selectedId; onTriggered: view.host.openNewOperationForSelectedAsset() }
+                    EditorialMenuItem { text: qsTr("Операция по счёту"); enabled: view.controller.investmentAccounts.length > 0; onTriggered: view.host.openNewOperationForSelectedAsset() }
                     EditorialMenuItem { text: qsTr("Добавить позицию"); enabled: view.controller.investmentAccounts.length > 0; onTriggered: view.host.editorialAddPosition() }
                 }
             }
