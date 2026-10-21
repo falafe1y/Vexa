@@ -170,12 +170,14 @@ void FinanceController::rebuildAverageReturn()
                 exchangeName + QStringLiteral(" · ") + coin.key(), toApp(result.valueMinor, Currency::RUB), result.annual);
         }
     }
-    // The CBR rates of the trade days are asked for when they are missing, at most once an hour
+    // The CBR rates of the trade days are asked for when they are missing, at most once an hour.
+    // The CBR publishes nothing on holidays (New Year: no rates from 1 to 12 January), so a trade on a holiday
+    // takes the last rate before it: the request starts a month earlier to include that rate.
     if (firstMissingRate.isValid()) {
         const QDateTime requestNow = QDateTime::currentDateTimeUtc();
         if (!rateHistoryRequestedUtc_.isValid() || rateHistoryRequestedUtc_.secsTo(requestNow) >= 3600) {
             rateHistoryRequestedUtc_ = requestNow;
-            rateProvider_.requestUsdHistory(firstMissingRate, QDate::currentDate());
+            rateProvider_.requestUsdHistory(firstMissingRate.addDays(-30), QDate::currentDate());
         }
     }
     averageReturnItems_ = items;
