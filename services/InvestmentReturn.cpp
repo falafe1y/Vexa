@@ -31,6 +31,7 @@ QVariantMap groupSummary(const QVariantList& items, const QStringList& excludedI
                                       {"valueMinor", amount}});
         }
         const QVariant rate = item.value(QStringLiteral("annualPercent"));
+        // The average is weighted by the money each instrument holds now
         if (amount > 0 && !rate.isNull()) {
             weighted += double(amount) * rate.toDouble();
             weights += double(amount);

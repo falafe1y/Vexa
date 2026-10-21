@@ -772,6 +772,7 @@ FinanceController::FinanceController(QObject* parent, const QString& databasePat
     categories_ = repository_.loadCategories();
     accounts_ = repository_.loadAccounts();
     depositSettings_ = repository_.loadDepositSettings();
+    loadDepositRateSteps();
     budgets_ = repository_.loadBudgets();
     financialGoals_ = repository_.loadFinancialGoals();
     trajectorySettings_ = repository_.loadFinancialTrajectorySettings();
@@ -817,6 +818,7 @@ FinanceController::FinanceController(QObject* parent, const QString& databasePat
     // Kept in the database, so that a restart neither resets the cooldown nor refreshes prices at once
     lastCryptoPriceAttemptUtc_ = repository_.loadCryptoPriceAttemptUtc();
     loadManualCryptoState(repository_.loadCryptoManualState());
+    cryptoCostBasis_ = repository_.loadCryptoCostBasis();
     archivedCategoryIds_ = repository_.loadArchivedCategoryIds();
     summary_ = repository_.loadSummary();
     for (const FinanceRepository::BankCsvProfileRecord& record :
@@ -1354,6 +1356,7 @@ QVariantMap FinanceController::restoreDatabase(const QUrl& fileUrl)
     archivedCategoryIds_ = repository_.loadArchivedCategoryIds();
     accounts_ = repository_.loadAccounts();
     depositSettings_ = repository_.loadDepositSettings();
+    loadDepositRateSteps();
     budgets_ = repository_.loadBudgets();
     financialGoals_ = repository_.loadFinancialGoals();
     trajectorySettings_ = repository_.loadFinancialTrajectorySettings();
@@ -1398,6 +1401,7 @@ QVariantMap FinanceController::restoreDatabase(const QUrl& fileUrl)
     lastCryptoRefreshAttemptUtc_ = repository_.loadCryptoRefreshAttemptUtc();
     lastCryptoPriceAttemptUtc_ = repository_.loadCryptoPriceAttemptUtc();
     loadManualCryptoState(repository_.loadCryptoManualState());
+    cryptoCostBasis_ = repository_.loadCryptoCostBasis();
     refreshBudgetMonthLimits();
     emit accountsChanged();
     emit categoriesChanged();
@@ -3253,6 +3257,91 @@ QString FinanceController::manualCryptoStateText() const
     return QString::number(lockMs) + QStringLiteral(";") + clicks.join(QStringLiteral(","));
 }
 
+double FinanceController::currentCryptoPriceUsd(const QString& exchangeId, const QString& coin) const
+{
+    for (const QVariant& value : cryptoExchanges_) {
+        const QVariantMap exchange = value.toMap();
+        if (exchange.value(QStringLiteral("id")).toString() != exchangeId) {
+            continue;
+        }
+        for (const QVariant& entry : exchange.value(QStringLiteral("holdings")).toList()) {
+            const QVariantMap row = entry.toMap();
+            if (row.value(QStringLiteral("summary")).toBool() ||
+                row.value(QStringLiteral("coin")).toString() != coin) {
+                continue;
+            }
+            const double price = row.value(QStringLiteral("priceUsd")).toString().toDouble();
+            if (price > 0) {
+                return price;
+            }
+        }
+    }
+    return 0;
+}
+
+bool FinanceController::setCryptoCostBasis(
+    const QString& itemId,
+    const QString& mode,
+    double priceUsd,
+    const QString& dateIso
+    )
+{
+    const QStringList parts = itemId.split(QLatin1Char(':'));
+    if (parts.size() != 3 || parts.at(0) != QStringLiteral("crypto")) {
+        return false;
+    }
+    const QString exchangeId = parts.at(1);
+    const QString coin = parts.at(2);
+
+    QVariantMap basis;
+    if (mode == QStringLiteral("connection")) {
+        // From the connection: the price of the coin today, counted from today
+        const double current = currentCryptoPriceUsd(exchangeId, coin);
+        if (current <= 0) {
+            return false;
+        }
+        basis.insert(QStringLiteral("mode"), QStringLiteral("connection"));
+        basis.insert(QStringLiteral("priceUsd"), current);
+        basis.insert(QStringLiteral("date"), QDate::currentDate().toString(Qt::ISODate));
+    } else if (mode == QStringLiteral("manual")) {
+        const QDate day = QDate::fromString(dateIso, Qt::ISODate);
+        if (priceUsd <= 0 || !day.isValid() || day > QDate::currentDate()) {
+            return false;
+        }
+        basis.insert(QStringLiteral("mode"), QStringLiteral("manual"));
+        basis.insert(QStringLiteral("priceUsd"), priceUsd);
+        basis.insert(QStringLiteral("date"), day.toString(Qt::ISODate));
+    } else {
+        return false;
+    }
+    if (!repository_.saveCryptoCostBasis(exchangeId, coin, basis)) {
+        qWarning() << "Failed to save crypto cost basis:" << repository_.lastError();
+        return false;
+    }
+    cryptoCostBasis_.insert(exchangeId + QLatin1Char('|') + coin, basis);
+    rebuildAverageReturn();
+    emit performanceChanged();
+    emit cryptoWalletsChanged();
+    return true;
+}
+
+bool FinanceController::clearCryptoCostBasis(const QString& itemId)
+{
+    const QStringList parts = itemId.split(QLatin1Char(':'));
+    if (parts.size() != 3 || parts.at(0) != QStringLiteral("crypto")) {
+        return false;
+    }
+    if (!repository_.saveCryptoCostBasis(parts.at(1), parts.at(2), QVariantMap())) {
+        qWarning() << "Failed to clear crypto cost basis:" << repository_.lastError();
+        return false;
+    }
+    cryptoCostBasis_.remove(parts.at(1) + QLatin1Char('|') + parts.at(2));
+    rebuildAverageReturn();
+    emit performanceChanged();
+    emit cryptoWalletsChanged();
+    return true;
+}
+
 QString FinanceController::cryptoLastError() const
 {
     return cryptoLastError_;
@@ -3944,10 +4033,40 @@ bool FinanceController::updateAccount(
         initialBalanceMinor,
         resolvedCreditLimitMinor,
         creditCard ? countsDebt : true);
+    // The rate before this update: a change of the rate starts a new step of the rate history from today
+    const DepositSettings* previousDeposit = depositSettingsForAccount(id);
+    const int previousRate = previousDeposit ? previousDeposit->annualRateBasisPoints() : -1;
     if (!repository_.isOpen() ||
         !repository_.updateAccountAndDeposit(updated, deposit)) {
         qWarning() << "Failed to update account:" << repository_.lastError();
         return false;
+    }
+    if (deposit && previousRate >= 0 && previousRate != deposit->annualRateBasisPoints()) {
+        const QDate today = QDate::currentDate();
+        QVector<DepositRateStep> steps = depositRateSteps_.value(id);
+        if (steps.isEmpty()) {
+            // The rate the deposit had since its opening stays as the first step
+            const QVariant opened = repository_.loadAccountCreationDates().value(id);
+            const QDate openedOn = opened.isNull()
+                ? today
+                : QDateTime::fromMSecsSinceEpoch(opened.toLongLong()).date();
+            steps.append(DepositRateStep{openedOn, previousRate});
+        }
+        steps.erase(
+            std::remove_if(steps.begin(), steps.end(),
+                [&today](const DepositRateStep& step) { return step.from >= today; }),
+            steps.end());
+        steps.append(DepositRateStep{today, deposit->annualRateBasisPoints()});
+        QVariantList stored;
+        for (const DepositRateStep& step : std::as_const(steps)) {
+            stored.append(QVariantMap{{QStringLiteral("from"), step.from.toString(Qt::ISODate)},
+                                      {QStringLiteral("bps"), step.annualRateBasisPoints}});
+        }
+        if (repository_.saveDepositRateSteps(id, stored)) {
+            depositRateSteps_.insert(id, steps);
+        } else {
+            qWarning() << "Failed to save deposit rate steps:" << repository_.lastError();
+        }
     }
 
     accounts_[accountIndex] = updated;
@@ -5805,10 +5924,32 @@ void FinanceController::materializeRecurringTransactions()
     emit accountsChanged();
 }
 
+void FinanceController::loadDepositRateSteps()
+{
+    depositRateSteps_.clear();
+    const QVariantMap stored = repository_.loadDepositRateSteps();
+    for (auto iterator = stored.cbegin(); iterator != stored.cend(); ++iterator) {
+        QVector<DepositRateStep> steps;
+        for (const QVariant& value : iterator.value().toList()) {
+            const QVariantMap row = value.toMap();
+            const QDate from = QDate::fromString(row.value(QStringLiteral("from")).toString(), Qt::ISODate);
+            const int bps = row.value(QStringLiteral("bps")).toInt();
+            if (from.isValid() && bps >= 0) {
+                steps.append(DepositRateStep{from, bps});
+            }
+        }
+        std::sort(steps.begin(), steps.end(), [](const DepositRateStep& a, const DepositRateStep& b) {
+            return a.from < b.from;
+        });
+        depositRateSteps_.insert(iterator.key(), steps);
+    }
+}
+
 int FinanceController::materializeDepositInterest()
 {
     const QDate today = QDate::currentDate();
     int totalInserted = 0;
+    const QVariantMap creationDates = repository_.loadAccountCreationDates();
 
     for (const DepositSettings& settings :
          std::as_const(depositSettings_)) {
@@ -5840,6 +5981,22 @@ int FinanceController::materializeDepositInterest()
         QVector<FinanceRepository::DepositInterestOccurrence> occurrences;
         occurrences.reserve(dates.size());
 
+        // Interest accrues day by day from the last payout (or from the opening of the deposit) to the next payout
+        QDate periodStart;
+        for (const Transaction& transaction : std::as_const(transactions_)) {
+            if (transaction.accountId() == account->id() &&
+                transaction.categoryId() == QStringLiteral("deposit_interest") &&
+                transaction.date().date() > periodStart) {
+                periodStart = transaction.date().date();
+            }
+        }
+        if (!periodStart.isValid()) {
+            const QVariant opened = creationDates.value(account->id());
+            periodStart = !opened.isNull()
+                ? QDateTime::fromMSecsSinceEpoch(opened.toLongLong()).date()
+                : (settings.generatedThrough().isValid() ? settings.generatedThrough() : settings.startsOn());
+        }
+
         for (const QDate& date : dates) {
             const QDateTime payoutAt(
                 date,
@@ -5866,10 +6023,13 @@ int FinanceController::materializeDepositInterest()
             }
 
             const qint64 interestMinor =
-                DepositInterestCalculator::interestMinor(
+                DepositInterestCalculator::interestForPeriod(
                     balanceMinor,
+                    depositRateSteps_.value(settings.accountId()),
                     settings.annualRateBasisPoints(),
-                    settings.payoutFrequency());
+                    periodStart,
+                    date);
+            periodStart = date;
             if (interestMinor <= 0) {
                 continue;
             }
@@ -5901,6 +6061,7 @@ int FinanceController::materializeDepositInterest()
     }
 
     depositSettings_ = repository_.loadDepositSettings();
+    loadDepositRateSteps();
     return totalInserted;
 }
 

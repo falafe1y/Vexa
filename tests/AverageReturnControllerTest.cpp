@@ -26,13 +26,17 @@ private slots:
             {"manualValuation", true}, {"manualValue", "250"}, {"purchase", true}, {"cashAmount", "-200"}});
         QVERIFY2(bought.value("ok").toBool(), qPrintable(bought.value("error").toString()));
 
-        // Both were added today: neither has a history long enough for an annual rate, and each says why
+        // Neither has an annual rate yet, and each says why: the deposit has no rate in its settings,
+        // the position was bought today and has no history of 30 days
         const QVariantList items = c.averageReturnItems();
         QCOMPARE(int(items.size()), 2);
         for (const QVariant& value : items) {
             const QVariantMap row = value.toMap();
             QVERIFY(row.value("annualPercent").isNull());
-            QVERIFY(row.value("reason").toString().contains(QStringLiteral("30 дней")));
+            const QString expected = row.value("id").toString().startsWith(QStringLiteral("deposit:"))
+                ? QStringLiteral("ставки")
+                : QStringLiteral("30 дней");
+            QVERIFY(row.value("reason").toString().contains(expected));
         }
         QVERIFY(c.averageReturnSummary().value("merged").toBool());
 

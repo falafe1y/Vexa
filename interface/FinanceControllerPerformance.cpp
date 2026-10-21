@@ -59,7 +59,6 @@ void FinanceController::rebuildInvestmentPerformance()
 void FinanceController::rebuildAverageReturn()
 {
     const qint64 nowMs = QDateTime::currentMSecsSinceEpoch();
-    const QVariantMap creationDates = repository_.loadAccountCreationDates();
     const auto toApp = [this](qint64 minor, Currency currency) {
         return currencyConverter_.convert(Money(minor, currency), appCurrency_).minorUnits();
     };
@@ -110,38 +109,22 @@ void FinanceController::rebuildAverageReturn()
         add(id, investments, title, toApp(value.valueMinor, account->currency()),
             annualReturnOf(flows, nowMs, value.valueMinor));
     }
-    // Deposit-like accounts: the money put in and taken out; interest and the bank's commission stay inside
+    // Deposit-like accounts: the rate stated in the account's settings, as a simple yearly rate
     for (const Account& account : accounts_) {
         if (account.assetType() != AssetType::Investment || account.type() == AccountType::Brokerage)
             continue;
         const QString id = QStringLiteral("deposit:") + account.id();
         const QString title = accountDisplayName(account);
         const qint64 balance = accountBalanceMinor(account, false);
-        const QVariant created = creationDates.value(account.id());
-        if (created.isNull()) {
-            add(id, investments, title, toApp(balance, account.currency()),
-                AnnualReturn{std::nullopt, tr("нет даты открытия счёта"), 0});
-            continue;
-        }
-        QVector<ReturnFlow> flows;
-        if (account.initialBalanceMinor() != 0)
-            flows.append({created.toLongLong(), -account.initialBalanceMinor()});
-        for (const Transaction& transaction : transactions_) {
-            if (transaction.accountId() != account.id())
-                continue;
-            const QString category = transaction.categoryId();
-            if (category == QStringLiteral("deposit_interest") || category == QStringLiteral("bank_fee"))
-                continue;
-            const qint64 signedMinor = transaction.type() == TransactionType::Income ? transaction.money().minorUnits()
-                                                                                    : -transaction.money().minorUnits();
-            flows.append({transaction.date().toMSecsSinceEpoch(), -signedMinor});
-        }
-        add(id, investments, title, toApp(balance, account.currency()), annualReturnOf(flows, nowMs, balance));
+        const DepositSettings* deposit = depositSettingsForAccount(account.id());
+        const int rateBasisPoints = deposit ? deposit->annualRateBasisPoints() : 0;
+        add(id, investments, title, toApp(balance, account.currency()),
+            rateBasisPoints > 0
+                ? AnnualReturn{rateBasisPoints / 100.0, QString(), 0}
+                : AnnualReturn{std::nullopt, tr("нет ставки в настройках счёта"), 0});
     }
     // Crypto: the coins held on exchanges, each measured from its own trades. Crypto wallets are not counted.
-    const auto usdRubByDay = rubPerUsdByDate(repository_.loadFxHistory(QStringLiteral("USD")));
     const qint64 usdRubNow = rateProvider_.rateToRubMicros(QStringLiteral("USD"));
-    QDate firstMissingRate;
     for (const QVariant& value : cryptoExchanges_) {
         const QVariantMap exchange = value.toMap();
         const QString exchangeId = exchange.value(QStringLiteral("id")).toString();
@@ -162,22 +145,17 @@ void FinanceController::rebuildAverageReturn()
         for (auto coin = quantity.cbegin(); coin != quantity.cend(); ++coin) {
             if (coin.value() <= 0)
                 continue;
+            const QVariantMap costBasis = cryptoCostBasis_.value(exchangeId + QLatin1Char('|') + coin.key()).toMap();
             const CoinReturn result = coinReturnOf(coin.key(), coin.value(), priceUsd.value(coin.key(), 0.0), usdRubNow,
-                                                   exchange.value(QStringLiteral("history")).toList(), usdRubByDay, nowMs);
-            if (result.firstMissingRateDate.isValid() && (!firstMissingRate.isValid() || result.firstMissingRateDate < firstMissingRate))
-                firstMissingRate = result.firstMissingRateDate;
+                                                   exchange.value(QStringLiteral("history")).toList(), nowMs,
+                                                   costBasis);
             add(QStringLiteral("crypto:") + exchangeId + QStringLiteral(":") + coin.key(), QStringLiteral("crypto"),
                 exchangeName + QStringLiteral(" · ") + coin.key(), toApp(result.valueMinor, Currency::RUB), result.annual);
-        }
-    }
-    // The CBR rates of the trade days are asked for when they are missing, at most once an hour.
-    // The CBR publishes nothing on holidays (New Year: no rates from 1 to 12 January), so a trade on a holiday
-    // takes the last rate before it: the request starts a month earlier to include that rate.
-    if (firstMissingRate.isValid()) {
-        const QDateTime requestNow = QDateTime::currentDateTimeUtc();
-        if (!rateHistoryRequestedUtc_.isValid() || rateHistoryRequestedUtc_.secsTo(requestNow) >= 3600) {
-            rateHistoryRequestedUtc_ = requestNow;
-            rateProvider_.requestUsdHistory(firstMissingRate.addDays(-30), QDate::currentDate());
+            // The row tells the panel whether the user can give the purchase price, and which mode is in use
+            QVariantMap row = items.last().toMap();
+            row.insert(QStringLiteral("untracked"), result.untracked);
+            row.insert(QStringLiteral("basisMode"), costBasis.value(QStringLiteral("mode")).toString());
+            items.last() = row;
         }
     }
     averageReturnItems_ = items;

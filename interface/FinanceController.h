@@ -11,6 +11,7 @@
 #include "../services/CurrencyConverter.h"
 #include "../services/CryptoProvider.h"
 #include "../services/BybitProvider.h"
+#include "../services/DepositInterestCalculator.h"
 #include "../services/MoexInvestmentProvider.h"
 #include "../services/FinancialGoalCalculator.h"
 #include "../core/FinancialTrajectory.h"
@@ -548,6 +549,10 @@ public:
     Q_INVOKABLE QVariantList cryptoExchangeHoldings() const;
     Q_INVOKABLE bool deleteCryptoWallet(const QString& id);
     Q_INVOKABLE void refreshCryptoWallets();
+    // itemId is the id of a crypto row in the average return panel: "crypto:<exchangeId>:<coin>".
+    // mode "connection": the price today, counted from today; mode "manual": the given price on the given day.
+    Q_INVOKABLE bool setCryptoCostBasis(const QString& itemId, const QString& mode, double priceUsd, const QString& dateIso);
+    Q_INVOKABLE bool clearCryptoCostBasis(const QString& itemId);
     Q_INVOKABLE void searchInvestmentInstruments(const QString& query);
     Q_INVOKABLE void selectInvestmentSearchResult(int index);
     Q_INVOKABLE QVariantMap addInvestmentPosition(
@@ -847,6 +852,9 @@ private:
     QVector<BankCsvProfile> bankCsvProfiles_;
     QVector<RecurringTransaction> recurringTransactions_;
     QVector<DepositSettings> depositSettings_;
+    // Rate history of each deposit by account id (see DepositRateStep)
+    QHash<QString, QVector<DepositRateStep>> depositRateSteps_;
+    void loadDepositRateSteps();
     QVector<Project> projects_;
     QVector<Budget> budgets_;
     QVector<FinancialGoal> financialGoals_;
@@ -946,4 +954,7 @@ private:
     QDateTime cryptoManualLockUntilUtc_;
     void loadManualCryptoState(const QString& state);
     QString manualCryptoStateText() const;
+    // Purchase price of the coins without trades, by "exchangeId|coin"
+    QVariantMap cryptoCostBasis_;
+    double currentCryptoPriceUsd(const QString& exchangeId, const QString& coin) const;
 };

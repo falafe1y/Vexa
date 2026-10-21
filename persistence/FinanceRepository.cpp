@@ -9,6 +9,7 @@
 #include <QRegularExpression>
 #include <QJsonDocument>
 #include <QJsonArray>
+#include <QJsonObject>
 #include <QFileInfo>
 #include <QFile>
 #include <QSqlError>
@@ -2684,6 +2685,87 @@ bool FinanceRepository::saveCryptoPriceAttemptUtc(
         "ON CONFLICT(key) DO UPDATE SET value = excluded.value"));
     query.addBindValue(QString::number(
         attemptedAtUtc.toUTC().toMSecsSinceEpoch()));
+    if (!query.exec()) {
+        setLastError(query.lastError().text());
+        return false;
+    }
+    return true;
+}
+
+QVariantMap FinanceRepository::loadDepositRateSteps() const
+{
+    static const QString prefix = QStringLiteral("deposit_rate_steps:");
+    QVariantMap result;
+    QSqlQuery query(database_);
+    if (!query.exec(QStringLiteral(
+            "SELECT key, value FROM settings WHERE key LIKE 'deposit_rate_steps:%'"))) {
+        return result;
+    }
+    while (query.next()) {
+        const QString accountId = query.value(0).toString().mid(prefix.size());
+        result.insert(accountId, QJsonDocument::fromJson(query.value(1).toByteArray()).array().toVariantList());
+    }
+    return result;
+}
+
+bool FinanceRepository::saveDepositRateSteps(const QString& accountId, const QVariantList& steps)
+{
+    const QString key = QStringLiteral("deposit_rate_steps:") + accountId;
+    QSqlQuery query(database_);
+    if (steps.isEmpty()) {
+        query.prepare(QStringLiteral("DELETE FROM settings WHERE key = ?"));
+        query.addBindValue(key);
+    } else {
+        query.prepare(QStringLiteral(
+            "INSERT INTO settings(key, value) VALUES(?, ?) "
+            "ON CONFLICT(key) DO UPDATE SET value = excluded.value"));
+        query.addBindValue(key);
+        query.addBindValue(QString::fromUtf8(QJsonDocument(QJsonArray::fromVariantList(steps))
+                                                 .toJson(QJsonDocument::Compact)));
+    }
+    if (!query.exec()) {
+        setLastError(query.lastError().text());
+        return false;
+    }
+    return true;
+}
+
+QVariantMap FinanceRepository::loadCryptoCostBasis() const
+{
+    static const QString prefix = QStringLiteral("crypto_cost_basis:");
+    QVariantMap result;
+    QSqlQuery query(database_);
+    if (!query.exec(QStringLiteral(
+            "SELECT key, value FROM settings WHERE key LIKE 'crypto_cost_basis:%'"))) {
+        return result;
+    }
+    while (query.next()) {
+        const QString key = query.value(0).toString().mid(prefix.size());
+        result.insert(key, QJsonDocument::fromJson(query.value(1).toByteArray())
+                               .object().toVariantMap());
+    }
+    return result;
+}
+
+bool FinanceRepository::saveCryptoCostBasis(
+    const QString& exchangeId,
+    const QString& coin,
+    const QVariantMap& basis
+    )
+{
+    const QString key = QStringLiteral("crypto_cost_basis:") + exchangeId + QLatin1Char('|') + coin;
+    QSqlQuery query(database_);
+    if (basis.isEmpty()) {
+        query.prepare(QStringLiteral("DELETE FROM settings WHERE key = ?"));
+        query.addBindValue(key);
+    } else {
+        query.prepare(QStringLiteral(
+            "INSERT INTO settings(key, value) VALUES(?, ?) "
+            "ON CONFLICT(key) DO UPDATE SET value = excluded.value"));
+        query.addBindValue(key);
+        query.addBindValue(QString::fromUtf8(QJsonDocument(QJsonObject::fromVariantMap(basis))
+                                                 .toJson(QJsonDocument::Compact)));
+    }
     if (!query.exec()) {
         setLastError(query.lastError().text());
         return false;

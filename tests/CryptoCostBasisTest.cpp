@@ -14,31 +14,48 @@ QVariantMap tradeRow(const QString& currency, const QString& pair, const QString
     return {{"symbol", currency}, {"pair", pair}, {"category", "spot"}, {"tradeSide", side}, {"tradePrice", price},
             {"tradeQty", qty}, {"changeText", change}, {"occurredAtMs", at}};
 }
-
-QMap<QDate, qint64> rates()
-{
-    return {{kBuyDate, kRateMicros}};
-}
 } // namespace
 
 class CryptoCostBasisTest : public QObject {
     Q_OBJECT
 private slots:
-    void boughtCoinIsWorthItsDollarPriceAtTodayRate()
+    void simpleReturnIsThePriceGainOverAYear()
     {
-        // Bought 1 BTC for 50 000 USDT, worth 60 000 USDT now: both at 90 roubles per dollar
+        // Bought 1 BTC for 50 000 USDT, worth 60 000 USDT a year later: 20 % a year
         const QVariantList history{tradeRow("BTC", "BTCUSDT", "Buy", "50000", "1", "1", kBuyDay),
                                    tradeRow("USDT", "BTCUSDT", "Buy", "50000", "1", "-50000", kBuyDay)};
-        const CoinReturn result = coinReturnOf("BTC", 1.0, 60000.0, kRateMicros, history, rates(), kBuyDay + 365 * kDay);
+        const CoinReturn result = coinReturnOf("BTC", 1.0, 60000.0, kRateMicros, history, kBuyDay + 365 * kDay);
         QCOMPARE(result.valueMinor, qint64(540'000'000)); // 5 400 000 ₽ in kopecks
         QVERIFY(result.annual.percent.has_value());
-        QVERIFY(qAbs(*result.annual.percent - 20.0) < 0.1);
+        QVERIFY(qAbs(*result.annual.percent - 20.0) < 0.01);
+    }
+
+    void simpleReturnIsNotCompounded()
+    {
+        // The same 20 % gain in half a year is 40 % a year in the simple sense
+        const QVariantList history{tradeRow("BTC", "BTCUSDT", "Buy", "50000", "1", "1", kBuyDay),
+                                   tradeRow("USDT", "BTCUSDT", "Buy", "50000", "1", "-50000", kBuyDay)};
+        const CoinReturn result = coinReturnOf("BTC", 1.0, 60000.0, kRateMicros, history, kBuyDay + 365 * kDay / 2);
+        QVERIFY(result.annual.percent.has_value());
+        QVERIFY(qAbs(*result.annual.percent - 40.0) < 0.01);
+    }
+
+    void averagePurchasePriceWeighsByQuantity()
+    {
+        // 1 BTC at 50 000 and 3 BTC at 60 000: the average is 57 500; the price now is 69 000, a gain of 20 %
+        const QVariantList history{tradeRow("BTC", "BTCUSDT", "Buy", "50000", "1", "1", kBuyDay),
+                                   tradeRow("USDT", "BTCUSDT", "Buy", "50000", "1", "-50000", kBuyDay),
+                                   tradeRow("BTC", "BTCUSDT", "Buy", "60000", "3", "3", kBuyDay),
+                                   tradeRow("USDT", "BTCUSDT", "Buy", "60000", "3", "-180000", kBuyDay)};
+        const CoinReturn result = coinReturnOf("BTC", 4.0, 69000.0, kRateMicros, history, kBuyDay + 365 * kDay);
+        QVERIFY(result.annual.percent.has_value());
+        QVERIFY(qAbs(*result.annual.percent - 20.0) < 0.01);
     }
 
     void dollarLegOfTheSameTradeIsNotCountedAsTheCoin()
     {
         const QVariantList history{tradeRow("USDT", "BTCUSDT", "Buy", "50000", "1", "-50000", kBuyDay)};
-        const CoinReturn result = coinReturnOf("BTC", 1.0, 60000.0, kRateMicros, history, rates(), kBuyDay + 365 * kDay);
+        const CoinReturn result = coinReturnOf("BTC", 1.0, 60000.0, kRateMicros, history, kBuyDay + 365 * kDay);
         QVERIFY(!result.annual.percent.has_value());
         QVERIFY(result.annual.reason.contains(QStringLiteral("нет сделок")));
     }
@@ -48,32 +65,47 @@ private slots:
         // Holds 2 BTC, but the trades explain only 1: the other coin came by deposit
         const QVariantList history{tradeRow("BTC", "BTCUSDT", "Buy", "50000", "1", "1", kBuyDay),
                                    tradeRow("USDT", "BTCUSDT", "Buy", "50000", "1", "-50000", kBuyDay)};
-        const CoinReturn result = coinReturnOf("BTC", 2.0, 60000.0, kRateMicros, history, rates(), kBuyDay + 365 * kDay);
+        const CoinReturn result = coinReturnOf("BTC", 2.0, 60000.0, kRateMicros, history, kBuyDay + 365 * kDay);
+        QVERIFY(result.untracked);
         QVERIFY(!result.annual.percent.has_value());
         QVERIFY(result.annual.reason.contains(QStringLiteral("не сделками")));
     }
 
-    void tradeWithoutCbrRateWaitsForIt()
+    void untrackedCoinIsMeasuredFromTheGivenPurchase()
     {
+        // 1 BTC bought in a trade at 50 000 and 1 BTC given by the user at 40 000: the average is 45 000
         const QVariantList history{tradeRow("BTC", "BTCUSDT", "Buy", "50000", "1", "1", kBuyDay),
                                    tradeRow("USDT", "BTCUSDT", "Buy", "50000", "1", "-50000", kBuyDay)};
-        const CoinReturn result = coinReturnOf("BTC", 1.0, 60000.0, kRateMicros, history, {}, kBuyDay + 365 * kDay);
+        const QVariantMap basis{{"priceUsd", 40000.0}, {"date", kBuyDate.toString(Qt::ISODate)}};
+        const CoinReturn result = coinReturnOf("BTC", 2.0, 60000.0, kRateMicros, history,
+                                               kBuyDay + 365 * kDay, basis);
+        QVERIFY(result.untracked);
+        QCOMPARE(result.valueMinor, qint64(1'080'000'000)); // 2 BTC at 60 000 USDT, 10 800 000 ₽
+        QVERIFY(result.annual.percent.has_value());
+        QVERIFY(qAbs(*result.annual.percent - (60000.0 / 45000.0 - 1.0) * 100.0) < 0.5);
+    }
+
+    void shortHistoryIsNotAnnualised()
+    {
+        // Ten days is too short to scale a gain to a year
+        const QVariantList history{tradeRow("BTC", "BTCUSDT", "Buy", "50000", "1", "1", kBuyDay),
+                                   tradeRow("USDT", "BTCUSDT", "Buy", "50000", "1", "-50000", kBuyDay)};
+        const CoinReturn result = coinReturnOf("BTC", 1.0, 60000.0, kRateMicros, history, kBuyDay + 10 * kDay);
         QVERIFY(!result.annual.percent.has_value());
-        QCOMPARE(result.firstMissingRateDate, kBuyDate);
-        QVERIFY(result.annual.reason.contains(QStringLiteral("курса ЦБ")));
+        QVERIFY(result.annual.reason.contains(QStringLiteral("30 дней")));
     }
 
     void tradeAgainstNonDollarCoinIsNotMeasured()
     {
         const QVariantList history{tradeRow("ETH", "ETHBTC", "Buy", "0.05", "1", "1", kBuyDay)};
-        const CoinReturn result = coinReturnOf("ETH", 1.0, 3000.0, kRateMicros, history, rates(), kBuyDay + 365 * kDay);
+        const CoinReturn result = coinReturnOf("ETH", 1.0, 3000.0, kRateMicros, history, kBuyDay + 365 * kDay);
         QVERIFY(!result.annual.percent.has_value());
         QVERIFY(result.annual.reason.contains(QStringLiteral("не за доллары")));
     }
 
     void coinWithoutPriceHasNoValue()
     {
-        const CoinReturn result = coinReturnOf("BTC", 1.0, 0.0, kRateMicros, {}, rates(), kBuyDay);
+        const CoinReturn result = coinReturnOf("BTC", 1.0, 0.0, kRateMicros, {}, kBuyDay);
         QCOMPARE(result.valueMinor, qint64(0));
         QVERIFY(result.annual.reason.contains(QStringLiteral("нет цены")));
     }
@@ -83,7 +115,7 @@ private slots:
         // An inverse BTCUSD contract settles in BTC: its rows must not be taken for purchases of the coin
         QVariantMap contract = tradeRow("BTC", "BTCUSD", "Buy", "50000", "1", "0.0001", kBuyDay);
         contract.insert("category", "inverse");
-        const CoinReturn result = coinReturnOf("BTC", 1.0, 60000.0, kRateMicros, {contract}, rates(), kBuyDay + 365 * kDay);
+        const CoinReturn result = coinReturnOf("BTC", 1.0, 60000.0, kRateMicros, {contract}, kBuyDay + 365 * kDay);
         QVERIFY(!result.annual.percent.has_value());
         QVERIFY(result.annual.reason.contains(QStringLiteral("нет сделок")));
     }

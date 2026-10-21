@@ -96,6 +96,7 @@ qt_add_qml_module(vexa
         ui/mobile/MobileAnalyticsPage.qml
         ui/computer/analytics/EditorialAnalyticsPage.qml
         ui/computer/analytics/EditorialAverageReturn.qml
+        ui/computer/analytics/CostBasisDialog.qml
         ui/computer/categories/EditorialCategoriesPage.qml
         ui/computer/common/EditorialChart.qml
         ui/computer/common/EditorialCheck.qml

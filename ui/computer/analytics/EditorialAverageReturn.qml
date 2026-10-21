@@ -250,6 +250,21 @@ Column {
                                 font.pixelSize: 12
                                 font.bold: true
                             }
+                            EditorialAction {
+                                objectName: "editorialCostBasis"
+                                visible: !!instrument.modelData.untracked
+                                text: instrument.modelData.basisMode ? qsTr("Цена покупки…") : qsTr("Указать цену покупки")
+                                textSize: 11
+                                arrow: false
+                                onClicked: costBasisDialog.open()
+                            }
+                            CostBasisDialog {
+                                id: costBasisDialog
+                                controller: panel.controller
+                                itemId: instrument.modelData.id
+                                itemTitle: instrument.modelData.title
+                                basisMode: instrument.modelData.basisMode || ""
+                            }
                         }
                         Rectangle {
                             y: parent.height - 1

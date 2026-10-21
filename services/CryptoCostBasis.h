@@ -18,11 +18,14 @@ struct CoinReturn {
     qint64 valueMinor = 0;        // what the coin is worth now, in kopecks
     AnnualReturn annual;          // annual rate in percent, or the reason it cannot be computed
     QDate firstMissingRateDate;   // earliest trade day without a CBR rate; invalid when every day has one
+    bool untracked = false;       // part of the coin has no trade behind it (deposit, bot, transfer)
 };
 
-// The annual return of one coin held on an exchange (XIRR over its trades, in roubles).
+// The simple annual return of one coin held on an exchange: its price now against the average purchase price
+// (weighted by the quantity bought), scaled to a year. The return is in dollars; no compounding.
 // quantity: the coin in all sections of the exchange; priceUsd: its current price in dollars, 0 when unknown.
-// history: the exchange's history rows (see BybitProvider::parseOperation); each trade is priced in dollars
-// and converted to roubles at the CBR rate of its day.
+// history: the exchange's history rows (see BybitProvider::parseOperation).
+// costBasis: the purchase of the coins that have no trade behind them: {"priceUsd", "date" as ISO day}; empty when unknown.
 CoinReturn coinReturnOf(const QString& coin, double quantity, double priceUsd, qint64 usdRubNowMicros,
-                        const QVariantList& history, const QMap<QDate, qint64>& usdRubByDate, qint64 nowMillis);
+                        const QVariantList& history, qint64 nowMillis,
+                        const QVariantMap& costBasis = {});

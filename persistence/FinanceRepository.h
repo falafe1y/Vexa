@@ -151,6 +151,12 @@ public:
     QDateTime loadCryptoRefreshAttemptUtc() const;
     QDateTime loadCryptoPriceAttemptUtc() const;
     QString loadCryptoManualState() const;
+    // Purchase price of the coins without trades, by "exchangeId|coin"
+    QVariantMap loadCryptoCostBasis() const;
+    bool saveCryptoCostBasis(const QString& exchangeId, const QString& coin, const QVariantMap& basis);
+    // Rate history of deposits by account id: a list of {"from": "yyyy-MM-dd", "bps": int}, sorted by day
+    QVariantMap loadDepositRateSteps() const;
+    bool saveDepositRateSteps(const QString& accountId, const QVariantList& steps);
     QSet<QString> loadArchivedCategoryIds();
     Summary loadSummary();
     bool insertTransaction(const Transaction& transaction);

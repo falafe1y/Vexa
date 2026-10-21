@@ -26,6 +26,49 @@ qint64 DepositInterestCalculator::interestMinor(
         : static_cast<qint64>(rounded);
 }
 
+int DepositInterestCalculator::rateOn(
+    const QVector<DepositRateStep>& steps,
+    const int fallbackBasisPoints,
+    const QDate& day
+    )
+{
+    if (steps.isEmpty()) {
+        return fallbackBasisPoints;
+    }
+    int rate = steps.first().annualRateBasisPoints;
+    for (const DepositRateStep& step : steps) {
+        if (step.from <= day) {
+            rate = step.annualRateBasisPoints;
+        }
+    }
+    return rate;
+}
+
+qint64 DepositInterestCalculator::interestForPeriod(
+    const qint64 balanceMinor,
+    const QVector<DepositRateStep>& steps,
+    const int fallbackBasisPoints,
+    const QDate& from,
+    const QDate& through
+    )
+{
+    if (balanceMinor <= 0 || !from.isValid() || !through.isValid() || from >= through) {
+        return 0;
+    }
+
+    using Int128 = __int128_t;
+    Int128 weighted = 0;
+    for (QDate day = from; day < through; day = day.addDays(1)) {
+        weighted += static_cast<Int128>(balanceMinor) *
+            static_cast<Int128>(rateOn(steps, fallbackBasisPoints, day));
+    }
+    const Int128 divisor = 10'000 * 365;
+    const Int128 rounded = (weighted + divisor / 2) / divisor;
+    return rounded > std::numeric_limits<qint64>::max()
+        ? std::numeric_limits<qint64>::max()
+        : static_cast<qint64>(rounded);
+}
+
 QDate DepositInterestCalculator::monthlyPayout(
     const int year,
     const int month,

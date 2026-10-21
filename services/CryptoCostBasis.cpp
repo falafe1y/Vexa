@@ -6,19 +6,6 @@
 
 #include <algorithm>
 #include <cmath>
-#include <iterator>
-
-namespace {
-// The CBR publishes business days only: a trade on a weekend or holiday uses the last rate before it.
-bool rateOn(const QMap<QDate, qint64>& rates, QDate day, qint64& rubPerUsdMicros)
-{
-    const auto after = rates.upperBound(day);
-    if (after == rates.cbegin())
-        return false;
-    rubPerUsdMicros = std::prev(after).value();
-    return rubPerUsdMicros > 0;
-}
-} // namespace
 
 bool isStableCoin(const QString& coin)
 {
@@ -48,8 +35,10 @@ QMap<QDate, qint64> rubPerUsdByDate(const QVariantList& rows)
 }
 
 CoinReturn coinReturnOf(const QString& coin, double quantity, double priceUsd, qint64 usdRubNowMicros,
-                        const QVariantList& history, const QMap<QDate, qint64>& usdRubByDate, qint64 nowMillis)
+                        const QVariantList& history, qint64 nowMillis, const QVariantMap& costBasis)
 {
+    // The simple return of a coin: the price now against its average purchase price, scaled to a year.
+    // The average purchase price and day are weighted by the quantity bought. No compounding, no roubles.
     CoinReturn result;
     if (priceUsd <= 0 || usdRubNowMicros <= 0) {
         result.annual = AnnualReturn{std::nullopt, QObject::tr("нет цены монеты или курса доллара"), 0};
@@ -58,8 +47,10 @@ CoinReturn coinReturnOf(const QString& coin, double quantity, double priceUsd, q
     // Roubles = quantity × dollar price × CBR rate; kopecks are 1/100 of a rouble, micros are 1/1 000 000.
     result.valueMinor = std::llround(quantity * priceUsd * static_cast<double>(usdRubNowMicros) / 1e4);
 
-    QVector<ReturnFlow> flows;
-    double netQuantity = 0;
+    double boughtQuantity = 0;        // quantity bought in trades, plus the coins with a purchase given by the user
+    double costUsd = 0;               // quantity × purchase price, summed
+    double dayMsTimesQuantity = 0;    // quantity × purchase time (ms), summed
+    double netQuantity = 0;           // all coin legs of the trades: buys add, sells subtract
     QString problem;
     for (const QVariant& value : history) {
         const QVariantMap row = value.toMap();
@@ -75,46 +66,64 @@ CoinReturn coinReturnOf(const QString& coin, double quantity, double priceUsd, q
             continue;
         }
         const QString side = row.value(QStringLiteral("tradeSide")).toString();
-        bool priceOk = false, qtyOk = false, changeOk = false;
+        bool priceOk = false, changeOk = false;
         const double tradePrice = row.value(QStringLiteral("tradePrice")).toString().toDouble(&priceOk);
-        const double tradeQty = row.value(QStringLiteral("tradeQty")).toString().toDouble(&qtyOk);
+        // The exact quantity of the coin is in "changeText"; "tradeQty" is rounded by the exchange
         const double change = row.value(QStringLiteral("changeText")).toString().toDouble(&changeOk);
-        if ((side != QStringLiteral("Buy") && side != QStringLiteral("Sell")) || !priceOk || !qtyOk || !changeOk
-            || tradePrice <= 0 || tradeQty <= 0) {
+        if ((side != QStringLiteral("Buy") && side != QStringLiteral("Sell")) || !priceOk || !changeOk
+            || tradePrice <= 0) {
             problem = QObject::tr("в истории есть сделка без цены или количества");
             continue;
         }
         const qint64 occurredAt = row.value(QStringLiteral("occurredAtMs")).toLongLong();
-        const QDate day = QDateTime::fromMSecsSinceEpoch(occurredAt).date();
-        qint64 rubPerUsd = 0;
-        if (!rateOn(usdRubByDate, day, rubPerUsd)) {
-            if (!result.firstMissingRateDate.isValid() || day < result.firstMissingRateDate)
-                result.firstMissingRateDate = day;
-            continue;
-        }
-        const qint64 rubMinor = std::llround(tradeQty * tradePrice * static_cast<double>(rubPerUsd) / 1e4);
-        flows.append({occurredAt, side == QStringLiteral("Buy") ? -rubMinor : rubMinor});
         netQuantity += change;
+        if (side == QStringLiteral("Buy")) {
+            boughtQuantity += change;
+            costUsd += change * tradePrice;
+            dayMsTimesQuantity += change * static_cast<double>(occurredAt);
+        }
     }
-
     if (!problem.isEmpty()) {
         result.annual = AnnualReturn{std::nullopt, problem, 0};
         return result;
     }
-    if (result.firstMissingRateDate.isValid()) {
-        result.annual = AnnualReturn{std::nullopt, QObject::tr("нет курса ЦБ на дату сделки"), 0};
-        return result;
+
+    // Coins without a trade behind them (deposit, bot, transfer): the purchase given by the user stands in for them.
+    // Without it they are not measured, see the checks below.
+    const double tolerance = std::max(1e-7, 1e-6 * std::abs(quantity));
+    const double untrackedQuantity = quantity - netQuantity;
+    if (std::abs(untrackedQuantity) > tolerance) {
+        result.untracked = true;
+        const double basisPriceUsd = costBasis.value(QStringLiteral("priceUsd")).toDouble();
+        const QDate basisDay = QDate::fromString(
+            costBasis.value(QStringLiteral("date")).toString(), Qt::ISODate);
+        if (untrackedQuantity > 0 && basisPriceUsd > 0 && basisDay.isValid()) {
+            const double basisMs = static_cast<double>(QDateTime(basisDay, QTime(12, 0)).toMSecsSinceEpoch());
+            boughtQuantity += untrackedQuantity;
+            costUsd += untrackedQuantity * basisPriceUsd;
+            dayMsTimesQuantity += untrackedQuantity * basisMs;
+            netQuantity += untrackedQuantity;
+        }
     }
-    if (flows.isEmpty()) {
+    if (boughtQuantity <= 0 || costUsd <= 0) {
         result.annual = AnnualReturn{std::nullopt, QObject::tr("нет сделок на бирже"), 0};
         return result;
     }
-    // Every coin on the exchange must come from trades. Coins that arrived by deposit or left by withdrawal
-    // have no known purchase price here, so the rate for this coin would be wrong.
-    if (std::abs(quantity - netQuantity) > std::max(1e-7, 1e-6 * std::abs(quantity))) {
+    // Every coin on the exchange must come from trades or from a given purchase
+    if (std::abs(quantity - netQuantity) > tolerance) {
         result.annual = AnnualReturn{std::nullopt, QObject::tr("часть монет пришла не сделками: ввод, вывод или покупка вне биржи"), 0};
         return result;
     }
-    result.annual = annualReturnOf(flows, nowMillis, result.valueMinor);
+
+    const double averagePriceUsd = costUsd / boughtQuantity;
+    const double averageDayMs = dayMsTimesQuantity / boughtQuantity;
+    const double days = (static_cast<double>(nowMillis) - averageDayMs) / 86400000.0;
+    if (days < 30.0) {
+        result.annual = AnnualReturn{std::nullopt, QObject::tr("мало времени (меньше 30 дней)"), days};
+        return result;
+    }
+    // The price gain in percent, scaled to a year: simple, without compounding
+    const double gainPercent = (priceUsd / averagePriceUsd - 1.0) * 100.0;
+    result.annual = AnnualReturn{gainPercent * 365.0 / days, QString(), days};
     return result;
 }
