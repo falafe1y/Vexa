@@ -104,10 +104,14 @@ void DatabaseProtection::finishBackup(bool exporting, const QString& path, quint
     backupWorker_.setFuture(QFuture<PortableBackup::Result>());
     busy_ = false;
     const bool current = generation == generation_ && admitted_;
-    // A picked document receives the backup only while the session that started the export is still open
-    if (exporting && result.ok && current && ContentUriIo::isContentUri(destination)
-        && !ContentUriIo::copyFileTo(path, destination, result.error)) {
-        result.ok = false;
+    // The backup is saved only while the session that started the export is still open
+    QUrl saved = destination;
+    if (exporting && result.ok && current && ContentUriIo::isContentUri(destination)) {
+        if (ContentUriIo::saveToDownloads(path, backupName_, saved, result.error)) {
+            ContentUriIo::deleteDocument(destination); // The empty document the picker made
+        } else {
+            result.ok = false;
+        }
     }
     backupDirectory_.reset();
     if (current) {
@@ -115,8 +119,8 @@ void DatabaseProtection::finishBackup(bool exporting, const QString& path, quint
         if (result.ok && !exporting) { preview_ = result.prepared; previewAge_.start(); passwordRequired_ = false; }
         emit backupChanged();
         if (result.ok && exporting) {
-            const QString name = ContentUriIo::isContentUri(destination) ? ContentUriIo::displayName(destination) : path;
-            emit backupExported(name.isEmpty() ? destination.toString() : name);
+            const QString name = ContentUriIo::isContentUri(saved) ? ContentUriIo::displayName(saved) : path;
+            emit backupExported(name.isEmpty() ? saved.toString() : name);
         }
     }
     emit changed();
@@ -132,9 +136,12 @@ void DatabaseProtection::exportBackup(const QUrl& destination, const QString& pa
     QUrl target = destination;
     QString path = destination.toLocalFile();
     if (ContentUriIo::isContentUri(destination)) {
-        // The picker does not add the suffix on Android, so the picked document is renamed before anything is written
+        // A picked document cannot be written on Android, so the backup goes to Downloads under the picked name.
+        // The picker does not add the suffix, so it is added to the name here.
         QString error;
-        if (!ContentUriIo::ensureSuffix(target, suffix, error)) { backupError_ = error; emit backupChanged(); return; }
+        backupName_ = ContentUriIo::displayName(destination);
+        if (backupName_.isEmpty()) { backupError_ = tr("Не удалось узнать имя выбранного файла"); emit backupChanged(); return; }
+        if (!backupName_.endsWith(suffix, Qt::CaseInsensitive)) backupName_ += suffix;
         // A picked document has no path on Android: the backup is written to a temporary folder and copied over later
         backupDirectory_ = ContentUriIo::temporaryDirectory(error);
         if (!backupDirectory_) { backupError_ = error; emit backupChanged(); return; }

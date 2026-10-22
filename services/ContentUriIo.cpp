@@ -96,28 +96,45 @@ bool writeAll(const QUrl& url, const QByteArray& bytes, QString& error)
     return ok;
 }
 
-bool ensureSuffix(QUrl& url, const QString& suffix, QString& error)
+bool saveToDownloads(const QString& path, const QString& name, QUrl& saved, QString& error)
 {
-    const QString name = displayName(url);
-    if (name.isEmpty()) {
-        error = QCoreApplication::translate("ContentUriIo", "Не удалось узнать имя выбранного файла");
-        return false;
-    }
-    if (name.endsWith(suffix, Qt::CaseInsensitive)) {
-        return true;
-    }
     QJniEnvironment env;
-    const QJniObject renamed = QJniObject::callStaticObjectMethod(
-        "android/provider/DocumentsContract", "renameDocument",
-        "(Landroid/content/ContentResolver;Landroid/net/Uri;Ljava/lang/String;)Landroid/net/Uri;",
-        contentResolver().object(), uriOf(url).object(),
-        QJniObject::fromString(name + suffix).object<jstring>());
-    if (env.checkAndClearExceptions() || !renamed.isValid()) {
-        error = QCoreApplication::translate("ContentUriIo", "Хранилище не позволило переименовать файл в %1").arg(name + suffix);
+    QJniObject values("android/content/ContentValues");
+    values.callMethod<void>("put", "(Ljava/lang/String;Ljava/lang/String;)V",
+        QJniObject::fromString(QStringLiteral("_display_name")).object<jstring>(),
+        QJniObject::fromString(name).object<jstring>());
+    values.callMethod<void>("put", "(Ljava/lang/String;Ljava/lang/String;)V",
+        QJniObject::fromString(QStringLiteral("relative_path")).object<jstring>(),
+        QJniObject::fromString(QStringLiteral("Download/")).object<jstring>());
+    const QJniObject downloads = QJniObject::getStaticObjectField(
+        "android/provider/MediaStore$Downloads", "EXTERNAL_CONTENT_URI", "Landroid/net/Uri;");
+    const QJniObject created = contentResolver().callObjectMethod(
+        "insert", "(Landroid/net/Uri;Landroid/content/ContentValues;)Landroid/net/Uri;",
+        downloads.object(), values.object());
+    if (env.checkAndClearExceptions() || !created.isValid()) {
+        error = QCoreApplication::translate("ContentUriIo", "Не удалось создать файл в папке «Загрузки»");
         return false;
     }
-    url = QUrl(renamed.toString());
+    saved = QUrl(created.toString());
+    if (!copyFileTo(path, saved, error)) {
+        // Keep no empty file in Downloads after a failed write
+        contentResolver().callMethod<jint>(
+            "delete", "(Landroid/net/Uri;Ljava/lang/String;[Ljava/lang/String;)I",
+            created.object(), jobject(nullptr), jobject(nullptr));
+        env.checkAndClearExceptions();
+        return false;
+    }
     return true;
+}
+
+void deleteDocument(const QUrl& url)
+{
+    QJniEnvironment env;
+    QJniObject::callStaticMethod<jboolean>(
+        "android/provider/DocumentsContract", "deleteDocument",
+        "(Landroid/content/ContentResolver;Landroid/net/Uri;)Z",
+        contentResolver().object(), uriOf(url).object());
+    env.checkAndClearExceptions();
 }
 
 QString displayName(const QUrl& url)
@@ -161,10 +178,14 @@ QString displayName(const QUrl&)
     return {};
 }
 
-bool ensureSuffix(QUrl&, const QString&, QString& error)
+bool saveToDownloads(const QString&, const QString&, QUrl&, QString& error)
 {
     error = QCoreApplication::translate("ContentUriIo", "Этот адрес файла поддерживается только на Android");
     return false;
+}
+
+void deleteDocument(const QUrl&)
+{
 }
 #endif
 
@@ -176,6 +197,21 @@ bool copyFileTo(const QString& path, const QUrl& destination, QString& error)
         return false;
     }
     return writeAll(destination, file.readAll(), error);
+}
+
+bool saveBytesToDownloads(const QByteArray& bytes, const QString& name, QUrl& saved, QString& error)
+{
+    const auto directory = temporaryDirectory(error);
+    if (!directory) {
+        return false;
+    }
+    QFile file(directory->filePath(name));
+    if (!file.open(QIODevice::WriteOnly) || file.write(bytes) != bytes.size()) {
+        error = QCoreApplication::translate("ContentUriIo", "Не удалось подготовить файл");
+        return false;
+    }
+    file.close();
+    return saveToDownloads(file.fileName(), name, saved, error);
 }
 
 std::unique_ptr<QTemporaryDir> temporaryDirectory(QString& error)

@@ -1269,18 +1269,30 @@ QVariantMap FinanceController::exportTransactionsCsv(const QUrl& fileUrl) const
     }
 
     QString error;
+    QString savedName;
     if (contentUri) {
-        if (!ContentUriIo::writeAll(fileUrl, CsvCodec::serialize(rows), error)) {
+        // A picked document cannot be written on Android: the file goes to Downloads under the picked name
+        savedName = ContentUriIo::displayName(fileUrl);
+        if (savedName.isEmpty()) {
+            result["error"] = tr("Не удалось узнать имя выбранного файла");
+            return result;
+        }
+        if (!savedName.endsWith(QStringLiteral(".csv"), Qt::CaseInsensitive)) {
+            savedName += QStringLiteral(".csv");
+        }
+        QUrl saved;
+        if (!ContentUriIo::saveBytesToDownloads(CsvCodec::serialize(rows), savedName, saved, error)) {
             result["error"] = error;
             return result;
         }
+        ContentUriIo::deleteDocument(fileUrl); // The empty document the picker made
     } else if (!CsvCodec::writeFile(filePath, rows, error)) {
         result["error"] = error;
         return result;
     }
     result["ok"] = true;
     result["count"] = rows.size() - 1;
-    result["path"] = contentUri ? fileUrl.toString() : QFileInfo(filePath).absoluteFilePath();
+    result["path"] = contentUri ? savedName : QFileInfo(filePath).absoluteFilePath();
     return result;
 }
 

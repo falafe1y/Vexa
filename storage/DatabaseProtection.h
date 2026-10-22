@@ -90,6 +90,7 @@ private:
     std::shared_ptr<PortableBackup::Prepared> preview_, restoring_;
     QElapsedTimer previewAge_;
     std::unique_ptr<QTemporaryDir> backupDirectory_; // Holds a backup until it is copied to a picked document
+    QString backupName_; // The name of the backup in Downloads when a document was picked
     QString backupError_, workspaceRoot_;
     quint64 generation_ = 0;
     bool passwordRequired_ = false, recovery_ = false;

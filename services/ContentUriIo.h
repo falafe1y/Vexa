@@ -16,9 +16,14 @@ bool readAll(const QUrl& url, QByteArray& bytes, QString& error);
 bool writeAll(const QUrl& url, const QByteArray& bytes, QString& error);
 // Writes a local file over a document chosen in a save dialog
 bool copyFileTo(const QString& path, const QUrl& destination, QString& error);
-// Renames a picked document so that its name ends with the suffix. The picker does not add suffixes on Android,
-// so the name is checked here. `url` is updated to the renamed document.
-bool ensureSuffix(QUrl& url, const QString& suffix, QString& error);
+// Creates a file named `name` in the Downloads folder and writes the local file into it. Android allows an app to
+// create its own files there, while the document the picker returned cannot be written to. `saved` is the new file;
+// it is removed again when the write fails.
+bool saveToDownloads(const QString& path, const QString& name, QUrl& saved, QString& error);
+// The same for bytes that are not in a file yet
+bool saveBytesToDownloads(const QByteArray& bytes, const QString& name, QUrl& saved, QString& error);
+// Removes a document the picker returned. Android may refuse, and the caller does not depend on the result.
+void deleteDocument(const QUrl& url);
 // A private folder in the cache; it and its files are removed with the returned object
 std::unique_ptr<QTemporaryDir> temporaryDirectory(QString& error);
 
