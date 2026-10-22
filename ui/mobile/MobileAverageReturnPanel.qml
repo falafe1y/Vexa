@@ -147,7 +147,17 @@ ColumnLayout {
                 wrapMode: Text.Wrap
                 text: MobileFormat.displayMoney(modelData.valueMinor, "RUB", false) + " · " + (modelData.annualPercent === null || modelData.annualPercent === undefined ? modelData.reason : panel.percent(modelData.annualPercent) + qsTr(" в год"))
             }
+            MobileButton {
+                Layout.fillWidth: true
+                Layout.leftMargin: 36
+                visible: !!modelData.untracked
+                text: modelData.basisMode ? qsTr("Цена покупки…") : qsTr("Указать цену покупки")
+                onClicked: costBasisSheet.openFor(modelData)
+            }
         }
+    }
+    MobileCostBasisSheet {
+        id: costBasisSheet
     }
     MobileText {
         Layout.fillWidth: true

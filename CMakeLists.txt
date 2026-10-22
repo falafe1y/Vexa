@@ -75,6 +75,7 @@ qt_add_qml_module(vexa
         ui/mobile/MobileBudgetSheet.qml
         ui/mobile/MobileGoalsPage.qml
         ui/mobile/MobileGoalSheet.qml
+        ui/mobile/MobileCostBasisSheet.qml
         ui/mobile/MobileProjectsPage.qml
         ui/mobile/MobileProjectPage.qml
         ui/mobile/MobileTrajectoryPage.qml

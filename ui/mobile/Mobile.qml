@@ -153,7 +153,7 @@ ApplicationWindow {
         if (!row || !row.isCrypto)
             return "";
         if (row.refreshing)
-            return qsTr("Обновление баланса…");
+            return row.syncProgress >= 0 ? qsTr("Загрузка истории: %1%").arg(row.syncProgress) : qsTr("Обновление баланса…");
         if (row.connectionError)
             return row.connectionError;
         if (!row.hasSnapshot)
@@ -1039,8 +1039,16 @@ ApplicationWindow {
     }
 
     function rowPrimaryAmount(row) {
-        if (row.isExchange)
-            return row.hasSnapshot ? root.money(row.valueMinor, financeController.appCurrency, false) : qsTr("Нет данных");
+        // The same order as on the computer: waiting for the jitter, then the value, then the progress of the sync
+        if (row.isExchange) {
+            if (row.awaitingRefresh)
+                return qsTr("Загружается");
+            if (row.hasSnapshot)
+                return root.money(row.valueMinor, financeController.appCurrency, false);
+            if (row.refreshing)
+                return row.syncProgress >= 0 ? qsTr("Загрузка %1%").arg(row.syncProgress) : qsTr("Загрузка…");
+            return qsTr("Нет данных");
+        }
         if (row.isCrypto)
             return row.balanceText + " " + row.symbol;
         if (row.isCreditCard)

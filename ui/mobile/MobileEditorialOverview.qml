@@ -208,7 +208,8 @@ Flickable {
                             MobileText {
                                 font.family: MobileTheme.mono
                                 Layout.fillWidth: true
-                                text: account.modelData.isCrypto ? (account.modelData.symbol || "") + " · " + (account.modelData.network || "") + " · " + (account.modelData.address || "") : dashboard.host.accountTypeLabel(account.modelData.type)
+                                // While the wallet or the exchange syncs, the progress takes the place of the address
+                                text: account.modelData.refreshing ? dashboard.host.cryptoWalletStatus(account.modelData) : account.modelData.isCrypto ? (account.modelData.symbol || "") + " · " + (account.modelData.network || "") + " · " + (account.modelData.address || "") : dashboard.host.accountTypeLabel(account.modelData.type)
                                 font.pixelSize: 12
                                 color: MobileTheme.muted
                                 elide: Text.ElideRight
