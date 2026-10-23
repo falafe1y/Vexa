@@ -171,10 +171,6 @@ qt_add_qml_module(vexa
         SOURCES ui/computer/notes/NotebookLayout.h
         SOURCES ui/computer/common/WindowScrollInput.h
         SOURCES ui/computer/common/WindowScrollInput.cpp
-        SOURCES services/FinancialGoalCalculator.h
-        SOURCES services/FinancialGoalCalculator.cpp
-        SOURCES services/FinancialTrajectoryCalculator.h
-        SOURCES services/FinancialTrajectoryCalculator.cpp
         SOURCES services/InvestmentBenchmark.h
         SOURCES services/InvestmentBenchmark.cpp
         SOURCES services/InvestmentBenchmarkProvider.h
@@ -196,8 +192,6 @@ qt_add_qml_module(vexa
         SOURCES services/PdfStatementReader.cpp
         SOURCES services/XlsxReader.h
         SOURCES services/XlsxReader.cpp
-        SOURCES services/CapitalHistoryCalculator.h
-        SOURCES services/CapitalHistoryCalculator.cpp
         SOURCES services/CurrencyRateCache.h
         SOURCES services/CurrencyRateCache.cpp
         SOURCES services/CbrCurrencyRateProvider.h
@@ -548,11 +542,11 @@ add_test(
 
 add_executable(CapitalHistoryCalculatorTest
     tests/CapitalHistoryCalculatorTest.cpp
-    services/CapitalHistoryCalculator.cpp
 )
 
 target_link_libraries(CapitalHistoryCalculatorTest
     PRIVATE
+        core_model
         Qt6::Core
         Qt6::Test
 )
@@ -564,16 +558,14 @@ add_test(
 
 add_executable(FinancialGoalCalculatorTest
     tests/FinancialGoalCalculatorTest.cpp
-    services/FinancialGoalCalculator.cpp
 )
 target_link_libraries(FinancialGoalCalculatorTest PRIVATE core_model Qt6::Core Qt6::Test)
 add_test(NAME FinancialGoalCalculatorTest COMMAND FinancialGoalCalculatorTest)
 
 add_executable(FinancialTrajectoryCalculatorTest
     tests/FinancialTrajectoryCalculatorTest.cpp
-    services/FinancialTrajectoryCalculator.cpp
 )
-target_link_libraries(FinancialTrajectoryCalculatorTest PRIVATE Qt6::Core Qt6::Test)
+target_link_libraries(FinancialTrajectoryCalculatorTest PRIVATE core_model Qt6::Core Qt6::Test)
 add_test(NAME FinancialTrajectoryCalculatorTest COMMAND FinancialTrajectoryCalculatorTest)
 
 add_executable(RecurringScheduleCalculatorTest

@@ -4,7 +4,7 @@
 #include "../persistence/FinanceRepository.h"
 #include "../core/model/BalanceCalculator.h"
 #include "../services/BankCsvImporter.h"
-#include "../services/CapitalHistoryCalculator.h"
+#include "../core/model/CapitalHistoryCalculator.h"
 #include "../core/model/InvestmentValuation.h"
 #include "../services/InvestmentBenchmarkProvider.h"
 #include "../services/CbrCurrencyRateProvider.h"
@@ -13,7 +13,7 @@
 #include "../services/BybitProvider.h"
 #include "../core/model/DepositInterestCalculator.h"
 #include "../services/MoexInvestmentProvider.h"
-#include "../services/FinancialGoalCalculator.h"
+#include "../core/model/FinancialGoalCalculator.h"
 #include "../core/model/FinancialTrajectory.h"
 
 #include <QDateTime>

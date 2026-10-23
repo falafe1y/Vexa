@@ -1,6 +1,6 @@
 #pragma once
 
-#include "../core/model/FinancialTrajectory.h"
+#include "FinancialTrajectory.h"
 
 class FinancialTrajectoryCalculator
 {

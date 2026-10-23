@@ -10,7 +10,7 @@
 #include "../services/BankCsvImporter.h"
 #include "../services/BankCategoryMatcher.h"
 #include "../services/BankImportReview.h"
-#include "../services/CapitalHistoryCalculator.h"
+#include "../core/model/CapitalHistoryCalculator.h"
 #include "../core/model/DateSliceCalculator.h"
 #include "../core/model/DepositInterestCalculator.h"
 #include "../core/model/RecurringScheduleCalculator.h"
@@ -19,7 +19,7 @@
 #include "../services/CryptoParser.h"
 #include "../core/model/TransactionDateFilter.h"
 #include "../services/TronUsdtParser.h"
-#include "../services/FinancialTrajectoryCalculator.h"
+#include "../core/model/FinancialTrajectoryCalculator.h"
 
 #include <QDebug>
 #include <QCoreApplication>

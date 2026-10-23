@@ -1,5 +1,5 @@
 #include "FinancialGoalCalculator.h"
-#include "../core/model/CurrencyConverter.h"
+#include "CurrencyConverter.h"
 #include <QSet>
 #include <algorithm>
 #include <limits>

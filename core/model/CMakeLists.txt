@@ -7,6 +7,8 @@ add_library(core_model STATIC
     BalanceCalculator.cpp
     BalanceCalculator.h
     Budget.h
+    CapitalHistoryCalculator.cpp
+    CapitalHistoryCalculator.h
     Category.h
     CryptoCostBasis.cpp
     CryptoCostBasis.h
@@ -23,7 +25,11 @@ add_library(core_model STATIC
     DepositInterestCalculator.h
     DepositSettings.h
     FinancialGoal.h
+    FinancialGoalCalculator.cpp
+    FinancialGoalCalculator.h
     FinancialTrajectory.h
+    FinancialTrajectoryCalculator.cpp
+    FinancialTrajectoryCalculator.h
     InvestmentInstrument.h
     InvestmentMarketInstrument.h
     InvestmentOperation.h

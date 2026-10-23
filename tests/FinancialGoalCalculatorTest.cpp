@@ -1,4 +1,4 @@
-#include "../services/FinancialGoalCalculator.h"
+#include "../core/model/FinancialGoalCalculator.h"
 #include <QtTest>
 
 class GoalRates final : public CurrencyRateProvider
