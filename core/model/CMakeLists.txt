@@ -8,6 +8,8 @@ add_library(core_model STATIC
     BalanceCalculator.h
     Budget.h
     Category.h
+    CryptoCostBasis.cpp
+    CryptoCostBasis.h
     CryptoTransaction.h
     CryptoWallet.h
     Currency.cpp
@@ -25,9 +27,17 @@ add_library(core_model STATIC
     InvestmentInstrument.h
     InvestmentMarketInstrument.h
     InvestmentOperation.h
+    InvestmentPerformanceCalculator.cpp
+    InvestmentPerformanceCalculator.h
     InvestmentPosition.h
     InvestmentQuote.h
+    InvestmentReturn.cpp
+    InvestmentReturn.h
+    InvestmentRiskCalculator.cpp
+    InvestmentRiskCalculator.h
     InvestmentTerms.h
+    InvestmentValuation.cpp
+    InvestmentValuation.h
     Money.h
     Project.h
     RecurringScheduleCalculator.cpp

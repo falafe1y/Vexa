@@ -5,7 +5,7 @@
 #include "../core/model/BalanceCalculator.h"
 #include "../services/BankCsvImporter.h"
 #include "../services/CapitalHistoryCalculator.h"
-#include "../services/InvestmentValuation.h"
+#include "../core/model/InvestmentValuation.h"
 #include "../services/InvestmentBenchmarkProvider.h"
 #include "../services/CbrCurrencyRateProvider.h"
 #include "../core/model/CurrencyConverter.h"

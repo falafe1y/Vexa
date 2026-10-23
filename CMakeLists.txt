@@ -175,21 +175,11 @@ qt_add_qml_module(vexa
         SOURCES services/FinancialGoalCalculator.cpp
         SOURCES services/FinancialTrajectoryCalculator.h
         SOURCES services/FinancialTrajectoryCalculator.cpp
-        SOURCES services/InvestmentValuation.h
-        SOURCES services/InvestmentValuation.cpp
-        SOURCES services/InvestmentPerformanceCalculator.cpp
-        SOURCES services/InvestmentReturn.h
-        SOURCES services/InvestmentReturn.cpp
-        SOURCES services/CryptoCostBasis.h
-        SOURCES services/CryptoCostBasis.cpp
         SOURCES services/InvestmentBenchmark.h
         SOURCES services/InvestmentBenchmark.cpp
         SOURCES services/InvestmentBenchmarkProvider.h
         SOURCES services/InvestmentBenchmarkProvider.cpp
         SOURCES interface/FinanceControllerBenchmark.cpp
-        SOURCES services/InvestmentRiskCalculator.cpp
-        SOURCES services/InvestmentRiskCalculator.h
-        SOURCES services/InvestmentPerformanceCalculator.h
         SOURCES interface/FinanceControllerPerformance.cpp
         SOURCES services/CsvCodec.h
         SOURCES services/CsvCodec.cpp
@@ -430,12 +420,12 @@ endif()
 add_test(NAME BackupRestoreControllerTest COMMAND BackupRestoreControllerTest)
 
 add_executable(InvestmentAccountingRepositoryTest tests/InvestmentAccountingRepositoryTest.cpp
-    persistence/FinanceRepository.cpp persistence/FinanceRepositoryHistory.cpp services/InvestmentValuation.cpp)
+    persistence/FinanceRepository.cpp persistence/FinanceRepositoryHistory.cpp)
 target_link_libraries(InvestmentAccountingRepositoryTest PRIVATE core_model Qt6::Core Qt6::Sql Qt6::Test)
 add_test(NAME InvestmentAccountingRepositoryTest COMMAND InvestmentAccountingRepositoryTest)
 
-add_executable(InvestmentValuationTest tests/InvestmentValuationTest.cpp services/InvestmentValuation.cpp)
-target_link_libraries(InvestmentValuationTest PRIVATE Qt6::Core Qt6::Test)
+add_executable(InvestmentValuationTest tests/InvestmentValuationTest.cpp)
+target_link_libraries(InvestmentValuationTest PRIVATE core_model Qt6::Core Qt6::Test)
 add_test(NAME InvestmentValuationTest COMMAND InvestmentValuationTest)
 
 add_executable(InvestmentModelTest
@@ -703,18 +693,18 @@ if(WIN32)
 endif()
 add_test(NAME AnalyticsHistoryControllerTest COMMAND AnalyticsHistoryControllerTest)
 
-add_executable(InvestmentPerformanceTest tests/InvestmentPerformanceTest.cpp services/InvestmentRiskCalculator.cpp services/InvestmentPerformanceCalculator.cpp services/InvestmentValuation.cpp)
+add_executable(InvestmentPerformanceTest tests/InvestmentPerformanceTest.cpp)
 target_link_libraries(InvestmentPerformanceTest PRIVATE core_model Qt6::Core Qt6::Test)
 add_test(NAME InvestmentPerformanceTest COMMAND InvestmentPerformanceTest)
-add_executable(AverageReturnTest tests/AverageReturnTest.cpp services/InvestmentReturn.cpp)
-target_link_libraries(AverageReturnTest PRIVATE Qt6::Core Qt6::Test)
+add_executable(AverageReturnTest tests/AverageReturnTest.cpp)
+target_link_libraries(AverageReturnTest PRIVATE core_model Qt6::Core Qt6::Test)
 add_test(NAME AverageReturnTest COMMAND AverageReturnTest)
 add_executable(AverageReturnControllerTest tests/AverageReturnControllerTest.cpp ${investment_controller_test_sources} services/BankRecipients.qrc)
 target_link_libraries(AverageReturnControllerTest PRIVATE core vexa_storage Qt6::Core Qt6::Gui Qt6::Sql Qt6::Network Qt6::Concurrent Qt6::Test ZLIB::ZLIB)
 add_test(NAME AverageReturnControllerTest COMMAND AverageReturnControllerTest)
 
-add_executable(CryptoCostBasisTest tests/CryptoCostBasisTest.cpp services/CryptoCostBasis.cpp services/InvestmentReturn.cpp)
-target_link_libraries(CryptoCostBasisTest PRIVATE Qt6::Core Qt6::Test)
+add_executable(CryptoCostBasisTest tests/CryptoCostBasisTest.cpp)
+target_link_libraries(CryptoCostBasisTest PRIVATE core_model Qt6::Core Qt6::Test)
 add_test(NAME CryptoCostBasisTest COMMAND CryptoCostBasisTest)
 
 add_executable(CbrFxHistoryTest tests/CbrFxHistoryTest.cpp services/CbrFxHistory.cpp)
@@ -729,7 +719,7 @@ add_executable(TrajectoryControllerTest tests/TrajectoryControllerTest.cpp ${inv
 target_link_libraries(TrajectoryControllerTest PRIVATE core vexa_storage Qt6::Core Qt6::Gui Qt6::Sql Qt6::Network Qt6::Concurrent Qt6::Test ZLIB::ZLIB)
 add_test(NAME TrajectoryControllerTest COMMAND TrajectoryControllerTest)
 
-add_executable(InvestmentStructureIncomeTest tests/InvestmentStructureIncomeTest.cpp services/InvestmentRiskCalculator.cpp services/InvestmentPerformanceCalculator.cpp services/InvestmentValuation.cpp)
+add_executable(InvestmentStructureIncomeTest tests/InvestmentStructureIncomeTest.cpp)
 target_link_libraries(InvestmentStructureIncomeTest PRIVATE core_model Qt6::Core Qt6::Test)
 add_test(NAME InvestmentStructureIncomeTest COMMAND InvestmentStructureIncomeTest)
 
@@ -740,8 +730,9 @@ if(WIN32)
 endif()
 add_test(NAME InvestmentPerformanceControllerTest COMMAND InvestmentPerformanceControllerTest)
 
-add_executable(InvestmentRiskTest tests/InvestmentRiskTest.cpp services/InvestmentRiskCalculator.cpp)
+add_executable(InvestmentRiskTest tests/InvestmentRiskTest.cpp)
 target_compile_features(InvestmentRiskTest PRIVATE cxx_std_17)
+target_link_libraries(InvestmentRiskTest PRIVATE core_model)
 add_test(NAME InvestmentRiskTest COMMAND InvestmentRiskTest)
 
 add_executable(InvestmentBenchmarkTest tests/InvestmentBenchmarkTest.cpp services/InvestmentBenchmark.cpp)

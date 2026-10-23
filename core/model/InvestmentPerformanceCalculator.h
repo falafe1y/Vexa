@@ -1,6 +1,6 @@
 #pragma once
-#include "../core/model/Transaction.h"
-#include "../core/model/InvestmentOperation.h"
+#include "Transaction.h"
+#include "InvestmentOperation.h"
 #include <QVariant>
 #include <QSet>
 #include <optional>

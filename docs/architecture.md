@@ -47,7 +47,7 @@ core/
 - [ ] 1.4 Перенести чистые расчёты из `services/` в `core/model/`, по группам, каждая — отдельный коммит:
   - [x] 1.4.1 Деньги и валюты: `CurrencyConverter`, интерфейс `CurrencyRateProvider` — в `core/model/`, `TestCurrencyRateProvider` — в `tests/`.
   - [x] 1.4.2 Операции и балансы: `BalanceCalculator`, `TransactionDateFilter`, `DateSliceCalculator`, `RecurringScheduleCalculator`, `DepositInterestCalculator`.
-  - [ ] 1.4.3 Инвестиции: `InvestmentReturn`, `InvestmentValuation`, `InvestmentRiskCalculator`, `InvestmentBenchmark`, `InvestmentPerformanceCalculator`, `CryptoCostBasis`.
+  - [x] 1.4.3 Инвестиции: `InvestmentReturn`, `InvestmentValuation`, `InvestmentRiskCalculator`, `InvestmentPerformanceCalculator`, `CryptoCostBasis`. `InvestmentBenchmark` не перенесён: в нём вместе расчёт и разбор ответов Мосбиржи, делится в 2.5.
   - [ ] 1.4.4 Планирование: `FinancialGoalCalculator`, `FinancialTrajectoryCalculator`, `CapitalHistoryCalculator`.
 - [ ] 1.5 Подпапки внутри `core/model/`: `money/`, `accounts/`, `transactions/`, `investments/`, `crypto/`, `planning/`.
 - [ ] 1.6 Замер сборки «после»; проверить, что `core_model` линкуется только с Qt Core.
@@ -72,7 +72,7 @@ core/
   - [ ] 2.3.11 `AccountRepository` — счета, настройки вкладов, ставки
   - [ ] 2.3.12 `TransactionRepository` — операции, переводы, сводка
 - [ ] 2.4 Распутать банковский импорт: структуры и логика правил (`BankCategoryRule`, `BankRecipientRule`, сопоставление) — в `core/model`, загрузка словаря и чтение файлов — в `core/system`.
-- [ ] 2.5 Провайдеры и парсеры ответов — в `core/api/`.
+- [ ] 2.5 Провайдеры и парсеры ответов — в `core/api/`. `services/InvestmentBenchmark` разделить: `parseBenchmarkPage`, `mergeBenchmarkRows` и список индексов `investmentBenchmarkIndices` — в `core/api` (Мосбиржа), `compareInvestmentBenchmark` — в `core/model`.
 - [ ] 2.6 Файлы и форматы — в `core/system/`: `CsvCodec`, `XlsxReader`, `PdfStatementReader`, `ContentUriIo`. Разбор форматов отделить от доступа к файлам: `PdfStatementReader` делится на получение слов (`pdftotext`/PDFBox) и раскладку в строки (`parsePages`). Как понимать выписку по профилю банка (`BankCsvImporter`) — в `core/model`.
 - [ ] 2.7 Бэкап, восстановление и очистка базы — `DatabaseMaintenance` в `core/db/`.
 - [ ] 2.8 `FinanceRepository` опустел — удалить.
