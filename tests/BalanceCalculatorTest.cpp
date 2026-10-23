@@ -1,7 +1,7 @@
 #include "../core/model/Transaction.h"
 #include "../services/BalanceCalculator.h"
-#include "../services/CurrencyConverter.h"
-#include "../services/TestCurrencyRateProvider.h"
+#include "../core/model/CurrencyConverter.h"
+#include "TestCurrencyRateProvider.h"
 
 #include <QtTest>
 

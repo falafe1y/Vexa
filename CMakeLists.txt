@@ -191,8 +191,6 @@ qt_add_qml_module(vexa
         SOURCES services/InvestmentRiskCalculator.h
         SOURCES services/InvestmentPerformanceCalculator.h
         SOURCES interface/FinanceControllerPerformance.cpp
-        SOURCES services/CurrencyConverter.h
-        SOURCES services/CurrencyConverter.cpp
         SOURCES services/BalanceCalculator.h
         SOURCES services/BalanceCalculator.cpp
         SOURCES services/TransactionDateFilter.h
@@ -220,7 +218,6 @@ qt_add_qml_module(vexa
         SOURCES services/RecurringScheduleCalculator.cpp
         SOURCES services/DepositInterestCalculator.h
         SOURCES services/DepositInterestCalculator.cpp
-        SOURCES services/CurrencyRateProvider.h
         SOURCES services/CurrencyRateCache.h
         SOURCES services/CurrencyRateCache.cpp
         SOURCES services/CbrCurrencyRateProvider.h
@@ -326,7 +323,6 @@ find_package(Qt6 REQUIRED COMPONENTS Test)
 
 add_executable(CurrencyConverterTest
     tests/CurrencyConverterTest.cpp
-    services/CurrencyConverter.cpp
 )
 
 target_link_libraries(CurrencyConverterTest
@@ -343,7 +339,6 @@ add_test(
 
 add_executable(CurrencyRateCacheTest
     tests/CurrencyRateCacheTest.cpp
-    services/CurrencyConverter.cpp
     services/CurrencyRateCache.cpp
     services/CbrCurrencyRateProvider.cpp
     services/CbrFxHistory.cpp
@@ -364,7 +359,6 @@ add_test(
 
 add_executable(BalanceCalculatorTest
     tests/BalanceCalculatorTest.cpp
-    services/CurrencyConverter.cpp
     services/BalanceCalculator.cpp
 )
 
@@ -593,7 +587,6 @@ add_test(
 add_executable(FinancialGoalCalculatorTest
     tests/FinancialGoalCalculatorTest.cpp
     services/FinancialGoalCalculator.cpp
-    services/CurrencyConverter.cpp
 )
 target_link_libraries(FinancialGoalCalculatorTest PRIVATE core_model Qt6::Core Qt6::Test)
 add_test(NAME FinancialGoalCalculatorTest COMMAND FinancialGoalCalculatorTest)

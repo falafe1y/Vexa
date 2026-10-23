@@ -2,7 +2,7 @@
 
 #include "CurrencyRateCache.h"
 #include "../core/model/AnalyticsHistory.h"
-#include "CurrencyRateProvider.h"
+#include "../core/model/CurrencyRateProvider.h"
 
 #include <QNetworkAccessManager>
 #include <QObject>

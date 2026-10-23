@@ -2,7 +2,7 @@
 
 #include "../core/model/Money.h"
 #include "../core/model/Transaction.h"
-#include "CurrencyConverter.h"
+#include "../core/model/CurrencyConverter.h"
 
 #include <QVector>
 

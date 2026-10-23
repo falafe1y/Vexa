@@ -10,6 +10,9 @@ add_library(core_model STATIC
     CryptoWallet.h
     Currency.cpp
     Currency.h
+    CurrencyConverter.cpp
+    CurrencyConverter.h
+    CurrencyRateProvider.h
     DepositSettings.h
     FinancialGoal.h
     FinancialTrajectory.h

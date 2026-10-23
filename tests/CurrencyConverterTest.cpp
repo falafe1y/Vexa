@@ -1,6 +1,6 @@
 #include "../core/model/Money.h"
-#include "../services/CurrencyConverter.h"
-#include "../services/TestCurrencyRateProvider.h"
+#include "../core/model/CurrencyConverter.h"
+#include "TestCurrencyRateProvider.h"
 
 #include <QtTest>
 

@@ -2,7 +2,7 @@
 
 #include "../core/model/FinancialGoal.h"
 #include "../core/model/Money.h"
-#include "CurrencyRateProvider.h"
+#include "../core/model/CurrencyRateProvider.h"
 #include <QVector>
 
 struct GoalAssetValue

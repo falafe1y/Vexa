@@ -15,14 +15,15 @@ core/
   model/         — сущности, деньги, валюты, расчёты, правила      (только Qt Core)
   db/            — подключение, migrations/, репозитории            (Qt Sql)
   api/           — ЦБ, MOEX, Bybit, Tron                            (Qt Network)
-  files/         — CSV, XLSX, PDF выписки
+  system/        — файлы, content://, CSV/XLSX/PDF, хранилище ключей, события ОС
 ```
 
 Правила зависимостей:
 - слой видит только слои ниже;
 - `core/model` ни от чего не зависит;
-- `core/db`, `core/api`, `core/files` зависят от `core/model`, но не друг от друга;
-- каждая часть — отдельная статическая библиотека CMake: `core_model`, `core_db`, `core_api`, `core_files`, `services`. Так компилятор не даст `core/model` подключить SQL или сеть;
+- `core/db`, `core/api`, `core/system` зависят от `core/model`, но не друг от друга;
+- `services` обращается к `core/db` напрямую; интерфейсы — только для того, что подменяется в тестах (внешние API);
+- каждая часть — отдельная статическая библиотека CMake: `core_model`, `core_db`, `core_api`, `core_system`, `services`. Так компилятор не даст `core/model` подключить SQL или сеть;
 - библиотека-обёртка `core` (`INTERFACE`) подключает все части `core` разом — для приложения. Тесты линкуются точечно: тесты расчётов только с `core_model`.
 
 Правила предметной области живут в `core/model`. `services` решает только порядок шагов.
@@ -44,7 +45,7 @@ core/
 - [x] 1.1–1.2 Библиотека `core` из файлов `core/`, зависит только от Qt Core. Приложение и тесты линкуются с ней, `Currency.cpp` компилируется один раз.
 - [x] 1.3 Файлы `core/*` перенесены в `core/model/`, библиотека — `core_model`, добавлена обёртка `core`. Приложение и тесты контроллера линкуются с `core`, остальные тесты — с `core_model`.
 - [ ] 1.4 Перенести чистые расчёты из `services/` в `core/model/`, по группам, каждая — отдельный коммит:
-  - [ ] 1.4.1 Деньги и валюты: `CurrencyConverter`, интерфейс `CurrencyRateProvider`. `TestCurrencyRateProvider` — в `tests/`.
+  - [x] 1.4.1 Деньги и валюты: `CurrencyConverter`, интерфейс `CurrencyRateProvider` — в `core/model/`, `TestCurrencyRateProvider` — в `tests/`.
   - [ ] 1.4.2 Операции и балансы: `BalanceCalculator`, `TransactionDateFilter`, `DateSliceCalculator`, `RecurringScheduleCalculator`, `DepositInterestCalculator`.
   - [ ] 1.4.3 Инвестиции: `InvestmentReturn`, `InvestmentValuation`, `InvestmentRiskCalculator`, `InvestmentBenchmark`, `InvestmentPerformanceCalculator`, `CryptoCostBasis`.
   - [ ] 1.4.4 Планирование: `FinancialGoalCalculator`, `FinancialTrajectoryCalculator`, `CapitalHistoryCalculator`.
@@ -53,7 +54,7 @@ core/
 
 Не трогаем на этом этапе: банковский импорт (`BankCategoryMatcher`, `BankImportReview` завязаны на чтение файлов, распутываются в 2.4), парсеры ответов API (уходят в `core/api`), `QVariantMap` на входе и выходе `InvestmentPerformanceCalculator` (свои структуры — позже).
 
-## Этап 2. `core/db`, `core/api`, `core/files`
+## Этап 2. `core/db`, `core/api`, `core/system`
 
 - [ ] 2.1 Класс `Database` в `core/db/`: подключение, ключ, `lastError`, `transaction(fn)`. `FinanceRepository` пользуется им внутри, его API не меняется.
 - [ ] 2.2 Миграции в `core/db/migrations/`.
@@ -70,9 +71,9 @@ core/
   - [ ] 2.3.10 `MarketHistoryRepository` — дневные оценки, история цен и курсов, бенчмарк
   - [ ] 2.3.11 `AccountRepository` — счета, настройки вкладов, ставки
   - [ ] 2.3.12 `TransactionRepository` — операции, переводы, сводка
-- [ ] 2.4 Распутать банковский импорт: структуры и логика правил (`BankCategoryRule`, `BankRecipientRule`, сопоставление) — в `core/model`, загрузка словаря и чтение файлов — в `core/files`.
+- [ ] 2.4 Распутать банковский импорт: структуры и логика правил (`BankCategoryRule`, `BankRecipientRule`, сопоставление) — в `core/model`, загрузка словаря и чтение файлов — в `core/system`.
 - [ ] 2.5 Провайдеры и парсеры ответов — в `core/api/`.
-- [ ] 2.6 Чтение файлов (`CsvCodec`, `XlsxReader`, `PdfStatementReader`, `ContentUriIo`, `BankCsvImporter`) — в `core/files/`.
+- [ ] 2.6 Файлы и форматы — в `core/system/`: `CsvCodec`, `XlsxReader`, `PdfStatementReader`, `ContentUriIo`. Разбор форматов отделить от доступа к файлам: `PdfStatementReader` делится на получение слов (`pdftotext`/PDFBox) и раскладку в строки (`parsePages`). Как понимать выписку по профилю банка (`BankCsvImporter`) — в `core/model`.
 - [ ] 2.7 Бэкап, восстановление и очистка базы — `DatabaseMaintenance` в `core/db/`.
 - [ ] 2.8 `FinanceRepository` опустел — удалить.
 
@@ -101,5 +102,5 @@ core/
 
 ## Открытые вопросы
 
-- Куда идут `storage/` (шифрование базы, бэкапы) и `security/` (пароль входа): внутрь `core` или остаются отдельными библиотеками рядом. Решить до шага 2.7.
+- Куда идут `storage/` и `security/`. Предложение, ждёт подтверждения: техника — в `core` (`CipherDriver`, `DatabaseEncryption`, `PortableBackup` — в `core/db`; хранилища паролей `PasswordStore`/`AndroidVault`, Argon2 из `PasswordLock`, `SystemLockMonitor`, работа с папкой автокопий — в `core/system`; правила автокопий и пауз после ошибок пароля — в `core/model`), оркестрация — в `services` (`DatabaseProtection` → `DatabaseProtectionService`, `AppAccess`). Решить до шага 2.7.
 - Папка слоя сценариев: оставить существующую `services/` или переименовать в `service/`. Решить до этапа 3.

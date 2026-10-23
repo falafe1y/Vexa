@@ -1,6 +1,6 @@
 #pragma once
 
-#include "../core/model/Currency.h"
+#include "Currency.h"
 
 #include <QtGlobal>
 

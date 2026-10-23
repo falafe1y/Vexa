@@ -1,6 +1,6 @@
 #include "CurrencyRateCache.h"
 
-#include "CurrencyRateProvider.h"
+#include "../core/model/CurrencyRateProvider.h"
 
 #include <QDir>
 #include <QFile>

@@ -8,7 +8,7 @@
 #include "../services/InvestmentValuation.h"
 #include "../services/InvestmentBenchmarkProvider.h"
 #include "../services/CbrCurrencyRateProvider.h"
-#include "../services/CurrencyConverter.h"
+#include "../core/model/CurrencyConverter.h"
 #include "../services/CryptoProvider.h"
 #include "../services/BybitProvider.h"
 #include "../services/DepositInterestCalculator.h"
