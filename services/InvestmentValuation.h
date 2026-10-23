@@ -1,6 +1,6 @@
 #pragma once
-#include "../core/InvestmentPosition.h"
-#include "../core/InvestmentQuote.h"
+#include "../core/model/InvestmentPosition.h"
+#include "../core/model/InvestmentQuote.h"
 
 struct InvestmentValuation
 {

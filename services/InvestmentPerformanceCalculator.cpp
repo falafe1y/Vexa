@@ -1,7 +1,7 @@
 #include "InvestmentPerformanceCalculator.h"
 #include "InvestmentValuation.h"
 #include "InvestmentRiskCalculator.h"
-#include "../core/InvestmentQuote.h"
+#include "../core/model/InvestmentQuote.h"
 #include <QJsonDocument>
 #include <QJsonObject>
 #include <QMap>

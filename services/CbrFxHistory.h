@@ -1,6 +1,6 @@
 #pragma once
 
-#include "../core/AnalyticsHistory.h"
+#include "../core/model/AnalyticsHistory.h"
 
 #include <QByteArray>
 #include <QDate>

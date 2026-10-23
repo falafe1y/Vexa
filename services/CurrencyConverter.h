@@ -1,6 +1,6 @@
 #pragma once
 
-#include "../core/Money.h"
+#include "../core/model/Money.h"
 #include "CurrencyRateProvider.h"
 
 class CurrencyConverter

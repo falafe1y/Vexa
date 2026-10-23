@@ -1,6 +1,6 @@
 #pragma once
 
-#include "../core/InvestmentMarketInstrument.h"
+#include "../core/model/InvestmentMarketInstrument.h"
 
 #include <QByteArray>
 #include <QString>

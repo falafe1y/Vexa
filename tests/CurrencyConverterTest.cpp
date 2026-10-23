@@ -1,4 +1,4 @@
-#include "../core/Money.h"
+#include "../core/model/Money.h"
 #include "../services/CurrencyConverter.h"
 #include "../services/TestCurrencyRateProvider.h"
 

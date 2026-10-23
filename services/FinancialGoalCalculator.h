@@ -1,7 +1,7 @@
 #pragma once
 
-#include "../core/FinancialGoal.h"
-#include "../core/Money.h"
+#include "../core/model/FinancialGoal.h"
+#include "../core/model/Money.h"
 #include "CurrencyRateProvider.h"
 #include <QVector>
 

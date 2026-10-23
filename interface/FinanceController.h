@@ -1,6 +1,6 @@
 #pragma once
 
-#include "../core/Transaction.h"
+#include "../core/model/Transaction.h"
 #include "../persistence/FinanceRepository.h"
 #include "../services/BalanceCalculator.h"
 #include "../services/BankCsvImporter.h"
@@ -14,7 +14,7 @@
 #include "../services/DepositInterestCalculator.h"
 #include "../services/MoexInvestmentProvider.h"
 #include "../services/FinancialGoalCalculator.h"
-#include "../core/FinancialTrajectory.h"
+#include "../core/model/FinancialTrajectory.h"
 
 #include <QDateTime>
 #include <QDate>

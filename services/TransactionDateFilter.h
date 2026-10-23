@@ -1,6 +1,6 @@
 #pragma once
 
-#include "../core/Transaction.h"
+#include "../core/model/Transaction.h"
 
 #include <QDate>
 #include <QVector>

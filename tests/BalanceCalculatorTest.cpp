@@ -1,4 +1,4 @@
-#include "../core/Transaction.h"
+#include "../core/model/Transaction.h"
 #include "../services/BalanceCalculator.h"
 #include "../services/CurrencyConverter.h"
 #include "../services/TestCurrencyRateProvider.h"

@@ -1,6 +1,6 @@
 #pragma once
 
-#include "../core/Currency.h"
+#include "../core/model/Currency.h"
 
 #include <QByteArray>
 #include <QHash>

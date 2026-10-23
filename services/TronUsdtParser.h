@@ -1,6 +1,6 @@
 #pragma once
 
-#include "../core/CryptoTransaction.h"
+#include "../core/model/CryptoTransaction.h"
 
 #include <QByteArray>
 #include <QString>
