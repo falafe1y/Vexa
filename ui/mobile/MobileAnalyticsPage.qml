@@ -76,7 +76,7 @@ Flickable {
 
         MobileDisclosure {
             Layout.fillWidth: true
-            title: qsTr("Доходность")
+            title: "Доходность"
             MobileInvestmentPerformance {
                 Layout.fillWidth: true
             }
@@ -84,7 +84,7 @@ Flickable {
 
         MobileDisclosure {
             Layout.fillWidth: true
-            title: qsTr("Средняя годовая доходность")
+            title: "Средняя годовая доходность"
             MobileAverageReturnPanel {
                 Layout.fillWidth: true
             }
@@ -92,7 +92,7 @@ Flickable {
 
         MobileDisclosure {
             Layout.fillWidth: true
-            title: qsTr("История расходов")
+            title: "История расходов"
             MobileCard {
                 Layout.fillWidth: true
                 gap: 8
@@ -100,7 +100,7 @@ Flickable {
                 MobileText {
                     font.family: MobileTheme.serif
                     Layout.fillWidth: true
-                    text: qsTr("История расходов по месяцам")
+                    text: "История расходов по месяцам"
                     color: MobileTheme.accent
                     font.pixelSize: MobileTheme.sizeHeading
                     font.weight: Font.DemiBold
@@ -135,7 +135,7 @@ Flickable {
                 MobileText {
                     font.family: MobileTheme.sans
                     Layout.fillWidth: true
-                    text: qsTr("В среднем %1").arg(MobileFormat.money(MobileAnalytics.averageCompletedMonthExpense(page.expenseRows), "RUB", false))
+                    text: "В среднем %1".arg(MobileFormat.money(MobileAnalytics.averageCompletedMonthExpense(page.expenseRows), "RUB", false))
                     color: MobileTheme.muted
                     font.pixelSize: MobileTheme.sizeBody
                     horizontalAlignment: Text.AlignHCenter
@@ -154,7 +154,7 @@ Flickable {
 
         MobileDisclosure {
             Layout.fillWidth: true
-            title: qsTr("История капитала в рублях")
+            title: "История капитала в рублях"
             MobileCard {
                 Layout.fillWidth: true
                 gap: 8
@@ -166,7 +166,7 @@ Flickable {
                     MobileText {
                         font.family: MobileTheme.serif
                         Layout.fillWidth: true
-                        text: qsTr("История капитала в рублях")
+                        text: "История капитала в рублях"
                         color: MobileTheme.accent
                         font.pixelSize: MobileTheme.sizeHeading
                         font.weight: Font.DemiBold
@@ -204,7 +204,7 @@ Flickable {
                     font.family: MobileTheme.mono
                     Layout.fillWidth: true
                     visible: page.capitalRub.length === 0
-                    text: qsTr("Добавьте операцию — здесь появится история капитала")
+                    text: "Добавьте операцию — здесь появится история капитала"
                     color: MobileTheme.muted
                     font.pixelSize: MobileTheme.sizeCaption
                     wrapMode: Text.Wrap
@@ -214,7 +214,7 @@ Flickable {
 
         MobileDisclosure {
             Layout.fillWidth: true
-            title: qsTr("Капитал в выбранной валюте")
+            title: "Капитал в выбранной валюте"
             MobileCard {
                 Layout.fillWidth: true
                 gap: 8
@@ -226,7 +226,7 @@ Flickable {
                     MobileText {
                         font.family: MobileTheme.serif
                         Layout.fillWidth: true
-                        text: qsTr("Капитал в выбранной валюте")
+                        text: "Капитал в выбранной валюте"
                         color: MobileTheme.accent
                         font.pixelSize: MobileTheme.sizeHeading
                         font.weight: Font.DemiBold
@@ -274,7 +274,7 @@ Flickable {
                     font.family: MobileTheme.mono
                     Layout.fillWidth: true
                     visible: page.capitalCurrency.length === 0
-                    text: qsTr("Добавьте операцию — здесь появится история капитала")
+                    text: "Добавьте операцию — здесь появится история капитала"
                     color: MobileTheme.muted
                     font.pixelSize: MobileTheme.sizeCaption
                     wrapMode: Text.Wrap
@@ -284,7 +284,7 @@ Flickable {
 
         MobileDisclosure {
             Layout.fillWidth: true
-            title: qsTr("Качество данных")
+            title: "Качество данных"
             MobileInvestmentDataQuality {
                 Layout.fillWidth: true
                 quality: financeController.investmentPerformance.dataQuality || ({})
@@ -293,7 +293,7 @@ Flickable {
 
         MobileDisclosure {
             Layout.fillWidth: true
-            title: qsTr("Сравнение с индексным фондом")
+            title: "Сравнение с индексным фондом"
             MobileInvestmentBenchmark {
                 Layout.fillWidth: true
             }
@@ -301,7 +301,7 @@ Flickable {
 
         MobileDisclosure {
             Layout.fillWidth: true
-            title: qsTr("Сравнение с вкладом")
+            title: "Сравнение с вкладом"
             MobileInvestmentDeposit {
                 Layout.fillWidth: true
             }
@@ -309,7 +309,7 @@ Flickable {
 
         MobileDisclosure {
             Layout.fillWidth: true
-            title: qsTr("Волатильность")
+            title: "Волатильность"
             MobileInvestmentRisk {
                 Layout.fillWidth: true
                 risk: financeController.investmentPerformance.risk || ({})
@@ -318,7 +318,7 @@ Flickable {
 
         MobileDisclosure {
             Layout.fillWidth: true
-            title: qsTr("Структура вложений")
+            title: "Структура вложений"
             MobileInvestmentStructure {
                 Layout.fillWidth: true
                 allocation: financeController.investmentPerformance.allocation || ({})
@@ -329,7 +329,7 @@ Flickable {
 
         MobileDisclosure {
             Layout.fillWidth: true
-            title: qsTr("Аналитика выплат")
+            title: "Аналитика выплат"
             MobileInvestmentPayments {
                 Layout.fillWidth: true
                 payments: financeController.investmentPerformance.payments || ({})

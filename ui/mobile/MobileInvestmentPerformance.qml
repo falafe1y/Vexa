@@ -8,15 +8,15 @@ ColumnLayout {
     readonly property var choices: [
         {
             id: "",
-            name: qsTr("Все инвестиционные счета")
+            name: "Все инвестиционные счета"
         },
         {
             id: "group:brokerage",
-            name: qsTr("Все брокерские счета")
+            name: "Все брокерские счета"
         },
         {
             id: "group:deposit",
-            name: qsTr("Все вклады")
+            name: "Все вклады"
         }
     ].concat(financeController.performanceAccounts || [])
     readonly property var warnings: report.warnings || []
@@ -47,7 +47,7 @@ ColumnLayout {
     MobileText {
         font.family: MobileTheme.serif
         Layout.fillWidth: true
-        text: qsTr("Доходность")
+        text: "Доходность"
         color: MobileTheme.accent
         font.pixelSize: MobileTheme.sizeTitle
         font.weight: Font.Bold
@@ -63,7 +63,7 @@ ColumnLayout {
     MobileText {
         font.family: MobileTheme.mono
         Layout.fillWidth: true
-        text: qsTr("Действующие брокерские счета и вклады · Валюта отчёта: %1").arg(panel.report.currency || "") + "\n" + qsTr("Оценки: %1 — %2 · Дней с оценкой: %3").arg(panel.date(panel.report.from)).arg(panel.date(panel.report.to)).arg(panel.report.observationCount || 0)
+        text: "Действующие брокерские счета и вклады · Валюта отчёта: %1".arg(panel.report.currency || "") + "\n" + "Оценки: %1 — %2 · Дней с оценкой: %3".arg(panel.date(panel.report.from)).arg(panel.date(panel.report.to)).arg(panel.report.observationCount || 0)
         wrapMode: Text.Wrap
         color: MobileTheme.muted
         font.pixelSize: MobileTheme.sizeCaption
@@ -78,39 +78,39 @@ ColumnLayout {
         Repeater {
             model: [
                 {
-                    title: qsTr("Результат за период"),
+                    title: "Результат за период",
                     value: panel.amount(panel.report.gainMinor),
-                    hint: qsTr("Изменение капитала без пополнений и выводов"),
+                    hint: "Изменение капитала без пополнений и выводов",
                     metric: "gain"
                 },
                 {
-                    title: qsTr("Доходность за период"),
+                    title: "Доходность за период",
                     value: panel.percent(panel.report.periodPercent),
-                    hint: qsTr("По дневным оценкам, с учётом денежных потоков"),
+                    hint: "По дневным оценкам, с учётом денежных потоков",
                     metric: "period"
                 },
                 {
-                    title: qsTr("Годовой эквивалент"),
+                    title: "Годовой эквивалент",
                     value: panel.percent(panel.report.annualPercent),
-                    hint: qsTr("Пересчёт темпа роста на год, без прогноза"),
+                    hint: "Пересчёт темпа роста на год, без прогноза",
                     metric: "annual"
                 },
                 {
-                    title: qsTr("Прибыль после продаж"),
+                    title: "Прибыль после продаж",
                     value: panel.amount(panel.report.realizedMinor),
-                    hint: panel.available(panel.report.realizedMinor) ? qsTr("Продажи и расчёты по контрактам, после учтённых расходов; по фильтру дат") : qsTr("Известная часть: %1").arg(panel.amount(panel.report.knownRealizedMinor)),
+                    hint: panel.available(panel.report.realizedMinor) ? "Продажи и расчёты по контрактам, после учтённых расходов; по фильтру дат" : "Известная часть: %1".arg(panel.amount(panel.report.knownRealizedMinor)),
                     metric: "realized"
                 },
                 {
-                    title: qsTr("Прибыль открытых позиций"),
+                    title: "Прибыль открытых позиций",
                     value: panel.amount(panel.report.unrealizedMinor),
-                    hint: qsTr("На конец периода, относительно стоимости приобретения"),
+                    hint: "На конец периода, относительно стоимости приобретения",
                     metric: "unrealized"
                 },
                 {
-                    title: qsTr("После заданной инфляции"),
+                    title: "После заданной инфляции",
                     value: panel.percent(panel.report.realPercent),
-                    hint: qsTr("Доходность за период по указанной ниже годовой ставке"),
+                    hint: "Доходность за период по указанной ниже годовой ставке",
                     metric: "inflation"
                 }
             ]
@@ -161,7 +161,7 @@ ColumnLayout {
     MobileText {
         font.family: MobileTheme.mono
         Layout.fillWidth: true
-        text: qsTr("Заданная инфляция, % в год")
+        text: "Заданная инфляция, % в год"
         color: MobileTheme.muted
         font.pixelSize: MobileTheme.sizeCaption
         font.weight: Font.Medium
@@ -173,14 +173,14 @@ ColumnLayout {
         MobileField {
             id: inflationField
             Layout.fillWidth: true
-            placeholder: qsTr("Не задана")
+            placeholder: "Не задана"
             inputMethodHints: Qt.ImhFormattedNumbersOnly
             text: financeController.performanceInflation || ""
         }
         MobileButton {
             implicitHeight: 48
-            text: qsTr("Применить")
-            onClicked: inflationError.text = financeController.setPerformanceInflation(inflationField.text) ? "" : qsTr("Введите ставку больше −100 и не выше 1000 %; до 4 знаков после запятой.")
+            text: "Применить"
+            onClicked: inflationError.text = financeController.setPerformanceInflation(inflationField.text) ? "" : "Введите ставку больше −100 и не выше 1000 %; до 4 знаков после запятой."
         }
     }
     MobileText {
@@ -195,7 +195,7 @@ ColumnLayout {
     MobileText {
         font.family: MobileTheme.mono
         Layout.fillWidth: true
-        text: qsTr("Ставка — ваше допущение, одинаковое на весь период. Это не исторический индекс потребительских цен.")
+        text: "Ставка — ваше допущение, одинаковое на весь период. Это не исторический индекс потребительских цен."
         wrapMode: Text.Wrap
         color: MobileTheme.muted
         font.pixelSize: MobileTheme.sizeCaption
@@ -205,7 +205,7 @@ ColumnLayout {
         font.family: MobileTheme.serif
         Layout.fillWidth: true
         Layout.topMargin: 6
-        text: qsTr("Разложение результата за период")
+        text: "Разложение результата за период"
         color: MobileTheme.accent
         font.pixelSize: MobileTheme.sizeHeading
         font.weight: Font.DemiBold
@@ -214,7 +214,7 @@ ColumnLayout {
     MobileText {
         font.family: MobileTheme.mono
         Layout.fillWidth: true
-        text: qsTr("Чистые пополнения и выводы: %1 · Изменение прибыли открытых позиций: %2").arg(panel.amount(panel.report.externalFlowMinor)).arg(panel.amount(panel.report.unrealizedChangeMinor))
+        text: "Чистые пополнения и выводы: %1 · Изменение прибыли открытых позиций: %2".arg(panel.amount(panel.report.externalFlowMinor)).arg(panel.amount(panel.report.unrealizedChangeMinor))
         wrapMode: Text.Wrap
         color: MobileTheme.muted
         font.pixelSize: MobileTheme.sizeCaption
@@ -230,7 +230,7 @@ ColumnLayout {
         MobileText {
             font.family: MobileTheme.mono
             Layout.fillWidth: true
-            text: qsTr("Пополнения и выводы")
+            text: "Пополнения и выводы"
             color: MobileTheme.muted
             font.pixelSize: MobileTheme.sizeCaption
         }
@@ -241,7 +241,7 @@ ColumnLayout {
         MobileText {
             font.family: MobileTheme.mono
             Layout.fillWidth: true
-            text: qsTr("Изменение открытой прибыли")
+            text: "Изменение открытой прибыли"
             color: MobileTheme.muted
             font.pixelSize: MobileTheme.sizeCaption
             wrapMode: Text.Wrap
@@ -260,7 +260,7 @@ ColumnLayout {
             MobileText {
                 font.family: MobileTheme.mono
                 Layout.fillWidth: true
-                text: modelData.label + (modelData.complete ? "" : qsTr(" · известная часть"))
+                text: modelData.label + (modelData.complete ? "" : " · известная часть")
                 wrapMode: Text.Wrap
                 color: MobileTheme.accent
                 font.pixelSize: MobileTheme.sizeCaption
@@ -283,7 +283,7 @@ ColumnLayout {
         font.family: MobileTheme.mono
         Layout.fillWidth: true
         visible: !panel.available(panel.report.gainMinor)
-        text: qsTr("Разложение появится, когда будут известны результат периода и денежные потоки.")
+        text: "Разложение появится, когда будут известны результат периода и денежные потоки."
         color: MobileTheme.muted
         font.pixelSize: MobileTheme.sizeCaption
         wrapMode: Text.Wrap
@@ -292,7 +292,7 @@ ColumnLayout {
     MobileText {
         font.family: MobileTheme.mono
         Layout.fillWidth: true
-        text: qsTr("Продажи и переоценка показаны до отдельно указанных комиссий и удержаний. Валютная строка отражает изменение курса валюты счёта к валюте отчёта; курс валюты самого инструмента включён в результат позиции.")
+        text: "Продажи и переоценка показаны до отдельно указанных комиссий и удержаний. Валютная строка отражает изменение курса валюты счёта к валюте отчёта; курс валюты самого инструмента включён в результат позиции."
         wrapMode: Text.Wrap
         color: MobileTheme.muted
         font.pixelSize: MobileTheme.sizeCaption
@@ -301,7 +301,7 @@ ColumnLayout {
     MobileButton {
         visible: panel.warnings.length > 0
         Layout.fillWidth: true
-        text: panel.detailsOpen ? qsTr("Скрыть пояснения") : qsTr("Пояснения к расчёту (%1)").arg(panel.warnings.length)
+        text: panel.detailsOpen ? "Скрыть пояснения" : "Пояснения к расчёту (%1)".arg(panel.warnings.length)
         onClicked: panel.detailsOpen = !panel.detailsOpen
     }
     MobileText {
@@ -316,7 +316,7 @@ ColumnLayout {
 
     MobileSheet {
         id: accountSheet
-        title: qsTr("Инвестиционный счёт")
+        title: "Инвестиционный счёт"
 
         Repeater {
             model: panel.choices

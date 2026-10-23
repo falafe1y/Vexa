@@ -38,7 +38,7 @@ ColumnLayout {
         MobileText {
             font.family: MobileTheme.serif
             Layout.fillWidth: true
-            text: qsTr("Структура вложений")
+            text: "Структура вложений"
             color: MobileTheme.accent
             font.pixelSize: MobileTheme.sizeHeading
             font.weight: Font.DemiBold
@@ -55,7 +55,7 @@ ColumnLayout {
         spacing: 8
 
         Repeater {
-            model: [qsTr("По активам"), qsTr("По типам активов"), qsTr("По счетам"), qsTr("По валютам счетов")]
+            model: ["По активам", "По типам активов", "По счетам", "По валютам счетов"]
 
             delegate: MobileChip {
                 required property string modelData
@@ -70,7 +70,7 @@ ColumnLayout {
     MobileText {
         font.family: MobileTheme.mono
         Layout.fillWidth: true
-        text: qsTr("На конец выбранного периода · Стоимость: %1").arg(panel.amount(panel.allocation.capitalMinor))
+        text: "На конец выбранного периода · Стоимость: %1".arg(panel.amount(panel.allocation.capitalMinor))
         wrapMode: Text.Wrap
         color: MobileTheme.muted
         font.pixelSize: MobileTheme.sizeCaption
@@ -121,7 +121,7 @@ ColumnLayout {
         font.family: MobileTheme.mono
         Layout.fillWidth: true
         visible: !panel.allocation.pieAvailable
-        text: !panel.allocation.available ? qsTr("Для долей нужна полная оценка всех активов на конец периода.") : qsTr("При нулевой или отрицательной стоимости круговые доли не рассчитываются. Суммы приведены ниже.")
+        text: !panel.allocation.available ? "Для долей нужна полная оценка всех активов на конец периода." : "При нулевой или отрицательной стоимости круговые доли не рассчитываются. Суммы приведены ниже."
         wrapMode: Text.Wrap
         color: MobileTheme.muted
         font.pixelSize: MobileTheme.sizeCaption
@@ -172,7 +172,7 @@ ColumnLayout {
         font.family: MobileTheme.mono
         Layout.fillWidth: true
         visible: (panel.allocation.adjustments || []).length > 0
-        text: qsTr("Неучтённый в деньгах результат контрактов: %1. Это переоценка, а не стоимость вложенного капитала; в круговые доли она не входит.").arg(panel.amount(panel.allocation.adjustmentMinor))
+        text: "Неучтённый в деньгах результат контрактов: %1. Это переоценка, а не стоимость вложенного капитала; в круговые доли она не входит.".arg(panel.amount(panel.allocation.adjustmentMinor))
         wrapMode: Text.Wrap
         color: MobileTheme.muted
         font.pixelSize: MobileTheme.sizeCaption
@@ -207,7 +207,7 @@ ColumnLayout {
     MobileText {
         font.family: MobileTheme.mono
         Layout.fillWidth: true
-        text: qsTr("Валюты — валюты оценки на счетах, а не валютная экспозиция компаний и фондов. Заблокированное обеспечение контрактов не добавляется повторно к деньгам.")
+        text: "Валюты — валюты оценки на счетах, а не валютная экспозиция компаний и фондов. Заблокированное обеспечение контрактов не добавляется повторно к деньгам."
         wrapMode: Text.Wrap
         color: MobileTheme.muted
         font.pixelSize: MobileTheme.sizeCaption
@@ -221,7 +221,7 @@ ColumnLayout {
         MobileText {
             font.family: MobileTheme.serif
             Layout.fillWidth: true
-            text: qsTr("Вклад активов в результат")
+            text: "Вклад активов в результат"
             color: MobileTheme.accent
             font.pixelSize: MobileTheme.sizeHeading
             font.weight: Font.DemiBold
@@ -236,7 +236,7 @@ ColumnLayout {
     MobileText {
         font.family: MobileTheme.mono
         Layout.fillWidth: true
-        text: qsTr("За выбранный период, включая закрытые позиции, выплаты и учтённые расходы. Пополнения и выводы исключены.")
+        text: "За выбранный период, включая закрытые позиции, выплаты и учтённые расходы. Пополнения и выводы исключены."
         wrapMode: Text.Wrap
         color: MobileTheme.muted
         font.pixelSize: MobileTheme.sizeCaption
@@ -246,7 +246,7 @@ ColumnLayout {
         font.family: MobileTheme.mono
         Layout.fillWidth: true
         visible: !panel.contributions.available
-        text: qsTr("Нужны достоверные начальная и конечная оценки, денежные потоки и курсы валют.")
+        text: "Нужны достоверные начальная и конечная оценки, денежные потоки и курсы валют."
         wrapMode: Text.Wrap
         color: MobileTheme.muted
         font.pixelSize: MobileTheme.sizeCaption
@@ -306,7 +306,7 @@ ColumnLayout {
         font.family: MobileTheme.mono
         Layout.fillWidth: true
         visible: !!panel.contributions.available
-        text: qsTr("Валютная переоценка счетов: %1\nНеобъяснённая разница: %2\nИтого: %3").arg(panel.amount(panel.contributions.fxMinor)).arg(panel.amount(panel.contributions.unexplainedMinor)).arg(panel.amount(panel.contributions.totalMinor))
+        text: "Валютная переоценка счетов: %1\nНеобъяснённая разница: %2\nИтого: %3".arg(panel.amount(panel.contributions.fxMinor)).arg(panel.amount(panel.contributions.unexplainedMinor)).arg(panel.amount(panel.contributions.totalMinor))
         wrapMode: Text.Wrap
         color: MobileTheme.muted
         font.pixelSize: MobileTheme.sizeCaption
@@ -315,7 +315,7 @@ ColumnLayout {
     MobileText {
         font.family: MobileTheme.mono
         Layout.fillWidth: true
-        text: qsTr("Результат активов рассчитан при курсе валют счетов на начало периода. Валютная переоценка показана отдельно. Длина полос отражает сумму прибыли или убытка, а не долю вложений.")
+        text: "Результат активов рассчитан при курсе валют счетов на начало периода. Валютная переоценка показана отдельно. Длина полос отражает сумму прибыли или убытка, а не долю вложений."
         wrapMode: Text.Wrap
         color: MobileTheme.muted
         font.pixelSize: MobileTheme.sizeCaption

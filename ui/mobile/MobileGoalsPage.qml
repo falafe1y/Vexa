@@ -56,7 +56,7 @@ Item {
                     MobileText {
                         font.family: MobileTheme.mono
                         visible: goalCard.row.achieved || goalCard.row.overdue
-                        text: goalCard.row.achieved ? qsTr("Достигнута") : qsTr("Срок прошёл")
+                        text: goalCard.row.achieved ? "Достигнута" : "Срок прошёл"
                         color: goalCard.row.achieved ? MobileTheme.income : MobileTheme.red
                         font.pixelSize: MobileTheme.sizeCaption
                         font.weight: Font.Normal
@@ -79,7 +79,7 @@ Item {
                 MobileText {
                     font.family: MobileTheme.mono
                     Layout.fillWidth: true
-                    text: goalCard.row.remainingMinor > 0 ? qsTr("Осталось %1").arg(MobileFormat.displayMoney(goalCard.row.remainingMinor, goalCard.row.currency, false)) : qsTr("Цель достигнута")
+                    text: goalCard.row.remainingMinor > 0 ? "Осталось %1".arg(MobileFormat.displayMoney(goalCard.row.remainingMinor, goalCard.row.currency, false)) : "Цель достигнута"
                     color: MobileTheme.muted
                     font.pixelSize: MobileTheme.sizeCaption
                 }
@@ -87,7 +87,7 @@ Item {
                 MobileText {
                     font.family: MobileTheme.mono
                     Layout.fillWidth: true
-                    text: goalCard.row.deadline ? qsTr("Срок: %1").arg(MobileFormat.isoDate(goalCard.row.deadline)) : qsTr("Без срока")
+                    text: goalCard.row.deadline ? "Срок: %1".arg(MobileFormat.isoDate(goalCard.row.deadline)) : "Без срока"
                     color: MobileTheme.muted
                     font.pixelSize: MobileTheme.sizeCaption
                 }
@@ -100,8 +100,8 @@ Item {
         width: parent.width - 32
         visible: list.count === 0
         svg: "qrc:/icons/goals.svg"
-        title: qsTr("Целей пока нет")
-        text: qsTr("Укажите сумму и срок, а приложение покажет, сколько осталось накопить.")
+        title: "Целей пока нет"
+        text: "Укажите сумму и срок, а приложение покажет, сколько осталось накопить."
         actionText: ""
         onAction: goalSheet.openFor(null)
     }

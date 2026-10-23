@@ -11,12 +11,12 @@ ColumnLayout {
     readonly property var choices: [
         {
             key: "",
-            name: qsTr("Без сравнения")
+            name: "Без сравнения"
         }
     ].concat(indices).concat([
         {
             key: "fund",
-            name: qsTr("Биржевой фонд Мосбиржи…")
+            name: "Биржевой фонд Мосбиржи…"
         }
     ])
     readonly property var xFractions: points.map(function (row, index) {
@@ -69,7 +69,7 @@ ColumnLayout {
     MobileText {
         font.family: MobileTheme.serif
         Layout.fillWidth: true
-        text: qsTr("Сравнение с индексом или фондом")
+        text: "Сравнение с индексом или фондом"
         wrapMode: Text.Wrap
         color: MobileTheme.accent
         font.pixelSize: MobileTheme.sizeHeading
@@ -102,12 +102,12 @@ ColumnLayout {
             MobileButton {
                 Layout.fillWidth: true
                 visible: panel.selection.kind === "fund"
-                text: qsTr("Выбрать другой фонд")
+                text: "Выбрать другой фонд"
                 onClicked: fundSheet.open()
             }
             MobileButton {
                 Layout.fillWidth: true
-                text: financeController.benchmarkBusy ? qsTr("Загрузка…") : qsTr("Обновить историю")
+                text: financeController.benchmarkBusy ? "Загрузка…" : "Обновить историю"
                 enabled: !financeController.benchmarkBusy && !!panel.comparison.canRefresh
                 onClicked: financeController.refreshBenchmark()
             }
@@ -118,7 +118,7 @@ ColumnLayout {
         font.family: MobileTheme.mono
         Layout.fillWidth: true
         visible: !!panel.selection.key
-        text: panel.selection.kind === "fund" ? qsTr("Сравнение по биржевой цене пая. Выплаты владельцу пая и дробления отдельно не учитываются. Расходы управления, уже отражённые в цене, остаются в ней.") : panel.selection.totalReturn ? qsTr("Полная доходность брутто: индекс включает реинвестирование выплат до налогов. Ваши личные комиссии и налоги в ориентире не учитываются.") : qsTr("Ценовой индекс: дивиденды не включены. Доходность вашего счёта учитывает записанные выплаты и расходы.")
+        text: panel.selection.kind === "fund" ? "Сравнение по биржевой цене пая. Выплаты владельцу пая и дробления отдельно не учитываются. Расходы управления, уже отражённые в цене, остаются в ней." : panel.selection.totalReturn ? "Полная доходность брутто: индекс включает реинвестирование выплат до налогов. Ваши личные комиссии и налоги в ориентире не учитываются." : "Ценовой индекс: дивиденды не включены. Доходность вашего счёта учитывает записанные выплаты и расходы."
         wrapMode: Text.Wrap
         color: MobileTheme.muted
         font.pixelSize: MobileTheme.sizeCaption
@@ -138,7 +138,7 @@ ColumnLayout {
         font.family: MobileTheme.mono
         Layout.fillWidth: true
         visible: !!panel.comparison.available && panel.comparison.maximumQuoteAgeDays > 7
-        text: qsTr("В части периода последняя биржевая цена старше семи дней. Торги могли не проводиться или быть приостановлены. Фактическая дата цены видна в подсказке на графике.")
+        text: "В части периода последняя биржевая цена старше семи дней. Торги могли не проводиться или быть приостановлены. Фактическая дата цены видна в подсказке на графике."
         wrapMode: Text.Wrap
         color: MobileTheme.muted
         font.pixelSize: MobileTheme.sizeCaption
@@ -148,7 +148,7 @@ ColumnLayout {
         font.family: MobileTheme.mono
         Layout.fillWidth: true
         visible: !panel.comparison.available
-        text: panel.comparison.reason || qsTr("Выберите ориентир для сравнения.")
+        text: panel.comparison.reason || "Выберите ориентир для сравнения."
         wrapMode: Text.Wrap
         color: MobileTheme.muted
         font.pixelSize: MobileTheme.sizeCaption
@@ -158,7 +158,7 @@ ColumnLayout {
         font.family: MobileTheme.mono
         Layout.fillWidth: true
         visible: !!panel.selection.key && !!panel.comparison.canRefresh
-        text: qsTr("История ориентира: %1 — %2 · %3").arg(panel.date(panel.comparison.historyFrom)).arg(panel.date(panel.comparison.historyTo)).arg(panel.comparison.historyLoaded ? qsTr("сохранена в базе") : qsTr("можно загрузить заранее")) + (panel.comparison.historyFallback ? "\n" + qsTr("В выбранном фильтре ещё нет завершённых дней. Для предварительной загрузки используется последний год до вчерашнего дня.") : "") + (!panel.comparison.available ? "\n" + qsTr("Котировки можно загрузить без оценок портфеля. Сравнение появится, когда накопится достаточная непрерывная история. Без фильтра и прошлых оценок загружается последний год.") : "")
+        text: "История ориентира: %1 — %2 · %3".arg(panel.date(panel.comparison.historyFrom)).arg(panel.date(panel.comparison.historyTo)).arg(panel.comparison.historyLoaded ? "сохранена в базе" : "можно загрузить заранее") + (panel.comparison.historyFallback ? "\n" + "В выбранном фильтре ещё нет завершённых дней. Для предварительной загрузки используется последний год до вчерашнего дня." : "") + (!panel.comparison.available ? "\n" + "Котировки можно загрузить без оценок портфеля. Сравнение появится, когда накопится достаточная непрерывная история. Без фильтра и прошлых оценок загружается последний год." : "")
         wrapMode: Text.Wrap
         color: MobileTheme.muted
         font.pixelSize: MobileTheme.sizeCaption
@@ -168,7 +168,7 @@ ColumnLayout {
         font.family: MobileTheme.mono
         Layout.fillWidth: true
         visible: !!panel.comparison.available
-        text: qsTr("%1 — %2 · Валюта: %3 · Текущий день исключён").arg(panel.date(panel.comparison.from)).arg(panel.date(panel.comparison.to)).arg(financeController.investmentPerformance.currency || "")
+        text: "%1 — %2 · Валюта: %3 · Текущий день исключён".arg(panel.date(panel.comparison.from)).arg(panel.date(panel.comparison.to)).arg(financeController.investmentPerformance.currency || "")
         wrapMode: Text.Wrap
         color: MobileTheme.muted
         font.pixelSize: MobileTheme.sizeCaption
@@ -184,18 +184,18 @@ ColumnLayout {
         Repeater {
             model: [
                 {
-                    title: qsTr("Ваш результат"),
+                    title: "Ваш результат",
                     value: panel.percent(panel.comparison.portfolioPercent),
                     metric: "benchmark_portfolio"
                 },
                 {
-                    title: qsTr("Результат ориентира"),
+                    title: "Результат ориентира",
                     value: panel.percent(panel.comparison.benchmarkPercent),
                     metric: "benchmark"
                 },
                 {
-                    title: qsTr("Разница результатов"),
-                    value: panel.available(panel.comparison.differencePoints) ? Number(panel.comparison.differencePoints).toLocaleString(MobileFormat.locale(), "f", 2) + qsTr(" п.п.") : "—",
+                    title: "Разница результатов",
+                    value: panel.available(panel.comparison.differencePoints) ? Number(panel.comparison.differencePoints).toLocaleString(MobileFormat.locale(), "f", 2) + " п.п." : "—",
                     metric: "benchmark_difference"
                 }
             ]
@@ -259,7 +259,7 @@ ColumnLayout {
                 }
             ]
             tooltips: panel.points.map(function (row) {
-                return panel.date(row.date) + "\n" + qsTr("Ваш результат: %1").arg(panel.percent(row.portfolio)) + "\n" + qsTr("Ориентир: %1").arg(panel.percent(row.benchmark)) + "\n" + qsTr("Дата цены ориентира: %1").arg(panel.date(row.quoteDate));
+                return panel.date(row.date) + "\n" + "Ваш результат: %1".arg(panel.percent(row.portfolio)) + "\n" + "Ориентир: %1".arg(panel.percent(row.benchmark)) + "\n" + "Дата цены ориентира: %1".arg(panel.date(row.quoteDate));
             })
             formatValue: function (value) {
                 return Number(value).toLocaleString(MobileFormat.locale(), "f", 1) + " %";
@@ -275,7 +275,7 @@ ColumnLayout {
             }
             MobileText {
                 font.family: MobileTheme.mono
-                text: qsTr("Ваш результат")
+                text: "Ваш результат"
                 color: MobileTheme.accent
                 font.pixelSize: MobileTheme.sizeCaption
             }
@@ -287,7 +287,7 @@ ColumnLayout {
             MobileText {
                 font.family: MobileTheme.mono
                 Layout.fillWidth: true
-                text: panel.selection.symbol || qsTr("Ориентир")
+                text: panel.selection.symbol || "Ориентир"
                 color: MobileTheme.accent
                 font.pixelSize: MobileTheme.sizeCaption
                 elide: Text.ElideRight
@@ -299,7 +299,7 @@ ColumnLayout {
         font.family: MobileTheme.mono
         Layout.fillWidth: true
         visible: !!panel.selection.key
-        text: qsTr("Обе линии начинаются с нуля и показывают номинальную доходность без поправки на инфляцию. Разница указана в процентных пунктах. Доходность счёта очищена от пополнений и выводов. Сравнение идёт по календарным датам и ценам закрытия, без внутридневной синхронизации. В дни без новой биржевой цены сохраняется последняя предыдущая цена; её дата показана в подсказке.")
+        text: "Обе линии начинаются с нуля и показывают номинальную доходность без поправки на инфляцию. Разница указана в процентных пунктах. Доходность счёта очищена от пополнений и выводов. Сравнение идёт по календарным датам и ценам закрытия, без внутридневной синхронизации. В дни без новой биржевой цены сохраняется последняя предыдущая цена; её дата показана в подсказке."
         wrapMode: Text.Wrap
         color: MobileTheme.muted
         font.pixelSize: MobileTheme.sizeCaption
@@ -307,7 +307,7 @@ ColumnLayout {
 
     MobileSheet {
         id: choiceSheet
-        title: qsTr("Сравнение")
+        title: "Сравнение"
 
         Repeater {
             model: panel.choices
@@ -327,7 +327,7 @@ ColumnLayout {
 
     MobileSheet {
         id: fundSheet
-        title: qsTr("Биржевой фонд для сравнения")
+        title: "Биржевой фонд для сравнения"
 
         function search() {
             financeController.searchBenchmarkFunds(fundQuery.text);
@@ -340,11 +340,11 @@ ColumnLayout {
             MobileField {
                 id: fundQuery
                 Layout.fillWidth: true
-                placeholder: qsTr("Название или обозначение фонда")
+                placeholder: "Название или обозначение фонда"
             }
             MobileButton {
                 implicitHeight: 48
-                text: qsTr("Найти")
+                text: "Найти"
                 enabled: !financeController.benchmarkSearchBusy
                 onClicked: fundSheet.search()
             }
@@ -354,7 +354,7 @@ ColumnLayout {
             font.family: MobileTheme.mono
             Layout.fillWidth: true
             visible: financeController.benchmarkSearchBusy
-            text: qsTr("Ищем биржевые фонды…")
+            text: "Ищем биржевые фонды…"
             color: MobileTheme.muted
             font.pixelSize: MobileTheme.sizeCaption
         }

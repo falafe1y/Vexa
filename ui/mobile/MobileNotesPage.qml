@@ -53,7 +53,7 @@ Item {
                 font.family: MobileTheme.sans
                 font.pixelSize: 16
                 color: MobileTheme.accent
-                placeholderText: qsTr("Запишите мысли, планы и напоминания")
+                placeholderText: "Запишите мысли, планы и напоминания"
                 placeholderTextColor: MobileTheme.muted
                 background: Item {
                     Repeater {

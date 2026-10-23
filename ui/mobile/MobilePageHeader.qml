@@ -27,7 +27,7 @@ ColumnLayout {
         }
         MobileIconButton {
             icon: header.host.hideAmounts ? "eyeOff" : "eye"
-            Accessible.name: header.host.hideAmounts ? qsTr("Показать суммы") : qsTr("Скрыть суммы")
+            Accessible.name: header.host.hideAmounts ? "Показать суммы" : "Скрыть суммы"
             onClicked: header.host.hideAmounts = !header.host.hideAmounts
         }
     }

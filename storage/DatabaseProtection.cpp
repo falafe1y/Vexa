@@ -71,7 +71,7 @@ void DatabaseProtection::launch(bool conversion, bool encrypted, std::shared_ptr
         if (!result.ok) {
             ready_ = false;
             error_ = result.error;
-            if (!result.recoveryPath.isEmpty()) error_ += tr(" Копия для восстановления: %1").arg(result.recoveryPath);
+            if (!result.recoveryPath.isEmpty()) error_ += QStringLiteral(" Копия для восстановления: %1").arg(result.recoveryPath);
         } else if (conversion) {
             access_ = result.access;
             restartRequired_ = true;
@@ -130,7 +130,7 @@ void DatabaseProtection::exportBackup(const QUrl& destination, const QString& pa
     if (!admitted_ || !ready_ || busy_) return;
     backupError_.clear();
     if (!plaintext && !PortableBackup::validPassword(password)) {
-        backupError_ = tr("Пароль копии должен содержать от 12 до 1024 символов."); emit backupChanged(); return;
+        backupError_ = QStringLiteral("Пароль копии должен содержать от 12 до 1024 символов."); emit backupChanged(); return;
     }
     const QString suffix = plaintext ? QStringLiteral(".sqlite3") : QStringLiteral(".vexabackup");
     QUrl target = destination;
@@ -140,14 +140,14 @@ void DatabaseProtection::exportBackup(const QUrl& destination, const QString& pa
         // The picker does not add the suffix, so it is added to the name here.
         QString error;
         backupName_ = ContentUriIo::displayName(destination);
-        if (backupName_.isEmpty()) { backupError_ = tr("Не удалось узнать имя выбранного файла"); emit backupChanged(); return; }
+        if (backupName_.isEmpty()) { backupError_ = QStringLiteral("Не удалось узнать имя выбранного файла"); emit backupChanged(); return; }
         if (!backupName_.endsWith(suffix, Qt::CaseInsensitive)) backupName_ += suffix;
         // A picked document has no path on Android: the backup is written to a temporary folder and copied over later
         backupDirectory_ = ContentUriIo::temporaryDirectory(error);
         if (!backupDirectory_) { backupError_ = error; emit backupChanged(); return; }
         path = backupDirectory_->filePath(QStringLiteral("backup"));
     }
-    if (path.isEmpty()) { backupError_ = tr("Выберите место сохранения копии."); emit backupChanged(); return; }
+    if (path.isEmpty()) { backupError_ = QStringLiteral("Выберите место сохранения копии."); emit backupChanged(); return; }
     if (QFileInfo(path).suffix().isEmpty()) path += suffix;
     busy_ = true; emit changed(); emit backupChanged();
     const auto generation = generation_; const auto source = access_; const auto root = workspaceRoot_;
@@ -167,7 +167,7 @@ void DatabaseProtection::inspectBackup(const QUrl& source, const QString& passwo
     if (!copy->error().isEmpty()) { backupError_ = copy->error(); emit backupChanged(); return; }
     const auto path = copy->path();
     if (QFileInfo(path).canonicalFilePath() == QFileInfo(path_).canonicalFilePath()) {
-        backupError_ = tr("Выберите копию, а не рабочую базу."); emit backupChanged(); return;
+        backupError_ = QStringLiteral("Выберите копию, а не рабочую базу."); emit backupChanged(); return;
     }
     if (!PortableBackup::needsPassword(path, passwordRequired_, backupError_)
         || (passwordRequired_ && password.isEmpty())) { emit backupChanged(); return; }
@@ -191,7 +191,7 @@ void DatabaseProtection::discardBackup() {
 void DatabaseProtection::restoreBackup() {
     if (!admitted_ || busy_ || restartRequired_ || !preview_ || (!ready_ && error_.isEmpty())) return;
     if (!previewAge_.isValid() || previewAge_.elapsed() >= 10 * 60 * 1000) {
-        preview_.reset(); backupError_ = tr("Проверка копии устарела. Выберите файл и проверьте его заново."); emit backupChanged(); return;
+        preview_.reset(); backupError_ = QStringLiteral("Проверка копии устарела. Выберите файл и проверьте его заново."); emit backupChanged(); return;
     }
     restoring_ = std::move(preview_);
     recovery_ = !ready_;
@@ -220,13 +220,13 @@ void DatabaseProtection::setAutoBackupEnabled(bool enabled)
 {
     autoError_.clear();
     if (!autoSupported_) {
-        autoError_ = tr("Автокопии на этой платформе недоступны.");
+        autoError_ = QStringLiteral("Автокопии на этой платформе недоступны.");
         emit autoBackupChanged();
         return;
     }
     if (enabled) {
-        if (autoState_.folder.isEmpty()) { autoError_ = tr("Сначала выберите папку для автокопий."); emit autoBackupChanged(); return; }
-        if (!autoPasswordSet_) { autoError_ = tr("Сначала задайте пароль автокопий."); emit autoBackupChanged(); return; }
+        if (autoState_.folder.isEmpty()) { autoError_ = QStringLiteral("Сначала выберите папку для автокопий."); emit autoBackupChanged(); return; }
+        if (!autoPasswordSet_) { autoError_ = QStringLiteral("Сначала задайте пароль автокопий."); emit autoBackupChanged(); return; }
         QString error;
         if (!AutoBackup::Target::grant(autoState_.folder, error)) { autoError_ = error; emit autoBackupChanged(); return; }
     }
@@ -242,7 +242,7 @@ void DatabaseProtection::chooseAutoBackupFolder(const QUrl& folder)
     autoError_.clear();
     // Windows gives a local path; Android gives a document-tree URI, which is kept as text
     const QString path = folder.scheme() == QStringLiteral("content") ? folder.toString() : folder.toLocalFile();
-    if (path.isEmpty()) { autoError_ = tr("Выберите папку."); emit autoBackupChanged(); return; }
+    if (path.isEmpty()) { autoError_ = QStringLiteral("Выберите папку."); emit autoBackupChanged(); return; }
     QString error;
     if (!AutoBackup::Target::grant(path, error)) { autoError_ = error; emit autoBackupChanged(); return; }
     if (path != autoState_.folder) {
@@ -260,7 +260,7 @@ void DatabaseProtection::setAutoBackupPassword(const QString& password)
 {
     autoError_.clear();
     if (!PortableBackup::validPassword(password)) {
-        autoError_ = tr("Пароль автокопий должен содержать от 12 до 1024 символов.");
+        autoError_ = QStringLiteral("Пароль автокопий должен содержать от 12 до 1024 символов.");
         emit autoBackupChanged();
         return;
     }
@@ -283,7 +283,7 @@ void DatabaseProtection::autoBackupCheck()
     }
     if (!found) {
         autoPasswordSet_ = false;
-        autoError_ = tr("Пароль автокопий не найден. Задайте его заново.");
+        autoError_ = QStringLiteral("Пароль автокопий не найден. Задайте его заново.");
         emit autoBackupChanged();
         return;
     }

@@ -66,13 +66,6 @@ class FinanceController final : public QObject
         )
 
     Q_PROPERTY(
-        QString uiLanguage
-            READ uiLanguage
-                WRITE setUiLanguage
-                    NOTIFY uiLanguageChanged
-        )
-
-    Q_PROPERTY(
         bool automaticCurrencyRates
             READ automaticCurrencyRates
                 WRITE setAutomaticCurrencyRates
@@ -395,9 +388,6 @@ public:
     QString appCurrency() const;
     void setAppCurrency(const QString& currency);
 
-    QString uiLanguage() const;
-    void setUiLanguage(const QString& language);
-    void retranslate();
 
     bool automaticCurrencyRates() const;
     void setAutomaticCurrencyRates(bool enabled);
@@ -689,7 +679,6 @@ signals:
     void selectedAccountIdChanged();
     void accountsChanged();
     void appCurrencyChanged();
-    void uiLanguageChanged();
     void automaticCurrencyRatesChanged();
     void manualCurrencyRatesChanged();
     void currencyRatesChanged();
@@ -893,7 +882,6 @@ private:
 
     Currency appCurrency_ = Currency::RUB;
     Currency analyticsCurrency_ = Currency::USD;
-    QString uiLanguage_ = QStringLiteral("ru");
     bool automaticCurrencyRates_ = true;
     double manualRubToRubRate_ = 1.0;
     double manualUsdToRubRate_ = 90.909090909;

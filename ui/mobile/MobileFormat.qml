@@ -3,7 +3,7 @@ import QtQuick
 
 QtObject {
     function locale() {
-        return Qt.locale(financeController.uiLanguage === "en" ? "en_US" : "ru_RU");
+        return Qt.locale("ru_RU");
     }
 
     function symbol(code) {

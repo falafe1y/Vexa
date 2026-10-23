@@ -32,7 +32,7 @@ ColumnLayout {
     MobileText {
         font.family: MobileTheme.serif
         Layout.fillWidth: true
-        text: qsTr("Аналитика выплат")
+        text: "Аналитика выплат"
         color: MobileTheme.accent
         font.pixelSize: MobileTheme.sizeHeading
         font.weight: Font.DemiBold
@@ -41,7 +41,7 @@ ColumnLayout {
     MobileText {
         font.family: MobileTheme.mono
         Layout.fillWidth: true
-        text: qsTr("Дивиденды, купоны и проценты по вкладам за выбранный период. Каждая выплата переведена в валюту отчёта по историческому курсу на её дату.")
+        text: "Дивиденды, купоны и проценты по вкладам за выбранный период. Каждая выплата переведена в валюту отчёта по историческому курсу на её дату."
         wrapMode: Text.Wrap
         color: MobileTheme.muted
         font.pixelSize: MobileTheme.sizeCaption
@@ -56,22 +56,22 @@ ColumnLayout {
         Repeater {
             model: [
                 {
-                    label: qsTr("Получено"),
+                    label: "Получено",
                     value: panel.amount(panel.payments.netMinor),
                     metric: "payments_net"
                 },
                 {
-                    label: qsTr("До расходов"),
+                    label: "До расходов",
                     value: panel.amount(panel.payments.grossMinor),
                     metric: "payments_gross"
                 },
                 {
-                    label: qsTr("Комиссии выплат"),
+                    label: "Комиссии выплат",
                     value: panel.amount(panel.payments.feesMinor),
                     metric: "payments_fees"
                 },
                 {
-                    label: qsTr("Удержания выплат"),
+                    label: "Удержания выплат",
                     value: panel.amount(panel.payments.taxMinor),
                     metric: "payments_tax"
                 }
@@ -115,7 +115,7 @@ ColumnLayout {
     MobileText {
         font.family: MobileTheme.mono
         Layout.fillWidth: true
-        text: qsTr("Записей: %1").arg(panel.payments.count || 0) + (panel.available(panel.payments.netMinor) ? "" : qsTr(" · Известная часть полученного: %1").arg(panel.amount(panel.payments.knownNetMinor)))
+        text: "Записей: %1".arg(panel.payments.count || 0) + (panel.available(panel.payments.netMinor) ? "" : " · Известная часть полученного: %1".arg(panel.amount(panel.payments.knownNetMinor)))
         wrapMode: Text.Wrap
         color: MobileTheme.muted
         font.pixelSize: MobileTheme.sizeCaption
@@ -124,7 +124,7 @@ ColumnLayout {
     MobileText {
         font.family: MobileTheme.mono
         Layout.fillWidth: true
-        text: qsTr("Если расходы не указаны отдельно, сумма до расходов и соответствующие итоги не вычисляются. Проценты по вкладам записываются чистой суммой: их комиссии и удержания неизвестны. Комиссии покупки и продажи относятся к результату позиций.")
+        text: "Если расходы не указаны отдельно, сумма до расходов и соответствующие итоги не вычисляются. Проценты по вкладам записываются чистой суммой: их комиссии и удержания неизвестны. Комиссии покупки и продажи относятся к результату позиций."
         wrapMode: Text.Wrap
         color: MobileTheme.muted
         font.pixelSize: MobileTheme.sizeCaption
@@ -142,7 +142,7 @@ ColumnLayout {
             MobileText {
                 font.family: MobileTheme.mono
                 Layout.fillWidth: true
-                text: modelData.label + qsTr(" · Записей: %1").arg(modelData.count)
+                text: modelData.label + " · Записей: %1".arg(modelData.count)
                 wrapMode: Text.Wrap
                 color: MobileTheme.accent
                 font.pixelSize: MobileTheme.sizeCaption
@@ -166,7 +166,7 @@ ColumnLayout {
         MobileText {
             font.family: MobileTheme.sans
             Layout.fillWidth: true
-            text: qsTr("Получено по месяцам")
+            text: "Получено по месяцам"
             color: MobileTheme.accent
             font.pixelSize: MobileTheme.sizeBody
             font.weight: Font.DemiBold
@@ -219,7 +219,7 @@ ColumnLayout {
         font.family: MobileTheme.sans
         visible: (panel.payments.assets || []).length > 0
         Layout.topMargin: 6
-        text: qsTr("Источники выплат")
+        text: "Источники выплат"
         color: MobileTheme.accent
         font.pixelSize: MobileTheme.sizeBody
         font.weight: Font.DemiBold
@@ -254,7 +254,7 @@ ColumnLayout {
         font.family: MobileTheme.mono
         visible: !(panel.payments.count > 0)
         Layout.fillWidth: true
-        text: qsTr("За выбранный период выплаты не записаны.")
+        text: "За выбранный период выплаты не записаны."
         color: MobileTheme.muted
         font.pixelSize: MobileTheme.sizeCaption
     }
@@ -262,7 +262,7 @@ ColumnLayout {
     MobileButton {
         visible: panel.payments.count > 0
         Layout.fillWidth: true
-        text: panel.eventsOpen ? qsTr("Скрыть выплаты") : qsTr("Показать выплаты")
+        text: panel.eventsOpen ? "Скрыть выплаты" : "Показать выплаты"
         onClicked: panel.eventsOpen = !panel.eventsOpen
     }
 
@@ -308,7 +308,7 @@ ColumnLayout {
                 font.family: MobileTheme.mono
                 Layout.fillWidth: true
                 wrapMode: Text.Wrap
-                text: qsTr("До расходов: %1 · Комиссии: %2 · Удержания: %3").arg(panel.amount(modelData.grossMinor)).arg(panel.amount(modelData.feesMinor)).arg(panel.amount(modelData.taxMinor))
+                text: "До расходов: %1 · Комиссии: %2 · Удержания: %3".arg(panel.amount(modelData.grossMinor)).arg(panel.amount(modelData.feesMinor)).arg(panel.amount(modelData.taxMinor))
                 color: MobileTheme.muted
                 font.pixelSize: MobileTheme.sizeCaption
             }

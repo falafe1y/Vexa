@@ -51,7 +51,7 @@ Item {
             height: 40
             leftPadding: 8
             rightPadding: 8
-            text: qsTr("ПЛАНОВЫЕ")
+            text: "ПЛАНОВЫЕ"
             mono: false
             textSize: head.small ? 14 : 16
             outlined: true
@@ -65,7 +65,7 @@ Item {
             width: filters.width - x - filters.currencyWidth - filters.gap
             EditorialText {
                 height: 24
-                text: qsTr("ПЕРИОД")
+                text: "ПЕРИОД"
                 font.family: "Cousine"
                 font.pixelSize: 12
                 color: "#59616a"
@@ -95,18 +95,18 @@ Item {
                     font.pixelSize: 16
 
                     EditorialMenuItem {
-                        text: qsTr("Всё время")
+                        text: "Всё время"
                         onTriggered: head.controller.clearDateFilter()
                     }
                     EditorialMenuItem {
-                        text: qsTr("Текущий месяц")
+                        text: "Текущий месяц"
                         onTriggered: {
                             const now = new Date();
                             head.controller.setDateFilter(new Date(now.getFullYear(), now.getMonth(), 1), now);
                         }
                     }
                     EditorialMenuItem {
-                        text: qsTr("Последние 7 дней")
+                        text: "Последние 7 дней"
                         onTriggered: {
                             const end = new Date();
                             const start = new Date();
@@ -115,7 +115,7 @@ Item {
                         }
                     }
                     EditorialMenuItem {
-                        text: qsTr("Последние 30 дней")
+                        text: "Последние 30 дней"
                         onTriggered: {
                             const end = new Date();
                             const start = new Date();
@@ -124,7 +124,7 @@ Item {
                         }
                     }
                     EditorialMenuItem {
-                        text: qsTr("Выбрать даты…")
+                        text: "Выбрать даты…"
                         onTriggered: head.host.editorialDateFilter()
                     }
                 }
@@ -137,7 +137,7 @@ Item {
             height: 72
             EditorialText {
                 height: 24
-                text: qsTr("ВАЛЮТА")
+                text: "ВАЛЮТА"
                 font.family: "Cousine"
                 font.pixelSize: 12
                 color: "#59616a"

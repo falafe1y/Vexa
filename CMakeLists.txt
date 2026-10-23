@@ -7,7 +7,7 @@ include(GNUInstallDirs)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_AUTORCC ON)
 
-find_package(Qt6 REQUIRED COMPONENTS Quick QuickControls2 QuickDialogs2 Sql Network Concurrent LinguistTools Svg)
+find_package(Qt6 REQUIRED COMPONENTS Quick QuickControls2 QuickDialogs2 Sql Network Concurrent Svg)
 find_package(ZLIB REQUIRED)
 if(ANDROID)
     include(cmake/VexaAndroidOpenSSL.cmake)
@@ -268,13 +268,6 @@ qt_add_qml_module(vexa
         SOURCES persistence/FinanceRepository.h
         SOURCES persistence/FinanceRepository.cpp
         SOURCES persistence/FinanceRepositoryHistory.cpp
-)
-
-qt_add_translations(
-    TARGETS vexa
-    SOURCE_TARGETS vexa
-    TS_FILES translations/qml_en.ts
-    RESOURCE_PREFIX /i18n
 )
 
 # Qt for iOS sets MACOSX_BUNDLE_GUI_IDENTIFIER automatically since Qt 6.1.

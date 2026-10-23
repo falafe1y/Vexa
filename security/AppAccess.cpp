@@ -48,9 +48,9 @@ void AppAccess::unlock(const QString& proof)
 void AppAccess::changePassword(const QString& proof, const QString& password, const QString& confirmation)
 {
     if (busy_ || !ready_ || !storeAvailable_ || !recoveryCode_.isEmpty() || (locked_ && !enabled_)) return;
-    if (password != confirmation) { error_ = tr("Пароли не совпадают."); emit changed(); return; }
+    if (password != confirmation) { error_ = QStringLiteral("Пароли не совпадают."); emit changed(); return; }
     if (!PasswordLock::validPassword(password)) {
-        error_ = tr("Пароль должен содержать от 1 до 1024 символов."); emit changed(); return;
+        error_ = QStringLiteral("Пароль должен содержать от 1 до 1024 символов."); emit changed(); return;
     }
     run(Operation::PrepareChange, proof, password);
 }

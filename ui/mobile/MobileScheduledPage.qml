@@ -10,71 +10,71 @@ Item {
 
     readonly property var recurrenceOptions: [
         {
-            label: qsTr("Ежедневно"),
+            label: "Ежедневно",
             value: "daily"
         },
         {
-            label: qsTr("Каждую неделю"),
+            label: "Каждую неделю",
             value: "weekly"
         },
         {
-            label: qsTr("Каждый месяц"),
+            label: "Каждый месяц",
             value: "monthly_day"
         },
         {
-            label: qsTr("День недели месяца"),
+            label: "День недели месяца",
             value: "monthly_weekday"
         }
     ]
     readonly property var weekdayOptions: [
         {
-            label: qsTr("Пн"),
+            label: "Пн",
             value: 1
         },
         {
-            label: qsTr("Вт"),
+            label: "Вт",
             value: 2
         },
         {
-            label: qsTr("Ср"),
+            label: "Ср",
             value: 3
         },
         {
-            label: qsTr("Чт"),
+            label: "Чт",
             value: 4
         },
         {
-            label: qsTr("Пт"),
+            label: "Пт",
             value: 5
         },
         {
-            label: qsTr("Сб"),
+            label: "Сб",
             value: 6
         },
         {
-            label: qsTr("Вс"),
+            label: "Вс",
             value: 7
         }
     ]
     readonly property var weekOfMonthOptions: [
         {
-            label: qsTr("Первая"),
+            label: "Первая",
             value: 1
         },
         {
-            label: qsTr("Вторая"),
+            label: "Вторая",
             value: 2
         },
         {
-            label: qsTr("Третья"),
+            label: "Третья",
             value: 3
         },
         {
-            label: qsTr("Четвёртая"),
+            label: "Четвёртая",
             value: 4
         },
         {
-            label: qsTr("Последняя"),
+            label: "Последняя",
             value: 5
         }
     ]
@@ -168,7 +168,7 @@ Item {
                 MobileText {
                     font.family: MobileTheme.mono
                     Layout.fillWidth: true
-                    text: qsTr("Следующая: %1").arg(MobileFormat.isoDate(scheduleCard.row.nextDate)) + " · " + scheduleCard.row.accountName
+                    text: "Следующая: %1".arg(MobileFormat.isoDate(scheduleCard.row.nextDate)) + " · " + scheduleCard.row.accountName
                     elide: Text.ElideRight
                     color: MobileTheme.muted
                     font.pixelSize: MobileTheme.sizeCaption
@@ -182,8 +182,8 @@ Item {
         width: parent.width - 32
         visible: list.count === 0
         icon: "calendar"
-        title: qsTr("Регулярных операций пока нет")
-        text: qsTr("Зарплата, аренда или подписки будут попадать в операции автоматически.")
+        title: "Регулярных операций пока нет"
+        text: "Зарплата, аренда или подписки будут попадать в операции автоматически."
         actionText: ""
         onAction: sheet.openFor(null)
     }
@@ -201,7 +201,7 @@ Item {
         property string errorText: ""
         property bool confirmingDelete: false
 
-        title: editingId.length > 0 ? qsTr("Регулярная операция") : qsTr("Новая регулярная операция")
+        title: editingId.length > 0 ? "Регулярная операция" : "Новая регулярная операция"
 
         function openFor(row) {
             const accounts = page.fiatAccounts();
@@ -224,7 +224,7 @@ Item {
         function save() {
             const date = MobileFormat.dateFromInput(startField.text);
             if (!date) {
-                errorText = qsTr("Укажите дату начала в формате дд.мм.гггг");
+                errorText = "Укажите дату начала в формате дд.мм.гггг";
                 return;
             }
             const result = financeController.saveScheduledTransaction({
@@ -244,25 +244,25 @@ Item {
             if (result.ok)
                 sheet.close();
             else
-                errorText = result.error || qsTr("Не удалось сохранить операцию");
+                errorText = result.error || "Не удалось сохранить операцию";
         }
 
         MobileField {
             id: nameField
             Layout.fillWidth: true
-            label: qsTr("Название")
-            placeholder: qsTr("Например, аренда")
+            label: "Название"
+            placeholder: "Например, аренда"
         }
 
         MobileSegmented {
             Layout.fillWidth: true
             options: [
                 {
-                    label: qsTr("Расход"),
+                    label: "Расход",
                     value: "expense"
                 },
                 {
-                    label: qsTr("Доход"),
+                    label: "Доход",
                     value: "income"
                 }
             ]
@@ -278,13 +278,13 @@ Item {
         MobileField {
             id: amountField
             Layout.fillWidth: true
-            label: qsTr("Сумма")
+            label: "Сумма"
             placeholder: "0"
             inputMethodHints: Qt.ImhFormattedNumbersOnly
         }
 
         SheetLabel {
-            text: qsTr("Счёт")
+            text: "Счёт"
         }
         Flow {
             Layout.fillWidth: true
@@ -303,7 +303,7 @@ Item {
         }
 
         SheetLabel {
-            text: qsTr("Категория")
+            text: "Категория"
         }
         Flow {
             Layout.fillWidth: true
@@ -322,7 +322,7 @@ Item {
         }
 
         SheetLabel {
-            text: qsTr("Повторять")
+            text: "Повторять"
         }
         Flow {
             Layout.fillWidth: true
@@ -378,15 +378,15 @@ Item {
             id: dayField
             visible: sheet.recurrence === "monthly_day"
             Layout.fillWidth: true
-            label: qsTr("День месяца, 1–31")
+            label: "День месяца, 1–31"
             inputMethodHints: Qt.ImhDigitsOnly
         }
 
         MobileField {
             id: startField
             Layout.fillWidth: true
-            label: qsTr("Дата начала")
-            placeholder: qsTr("дд.мм.гггг")
+            label: "Дата начала"
+            placeholder: "дд.мм.гггг"
         }
 
         MobileText {
@@ -402,7 +402,7 @@ Item {
         MobileButton {
             Layout.fillWidth: true
             variant: "primary"
-            text: qsTr("Сохранить")
+            text: "Сохранить"
             onClicked: sheet.save()
         }
 
@@ -410,7 +410,7 @@ Item {
             Layout.fillWidth: true
             visible: sheet.editingId.length > 0
             variant: "danger"
-            text: sheet.confirmingDelete ? qsTr("Нажмите ещё раз, чтобы удалить") : qsTr("Удалить расписание")
+            text: sheet.confirmingDelete ? "Нажмите ещё раз, чтобы удалить" : "Удалить расписание"
             onClicked: {
                 if (!sheet.confirmingDelete) {
                     sheet.confirmingDelete = true;
@@ -419,7 +419,7 @@ Item {
                 if (financeController.deleteScheduledTransaction(sheet.editingId))
                     sheet.close();
                 else
-                    sheet.errorText = qsTr("Не удалось удалить расписание");
+                    sheet.errorText = "Не удалось удалить расписание";
             }
         }
     }

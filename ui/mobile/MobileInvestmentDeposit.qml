@@ -44,7 +44,7 @@ ColumnLayout {
         MobileText {
             font.family: MobileTheme.serif
             Layout.fillWidth: true
-            text: qsTr("А если бы деньги лежали на вкладе?")
+            text: "А если бы деньги лежали на вкладе?"
             wrapMode: Text.Wrap
             color: MobileTheme.accent
             font.pixelSize: MobileTheme.sizeHeading
@@ -58,8 +58,8 @@ ColumnLayout {
     MobileField {
         id: rate
         Layout.fillWidth: true
-        label: qsTr("Годовая ставка, %")
-        placeholder: qsTr("Укажите ставку")
+        label: "Годовая ставка, %"
+        placeholder: "Укажите ставку"
         inputMethodHints: Qt.ImhFormattedNumbersOnly
         text: panel.settings.rate || ""
     }
@@ -67,7 +67,7 @@ ColumnLayout {
     MobileText {
         font.family: MobileTheme.mono
         Layout.fillWidth: true
-        text: qsTr("Капитализация процентов")
+        text: "Капитализация процентов"
         color: MobileTheme.muted
         font.pixelSize: MobileTheme.sizeCaption
         font.weight: Font.Medium
@@ -77,15 +77,15 @@ ColumnLayout {
         Layout.fillWidth: true
         options: [
             {
-                label: qsTr("Без капитализации"),
+                label: "Без капитализации",
                 value: "none"
             },
             {
-                label: qsTr("Ежемесячная"),
+                label: "Ежемесячная",
                 value: "monthly"
             },
             {
-                label: qsTr("Ежедневная"),
+                label: "Ежедневная",
                 value: "daily"
             }
         ]
@@ -98,10 +98,10 @@ ColumnLayout {
     MobileButton {
         Layout.fillWidth: true
         variant: "primary"
-        text: qsTr("Рассчитать")
+        text: "Рассчитать"
         onClicked: {
             const ok = financeController.setPerformanceDeposit(rate.text, capitalization.value);
-            depositError.text = ok ? "" : qsTr("Введите ставку от 0 до 1000 %, до четырёх знаков после запятой.");
+            depositError.text = ok ? "" : "Введите ставку от 0 до 1000 %, до четырёх знаков после запятой.";
         }
     }
 
@@ -118,7 +118,7 @@ ColumnLayout {
     MobileText {
         font.family: MobileTheme.mono
         Layout.fillWidth: true
-        text: qsTr("Валюта отчёта: %1").arg(panel.comparison.currency || "RUB")
+        text: "Валюта отчёта: %1".arg(panel.comparison.currency || "RUB")
         color: MobileTheme.muted
         font.pixelSize: MobileTheme.sizeCaption
         wrapMode: Text.Wrap
@@ -128,7 +128,7 @@ ColumnLayout {
         font.family: MobileTheme.mono
         Layout.fillWidth: true
         visible: !panel.comparison.available
-        text: panel.comparison.reason || qsTr("Укажите ставку и накопите дневные оценки выбранных счетов.")
+        text: panel.comparison.reason || "Укажите ставку и накопите дневные оценки выбранных счетов."
         color: MobileTheme.muted
         font.pixelSize: MobileTheme.sizeCaption
         wrapMode: Text.Wrap
@@ -138,7 +138,7 @@ ColumnLayout {
         font.family: MobileTheme.mono
         Layout.fillWidth: true
         visible: !!panel.comparison.available
-        text: qsTr("%1 — %2 · Начальный капитал: %3").arg(panel.date(panel.comparison.from)).arg(panel.date(panel.comparison.to)).arg(panel.amount(panel.comparison.openingMinor)) + (panel.comparison.liveDay ? "\n" + qsTr("Оценка текущего дня ещё может измениться.") : "")
+        text: "%1 — %2 · Начальный капитал: %3".arg(panel.date(panel.comparison.from)).arg(panel.date(panel.comparison.to)).arg(panel.amount(panel.comparison.openingMinor)) + (panel.comparison.liveDay ? "\n" + "Оценка текущего дня ещё может измениться." : "")
         color: MobileTheme.muted
         font.pixelSize: MobileTheme.sizeCaption
         wrapMode: Text.Wrap
@@ -153,15 +153,15 @@ ColumnLayout {
         Repeater {
             model: [
                 {
-                    title: qsTr("Результат вложений"),
+                    title: "Результат вложений",
                     value: panel.comparison.portfolioGainMinor
                 },
                 {
-                    title: qsTr("Доход условного вклада"),
+                    title: "Доход условного вклада",
                     value: panel.comparison.depositGainMinor
                 },
                 {
-                    title: qsTr("Разница результатов"),
+                    title: "Разница результатов",
                     value: panel.comparison.differenceMinor
                 }
             ]
@@ -217,7 +217,7 @@ ColumnLayout {
                 }
             ]
             tooltips: panel.points.map(function (row) {
-                return panel.date(row.date) + "\n" + qsTr("Вложения: %1").arg(panel.amount(row.portfolioMinor)) + "\n" + qsTr("Вклад: %1").arg(panel.amount(row.depositMinor));
+                return panel.date(row.date) + "\n" + "Вложения: %1".arg(panel.amount(row.portfolioMinor)) + "\n" + "Вклад: %1".arg(panel.amount(row.depositMinor));
             })
             formatValue: function (value) {
                 return MobileAnalytics.capitalAxisMoney(value, panel.comparison.currency || "RUB");
@@ -233,7 +233,7 @@ ColumnLayout {
             }
             MobileText {
                 font.family: MobileTheme.mono
-                text: qsTr("Вложения")
+                text: "Вложения"
                 color: MobileTheme.accent
                 font.pixelSize: MobileTheme.sizeCaption
             }
@@ -245,7 +245,7 @@ ColumnLayout {
             MobileText {
                 font.family: MobileTheme.mono
                 Layout.fillWidth: true
-                text: qsTr("Условный вклад")
+                text: "Условный вклад"
                 color: MobileTheme.accent
                 font.pixelSize: MobileTheme.sizeCaption
             }
@@ -255,7 +255,7 @@ ColumnLayout {
     MobileText {
         font.family: MobileTheme.mono
         Layout.fillWidth: true
-        text: qsTr("Одинаковый начальный капитал и внешние пополнения/выводы. Ставка постоянная, вклад в валюте отчёта. Между дневными оценками пополнения считаются внесёнными до начисления процентов, выводы — после. Проценты: ставка / 365 или 366 за календарный день. Ежемесячная капитализация — в дату открытия, в коротком месяце в его последний день. Без капитализации проценты хранятся отдельно и не приносят доход; выводы сначала расходуют их. Начисленные, но ещё не выплаченные проценты включены в итог, но не доступны для вывода. Налоги, ограничения банка и потеря процентов при досрочном закрытии не учитываются.")
+        text: "Одинаковый начальный капитал и внешние пополнения/выводы. Ставка постоянная, вклад в валюте отчёта. Между дневными оценками пополнения считаются внесёнными до начисления процентов, выводы — после. Проценты: ставка / 365 или 366 за календарный день. Ежемесячная капитализация — в дату открытия, в коротком месяце в его последний день. Без капитализации проценты хранятся отдельно и не приносят доход; выводы сначала расходуют их. Начисленные, но ещё не выплаченные проценты включены в итог, но не доступны для вывода. Налоги, ограничения банка и потеря процентов при досрочном закрытии не учитываются."
         wrapMode: Text.Wrap
         color: MobileTheme.muted
         font.pixelSize: MobileTheme.sizeCaption

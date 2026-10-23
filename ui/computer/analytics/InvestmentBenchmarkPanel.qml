@@ -15,7 +15,7 @@ Item {
     readonly property var comparison: controller ? (controller.benchmarkComparison || ({})) : ({})
     readonly property var points: comparison.points || []
     readonly property var indices: controller ? (controller.benchmarkIndices || []) : []
-    readonly property var choices: [{key:"",name:qsTr("Без сравнения")}].concat(indices).concat([{key:"fund",name:qsTr("Биржевой фонд Мосбиржи…")}])
+    readonly property var choices: [{key:"",name:"Без сравнения"}].concat(indices).concat([{key:"fund",name:"Биржевой фонд Мосбиржи…"}])
     implicitHeight: content.implicitHeight
     function available(v) { return v !== null && v !== undefined && isFinite(Number(v)) }
     function percent(v) { return available(v) ? Number(v).toLocaleString(Qt.locale(), 'f', 2) + " %" : "—" }
@@ -34,7 +34,7 @@ Item {
         spacing: 16
         EditorialRowLayout {
             Layout.fillWidth: true
-            EditorialLabel { text: qsTr("Сравнение с индексом или фондом"); color: panel.ink; font.pixelSize: 17; font.bold: true; Layout.fillWidth: true; wrapMode: Text.WordWrap }
+            EditorialLabel { text: "Сравнение с индексом или фондом"; color: panel.ink; font.pixelSize: 17; font.bold: true; Layout.fillWidth: true; wrapMode: Text.WordWrap }
             StyledComboBox {
                 id: choice; objectName: "choice"
                 Layout.preferredWidth: Math.min(360,panel.width*0.48)
@@ -51,8 +51,8 @@ Item {
             visible: !!panel.selection.key
             Layout.fillWidth: true
             EditorialLabel { text: panel.selection.name || panel.selection.symbol || ""; color: panel.ink; Layout.fillWidth: true; wrapMode: Text.WordWrap }
-            StyledButton { text: qsTr("Выбрать другой фонд"); visible: panel.selection.kind==="fund"; onClicked: fundDialog.open() }
-            StyledButton { text: panel.controller && panel.controller.benchmarkBusy ? qsTr("Загрузка…") : qsTr("Обновить историю"); enabled: panel.controller && !panel.controller.benchmarkBusy && !!panel.comparison.canRefresh; onClicked: panel.controller.refreshBenchmark() }
+            StyledButton { text: "Выбрать другой фонд"; visible: panel.selection.kind==="fund"; onClicked: fundDialog.open() }
+            StyledButton { text: panel.controller && panel.controller.benchmarkBusy ? "Загрузка…" : "Обновить историю"; enabled: panel.controller && !panel.controller.benchmarkBusy && !!panel.comparison.canRefresh; onClicked: panel.controller.refreshBenchmark() }
         }
         EditorialLabel {
             visible: !!panel.selection.key
@@ -60,40 +60,40 @@ Item {
             color: panel.muted
             wrapMode: Text.WordWrap
             text: panel.selection.kind==="fund"
-                ? qsTr("Сравнение по биржевой цене пая. Выплаты владельцу пая и дробления отдельно не учитываются. Расходы управления, уже отражённые в цене, остаются в ней.")
-                : panel.selection.totalReturn ? qsTr("Полная доходность брутто: индекс включает реинвестирование выплат до налогов. Ваши личные комиссии и налоги в ориентире не учитываются.")
-                : qsTr("Ценовой индекс: дивиденды не включены. Доходность вашего счёта учитывает записанные выплаты и расходы.")
+                ? "Сравнение по биржевой цене пая. Выплаты владельцу пая и дробления отдельно не учитываются. Расходы управления, уже отражённые в цене, остаются в ней."
+                : panel.selection.totalReturn ? "Полная доходность брутто: индекс включает реинвестирование выплат до налогов. Ваши личные комиссии и налоги в ориентире не учитываются."
+                : "Ценовой индекс: дивиденды не включены. Доходность вашего счёта учитывает записанные выплаты и расходы."
         }
         EditorialLabel { visible: panel.controller && panel.controller.benchmarkError.length>0; text: panel.controller ? panel.controller.benchmarkError : ""; color: (Appearance.desktop ? "#b84932" : "#B94F48"); wrapMode: Text.WordWrap; Layout.fillWidth: true }
         EditorialLabel {
             visible: !!panel.comparison.available && panel.comparison.maximumQuoteAgeDays>7
             Layout.fillWidth:true;wrapMode:Text.WordWrap;color:panel.muted
-            text:qsTr("В части периода последняя биржевая цена старше семи дней. Торги могли не проводиться или быть приостановлены. Фактическая дата цены видна в подсказке на графике.")
+            text:"В части периода последняя биржевая цена старше семи дней. Торги могли не проводиться или быть приостановлены. Фактическая дата цены видна в подсказке на графике."
         }
-        EditorialLabel { visible: !panel.comparison.available; text: panel.comparison.reason || qsTr("Выберите ориентир для сравнения."); color: panel.muted; wrapMode: Text.WordWrap; Layout.fillWidth: true }
+        EditorialLabel { visible: !panel.comparison.available; text: panel.comparison.reason || "Выберите ориентир для сравнения."; color: panel.muted; wrapMode: Text.WordWrap; Layout.fillWidth: true }
         EditorialLabel {
             visible: !!panel.selection.key && !!panel.comparison.canRefresh
             Layout.fillWidth: true; wrapMode: Text.WordWrap; color: panel.muted; font.pixelSize: 12
-            text: qsTr("История ориентира: %1 — %2 · %3").arg(panel.date(panel.comparison.historyFrom)).arg(panel.date(panel.comparison.historyTo))
-                .arg(panel.comparison.historyLoaded ? qsTr("сохранена в базе") : qsTr("можно загрузить заранее"))
-                + (panel.comparison.historyFallback ? "\n" + qsTr("В выбранном фильтре ещё нет завершённых дней. Для предварительной загрузки используется последний год до вчерашнего дня.") : "")
-                + (!panel.comparison.available ? "\n" + qsTr("Котировки можно загрузить без оценок портфеля. Сравнение появится, когда накопится достаточная непрерывная история. Без фильтра и прошлых оценок загружается последний год.") : "")
+            text: "История ориентира: %1 — %2 · %3".arg(panel.date(panel.comparison.historyFrom)).arg(panel.date(panel.comparison.historyTo))
+                .arg(panel.comparison.historyLoaded ? "сохранена в базе" : "можно загрузить заранее")
+                + (panel.comparison.historyFallback ? "\n" + "В выбранном фильтре ещё нет завершённых дней. Для предварительной загрузки используется последний год до вчерашнего дня." : "")
+                + (!panel.comparison.available ? "\n" + "Котировки можно загрузить без оценок портфеля. Сравнение появится, когда накопится достаточная непрерывная история. Без фильтра и прошлых оценок загружается последний год." : "")
         }
         EditorialLabel {
             visible: !!panel.comparison.available
             Layout.fillWidth: true
             color: panel.muted
             wrapMode: Text.WordWrap
-            text: qsTr("%1 — %2 · Валюта: %3 · Текущий день исключён").arg(panel.date(panel.comparison.from)).arg(panel.date(panel.comparison.to)).arg(panel.controller ? panel.controller.investmentPerformance.currency : "")
+            text: "%1 — %2 · Валюта: %3 · Текущий день исключён".arg(panel.date(panel.comparison.from)).arg(panel.date(panel.comparison.to)).arg(panel.controller ? panel.controller.investmentPerformance.currency : "")
         }
         GridLayout {
             visible: !!panel.comparison.available
             Layout.fillWidth: true
             columns: 3
             Repeater {
-                model: [{title:qsTr("Ваш результат"),value:panel.percent(panel.comparison.portfolioPercent)},
-                    {title:qsTr("Результат ориентира"),value:panel.percent(panel.comparison.benchmarkPercent)},
-                    {title:qsTr("Разница результатов"),value:panel.available(panel.comparison.differencePoints)?Number(panel.comparison.differencePoints).toLocaleString(Qt.locale(),'f',2)+qsTr(" п.п."):"—"}]
+                model: [{title:"Ваш результат",value:panel.percent(panel.comparison.portfolioPercent)},
+                    {title:"Результат ориентира",value:panel.percent(panel.comparison.benchmarkPercent)},
+                    {title:"Разница результатов",value:panel.available(panel.comparison.differencePoints)?Number(panel.comparison.differencePoints).toLocaleString(Qt.locale(),'f',2)+" п.п.":"—"}]
                 delegate: Rectangle {
                     required property var modelData
                     required property int index
@@ -164,36 +164,36 @@ Item {
                 onPositionChanged:function(mouse){plot.hovered=mouse.x>=plot.leftMargin && mouse.x<=width-plot.rightMargin && mouse.y>=plot.topMargin && mouse.y<=height-plot.bottomMargin?Math.max(0,Math.min(panel.points.length-1,Math.round((mouse.x-plot.leftMargin)/plot.plotWidth*(panel.points.length-1)))):-1;graph.requestPaint()}
                 onExited:{plot.hovered=-1;graph.requestPaint()}
                 ToolTip.visible:plot.hovered>=0 && plot.hovered<panel.points.length
-                ToolTip.text:plot.hovered>=0 && plot.hovered<panel.points.length?panel.date(panel.points[plot.hovered].date)+"\n"+qsTr("Ваш результат: %1").arg(panel.percent(panel.points[plot.hovered].portfolio))+"\n"+qsTr("Ориентир: %1").arg(panel.percent(panel.points[plot.hovered].benchmark))+"\n"+qsTr("Дата цены ориентира: %1").arg(panel.date(panel.points[plot.hovered].quoteDate)):""
+                ToolTip.text:plot.hovered>=0 && plot.hovered<panel.points.length?panel.date(panel.points[plot.hovered].date)+"\n"+"Ваш результат: %1".arg(panel.percent(panel.points[plot.hovered].portfolio))+"\n"+"Ориентир: %1".arg(panel.percent(panel.points[plot.hovered].benchmark))+"\n"+"Дата цены ориентира: %1".arg(panel.date(panel.points[plot.hovered].quoteDate)):""
             }
         }
         EditorialRowLayout {
             visible: !!panel.comparison.available
             Rectangle { implicitWidth:20;implicitHeight:3;color:panel.ink }
-            EditorialLabel { text:qsTr("Ваш результат");color:panel.ink }
+            EditorialLabel { text:"Ваш результат";color:panel.ink }
             Rectangle { implicitWidth:20;implicitHeight:3;color:panel.accent }
-            EditorialLabel { text:panel.selection.symbol || qsTr("Ориентир");color:panel.ink }
+            EditorialLabel { text:panel.selection.symbol || "Ориентир";color:panel.ink }
             Item { Layout.fillWidth:true }
         }
         EditorialLabel {
             visible: !!panel.selection.key
             Layout.fillWidth:true;wrapMode:Text.WordWrap;color:panel.muted;font.pixelSize:12
-            text:qsTr("Обе линии начинаются с нуля и показывают номинальную доходность без поправки на инфляцию. Разница указана в процентных пунктах. Доходность счёта очищена от пополнений и выводов. Сравнение идёт по календарным датам и ценам закрытия, без внутридневной синхронизации. В дни без новой биржевой цены сохраняется последняя предыдущая цена; её дата показана в подсказке.")
+            text:"Обе линии начинаются с нуля и показывают номинальную доходность без поправки на инфляцию. Разница указана в процентных пунктах. Доходность счёта очищена от пополнений и выводов. Сравнение идёт по календарным датам и ценам закрытия, без внутридневной синхронизации. В дни без новой биржевой цены сохраняется последняя предыдущая цена; её дата показана в подсказке."
         }
     }
     EditorialDialog {
         id: fundDialog; objectName: "fundDialog"
         parent:Overlay.overlay;anchors.centerIn:parent;width:Math.min(620,parent.width-32);modal:true;padding:24
-        title:qsTr("Биржевой фонд для сравнения")
+        title:"Биржевой фонд для сравнения"
         onClosed:choice.currentIndex=panel.selectionIndex()
         contentItem:EditorialColumnLayout {
             spacing:16
             EditorialRowLayout {
                 Layout.fillWidth:true
-                TextField { id:fundQuery; objectName: "fundQuery";Layout.fillWidth:true;placeholderText:qsTr("Название или обозначение фонда");onAccepted:panel.controller.searchBenchmarkFunds(text) }
-                StyledButton { text:qsTr("Найти");enabled:panel.controller && !panel.controller.benchmarkSearchBusy;onClicked:panel.controller.searchBenchmarkFunds(fundQuery.text) }
+                TextField { id:fundQuery; objectName: "fundQuery";Layout.fillWidth:true;placeholderText:"Название или обозначение фонда";onAccepted:panel.controller.searchBenchmarkFunds(text) }
+                StyledButton { text:"Найти";enabled:panel.controller && !panel.controller.benchmarkSearchBusy;onClicked:panel.controller.searchBenchmarkFunds(fundQuery.text) }
             }
-            EditorialLabel { visible:panel.controller && panel.controller.benchmarkSearchBusy;text:qsTr("Ищем биржевые фонды…");color:panel.muted }
+            EditorialLabel { visible:panel.controller && panel.controller.benchmarkSearchBusy;text:"Ищем биржевые фонды…";color:panel.muted }
             EditorialLabel { visible:panel.controller && panel.controller.benchmarkSearchError.length>0;text:panel.controller?panel.controller.benchmarkSearchError:"";wrapMode:Text.WordWrap;Layout.fillWidth:true;color:panel.muted }
             ListView {
                 Layout.fillWidth:true;Layout.preferredHeight:260;clip:true
@@ -204,7 +204,7 @@ Item {
                     onClicked:{panel.controller.selectBenchmarkFund(modelData.index);fundDialog.close()}
                 }
             }
-            StyledButton { text:qsTr("Закрыть");onClicked:fundDialog.close() }
+            StyledButton { text:"Закрыть";onClicked:fundDialog.close() }
         }
     }
 }

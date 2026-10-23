@@ -14,11 +14,11 @@ ColumnLayout {
         Layout.fillWidth: true
         options: [
             {
-                label: qsTr("Расходы"),
+                label: "Расходы",
                 value: "expense"
             },
             {
-                label: qsTr("Доходы"),
+                label: "Доходы",
                 value: "income"
             }
         ]
@@ -78,7 +78,7 @@ ColumnLayout {
             font.family: MobileTheme.mono
             anchors.centerIn: parent
             visible: list.count === 0
-            text: qsTr("Категорий пока нет")
+            text: "Категорий пока нет"
             font.pixelSize: 12
             color: MobileTheme.muted
         }

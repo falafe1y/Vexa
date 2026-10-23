@@ -5,7 +5,7 @@ import "../dashboard"
 
 EditorialPage {
     id: page
-    title: qsTr("Заметки.")
+    title: "Заметки."
     EditorialText {
         width: parent.width
         height: visible ? 48 : 0
@@ -55,7 +55,7 @@ EditorialPage {
             selectedTextColor: "#f3eddf"
             font.family: "Arimo"
             font.pixelSize: 18
-            placeholderText: qsTr("Запишите мысли, планы или важные детали…")
+            placeholderText: "Запишите мысли, планы или важные детали…"
             background: null
             Component.onCompleted: {
                 text = page.controller.notesText;

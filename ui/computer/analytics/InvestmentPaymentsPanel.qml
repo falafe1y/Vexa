@@ -24,17 +24,17 @@ EditorialColumnLayout {
     function amount(n) { return available(n) ? Number(n / 100).toLocaleString(Qt.locale(), 'f', 2) + " " + currency : "—" }
     function date(s) { return s ? s.substr(8, 2) + "." + s.substr(5, 2) + "." + s.substr(0, 4) : "—" }
     spacing: 12
-    EditorialLabel { text: qsTr("Аналитика выплат"); color: panel.ink; font.pixelSize: 17; font.bold: true }
-    EditorialLabel { Layout.fillWidth: true; wrapMode: Text.WordWrap; color: panel.muted; text: qsTr("Дивиденды, купоны и проценты по вкладам за выбранный период. Каждая выплата переведена в валюту отчёта по историческому курсу на её дату.") }
+    EditorialLabel { text: "Аналитика выплат"; color: panel.ink; font.pixelSize: 17; font.bold: true }
+    EditorialLabel { Layout.fillWidth: true; wrapMode: Text.WordWrap; color: panel.muted; text: "Дивиденды, купоны и проценты по вкладам за выбранный период. Каждая выплата переведена в валюту отчёта по историческому курсу на её дату." }
     GridLayout {
         Layout.fillWidth: true
         columns: panel.width < 750 ? 2 : 4
         columnSpacing: Appearance.desktop ? 12 : 10; rowSpacing: Appearance.desktop ? 12 : 10
         Repeater {
-            model: [{label: qsTr("Получено"), value: panel.amount(panel.payments.netMinor)},
-                {label: qsTr("До расходов"), value: panel.amount(panel.payments.grossMinor)},
-                {label: qsTr("Комиссии выплат"), value: panel.amount(panel.payments.feesMinor)},
-                {label: qsTr("Удержания выплат"), value: panel.amount(panel.payments.taxMinor)}]
+            model: [{label: "Получено", value: panel.amount(panel.payments.netMinor)},
+                {label: "До расходов", value: panel.amount(panel.payments.grossMinor)},
+                {label: "Комиссии выплат", value: panel.amount(panel.payments.feesMinor)},
+                {label: "Удержания выплат", value: panel.amount(panel.payments.taxMinor)}]
             delegate: Rectangle {
                 required property var modelData
                 required property int index
@@ -51,20 +51,20 @@ EditorialColumnLayout {
             }
         }
     }
-    EditorialLabel { Layout.fillWidth: true; wrapMode: Text.WordWrap; color: panel.muted; text: qsTr("Записей: %1").arg(panel.payments.count || 0) + (panel.available(panel.payments.netMinor) ? "" : qsTr(" · Известная часть полученного: %1").arg(panel.amount(panel.payments.knownNetMinor))) }
-    EditorialLabel { Layout.fillWidth: true; wrapMode: Text.WordWrap; color: panel.muted; font.pixelSize: 12; text: qsTr("Если расходы не указаны отдельно, сумма до расходов и соответствующие итоги не вычисляются. Проценты по вкладам записываются чистой суммой: их комиссии и удержания неизвестны. Комиссии покупки и продажи относятся к результату позиций.") }
+    EditorialLabel { Layout.fillWidth: true; wrapMode: Text.WordWrap; color: panel.muted; text: "Записей: %1".arg(panel.payments.count || 0) + (panel.available(panel.payments.netMinor) ? "" : " · Известная часть полученного: %1".arg(panel.amount(panel.payments.knownNetMinor))) }
+    EditorialLabel { Layout.fillWidth: true; wrapMode: Text.WordWrap; color: panel.muted; font.pixelSize: 12; text: "Если расходы не указаны отдельно, сумма до расходов и соответствующие итоги не вычисляются. Проценты по вкладам записываются чистой суммой: их комиссии и удержания неизвестны. Комиссии покупки и продажи относятся к результату позиций." }
     Repeater {
         model: panel.payments.kinds || []
         delegate: EditorialRowLayout {
             required property var modelData
             Layout.fillWidth: true
-            EditorialLabel { Layout.fillWidth: true; text: modelData.label + qsTr(" · Записей: %1").arg(modelData.count); color: panel.ink }
+            EditorialLabel { Layout.fillWidth: true; text: modelData.label + " · Записей: %1".arg(modelData.count); color: panel.ink }
             EditorialLabel { text: panel.amount(modelData.netMinor); color: panel.positive; font.bold: true }
         }
     }
     EditorialRowLayout {
         visible: panel.months.length > 0; Layout.fillWidth: true
-        EditorialLabel { text: qsTr("Получено по месяцам"); color: panel.ink; font.bold: true; Layout.fillWidth: true }
+        EditorialLabel { text: "Получено по месяцам"; color: panel.ink; font.bold: true; Layout.fillWidth: true }
         InvestmentMetricHelp { metric: "payments_months"; ink: panel.ink; muted: panel.muted }
     }
     Repeater {
@@ -80,7 +80,7 @@ EditorialColumnLayout {
             EditorialLabel { text: panel.amount(modelData.netMinor); color: panel.ink; Layout.preferredWidth: Appearance.desktop ? 156 : 155; horizontalAlignment: Text.AlignRight }
         }
     }
-    EditorialLabel { visible: (panel.payments.assets || []).length > 0; text: qsTr("Источники выплат"); color: panel.ink; font.bold: true }
+    EditorialLabel { visible: (panel.payments.assets || []).length > 0; text: "Источники выплат"; color: panel.ink; font.bold: true }
     Repeater {
         model: panel.payments.assets || []
         delegate: EditorialRowLayout {
@@ -90,8 +90,8 @@ EditorialColumnLayout {
             EditorialLabel { text: panel.amount(modelData.netMinor); color: panel.ink }
         }
     }
-    EditorialLabel { visible: !(panel.payments.count > 0); text: qsTr("За выбранный период выплаты не записаны."); color: panel.muted }
-    StyledButton { visible: panel.payments.count > 0; text: panel.eventsOpen ? qsTr("Скрыть выплаты") : qsTr("Показать выплаты"); onClicked: panel.eventsOpen = !panel.eventsOpen }
+    EditorialLabel { visible: !(panel.payments.count > 0); text: "За выбранный период выплаты не записаны."; color: panel.muted }
+    StyledButton { visible: panel.payments.count > 0; text: panel.eventsOpen ? "Скрыть выплаты" : "Показать выплаты"; onClicked: panel.eventsOpen = !panel.eventsOpen }
     ListView {
         Layout.fillWidth: true
         Layout.preferredHeight: visible ? Math.min(330, count * 94) : 0
@@ -110,7 +110,7 @@ EditorialColumnLayout {
                 EditorialLabel { text: panel.amount(modelData.netMinor); color: panel.ink; font.bold: true }
             }
             EditorialLabel { Layout.fillWidth: true; elide: Text.ElideRight; text: modelData.account + " · " + Number(modelData.nativeNetMinor / 100).toLocaleString(Qt.locale(), 'f', 2) + " " + modelData.currency; color: panel.muted; font.pixelSize: 12 }
-            EditorialLabel { Layout.fillWidth: true; wrapMode: Text.WordWrap; text: qsTr("До расходов: %1 · Комиссии: %2 · Удержания: %3").arg(panel.amount(modelData.grossMinor)).arg(panel.amount(modelData.feesMinor)).arg(panel.amount(modelData.taxMinor)); color: panel.muted; font.pixelSize: 12 }
+            EditorialLabel { Layout.fillWidth: true; wrapMode: Text.WordWrap; text: "До расходов: %1 · Комиссии: %2 · Удержания: %3".arg(panel.amount(modelData.grossMinor)).arg(panel.amount(modelData.feesMinor)).arg(panel.amount(modelData.taxMinor)); color: panel.muted; font.pixelSize: 12 }
             Rectangle { Layout.fillWidth: true; implicitHeight: 1; color: panel.line }
         }
     }

@@ -18,7 +18,7 @@ namespace {
 const QString AndroidAccessRecord = QStringLiteral("vexa-application-access-v1.bin");
 QString unavailable()
 {
-    return QCoreApplication::translate("AppAccess", "Системное хранилище учётных данных недоступно. Разблокируйте его и повторите попытку.");
+    return QStringLiteral("Системное хранилище учётных данных недоступно. Разблокируйте его и повторите попытку.");
 }
 class NativePasswordStore final : public PasswordStore {
 public:
@@ -37,7 +37,7 @@ public:
         return false;
 #elif defined(Q_OS_LINUX) && !defined(Q_OS_ANDROID)
         if (QStandardPaths::findExecutable("secret-tool").isEmpty()) {
-            error = QCoreApplication::translate("AppAccess", "Системное хранилище недоступно: не найден secret-tool.");
+            error = QStringLiteral("Системное хранилище недоступно: не найден secret-tool.");
             return false;
         }
         const auto bus = QDBusConnection::sessionBus();
@@ -49,7 +49,7 @@ public:
         }
         const auto path = qvariant_cast<QDBusObjectPath>(reply.arguments().first()).path();
         if (path.isEmpty() || path == "/") {
-            error = QCoreApplication::translate("AppAccess", "Системное хранилище недоступно: хранилище по умолчанию не настроено.");
+            error = QStringLiteral("Системное хранилище недоступно: хранилище по умолчанию не настроено.");
             return false;
         }
         auto locked = QDBusMessage::createMethodCall("org.freedesktop.secrets", path, "org.freedesktop.DBus.Properties", "Get");
@@ -61,7 +61,7 @@ public:
         const auto property = qvariant_cast<QDBusVariant>(state.arguments().first()).variant();
         if (property.metaType().id() != QMetaType::Bool) { error = unavailable();return false; }
         if (property.toBool()) {
-            error = QCoreApplication::translate("AppAccess", "Системное хранилище заблокировано. Разблокируйте его и перезапустите Vexa.");
+            error = QStringLiteral("Системное хранилище заблокировано. Разблокируйте его и перезапустите Vexa.");
             return false;
         }
         return true;
@@ -128,7 +128,7 @@ private:
     {
         const auto executable = QStandardPaths::findExecutable("secret-tool");
         if (executable.isEmpty()) {
-            error = QCoreApplication::translate("AppAccess", "Для защиты паролем нужны secret-tool и системное хранилище Secret Service.");
+            error = QStringLiteral("Для защиты паролем нужны secret-tool и системное хранилище Secret Service.");
             return false;
         }
         QProcess process;

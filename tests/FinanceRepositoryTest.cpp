@@ -28,7 +28,6 @@ private slots:
     void cnyMigrationPreservesData();
     void storesCapitalSnapshotsAndTrajectorySettings();
     void preservesSelectedAccountAfterReopen();
-    void storesUiLanguage();
     void storesCurrencyRateSettings();
     void storesBankCsvProfiles();
     void bankCategoryRulesPersistAndRollbackWithImport();
@@ -479,7 +478,6 @@ void FinanceRepositoryTest::clearsAllUserDataAndResetsSettings()
     QVERIFY(repository.loadBankCsvProfiles().isEmpty());
     QVERIFY(repository.loadCategories().isEmpty());
     QCOMPARE(repository.loadAppCurrency(), QStringLiteral("RUB"));
-    QCOMPARE(repository.loadUiLanguage(), QStringLiteral("ru"));
     FinanceRepository reopened(directory.filePath(QStringLiteral("clear.sqlite3")));
     QVERIFY2(reopened.isOpen(), qPrintable(reopened.lastError()));
     QVERIFY(reopened.loadAccounts().isEmpty());
@@ -1348,28 +1346,6 @@ void FinanceRepositoryTest::migratesSavingsAccountsWithoutLosingTransactions()
     QVERIFY(account != accounts.cend());
     QCOMPARE(account->type(), AccountType::Other);
     QCOMPARE(reopened.loadTransactions().size(), 1);
-}
-
-void FinanceRepositoryTest::storesUiLanguage()
-{
-    QTemporaryDir temporaryDirectory;
-    QVERIFY(temporaryDirectory.isValid());
-    const QString databasePath = temporaryDirectory.filePath(
-        QStringLiteral("vexa-language-test.sqlite3"));
-
-    {
-        FinanceRepository repository(databasePath);
-        QVERIFY2(repository.isOpen(), qPrintable(repository.lastError()));
-        QCOMPARE(repository.loadUiLanguage(), QStringLiteral("ru"));
-        QVERIFY2(repository.saveUiLanguage(QStringLiteral("en")),
-                 qPrintable(repository.lastError()));
-    }
-
-    {
-        FinanceRepository repository(databasePath);
-        QVERIFY2(repository.isOpen(), qPrintable(repository.lastError()));
-        QCOMPARE(repository.loadUiLanguage(), QStringLiteral("en"));
-    }
 }
 
 void FinanceRepositoryTest::preservesSelectedAccountAfterReopen()

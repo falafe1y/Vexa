@@ -173,12 +173,12 @@ EditorialDialog {
             startsOn: dateToIso(startsOn)
         });
         if (!result.ok) {
-            formError.text = result.error || qsTr("Не удалось сохранить операцию");
+            formError.text = result.error || "Не удалось сохранить операцию";
             return;
         }
         statusText = editingId.length > 0
-                   ? qsTr("Расписание обновлено")
-                   : qsTr("Операция запланирована");
+                   ? "Расписание обновлено"
+                   : "Операция запланирована";
         editingId = "";
         pageIndex = 0;
     }
@@ -270,10 +270,10 @@ EditorialDialog {
                 ruleVisible: false
                 Layout.fillWidth: true
                 text: dialog.pageIndex === 0
-                    ? qsTr("Запланированные операции")
+                    ? "Запланированные операции"
                     : dialog.editingId.length > 0
-                      ? qsTr("Редактирование расписания")
-                      : qsTr("Новая запланированная операция")
+                      ? "Редактирование расписания"
+                      : "Новая запланированная операция"
                 color: dialog.textColor
                 }
         }
@@ -336,7 +336,7 @@ EditorialDialog {
                                     EditorialLabel {
                                         Layout.fillWidth: true
                                         text: modelData.scheduleText
-                                            + " · " + qsTr("следующая: %1")
+                                            + " · " + "следующая: %1"
                                                 .arg(Qt.formatDate(
                                                     dialog.dateFromIso(modelData.nextDate),
                                                     "dd.MM.yyyy"))
@@ -363,11 +363,11 @@ EditorialDialog {
                                     font.weight: Font.DemiBold
                                 }
                                 FormButton {
-                                    text: qsTr("Изменить")
+                                    text: "Изменить"
                                     onClicked: dialog.openForEdit(modelData)
                                 }
                                 FormButton {
-                                    text: qsTr("Удалить")
+                                    text: "Удалить"
                                     destructive: true
                                     onClicked: deleteDialog.openFor(modelData)
                                 }
@@ -377,7 +377,7 @@ EditorialDialog {
                         EditorialLabel {
                             anchors.centerIn: parent
                             visible: scheduleList.count === 0
-                            text: qsTr("Запланированных операций пока нет")
+                            text: "Запланированных операций пока нет"
                             color: dialog.mutedColor
                         }
                     }
@@ -395,11 +395,11 @@ EditorialDialog {
                     x: 20
                     spacing: Appearance.desktop ? 12 : 11
 
-                    EditorialLabel { text: qsTr("Название"); color: dialog.mutedColor }
+                    EditorialLabel { text: "Название"; color: dialog.mutedColor }
                     FormField {
                         id: nameField; objectName: "nameField"
                         Layout.fillWidth: true
-                        placeholderText: qsTr("Например, аренда квартиры")
+                        placeholderText: "Например, аренда квартиры"
                     }
 
                     EditorialRowLayout {
@@ -407,13 +407,13 @@ EditorialDialog {
                         spacing: Appearance.desktop ? 12 : 10
                         EditorialColumnLayout {
                             Layout.fillWidth: true
-                            EditorialLabel { text: qsTr("Тип"); color: dialog.mutedColor }
+                            EditorialLabel { text: "Тип"; color: dialog.mutedColor }
                             FormCombo {
                                 id: typeBox; objectName: "typeBox"
                                 Layout.fillWidth: true
                                 model: [
-                                    { label: qsTr("Доход"), value: "income" },
-                                    { label: qsTr("Расход"), value: "expense" }
+                                    { label: "Доход", value: "income" },
+                                    { label: "Расход", value: "expense" }
                                 ]
                                 onActivated: {
                                     categoryBox.model = dialog.categoryItems(currentValue);
@@ -424,14 +424,14 @@ EditorialDialog {
                         }
                         EditorialColumnLayout {
                             Layout.fillWidth: true
-                            EditorialLabel { text: qsTr("Сумма"); color: dialog.mutedColor }
+                            EditorialLabel { text: "Сумма"; color: dialog.mutedColor }
                             FormField {
                                 id: amountField; objectName: "amountField"
                                 implicitWidth: 160
                                 Layout.minimumWidth: 0
                                 Layout.fillWidth: true
                                 autoScroll: true
-                                placeholderText: qsTr("0,00")
+                                placeholderText: "0,00"
                                 inputMethodHints: Qt.ImhFormattedNumbersOnly
                                 validator: DoubleValidator {
                                     bottom: 0.01
@@ -442,7 +442,7 @@ EditorialDialog {
                         }
                         EditorialColumnLayout {
                             Layout.preferredWidth: 120
-                            EditorialLabel { text: qsTr("Валюта"); color: dialog.mutedColor }
+                            EditorialLabel { text: "Валюта"; color: dialog.mutedColor }
                             FormCombo {
                                 id: currencyBox; objectName: "currencyBox"
                                 Layout.fillWidth: true
@@ -456,24 +456,24 @@ EditorialDialog {
                         }
                     }
 
-                    EditorialLabel { text: qsTr("Счёт"); color: dialog.mutedColor }
+                    EditorialLabel { text: "Счёт"; color: dialog.mutedColor }
                     FormCombo {
                         id: accountBox; objectName: "accountBox"
                         Layout.fillWidth: true
                         onActivated: dialog.selectAccountCurrency()
                     }
-                    EditorialLabel { text: qsTr("Категория"); color: dialog.mutedColor }
+                    EditorialLabel { text: "Категория"; color: dialog.mutedColor }
                     FormCombo { id: categoryBox; objectName: "categoryBox"; Layout.fillWidth: true }
 
-                    EditorialLabel { text: qsTr("Повторение"); color: dialog.mutedColor }
+                    EditorialLabel { text: "Повторение"; color: dialog.mutedColor }
                     FormCombo {
                         id: recurrenceBox; objectName: "recurrenceBox"
                         Layout.fillWidth: true
                         model: [
-                            { label: qsTr("Ежедневно"), value: "daily" },
-                            { label: qsTr("Каждую неделю"), value: "weekly" },
-                            { label: qsTr("Каждый месяц в выбранное число"), value: "monthly_day" },
-                            { label: qsTr("Выбранный день недели каждого месяца"), value: "monthly_weekday" }
+                            { label: "Ежедневно", value: "daily" },
+                            { label: "Каждую неделю", value: "weekly" },
+                            { label: "Каждый месяц в выбранное число", value: "monthly_day" },
+                            { label: "Выбранный день недели каждого месяца", value: "monthly_weekday" }
                         ]
                     }
 
@@ -484,16 +484,16 @@ EditorialDialog {
                         EditorialColumnLayout {
                             visible: recurrenceBox.currentValue === "monthly_weekday"
                             Layout.fillWidth: true
-                            EditorialLabel { text: qsTr("Неделя месяца"); color: dialog.mutedColor }
+                            EditorialLabel { text: "Неделя месяца"; color: dialog.mutedColor }
                             FormCombo {
                                 id: weekBox; objectName: "weekBox"
                                 Layout.fillWidth: true
                                 model: [
-                                    { label: qsTr("Первая"), value: 1 },
-                                    { label: qsTr("Вторая"), value: 2 },
-                                    { label: qsTr("Третья"), value: 3 },
-                                    { label: qsTr("Четвёртая"), value: 4 },
-                                    { label: qsTr("Последняя"), value: 5 }
+                                    { label: "Первая", value: 1 },
+                                    { label: "Вторая", value: 2 },
+                                    { label: "Третья", value: 3 },
+                                    { label: "Четвёртая", value: 4 },
+                                    { label: "Последняя", value: 5 }
                                 ]
                             }
                         }
@@ -501,25 +501,25 @@ EditorialDialog {
                             visible: recurrenceBox.currentValue === "weekly"
                                   || recurrenceBox.currentValue === "monthly_weekday"
                             Layout.fillWidth: true
-                            EditorialLabel { text: qsTr("День недели"); color: dialog.mutedColor }
+                            EditorialLabel { text: "День недели"; color: dialog.mutedColor }
                             FormCombo {
                                 id: weekdayBox; objectName: "weekdayBox"
                                 Layout.fillWidth: true
                                 model: [
-                                    { label: qsTr("Понедельник"), value: 1 },
-                                    { label: qsTr("Вторник"), value: 2 },
-                                    { label: qsTr("Среда"), value: 3 },
-                                    { label: qsTr("Четверг"), value: 4 },
-                                    { label: qsTr("Пятница"), value: 5 },
-                                    { label: qsTr("Суббота"), value: 6 },
-                                    { label: qsTr("Воскресенье"), value: 7 }
+                                    { label: "Понедельник", value: 1 },
+                                    { label: "Вторник", value: 2 },
+                                    { label: "Среда", value: 3 },
+                                    { label: "Четверг", value: 4 },
+                                    { label: "Пятница", value: 5 },
+                                    { label: "Суббота", value: 6 },
+                                    { label: "Воскресенье", value: 7 }
                                 ]
                             }
                         }
                         EditorialColumnLayout {
                             visible: recurrenceBox.currentValue === "monthly_day"
                             Layout.fillWidth: true
-                            EditorialLabel { text: qsTr("Число месяца"); color: dialog.mutedColor }
+                            EditorialLabel { text: "Число месяца"; color: dialog.mutedColor }
                             FormCombo {
                                 id: dayBox; objectName: "dayBox"
                                 Layout.fillWidth: true
@@ -528,7 +528,7 @@ EditorialDialog {
                         }
                     }
 
-                    EditorialLabel { text: qsTr("Начать с"); color: dialog.mutedColor }
+                    EditorialLabel { text: "Начать с"; color: dialog.mutedColor }
                     FormButton {
                         id: startDateButton; objectName: "startDateButton"
                         Layout.fillWidth: true
@@ -539,7 +539,7 @@ EditorialDialog {
                     EditorialLabel {
                         Layout.fillWidth: true
                         visible: recurrenceBox.currentValue === "monthly_day"
-                        text: qsTr("Если выбранного числа нет в месяце, операция будет создана в последний день месяца.")
+                        text: "Если выбранного числа нет в месяце, операция будет создана в последний день месяца."
                         color: dialog.mutedColor
                         font.pixelSize: Appearance.desktop ? 16 : 14
                         wrapMode: Text.WordWrap
@@ -562,26 +562,26 @@ EditorialDialog {
             Item { Layout.fillWidth: true }
             FormButton {
                 visible: dialog.pageIndex === 0
-                text: qsTr("Закрыть")
+                text: "Закрыть"
                 onClicked: dialog.close()
             }
             FormButton {
                 visible: dialog.pageIndex === 0
-                text: qsTr("+ Добавить")
+                text: "+ Добавить"
                 primary: true
                 onClicked: dialog.openForNew()
             }
             FormButton {
                 id: formCancelButton; objectName: "formCancelButton"
                 visible: dialog.pageIndex === 1
-                text: qsTr("Отмена")
+                text: "Отмена"
                 onClicked: dialog.pageIndex = 0
             }
             FormButton {
                 id: formSubmitButton; objectName: "formSubmitButton"
                 visible: dialog.pageIndex === 1
                 text: dialog.editingId.length > 0
-                    ? qsTr("Сохранить") : qsTr("Добавить")
+                    ? "Сохранить" : "Добавить"
                 primary: true
                 onClicked: dialog.submit()
             }
@@ -603,10 +603,10 @@ EditorialDialog {
         }
         function confirmDelete() {
             if (row && dialog.controller.deleteScheduledTransaction(row.id)) {
-                dialog.statusText = qsTr("Расписание удалено");
+                dialog.statusText = "Расписание удалено";
                 close();
             } else {
-                deleteError.text = qsTr("Не удалось удалить расписание");
+                deleteError.text = "Не удалось удалить расписание";
             }
         }
         Shortcut {
@@ -628,12 +628,12 @@ EditorialDialog {
         contentItem: EditorialDialogForm {
             spacing: Appearance.desktop ? 16 : 13
             EditorialDialogTitle {
-                text: qsTr("Удалить расписание?")
+                text: "Удалить расписание?"
                 color: dialog.textColor
                 }
             EditorialLabel {
                 Layout.fillWidth: true
-                text: qsTr("Будущие операции больше не будут создаваться. Уже добавленные в историю операции сохранятся.")
+                text: "Будущие операции больше не будут создаваться. Уже добавленные в историю операции сохранятся."
                 color: dialog.mutedColor
                 wrapMode: Text.WordWrap
             }
@@ -648,12 +648,12 @@ EditorialDialog {
                 Item { Layout.fillWidth: true }
                 FormButton {
                     id: deleteCancelButton; objectName: "deleteCancelButton"
-                    text: qsTr("Отмена")
+                    text: "Отмена"
                     onClicked: deleteDialog.close()
                 }
                 FormButton {
                     id: deleteSubmitButton; objectName: "deleteSubmitButton"
-                    text: qsTr("Удалить")
+                    text: "Удалить"
                     destructive: true
                     onClicked: deleteDialog.confirmDelete()
                 }
@@ -691,7 +691,7 @@ EditorialDialog {
         contentItem: EditorialDialogForm {
             spacing: 12
             EditorialDialogTitle {
-                text: qsTr("Дата начала")
+                text: "Дата начала"
                 color: dialog.textColor
                 }
             EditorialRowLayout {
@@ -721,8 +721,7 @@ EditorialDialog {
             DayOfWeekRow {
                 spacing: 4
                 Layout.fillWidth: true
-                locale: Qt.locale(dialog.controller.uiLanguage === "en"
-                                  ? "en_US" : "ru_RU")
+                locale: Qt.locale("ru_RU")
                 delegate: EditorialLabel {
                     required property string shortName
                     text: shortName
@@ -737,8 +736,7 @@ EditorialDialog {
                 Layout.preferredHeight: Math.max(0, (width - spacing * 6) / 7 * 6 + spacing * 5)
                 month: dateDialog.displayedMonth
                 year: dateDialog.displayedYear
-                locale: Qt.locale(dialog.controller.uiLanguage === "en"
-                                  ? "en_US" : "ru_RU")
+                locale: Qt.locale("ru_RU")
                 delegate: Button {
                     id: calendarDay; objectName: "calendarDay"
                     required property var model
@@ -768,14 +766,14 @@ EditorialDialog {
             EditorialRowLayout {
                 Item { Layout.fillWidth: true }
                 FormButton {
-                    text: qsTr("Сегодня")
+                    text: "Сегодня"
                     onClicked: {
                         dialog.startsOn = new Date();
                         dateDialog.close();
                     }
                 }
                 FormButton {
-                    text: qsTr("Отмена")
+                    text: "Отмена"
                     onClicked: dateDialog.close()
                 }
             }

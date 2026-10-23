@@ -41,7 +41,7 @@ CoinReturn coinReturnOf(const QString& coin, double quantity, double priceUsd, q
     // The average purchase price and day are weighted by the quantity bought. No compounding, no roubles.
     CoinReturn result;
     if (priceUsd <= 0 || usdRubNowMicros <= 0) {
-        result.annual = AnnualReturn{std::nullopt, QObject::tr("нет цены монеты или курса доллара"), 0};
+        result.annual = AnnualReturn{std::nullopt, QStringLiteral("нет цены монеты или курса доллара"), 0};
         return result;
     }
     // Roubles = quantity × dollar price × CBR rate; kopecks are 1/100 of a rouble, micros are 1/1 000 000.
@@ -62,7 +62,7 @@ CoinReturn coinReturnOf(const QString& coin, double quantity, double priceUsd, q
             continue;
         const QString quote = pair.mid(coin.size());
         if (!isStableCoin(quote)) {
-            problem = QObject::tr("есть сделки не за доллары");
+            problem = QStringLiteral("есть сделки не за доллары");
             continue;
         }
         const QString side = row.value(QStringLiteral("tradeSide")).toString();
@@ -72,7 +72,7 @@ CoinReturn coinReturnOf(const QString& coin, double quantity, double priceUsd, q
         const double change = row.value(QStringLiteral("changeText")).toString().toDouble(&changeOk);
         if ((side != QStringLiteral("Buy") && side != QStringLiteral("Sell")) || !priceOk || !changeOk
             || tradePrice <= 0) {
-            problem = QObject::tr("в истории есть сделка без цены или количества");
+            problem = QStringLiteral("в истории есть сделка без цены или количества");
             continue;
         }
         const qint64 occurredAt = row.value(QStringLiteral("occurredAtMs")).toLongLong();
@@ -106,12 +106,12 @@ CoinReturn coinReturnOf(const QString& coin, double quantity, double priceUsd, q
         }
     }
     if (boughtQuantity <= 0 || costUsd <= 0) {
-        result.annual = AnnualReturn{std::nullopt, QObject::tr("нет сделок на бирже"), 0};
+        result.annual = AnnualReturn{std::nullopt, QStringLiteral("нет сделок на бирже"), 0};
         return result;
     }
     // Every coin on the exchange must come from trades or from a given purchase
     if (std::abs(quantity - netQuantity) > tolerance) {
-        result.annual = AnnualReturn{std::nullopt, QObject::tr("часть монет пришла не сделками: ввод, вывод или покупка вне биржи"), 0};
+        result.annual = AnnualReturn{std::nullopt, QStringLiteral("часть монет пришла не сделками: ввод, вывод или покупка вне биржи"), 0};
         return result;
     }
 
@@ -119,7 +119,7 @@ CoinReturn coinReturnOf(const QString& coin, double quantity, double priceUsd, q
     const double averageDayMs = dayMsTimesQuantity / boughtQuantity;
     const double days = (static_cast<double>(nowMillis) - averageDayMs) / 86400000.0;
     if (days < 30.0) {
-        result.annual = AnnualReturn{std::nullopt, QObject::tr("мало времени (меньше 30 дней)"), days};
+        result.annual = AnnualReturn{std::nullopt, QStringLiteral("мало времени (меньше 30 дней)"), days};
         return result;
     }
     // The price gain in percent, scaled to a year: simple, without compounding

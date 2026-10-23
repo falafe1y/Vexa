@@ -40,11 +40,11 @@ EditorialColumnLayout {
             spacing: Appearance.desktop ? 12 : 10
             EditorialRowLayout {
                 Layout.fillWidth: true
-                EditorialLabel { text: qsTr("Структура вложений"); color: panel.ink; font.pixelSize: 17; font.bold: true; Layout.fillWidth: true }
+                EditorialLabel { text: "Структура вложений"; color: panel.ink; font.pixelSize: 17; font.bold: true; Layout.fillWidth: true }
                 InvestmentMetricHelp { metric: "structure"; displayValue: panel.amount(panel.allocation.capitalMinor); ink: panel.ink; muted: panel.muted }
             }
-            StyledComboBox { id: group; objectName: "group"; Layout.fillWidth: true; model: [qsTr("По активам"), qsTr("По типам активов"), qsTr("По счетам"), qsTr("По валютам счетов")] }
-            EditorialLabel { Layout.fillWidth: true; wrapMode: Text.WordWrap; color: panel.muted; text: qsTr("На конец выбранного периода · Стоимость: %1").arg(panel.amount(panel.allocation.capitalMinor)) }
+            StyledComboBox { id: group; objectName: "group"; Layout.fillWidth: true; model: ["По активам", "По типам активов", "По счетам", "По валютам счетов"] }
+            EditorialLabel { Layout.fillWidth: true; wrapMode: Text.WordWrap; color: panel.muted; text: "На конец выбранного периода · Стоимость: %1".arg(panel.amount(panel.allocation.capitalMinor)) }
             Canvas {
                 id: donut
                 visible: !!panel.allocation.pieAvailable
@@ -75,7 +75,7 @@ EditorialColumnLayout {
                 Layout.fillWidth: true
                 wrapMode: Text.WordWrap
                 color: panel.muted
-                text: !panel.allocation.available ? qsTr("Для долей нужна полная оценка всех активов на конец периода.") : qsTr("При нулевой или отрицательной стоимости круговые доли не рассчитываются. Суммы приведены ниже.")
+                text: !panel.allocation.available ? "Для долей нужна полная оценка всех активов на конец периода." : "При нулевой или отрицательной стоимости круговые доли не рассчитываются. Суммы приведены ниже."
             }
             Repeater {
                 model: panel.holdings
@@ -89,7 +89,7 @@ EditorialColumnLayout {
                     EditorialLabel { Layout.preferredWidth: Appearance.desktop ? 68 : 66; horizontalAlignment: Text.AlignRight; text: panel.percent(panel.allocation.pieAvailable ? modelData.percent : null); color: panel.muted }
                 }
             }
-            EditorialLabel { visible: (panel.allocation.adjustments || []).length > 0; color: panel.muted; Layout.fillWidth: true; wrapMode: Text.WordWrap; text: qsTr("Неучтённый в деньгах результат контрактов: %1. Это переоценка, а не стоимость вложенного капитала; в круговые доли она не входит.").arg(panel.amount(panel.allocation.adjustmentMinor)) }
+            EditorialLabel { visible: (panel.allocation.adjustments || []).length > 0; color: panel.muted; Layout.fillWidth: true; wrapMode: Text.WordWrap; text: "Неучтённый в деньгах результат контрактов: %1. Это переоценка, а не стоимость вложенного капитала; в круговые доли она не входит.".arg(panel.amount(panel.allocation.adjustmentMinor)) }
             Repeater {
                 model: panel.allocation.adjustments || []
                 delegate: EditorialRowLayout {
@@ -99,7 +99,7 @@ EditorialColumnLayout {
                     EditorialLabel { text: panel.amount(modelData.amountMinor); color: panel.ink }
                 }
             }
-            EditorialLabel { Layout.fillWidth: true; wrapMode: Text.WordWrap; font.pixelSize: 12; color: panel.muted; text: qsTr("Валюты — валюты оценки на счетах, а не валютная экспозиция компаний и фондов. Заблокированное обеспечение контрактов не добавляется повторно к деньгам.") }
+            EditorialLabel { Layout.fillWidth: true; wrapMode: Text.WordWrap; font.pixelSize: 12; color: panel.muted; text: "Валюты — валюты оценки на счетах, а не валютная экспозиция компаний и фондов. Заблокированное обеспечение контрактов не добавляется повторно к деньгам." }
         }
         EditorialColumnLayout {
             Layout.fillWidth: true
@@ -107,11 +107,11 @@ EditorialColumnLayout {
             spacing: Appearance.desktop ? 12 : 10
             EditorialRowLayout {
                 Layout.fillWidth: true
-                EditorialLabel { text: qsTr("Вклад активов в результат"); color: panel.ink; font.pixelSize: 17; font.bold: true; Layout.fillWidth: true }
+                EditorialLabel { text: "Вклад активов в результат"; color: panel.ink; font.pixelSize: 17; font.bold: true; Layout.fillWidth: true }
                 InvestmentMetricHelp { metric: "contribution"; displayValue: panel.amount(panel.contributions.totalMinor); ink: panel.ink; muted: panel.muted }
             }
-            EditorialLabel { Layout.fillWidth: true; wrapMode: Text.WordWrap; color: panel.muted; text: qsTr("За выбранный период, включая закрытые позиции, выплаты и учтённые расходы. Пополнения и выводы исключены.") }
-            EditorialLabel { visible: !panel.contributions.available; Layout.fillWidth: true; wrapMode: Text.WordWrap; color: panel.muted; text: qsTr("Нужны достоверные начальная и конечная оценки, денежные потоки и курсы валют.") }
+            EditorialLabel { Layout.fillWidth: true; wrapMode: Text.WordWrap; color: panel.muted; text: "За выбранный период, включая закрытые позиции, выплаты и учтённые расходы. Пополнения и выводы исключены." }
+            EditorialLabel { visible: !panel.contributions.available; Layout.fillWidth: true; wrapMode: Text.WordWrap; color: panel.muted; text: "Нужны достоверные начальная и конечная оценки, денежные потоки и курсы валют." }
             Repeater {
                 model: panel.contributions.available ? panel.resultRows : []
                 delegate: EditorialColumnLayout {
@@ -136,8 +136,8 @@ EditorialColumnLayout {
                     }
                 }
             }
-            EditorialLabel { visible: !!panel.contributions.available; Layout.fillWidth: true; wrapMode: Text.WordWrap; color: panel.muted; text: qsTr("Валютная переоценка счетов: %1\nНеобъяснённая разница: %2\nИтого: %3").arg(panel.amount(panel.contributions.fxMinor)).arg(panel.amount(panel.contributions.unexplainedMinor)).arg(panel.amount(panel.contributions.totalMinor)) }
-            EditorialLabel { Layout.fillWidth: true; wrapMode: Text.WordWrap; color: panel.muted; font.pixelSize: 12; text: qsTr("Результат активов рассчитан при курсе валют счетов на начало периода. Валютная переоценка показана отдельно. Длина полос отражает сумму прибыли или убытка, а не долю вложений.") }
+            EditorialLabel { visible: !!panel.contributions.available; Layout.fillWidth: true; wrapMode: Text.WordWrap; color: panel.muted; text: "Валютная переоценка счетов: %1\nНеобъяснённая разница: %2\nИтого: %3".arg(panel.amount(panel.contributions.fxMinor)).arg(panel.amount(panel.contributions.unexplainedMinor)).arg(panel.amount(panel.contributions.totalMinor)) }
+            EditorialLabel { Layout.fillWidth: true; wrapMode: Text.WordWrap; color: panel.muted; font.pixelSize: 12; text: "Результат активов рассчитан при курсе валют счетов на начало периода. Валютная переоценка показана отдельно. Длина полос отражает сумму прибыли или убытка, а не долю вложений." }
         }
     }
 }

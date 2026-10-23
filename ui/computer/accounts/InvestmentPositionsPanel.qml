@@ -49,14 +49,14 @@ Rectangle {
             Layout.fillWidth: true
             EditorialLabel {
                 Layout.fillWidth: true
-                text: qsTr("Позиции")
+                text: "Позиции"
                 color: panel.textColor
                 font.pixelSize: 16
                 font.weight: Font.DemiBold
             }
             PanelButton {
                 text: panel.controller && panel.controller.investmentRefreshing
-                      ? qsTr("Обновляем…") : qsTr("Обновить цены")
+                      ? "Обновляем…" : "Обновить цены"
                 enabled: panel.controller && !panel.controller.investmentRefreshing
                 onClicked: panel.controller.refreshInvestmentQuotes()
             }
@@ -64,7 +64,7 @@ Rectangle {
 
         EditorialLabel {
             Layout.fillWidth: true; visible: panel.controller && panel.controller.investmentValuationIncomplete
-            text: qsTr("Оценка капитала неполная: для части позиций нужна котировка, курс или ручная стоимость.")
+            text: "Оценка капитала неполная: для части позиций нужна котировка, курс или ручная стоимость."
             color: panel.errorColor; wrapMode: Text.WordWrap; font.pixelSize: Appearance.desktop ? 16 : 14
         }
         ListView {
@@ -105,7 +105,7 @@ Rectangle {
                             Layout.fillWidth: true
                             text: modelData.accountName + " · "
                                   + modelData.quantityText + " " + modelData.quantityUnit
-                                  + (modelData.direction === -1 ? " · " + qsTr("Продано") : "")
+                                  + (modelData.direction === -1 ? " · " + "Продано" : "")
                             color: panel.mutedColor
                             font.pixelSize: Appearance.desktop ? 16 : 14
                             elide: Text.ElideRight
@@ -120,7 +120,7 @@ Rectangle {
                             Layout.fillWidth: true
                             text: modelData.hasQuote
                                   ? modelData.marketValueText + " " + modelData.currency
-                                  : qsTr("Цена недоступна")
+                                  : "Цена недоступна"
                             color: panel.textColor
                             horizontalAlignment: Text.AlignRight
                             font.weight: Font.DemiBold
@@ -134,7 +134,7 @@ Rectangle {
                         EditorialLabel {
                             Layout.fillWidth: true
                             text: modelData.hasMarketQuote && !modelData.manualValuation
-                                  ? modelData.priceText + (modelData.type === 2 ? "%" : modelData.type >= 9 ? " " + qsTr("пункт.") : " " + modelData.quoteCurrency)
+                                  ? modelData.priceText + (modelData.type === 2 ? "%" : modelData.type >= 9 ? " " + "пункт." : " " + modelData.quoteCurrency)
                                     + " · " + modelData.quoteSourceLabel
                                   : modelData.valuationError
                             color: panel.mutedColor; horizontalAlignment: Text.AlignRight; font.pixelSize: Appearance.desktop ? 16 : 14
@@ -152,15 +152,15 @@ Rectangle {
                     EditorialRowLayout {
                         Layout.columnSpan: panel.width < 620 ? 2 : 1
                         Layout.fillWidth: panel.width < 620
-                        PanelButton { text: qsTr("Операция"); onClicked: panel.operationRequested(modelData) }
-                        PanelButton { visible: panel.showEditButton; text: qsTr("Изменить"); onClicked: panel.editRequested(modelData) }
+                        PanelButton { text: "Операция"; onClicked: panel.operationRequested(modelData) }
+                        PanelButton { visible: panel.showEditButton; text: "Изменить"; onClicked: panel.editRequested(modelData) }
                         Item { visible: panel.width < 620; Layout.fillWidth: true }
                         PanelButton {
                         text: "×"
                         flat: true
                         destructive: true
                         ToolTip.visible: hovered
-                        ToolTip.text: qsTr("Удалить позицию")
+                        ToolTip.text: "Удалить позицию"
                         onClicked: {
                             if (panel.confirmDeletion)
                                 panel.deleteRequested(modelData);
@@ -189,7 +189,7 @@ Rectangle {
             EditorialLabel {
                 anchors.centerIn: parent
                 visible: parent.count === 0
-                text: qsTr("Позиций пока нет")
+                text: "Позиций пока нет"
                 color: panel.mutedColor
             }
         }

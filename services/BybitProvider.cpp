@@ -30,17 +30,17 @@ QString magnitude(const QString& value) {
     return value.startsWith('-') || value.startsWith('+') ? value.mid(1) : value;
 }
 QString operationName(const QString& type, const QString& side) {
-    if (type == "TRADE") return side == "Buy" ? QObject::tr("Покупка") : side == "Sell" ? QObject::tr("Продажа") : QObject::tr("Сделка");
-    if (type == "TRANSFER_IN") return QObject::tr("Перевод на счёт");
-    if (type == "TRANSFER_OUT") return QObject::tr("Перевод со счёта");
-    if (type == "SETTLEMENT") return QObject::tr("Расчёт по позиции");
-    if (type == "INTEREST") return QObject::tr("Проценты");
-    if (type == "BONUS") return QObject::tr("Бонус");
-    if (type == "FEE_REFUND") return QObject::tr("Возврат комиссии");
-    if (type == "CURRENCY_BUY") return QObject::tr("Покупка валюты");
-    if (type == "CURRENCY_SELL") return QObject::tr("Продажа валюты");
-    if (type == "LIQUIDATION") return QObject::tr("Ликвидация");
-    return QObject::tr("Операция") + " · " + type;
+    if (type == "TRADE") return side == "Buy" ? QStringLiteral("Покупка") : side == "Sell" ? QStringLiteral("Продажа") : QStringLiteral("Сделка");
+    if (type == "TRANSFER_IN") return QStringLiteral("Перевод на счёт");
+    if (type == "TRANSFER_OUT") return QStringLiteral("Перевод со счёта");
+    if (type == "SETTLEMENT") return QStringLiteral("Расчёт по позиции");
+    if (type == "INTEREST") return QStringLiteral("Проценты");
+    if (type == "BONUS") return QStringLiteral("Бонус");
+    if (type == "FEE_REFUND") return QStringLiteral("Возврат комиссии");
+    if (type == "CURRENCY_BUY") return QStringLiteral("Покупка валюты");
+    if (type == "CURRENCY_SELL") return QStringLiteral("Продажа валюты");
+    if (type == "LIQUIDATION") return QStringLiteral("Ликвидация");
+    return QStringLiteral("Операция") + " · " + type;
 }
 }
 namespace {
@@ -94,23 +94,23 @@ bool BybitProvider::refresh(const QString& id, const QString& key, const QString
     get(sync, "/v5/market/time", {}, [this, sync, sentAt](const QJsonObject& result) {
         bool ok = false;
         const qint64 seconds = result.value("timeSecond").toString().toLongLong(&ok);
-        if (!ok) { finish(sync, tr("Bybit вернул некорректное время сервера")); return; }
+        if (!ok) { finish(sync, QStringLiteral("Bybit вернул некорректное время сервера")); return; }
         sync->offsetMs = seconds * 1000 - (sentAt + QDateTime::currentMSecsSinceEpoch()) / 2;
         get(sync, "/v5/user/query-api", {}, [this, sync](const QJsonObject& info) {
             if (info.value("readOnly").toInt(-1) != 1) {
-                finish(sync, tr("Создайте в Bybit ключ API с доступом только на чтение")); return;
+                finish(sync, QStringLiteral("Создайте в Bybit ключ API с доступом только на чтение")); return;
             }
             QUrlQuery query; query.addQueryItem("valuationCurrency", "USD");
             get(sync, "/v5/asset/asset-overview", query, [this, sync](const QJsonObject& result) {
                 if (!result.value("list").isArray()) {
-                    finish(sync, tr("Bybit вернул некорректный список остатков")); return;
+                    finish(sync, QStringLiteral("Bybit вернул некорректный список остатков")); return;
                 }
                 sync->holdings = parseHoldings(result);
                 for (const auto& value : sync->holdings) {
                     const auto row = value.toMap();
                     const QString amount = row.value(row.value("summary").toBool() ? "usdValue" : "amountText").toString();
                     if (!validDecimal(amount) || row.value("coin").toString().isEmpty()) {
-                        finish(sync, tr("Не удалось прочитать остатки Bybit")); return;
+                        finish(sync, QStringLiteral("Не удалось прочитать остатки Bybit")); return;
                     }
                 }
                 // Prices in dollars come from the public list of spot tickers. A coin without a USDT or USDC pair keeps no price.
@@ -151,7 +151,7 @@ void BybitProvider::get(const QSharedPointer<Sync>& sync, const QString& path,
                         const QUrlQuery& query, std::function<void(const QJsonObject&)> done,
                         bool authenticated, int attempt) {
     if (sync->canceled) return;
-    if (sync->elapsed.elapsed() > 600000) { finish(sync, tr("Загрузка Bybit заняла слишком много времени. Повторите обновление")); return; }
+    if (sync->elapsed.elapsed() > 600000) { finish(sync, QStringLiteral("Загрузка Bybit заняла слишком много времени. Повторите обновление")); return; }
     QUrl url("https://api.bybit.com" + path); url.setQuery(query);
     QNetworkRequest request(url);
     request.setTransferTimeout(15000);
@@ -181,13 +181,13 @@ void BybitProvider::get(const QSharedPointer<Sync>& sync, const QString& path,
             return;
         }
         if (networkError != QNetworkReply::NoError || status != 200) {
-            finish(sync, tr("Не удалось получить данные Bybit (HTTP %1). Проверьте подключение и доступность биржи").arg(status)); return;
+            finish(sync, QStringLiteral("Не удалось получить данные Bybit (HTTP %1). Проверьте подключение и доступность биржи").arg(status)); return;
         }
         QJsonParseError error;
         const auto doc = QJsonDocument::fromJson(bytes, &error);
         const auto root = doc.object();
         if (error.error != QJsonParseError::NoError || !root.contains("retCode")) {
-            finish(sync, tr("Некорректный ответ Bybit")); return;
+            finish(sync, QStringLiteral("Некорректный ответ Bybit")); return;
         }
         const int code = root.value("retCode").toInt(-1);
         // Rate limit: wait longer than for a network failure
@@ -197,11 +197,11 @@ void BybitProvider::get(const QSharedPointer<Sync>& sync, const QString& path,
         }
         if (code != 0) {
             // Do not expose the response: it may contain API key information.
-            QString message = tr("Ошибка Bybit: %1").arg(code);
-            if (code == 10003 || code == 10004 || code == 33004) message += tr(". Проверьте ключ и секретный ключ API");
-            if (code == 10005) message += tr(". У ключа недостаточно прав на чтение остатков или истории");
-            if (code == 10002) message += tr(". Время запроса не совпадает с временем сервера; повторите обновление");
-            if (code == 10006) message += tr(". Превышен лимит запросов; повторите позднее");
+            QString message = QStringLiteral("Ошибка Bybit: %1").arg(code);
+            if (code == 10003 || code == 10004 || code == 33004) message += QStringLiteral(". Проверьте ключ и секретный ключ API");
+            if (code == 10005) message += QStringLiteral(". У ключа недостаточно прав на чтение остатков или истории");
+            if (code == 10002) message += QStringLiteral(". Время запроса не совпадает с временем сервера; повторите обновление");
+            if (code == 10006) message += QStringLiteral(". Превышен лимит запросов; повторите позднее");
             finish(sync, message); return;
         }
         done(root.value("result").toObject());
@@ -247,7 +247,7 @@ QVariantMap BybitProvider::parseOperation(const QJsonObject& row, bool funding) 
     QString description = funding ? row.value("descriptionEn").toString()
                                   : operationName(row.value("type").toString(), row.value("side").toString());
     if (funding && description.isEmpty()) description = row.value("showBusiTypeEn").toString();
-    if (funding && description.isEmpty()) description = QObject::tr("Перевод");
+    if (funding && description.isEmpty()) description = QStringLiteral("Перевод");
     const QString pair = row.value("symbol").toString();
     if (!pair.isEmpty()) description += " · " + pair;
     QVariantMap operation{{"transactionId", (funding ? "fund:" : "uta:") + rawId}, {"isExchange", true},
@@ -306,10 +306,10 @@ void BybitProvider::fetchWindow(const QSharedPointer<Sync>& sync, const QSharedP
     if (!window->cursor.isEmpty()) query.addQueryItem("cursor", window->cursor);
     get(sync, sync->funding ? "/v5/asset/fundinghistory" : "/v5/account/transaction-log", query,
         [this, sync, window](const QJsonObject& result) {
-        if (!result.value("list").isArray()) { finish(sync, tr("Bybit вернул некорректную историю")); return; }
+        if (!result.value("list").isArray()) { finish(sync, QStringLiteral("Bybit вернул некорректную историю")); return; }
         for (const auto& value : result.value("list").toArray()) {
             auto row = parseOperation(value.toObject(), sync->funding);
-            if (row.isEmpty()) { finish(sync, tr("Не удалось прочитать строку истории Bybit")); return; }
+            if (row.isEmpty()) { finish(sync, QStringLiteral("Не удалось прочитать строку истории Bybit")); return; }
             const QString id = row.value("transactionId").toString();
             if (sync->operationIds.contains(id)) continue;
             sync->operationIds.insert(id); sync->operations.append(row);
@@ -317,7 +317,7 @@ void BybitProvider::fetchWindow(const QSharedPointer<Sync>& sync, const QSharedP
         window->cursor = result.value("nextPageCursor").toString();
         if (!window->cursor.isEmpty()) {
             if (++window->pages > 200 || window->cursors.contains(window->cursor)) {
-                finish(sync, tr("История Bybit слишком велика или биржа повторяет страницу. Сохранённая история не изменена")); return;
+                finish(sync, QStringLiteral("История Bybit слишком велика или биржа повторяет страницу. Сохранённая история не изменена")); return;
             }
             window->cursors.insert(window->cursor);
             fetchWindow(sync, window);

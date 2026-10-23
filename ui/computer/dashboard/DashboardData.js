@@ -34,20 +34,20 @@ function capitalScale(rows) {
         ticks: Array.from({length: 6}, function(_, i) { return maximum - (maximum - minimum) * i / 5; })};
 }
 
-function capitalTickLabel(minor, language) {
+function capitalTickLabel(minor) {
     const value = Number(minor) / 100;
     const thousands = Math.abs(value) >= 1000;
     const scaled = thousands ? value / 1000 : value;
     const decimals = thousands || Math.abs(value) < 10 ? 1 : 0;
-    const label = scaled.toLocaleString(Qt.locale(language === "en" ? "en_US" : "ru_RU"), "f", decimals);
+    const label = scaled.toLocaleString(Qt.locale("ru_RU"), "f", decimals);
     return (decimals ? label.replace(/[.,]0$/, "") : label) + (thousands ? "K" : "");
 }
 
-function money(minor, currency, signed, decimals, language) {
+function money(minor, currency, signed, decimals) {
     const symbols = {RUB: "₽", USD: "$", EUR: "€", CNY: "¥"};
     const amount = Number(minor);
     const prefix = amount < 0 ? "−" : signed && amount > 0 ? "+" : "";
-    return prefix + (Math.abs(amount) / 100).toLocaleString(Qt.locale(language === "en" ? "en_US" : "ru_RU"), "f", decimals)
+    return prefix + (Math.abs(amount) / 100).toLocaleString(Qt.locale("ru_RU"), "f", decimals)
         + " " + (symbols[currency] || currency);
 }
 
@@ -118,7 +118,7 @@ function history(controller, host, asset, selectedId) {
             category: row.categoryName || "—", description: host.transactionSummary(row),
             signed: signed, amount: row.cryptoRow
                 ? (signed > 0 ? "+" : "−") + (row.amountText || "0") + " " + (row.symbol || "")
-                : money(signed, converted ? controller.appCurrency : row.currency, true, 2, controller.uiLanguage) };
+                : money(signed, converted ? controller.appCurrency : row.currency, true, 2) };
     });
 }
 

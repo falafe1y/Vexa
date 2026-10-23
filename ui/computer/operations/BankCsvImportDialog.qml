@@ -277,7 +277,7 @@ EditorialDialog {
     }
 
     function profileItems() {
-        const result = [{ label: qsTr("Новый профиль"), value: "" }];
+        const result = [{ label: "Новый профиль", value: "" }];
         const profiles = controller.bankCsvProfiles;
         for (let i = 0; i < profiles.length; ++i)
             result.push({ label: profiles[i].name, value: profiles[i].id });
@@ -309,7 +309,7 @@ EditorialDialog {
 
     function columnItems(optional) {
         const result = [{
-            label: optional ? qsTr("Не используется") : qsTr("Выберите столбец"),
+            label: optional ? "Не используется" : "Выберите столбец",
             value: -1
         }];
         for (let i = 0; i < headers.length; ++i)
@@ -374,7 +374,7 @@ EditorialDialog {
         headers = []; previewRows = [];
         inspecting = true;
         statusOk = true;
-        statusText = qsTr("Читаем выписку…");
+        statusText = "Читаем выписку…";
         inspectionProfile = profile;
         inspectionRequestId = controller.inspectBankCsvAsync(
             csvFile,
@@ -391,12 +391,12 @@ EditorialDialog {
             return;
         headers = result.headers;
         previewRows = result.preview;
-        detectedInfo = qsTr("Определено: %1, разделитель: %2, строк: %3")
+        detectedInfo = "Определено: %1, разделитель: %2, строк: %3"
             .arg(result.encodingLabel)
             .arg(result.delimiterLabel)
             .arg(result.rowCount);
         if (pdfFile && result.previewTruncated)
-            detectedInfo += qsTr(" · Показаны первые 1000 строк");
+            detectedInfo += " · Показаны первые 1000 строк";
         if (pdfFile) {
             setValue(dateColumnBox, 0); setValue(amountColumnBox, 1);
             setValue(descriptionColumnBox, 2); setValue(idColumnBox, 3);
@@ -521,7 +521,7 @@ EditorialDialog {
                 keptChoices[row.rowKey] = choice;
         }
         categoryChoices = Object.keys(keptChoices).length ? applyPendingRules(keptChoices) : ({});
-        previewSummary = qsTr("Найдено: %1 · Новых: %2 · Дубликатов: %3 · Возможных переводов: %4 · %5 — %6 · Зачисления по выписке: %7 · Списания по выписке: %8 · Ошибок: %9 · Другая валюта: %10")
+        previewSummary = "Найдено: %1 · Новых: %2 · Дубликатов: %3 · Возможных переводов: %4 · %5 — %6 · Зачисления по выписке: %7 · Списания по выписке: %8 · Ошибок: %9 · Другая валюта: %10"
             .arg(result.operationCount)
             .arg(result.newCount)
             .arg(result.duplicateCount)
@@ -541,7 +541,7 @@ EditorialDialog {
         if (inspecting) return { ok: false };
         const result = controller.saveBankCsvProfile(currentProfileValues());
         statusOk = result.ok;
-        statusText = result.ok ? qsTr("Профиль сохранён") : result.error;
+        statusText = result.ok ? "Профиль сохранён" : result.error;
         if (result.ok) {
             editingProfileId = result.id;
             setValue(profileBox, result.id);
@@ -638,22 +638,22 @@ EditorialDialog {
         readonly property var draft: dialog.transferChoice(row, sourceBox.currentValue, targetBox.currentValue,
             peerAmountField.text, undefined)
         readonly property var details: visible ? dialog.controller.bankImportTransferDetails(row, draft) : ({})
-        readonly property var matchingItems: [{label: qsTr("Создать новый перевод"), value: ""}].concat(details.matches || [])
+        readonly property var matchingItems: [{label: "Создать новый перевод", value: ""}].concat(details.matches || [])
         readonly property string peerCurrency: row.signedMinor > 0 ? sourceCurrency : targetCurrency
         spacing: 8
         EditorialLabel {
             Layout.fillWidth: true
-            text: qsTr("Перевод перемещает деньги между вашими счетами и не входит в доходы и расходы. Счёт выписки уже выбран по направлению суммы.")
+            text: "Перевод перемещает деньги между вашими счетами и не входит в доходы и расходы. Счёт выписки уже выбран по направлению суммы."
             color: dialog.mutedColor; font.pixelSize: Appearance.desktop ? 16 : 13; wrapMode: Text.WordWrap
         }
         GridLayout {
             Layout.fillWidth: true; columns: 2; columnSpacing: 12
-            EditorialLabel { text: qsTr("Со счёта"); color: dialog.mutedColor; font.pixelSize: Appearance.desktop ? 16 : 14 }
-            EditorialLabel { text: qsTr("На счёт"); color: dialog.mutedColor; font.pixelSize: Appearance.desktop ? 16 : 14 }
+            EditorialLabel { text: "Со счёта"; color: dialog.mutedColor; font.pixelSize: Appearance.desktop ? 16 : 14 }
+            EditorialLabel { text: "На счёт"; color: dialog.mutedColor; font.pixelSize: Appearance.desktop ? 16 : 14 }
             FormCombo {
                 id: sourceBox; objectName: "transferSourceBox"
                 Layout.fillWidth: true; Layout.maximumWidth: 10000
-                model: dialog.fiatAccounts(); emptyText: qsTr("Выберите счёт списания")
+                model: dialog.fiatAccounts(); emptyText: "Выберите счёт списания"
                 displayText: currentIndex < 0 ? emptyText : currentText
                 enabled: transferFields.row.signedMinor > 0
                 currentIndex: dialog.categoryIndex(model, transferFields.existingChoice.sourceAccountId)
@@ -662,7 +662,7 @@ EditorialDialog {
             FormCombo {
                 id: targetBox; objectName: "transferTargetBox"
                 Layout.fillWidth: true; Layout.maximumWidth: 10000
-                model: dialog.fiatAccounts(); emptyText: qsTr("Выберите счёт зачисления")
+                model: dialog.fiatAccounts(); emptyText: "Выберите счёт зачисления"
                 displayText: currentIndex < 0 ? emptyText : currentText
                 enabled: transferFields.row.signedMinor < 0
                 currentIndex: dialog.categoryIndex(model, transferFields.existingChoice.targetAccountId)
@@ -672,8 +672,8 @@ EditorialDialog {
         EditorialLabel {
             visible: transferFields.differentCurrency
             Layout.fillWidth: true
-            text: (transferFields.row.signedMinor > 0 ? qsTr("Фактически списано со второго счёта, %1")
-                : qsTr("Фактически зачислено на второй счёт, %1")).arg(transferFields.peerCurrency)
+            text: (transferFields.row.signedMinor > 0 ? "Фактически списано со второго счёта, %1"
+                : "Фактически зачислено на второй счёт, %1").arg(transferFields.peerCurrency)
             color: dialog.mutedColor; font.pixelSize: Appearance.desktop ? 16 : 14; wrapMode: Text.WordWrap
         }
         FormField {
@@ -681,14 +681,14 @@ EditorialDialog {
             visible: transferFields.differentCurrency
             Layout.fillWidth: true; Layout.maximumWidth: 10000
             text: transferFields.existingChoice.peerAmount || ""
-            placeholderText: qsTr("Сумма в валюте второго счёта")
+            placeholderText: "Сумма в валюте второго счёта"
             inputMethodHints: Qt.ImhFormattedNumbersOnly
             onTextEdited: existingMatchBox.currentIndex = -1
         }
         EditorialLabel {
             visible: transferFields.matchingItems.length > 1
             Layout.fillWidth: true
-            text: qsTr("Найдены похожие операции. Если это тот же перевод, выберите его, чтобы не учесть сумму дважды. Объединение с операцией второго счёта также сохранит связь с её выпиской.")
+            text: "Найдены похожие операции. Если это тот же перевод, выберите его, чтобы не учесть сумму дважды. Объединение с операцией второго счёта также сохранит связь с её выпиской."
             color: dialog.mutedColor; font.pixelSize: Appearance.desktop ? 16 : 13; wrapMode: Text.WordWrap
         }
         FormCombo {
@@ -698,7 +698,7 @@ EditorialDialog {
             model: transferFields.matchingItems
             currentIndex: transferFields.existingChoice.transferMatchId !== undefined
                 ? dialog.categoryIndex(model, transferFields.existingChoice.transferMatchId) : -1
-            emptyText: qsTr("Выберите совпадение или новый перевод")
+            emptyText: "Выберите совпадение или новый перевод"
             displayText: currentIndex < 0 ? emptyText : currentText
         }
         EditorialLabel {
@@ -709,7 +709,7 @@ EditorialDialog {
         }
         FormButton {
             objectName: "confirmImportTransfer"
-            text: qsTr("Подтвердить перевод")
+            text: "Подтвердить перевод"
             enabled: !!sourceBox.currentValue && !!targetBox.currentValue
                 && sourceBox.currentValue !== targetBox.currentValue
                 && (!transferFields.differentCurrency || !!peerAmountField.text.trim())
@@ -739,7 +739,7 @@ EditorialDialog {
                 ruleVisible: false
                 Layout.fillWidth: true
                 wrapMode: Text.WordWrap
-                text: qsTr("Импорт банковской выписки")
+                text: "Импорт банковской выписки"
                 color: dialog.textColor
                 }
             Item { Layout.fillWidth: true }
@@ -764,7 +764,7 @@ EditorialDialog {
                 implicitHeight: 40
             }
             EditorialLabel {
-                text: qsTr("Читаем выписку…")
+                text: "Читаем выписку…"
                 color: dialog.mutedColor
                 font.pixelSize: Appearance.desktop ? 16 : 14
             }
@@ -798,47 +798,47 @@ EditorialDialog {
                     columnSpacing: Appearance.desktop ? 12 : 10
                     rowSpacing: 8
 
-                    FormLabel { text: qsTr("Профиль"); color: dialog.mutedColor }
+                    FormLabel { text: "Профиль"; color: dialog.mutedColor }
                     FormCombo {
                         id: profileBox; objectName: "profileBox"
                         Layout.fillWidth: true
                         model: dialog.profileItems()
                         onActivated: dialog.loadProfile(currentValue)
                     }
-                    FormLabel { text: qsTr("Название профиля"); color: dialog.mutedColor }
+                    FormLabel { text: "Название профиля"; color: dialog.mutedColor }
                     FormField {
                         id: profileNameField; objectName: "profileNameField"
                         Layout.fillWidth: true
-                        placeholderText: qsTr("Например, Альфа-Банк")
+                        placeholderText: "Например, Альфа-Банк"
                     }
 
-                    FormLabel { text: qsTr("Кодировка"); color: dialog.mutedColor }
+                    FormLabel { text: "Кодировка"; color: dialog.mutedColor }
                     FormCombo {
                         id: encodingBox; objectName: "encodingBox"
                         enabled: !dialog.pdfFile
                         Layout.fillWidth: true
                         model: [
-                            { label: qsTr("Определить автоматически"), value: "auto" },
+                            { label: "Определить автоматически", value: "auto" },
                             { label: "UTF-8", value: "utf8" },
                             { label: "Windows-1251", value: "windows1251" },
                             { label: "UTF-16LE", value: "utf16le" },
                             { label: "UTF-16BE", value: "utf16be" }
                         ]
                     }
-                    FormLabel { text: qsTr("Разделитель"); color: dialog.mutedColor }
+                    FormLabel { text: "Разделитель"; color: dialog.mutedColor }
                     FormCombo {
                         id: delimiterBox; objectName: "delimiterBox"
                         enabled: !dialog.pdfFile
                         Layout.fillWidth: true
                         model: [
-                            { label: qsTr("Определить автоматически"), value: "auto" },
-                            { label: qsTr("Точка с запятой"), value: "semicolon" },
-                            { label: qsTr("Запятая"), value: "comma" },
-                            { label: qsTr("Табуляция"), value: "tab" }
+                            { label: "Определить автоматически", value: "auto" },
+                            { label: "Точка с запятой", value: "semicolon" },
+                            { label: "Запятая", value: "comma" },
+                            { label: "Табуляция", value: "tab" }
                         ]
                     }
 
-                    FormLabel { text: qsTr("Строка заголовков"); color: dialog.mutedColor }
+                    FormLabel { text: "Строка заголовков"; color: dialog.mutedColor }
                     FormField {
                         id: headerRowField; objectName: "headerRowField"
                         enabled: !dialog.pdfFile
@@ -847,7 +847,7 @@ EditorialDialog {
                         validator: IntValidator { bottom: 1; top: 1000 }
                     }
                     FormButton {
-                        text: qsTr("Перечитать столбцы")
+                        text: "Перечитать столбцы"
                         Layout.columnSpan: 2
                         Layout.fillWidth: true
                         onClicked: dialog.inspectFile(null)
@@ -857,7 +857,7 @@ EditorialDialog {
                 EditorialLabel {
                     Layout.fillWidth: true
                     text: dialog.pdfFile
-                          ? dialog.detectedInfo + "\n" + qsTr("Сверьте операции и итоговые суммы перед импортом. Поддерживаются PDF с текстом; сканы и выписки с паролем не поддерживаются.")
+                          ? dialog.detectedInfo + "\n" + "Сверьте операции и итоговые суммы перед импортом. Поддерживаются PDF с текстом; сканы и выписки с паролем не поддерживаются."
                           : dialog.detectedInfo
                     wrapMode: Text.WordWrap
                     color: dialog.mutedColor
@@ -872,19 +872,19 @@ EditorialDialog {
                     columnSpacing: Appearance.desktop ? 12 : 10
                     rowSpacing: 8
 
-                    FormLabel { text: qsTr("Счёт"); color: dialog.mutedColor }
+                    FormLabel { text: "Счёт"; color: dialog.mutedColor }
                     FormCombo {
                         id: accountBox; objectName: "accountBox"
                         Layout.fillWidth: true
                         model: dialog.fiatAccounts()
                     }
-                    FormLabel { text: qsTr("Формат даты"); color: dialog.mutedColor }
+                    FormLabel { text: "Формат даты"; color: dialog.mutedColor }
                     FormCombo {
                         id: dateFormatBox; objectName: "dateFormatBox"
                         enabled: !dialog.pdfFile
                         Layout.fillWidth: true
                         model: [
-                            { label: qsTr("Определить автоматически"), value: "auto" },
+                            { label: "Определить автоматически", value: "auto" },
                             { label: "ДД.ММ.ГГГГ", value: "dd.MM.yyyy" },
                             { label: "ДД.ММ.ГГ", value: "dd.MM.yy" },
                             { label: "ДД.ММ.ГГГГ ЧЧ:ММ", value: "dd.MM.yyyy HH:mm" },
@@ -894,27 +894,27 @@ EditorialDialog {
                         ]
                     }
 
-                    FormLabel { text: qsTr("Столбец даты"); color: dialog.mutedColor }
+                    FormLabel { text: "Столбец даты"; color: dialog.mutedColor }
                     FormCombo {
                         id: dateColumnBox; objectName: "dateColumnBox"
                         enabled: !dialog.pdfFile
                         Layout.fillWidth: true
                         model: dialog.columnItems(false)
                     }
-                    FormLabel { text: qsTr("Хранение суммы"); color: dialog.mutedColor }
+                    FormLabel { text: "Хранение суммы"; color: dialog.mutedColor }
                     FormCombo {
                         id: amountModeBox; objectName: "amountModeBox"
                         enabled: !dialog.pdfFile
                         Layout.fillWidth: true
                         model: [
-                            { label: qsTr("Один столбец со знаком"), value: "signed" },
-                            { label: qsTr("Отдельно приход и расход"), value: "separate" }
+                            { label: "Один столбец со знаком", value: "signed" },
+                            { label: "Отдельно приход и расход", value: "separate" }
                         ]
                     }
 
                     FormLabel {
                         visible: amountModeBox.currentValue === "signed"
-                        text: qsTr("Столбец суммы")
+                        text: "Столбец суммы"
                         color: dialog.mutedColor
                     }
                     FormCombo {
@@ -930,12 +930,12 @@ EditorialDialog {
                         visible: amountModeBox.currentValue === "signed"
                         Layout.columnSpan: 2
                         checked: true
-                        text: qsTr("Положительное значение — доход")
+                        text: "Положительное значение — доход"
                     }
 
                     FormLabel {
                         visible: amountModeBox.currentValue === "separate"
-                        text: qsTr("Столбец прихода")
+                        text: "Столбец прихода"
                         color: dialog.mutedColor
                     }
                     FormCombo {
@@ -947,7 +947,7 @@ EditorialDialog {
                     }
                     FormLabel {
                         visible: amountModeBox.currentValue === "separate"
-                        text: qsTr("Столбец расхода")
+                        text: "Столбец расхода"
                         color: dialog.mutedColor
                     }
                     FormCombo {
@@ -958,28 +958,28 @@ EditorialDialog {
                         model: dialog.columnItems(false)
                     }
 
-                    FormLabel { text: qsTr("Описание"); color: dialog.mutedColor }
+                    FormLabel { text: "Описание"; color: dialog.mutedColor }
                     FormCombo {
                         id: descriptionColumnBox; objectName: "descriptionColumnBox"
                         enabled: !dialog.pdfFile
                         Layout.fillWidth: true
                         model: dialog.columnItems(true)
                     }
-                    FormLabel { text: qsTr("Получатель из файла"); color: dialog.mutedColor }
+                    FormLabel { text: "Получатель из файла"; color: dialog.mutedColor }
                     FormCombo {
                         id: recipientColumnBox; objectName: "recipientColumnBox"
                         enabled: !dialog.pdfFile
                         Layout.fillWidth: true
                         model: dialog.columnItems(true)
                     }
-                    FormLabel { text: qsTr("ИНН / ID получателя"); color: dialog.mutedColor }
+                    FormLabel { text: "ИНН / ID получателя"; color: dialog.mutedColor }
                     FormCombo {
                         id: recipientIdColumnBox; objectName: "recipientIdColumnBox"
                         enabled: !dialog.pdfFile
                         Layout.fillWidth: true
                         model: dialog.columnItems(true)
                     }
-                    FormLabel { text: qsTr("Идентификатор операции"); color: dialog.mutedColor }
+                    FormLabel { text: "Идентификатор операции"; color: dialog.mutedColor }
                     FormCombo {
                         id: idColumnBox; objectName: "idColumnBox"
                         enabled: !dialog.pdfFile
@@ -987,28 +987,28 @@ EditorialDialog {
                         model: dialog.columnItems(true)
                     }
 
-                    FormLabel { text: qsTr("Категория из файла"); color: dialog.mutedColor }
+                    FormLabel { text: "Категория из файла"; color: dialog.mutedColor }
                     FormCombo {
                         id: categoryColumnBox; objectName: "categoryColumnBox"
                         enabled: !dialog.pdfFile
                         Layout.fillWidth: true
                         model: dialog.columnItems(true)
                     }
-                    FormLabel { text: qsTr("Направление операции"); color: dialog.mutedColor }
+                    FormLabel { text: "Направление операции"; color: dialog.mutedColor }
                     FormCombo {
                         id: directionColumnBox; objectName: "directionColumnBox"
                         enabled: !dialog.pdfFile
                         Layout.fillWidth: true
                         model: dialog.columnItems(true)
                     }
-                    FormLabel { text: qsTr("Валюта строки"); color: dialog.mutedColor }
+                    FormLabel { text: "Валюта строки"; color: dialog.mutedColor }
                     FormCombo {
                         id: currencyColumnBox; objectName: "currencyColumnBox"
                         enabled: !dialog.pdfFile
                         Layout.fillWidth: true
                         model: dialog.columnItems(true)
                     }
-                    FormLabel { text: qsTr("Категория дохода по умолчанию"); color: dialog.mutedColor }
+                    FormLabel { text: "Категория дохода по умолчанию"; color: dialog.mutedColor }
                     FormCombo {
                         id: incomeCategoryBox; objectName: "incomeCategoryBox"
                         Layout.fillWidth: true
@@ -1017,7 +1017,7 @@ EditorialDialog {
 
                     Item { Layout.preferredHeight: 1 }
                     Item { Layout.preferredHeight: 1 }
-                    FormLabel { text: qsTr("Категория расхода по умолчанию"); color: dialog.mutedColor }
+                    FormLabel { text: "Категория расхода по умолчанию"; color: dialog.mutedColor }
                     FormCombo {
                         id: expenseCategoryBox; objectName: "expenseCategoryBox"
                         Layout.fillWidth: true
@@ -1031,7 +1031,7 @@ EditorialDialog {
                     Layout.fillWidth: true
                     visible: dialog.operationRows.length > 0
                     wrapMode: Text.WordWrap
-                    text: qsTr("Получатели и категории · Требуют проверки: %1 операций")
+                    text: "Получатели и категории · Требуют проверки: %1 операций"
                         .arg(dialog.remainingReviews())
                     font.pixelSize: 16
                     font.weight: Font.DemiBold
@@ -1044,7 +1044,7 @@ EditorialDialog {
                     columnSpacing: 16
                     rowSpacing: 8
                     StyledCheckBox {
-                        text: qsTr("Только требующие проверки")
+                        text: "Только требующие проверки"
                         checked: dialog.showReviewOnly
                         onClicked: dialog.showReviewOnly = checked
                         appTextColor: dialog.textColor
@@ -1052,14 +1052,14 @@ EditorialDialog {
                     }
                     Item { Layout.fillWidth: true; visible: !dialog.narrow }
                     FormButton {
-                        text: qsTr("Принять предложения")
+                        text: "Принять предложения"
                         onClicked: dialog.acceptSuggestions()
                     }
                 }
                 EditorialLabel {
                     visible: dialog.operationRows.length > 0
                     Layout.fillWidth: true
-                    text: qsTr("Проверьте группы: одно исправление применяется ко всем операциям группы. Без имени получателя можно импортировать, сохранив полное описание отдельно. Для движения между своими счетами выберите «Перевод» и укажите оба счёта. Возвраты, переводы другим людям и снятия проверьте по одному.")
+                    text: "Проверьте группы: одно исправление применяется ко всем операциям группы. Без имени получателя можно импортировать, сохранив полное описание отдельно. Для движения между своими счетами выберите «Перевод» и укажите оба счёта. Возвраты, переводы другим людям и снятия проверьте по одному."
                     color: dialog.mutedColor
                     font.pixelSize: Appearance.desktop ? 16 : 14
                     wrapMode: Text.WordWrap
@@ -1139,15 +1139,15 @@ EditorialDialog {
                                 Layout.fillWidth: true
                                 EditorialLabel {
                                     Layout.fillWidth: true
-                                    text: reviewGroup.modelData.type === "transfer" ? qsTr("Перевод между счетами")
-                                        : reviewGroup.modelData.merchant || qsTr("Получатель не определён")
+                                    text: reviewGroup.modelData.type === "transfer" ? "Перевод между счетами"
+                                        : reviewGroup.modelData.merchant || "Получатель не определён"
                                     font.pixelSize: 16
                                     font.weight: Font.DemiBold
                                     color: dialog.textColor
                                     elide: Text.ElideRight
                                 }
                                 EditorialLabel {
-                                    text: qsTr("Операций: %1 · %2").arg(reviewGroup.modelData.rows.length)
+                                    text: "Операций: %1 · %2".arg(reviewGroup.modelData.rows.length)
                                         .arg(dialog.formatMinor(reviewGroup.modelData.total, reviewGroup.modelData.currency))
                                     color: dialog.textColor
                                     font.pixelSize: Appearance.desktop ? 16 : 14
@@ -1157,7 +1157,7 @@ EditorialDialog {
                                 Layout.fillWidth: true
                                 text: (reviewGroup.modelData.type === "transfer" ? "" : reviewGroup.modelData.recipientReason + " · ")
                                     + reviewGroup.modelData.reason
-                                    + (reviewGroup.modelData.mixedCategory ? qsTr(" · Разные категории — сохраните исключения ниже") : "")
+                                    + (reviewGroup.modelData.mixedCategory ? " · Разные категории — сохраните исключения ниже" : "")
                                 color: dialog.mutedColor
                                 font.pixelSize: Appearance.desktop ? 16 : 13
                                 wrapMode: Text.WordWrap
@@ -1183,7 +1183,7 @@ EditorialDialog {
                                 rowSpacing: Appearance.desktop ? 8 : 6
                                 EditorialLabel {
                                     Layout.alignment: Qt.AlignVCenter
-                                    text: qsTr("Тип операции"); color: dialog.mutedColor; font.pixelSize: Appearance.desktop ? 16 : 14
+                                    text: "Тип операции"; color: dialog.mutedColor; font.pixelSize: Appearance.desktop ? 16 : 14
                                 }
                                 FormCombo {
                                     id: groupTypeBox
@@ -1191,9 +1191,9 @@ EditorialDialog {
                                     Layout.fillWidth: dialog.narrow
                                     Layout.preferredWidth: 240
                                     Layout.maximumWidth: dialog.narrow ? 10000 : 240
-                                    model: [{label: reviewGroup.modelData.statementType === "income" ? qsTr("Доход") : qsTr("Расход"),
+                                    model: [{label: reviewGroup.modelData.statementType === "income" ? "Доход" : "Расход",
                                             value: reviewGroup.modelData.statementType},
-                                        {label: qsTr("Перевод"), value: "transfer"}]
+                                        {label: "Перевод", value: "transfer"}]
                                     currentIndex: reviewGroup.modelData.type === "transfer" ? 1 : 0
                                     onActivated: dialog.setGroupType(reviewGroup.modelData, currentValue, reviewGroup)
                                 }
@@ -1216,7 +1216,7 @@ EditorialDialog {
                                     Layout.maximumWidth: 10000
                                     text: reviewGroup.modelData.merchant
                                     maximumLength: 160
-                                    placeholderText: qsTr("Имя получателя (можно оставить пустым)")
+                                    placeholderText: "Имя получателя (можно оставить пустым)"
                                 }
                                 FormCombo {
                                     id: groupCategoryBox
@@ -1227,7 +1227,7 @@ EditorialDialog {
                                     model: reviewGroup.items
                                     currentIndex: reviewGroup.modelData.mixedCategory ? -1
                                         : dialog.categoryIndex(reviewGroup.items, reviewGroup.modelData.categoryId)
-                                    emptyText: qsTr("Выберите категорию")
+                                    emptyText: "Выберите категорию"
                                 }
                             }
                             GridLayout {
@@ -1238,13 +1238,13 @@ EditorialDialog {
                                 rowSpacing: 4
                                 FormCheckBox {
                                     id: rememberCategoryCheck; objectName: "rememberCategoryCheck"
-                                    text: qsTr("Запомнить категорию получателя")
+                                    text: "Запомнить категорию получателя"
                                     checked: !!recipientNameField.text.trim() && !reviewGroup.modelData.special
                                     enabled: !!recipientNameField.text.trim()
                                 }
                                 FormCheckBox {
                                     id: rememberRecipientCheck
-                                    text: qsTr("Запомнить имя по правилу")
+                                    text: "Запомнить имя по правилу"
                                     objectName: "rememberRecipientCheck"
                                     checked: reviewGroup.rememberRecipientSelection >= 0
                                         ? reviewGroup.rememberRecipientSelection === 1
@@ -1269,10 +1269,10 @@ EditorialDialog {
                                     Layout.fillWidth: dialog.narrow
                                     Layout.preferredWidth: 240
                                     Layout.maximumWidth: dialog.narrow ? 10000 : 240
-                                    model: [{label: qsTr("Описание содержит"), value: "description"},
-                                        {label: qsTr("Получатель из файла"), value: "bank_recipient"},
-                                        {label: qsTr("ИНН / ID совпадает"), value: "recipient_id"},
-                                        {label: qsTr("Распознанное имя"), value: "recipient"}]
+                                    model: [{label: "Описание содержит", value: "description"},
+                                        {label: "Получатель из файла", value: "bank_recipient"},
+                                        {label: "ИНН / ID совпадает", value: "recipient_id"},
+                                        {label: "Распознанное имя", value: "recipient"}]
                                     currentIndex: dialog.indexByValue(model, reviewGroup.modelData.recipientField)
                                     onActivated: reviewGroup.fillRulePattern(currentValue)
                                 }
@@ -1284,7 +1284,7 @@ EditorialDialog {
                                     maximumLength: Math.max(240,
                                         dialog.recipientRuleSource(reviewGroup.modelData, recipientRuleFieldBox.currentValue).length)
                                     text: reviewGroup.patternForField(recipientRuleFieldBox.currentValue)
-                                    placeholderText: qsTr("Значение не найдено — введите правило")
+                                    placeholderText: "Значение не найдено — введите правило"
                                     onTextEdited: {
                                         const drafts = Object.assign({}, reviewGroup.ruleDrafts);
                                         drafts[recipientRuleFieldBox.currentValue] = text;
@@ -1294,7 +1294,7 @@ EditorialDialog {
                                 EditorialLabel {
                                     Layout.columnSpan: dialog.narrow ? 1 : 2
                                     Layout.fillWidth: true
-                                    text: qsTr("Значение подставляется из операции. Отредактируйте его: для описания оставьте целые слова без даты, суммы и номера карты. Остальные поля должны совпасть целиком. Правило сразу применяется к этой выписке и сохраняется после импорта.")
+                                    text: "Значение подставляется из операции. Отредактируйте его: для описания оставьте целые слова без даты, суммы и номера карты. Остальные поля должны совпасть целиком. Правило сразу применяется к этой выписке и сохраняется после импорта."
                                     color: dialog.mutedColor
                                     font.pixelSize: Appearance.desktop ? 16 : 13
                                     wrapMode: Text.WordWrap
@@ -1303,7 +1303,7 @@ EditorialDialog {
                             EditorialLabel {
                                 visible: reviewGroup.modelData.type !== "transfer" && rememberRecipientCheck.checked && recipientPatternField.text.length > 240
                                 Layout.fillWidth: true
-                                text: qsTr("Сократите правило до 240 символов: оставьте слова, по которым узнаётся получатель.")
+                                text: "Сократите правило до 240 символов: оставьте слова, по которым узнаётся получатель."
                                 color: dialog.errorColor
                                 font.pixelSize: Appearance.desktop ? 16 : 14
                                 wrapMode: Text.WordWrap
@@ -1316,7 +1316,7 @@ EditorialDialog {
                                 rowSpacing: 8
                                 FormButton {
                                     objectName: "applyRecipientGroup"
-                                    text: reviewGroup.modelData.rows.length > 1 ? qsTr("Применить к группе") : qsTr("Подтвердить")
+                                    text: reviewGroup.modelData.rows.length > 1 ? "Применить к группе" : "Подтвердить"
                                     enabled: !!groupCategoryBox.currentValue
                                     onClicked: dialog.applyGroup(reviewGroup.modelData, recipientNameField.text,
                                         groupCategoryBox.currentValue, rememberCategoryCheck.checked,
@@ -1325,7 +1325,7 @@ EditorialDialog {
                                         recipientRuleFieldBox.currentValue === "description" ? "contains" : "exact")
                                 }
                                 FormButton {
-                                    text: reviewGroup.expanded ? qsTr("Скрыть операции") : qsTr("Операции и исключения")
+                                    text: reviewGroup.expanded ? "Скрыть операции" : "Операции и исключения"
                                     onClicked: reviewGroup.expanded = !reviewGroup.expanded
                                 }
                                 Item { Layout.fillWidth: true; visible: !dialog.narrow }
@@ -1360,11 +1360,11 @@ EditorialDialog {
                                             currentIndex: dialog.categoryIndex(model, exceptionRow.modelData.categoryId)
                                         }
                                         FormButton {
-                                            text: qsTr("Это перевод")
+                                            text: "Это перевод"
                                             onClicked: dialog.setGroupType({ rows: [exceptionRow.modelData] }, "transfer", reviewGroup)
                                         }
                                         FormButton {
-                                            text: qsTr("Только эта операция")
+                                            text: "Только эта операция"
                                             enabled: !!exceptionCategoryBox.currentValue
                                             onClicked: dialog.setChoice(exceptionRow.modelData, {
                                                 categoryId: exceptionCategoryBox.currentValue, confirmed: true
@@ -1379,14 +1379,14 @@ EditorialDialog {
                 EditorialLabel {
                     visible: dialog.operationRows.length > 0 && dialog.showReviewOnly && dialog.reviewGroups().length === 0
                     Layout.fillWidth: true
-                    text: qsTr("Все операции готовы к импорту. Снимите фильтр, чтобы посмотреть распознанных получателей.")
+                    text: "Все операции готовы к импорту. Снимите фильтр, чтобы посмотреть распознанных получателей."
                     color: dialog.successColor
                     font.pixelSize: Appearance.desktop ? 16 : 14
                     wrapMode: Text.WordWrap
                 }
                 FormButton {
-                    text: dialog.showSavedRules ? qsTr("Скрыть сохранённые правила")
-                                                : qsTr("Сохранённые правила (%1)").arg(dialog.savedCategoryRules.length + dialog.savedRecipientRules.length)
+                    text: dialog.showSavedRules ? "Скрыть сохранённые правила"
+                                                : "Сохранённые правила (%1)".arg(dialog.savedCategoryRules.length + dialog.savedRecipientRules.length)
                     onClicked: { dialog.reloadRules(); dialog.showSavedRules = !dialog.showSavedRules; }
                 }
                 ListView {
@@ -1404,16 +1404,16 @@ EditorialDialog {
                         spacing: 16
                         EditorialLabel {
                             Layout.fillWidth: true
-                            text: (modelData.type === "income" ? qsTr("Доход: ") : qsTr("Расход: "))
-                                + (modelData.field === "description" ? qsTr("Описание «")
-                                    : modelData.field === "legacy" ? qsTr("Имя / описание «") : qsTr("Получатель «"))
+                            text: (modelData.type === "income" ? "Доход: " : "Расход: ")
+                                + (modelData.field === "description" ? "Описание «"
+                                    : modelData.field === "legacy" ? "Имя / описание «" : "Получатель «")
                                 + modelData.pattern + "» → " + modelData.categoryName
                             color: dialog.textColor
                             font.pixelSize: Appearance.desktop ? 16 : 14
                             wrapMode: Text.WordWrap
                         }
                         FormButton {
-                            text: qsTr("Удалить")
+                            text: "Удалить"
                             onClicked: {
                                 const result = controller.deleteBankCategoryRule(
                                     modelData.pattern, modelData.matchMode, modelData.type);
@@ -1439,14 +1439,14 @@ EditorialDialog {
                         width: savedRecipientRulesList.width
                         EditorialLabel {
                             Layout.fillWidth: true
-                            text: qsTr("Имя получателя: «%1» → %2 (%3)").arg(modelData.pattern)
-                                .arg(modelData.recipientName).arg(modelData.type === "income" ? qsTr("доход") : qsTr("расход"))
+                            text: "Имя получателя: «%1» → %2 (%3)".arg(modelData.pattern)
+                                .arg(modelData.recipientName).arg(modelData.type === "income" ? "доход" : "расход")
                             color: dialog.textColor
                             font.pixelSize: Appearance.desktop ? 16 : 14
                             wrapMode: Text.WordWrap
                         }
                         FormButton {
-                            text: qsTr("Удалить")
+                            text: "Удалить"
                             onClicked: {
                                 const result = controller.deleteBankRecipientRule(modelData.pattern, modelData.field,
                                     modelData.matchMode, modelData.type);
@@ -1458,7 +1458,7 @@ EditorialDialog {
                 }
 
                 EditorialLabel {
-                    text: qsTr("Предварительный просмотр")
+                    text: "Предварительный просмотр"
                     font.pixelSize: Appearance.desktop ? 16 : 14
                     color: dialog.textColor
                     font.weight: Font.DemiBold
@@ -1511,12 +1511,12 @@ EditorialDialog {
             columnSpacing: Appearance.desktop ? 12 : 10
             rowSpacing: Appearance.desktop ? 12 : 10
             FormButton {
-                text: qsTr("Удалить профиль")
+                text: "Удалить профиль"
                 enabled: !dialog.inspecting && dialog.editingProfileId.length > 0
                 onClicked: {
                     if (controller.deleteBankCsvProfile(dialog.editingProfileId)) {
                         dialog.statusOk = true;
-                        dialog.statusText = qsTr("Профиль удалён");
+                        dialog.statusText = "Профиль удалён";
                         profileBox.currentIndex = 0;
                         dialog.resetForNewProfile();
                     }
@@ -1525,24 +1525,24 @@ EditorialDialog {
             Item { Layout.fillWidth: true }
             FormButton {
                 enabled: !dialog.inspecting
-                text: qsTr("Проверить")
+                text: "Проверить"
                 onClicked: dialog.previewImport()
             }
             FormButton {
                 enabled: !dialog.inspecting
-                text: qsTr("Сохранить профиль")
+                text: "Сохранить профиль"
                 onClicked: dialog.saveProfile()
             }
             FormButton {
                 enabled: !dialog.inspecting
-                text: qsTr("Импортировать")
+                text: "Импортировать"
                 primary: true
                 onClicked: {
                     if (!dialog.previewImport())
                         return;
                     if (dialog.remainingReviews() > 0) {
                         dialog.statusOk = false;
-                        dialog.statusText = qsTr("Проверьте получателей и категории выше: осталось %1 операций")
+                        dialog.statusText = "Проверьте получателей и категории выше: осталось %1 операций"
                             .arg(dialog.remainingReviews());
                         return;
                     }
@@ -1554,7 +1554,7 @@ EditorialDialog {
                     });
                     dialog.statusOk = result.ok;
                     dialog.statusText = result.ok
-                        ? qsTr("Импортировано: %1, дубликатов: %2, отклонено строк: %3")
+                        ? "Импортировано: %1, дубликатов: %2, отклонено строк: %3"
                             .arg(result.imported).arg(result.skipped).arg(result.rejected)
                         : result.error;
                     if (result.ok) {

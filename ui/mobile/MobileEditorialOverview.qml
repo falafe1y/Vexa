@@ -65,7 +65,7 @@ Flickable {
                 spacing: 8
                 MobileText {
                     font.family: MobileTheme.mono
-                    text: qsTr("ВСЕ АКТИВЫ")
+                    text: "ВСЕ АКТИВЫ"
                     font.pixelSize: 12
                     color: MobileTheme.muted
                 }
@@ -78,7 +78,7 @@ Flickable {
                 }
                 MobileText {
                     font.family: MobileTheme.mono
-                    text: qsTr("Счетов и кошельков: %1").arg(Data.accountCount(financeController.allAccounts, financeController.cryptoWallets, "all"))
+                    text: "Счетов и кошельков: %1".arg(Data.accountCount(financeController.allAccounts, financeController.cryptoWallets, "all"))
                     font.pixelSize: 12
                     color: MobileTheme.muted
                 }
@@ -86,7 +86,7 @@ Flickable {
                     font.family: MobileTheme.mono
                     Layout.fillWidth: true
                     visible: financeController.investmentValuationIncomplete
-                    text: qsTr("Для части инвестиций нужна котировка, курс или ручная оценка")
+                    text: "Для части инвестиций нужна котировка, курс или ручная оценка"
                     font.pixelSize: 12
                     color: MobileTheme.muted
                     wrapMode: Text.Wrap
@@ -100,15 +100,15 @@ Flickable {
                 model: [
                     {
                         key: "fiat",
-                        name: qsTr("Фиат")
+                        name: "Фиат"
                     },
                     {
                         key: "crypto",
-                        name: qsTr("Крипто")
+                        name: "Крипто"
                     },
                     {
                         key: "investment",
-                        name: qsTr("Инвестиции")
+                        name: "Инвестиции"
                     }
                 ]
                 delegate: Button {
@@ -129,7 +129,7 @@ Flickable {
                         }
                         MobileText {
                             font.family: MobileTheme.mono
-                            text: qsTr("Счетов: %1").arg(Data.accountCount(financeController.allAccounts, financeController.cryptoWallets, modelData.key))
+                            text: "Счетов: %1".arg(Data.accountCount(financeController.allAccounts, financeController.cryptoWallets, modelData.key))
                             font.pixelSize: 12
                             color: MobileTheme.muted
                         }
@@ -159,11 +159,11 @@ Flickable {
                 MobileText {
                     font.family: MobileTheme.mono
                     Layout.fillWidth: true
-                    text: qsTr("01. СЧЕТА")
+                    text: "01. СЧЕТА"
                     font.pixelSize: 12
                 }
                 MobileChip {
-                    text: qsTr("Добавить")
+                    text: "Добавить"
                     onClicked: dashboard.host.addAccount()
                 }
             }
@@ -217,7 +217,7 @@ Flickable {
                         }
                         MobileText {
                             Layout.maximumWidth: accountList.width * 0.56
-                            text: dashboard.host.hideAmounts ? "******" : account.modelData.isCreditCard ? qsTr("Долг %1").arg(MobileFormat.money(account.modelData.debtMinor, account.modelData.currency, false)) : dashboard.host.rowPrimaryAmount(account.modelData)
+                            text: dashboard.host.hideAmounts ? "******" : account.modelData.isCreditCard ? "Долг %1".arg(MobileFormat.money(account.modelData.debtMinor, account.modelData.currency, false)) : dashboard.host.rowPrimaryAmount(account.modelData)
                             font.pixelSize: 20
                             font.family: MobileTheme.serif
                             elide: Text.ElideRight
@@ -247,7 +247,7 @@ Flickable {
                     font.family: MobileTheme.mono
                     anchors.centerIn: parent
                     visible: accountList.count === 0
-                    text: qsTr("Счетов пока нет")
+                    text: "Счетов пока нет"
                     font.pixelSize: 12
                     color: MobileTheme.muted
                 }
@@ -261,19 +261,19 @@ Flickable {
                 Layout.fillWidth: true
                 MobileText {
                     Layout.fillWidth: true
-                    text: qsTr("ПОЗИЦИИ")
+                    text: "ПОЗИЦИИ"
                     font.pixelSize: 12
                     font.family: MobileTheme.mono
                 }
                 MobileChip {
-                    text: qsTr("Добавить")
+                    text: "Добавить"
                     enabled: financeController.investmentAccounts.length > 0
                     onClicked: dashboard.host.addPosition()
                 }
             }
             MobileButton {
                 Layout.fillWidth: true
-                text: financeController.investmentRefreshing ? qsTr("Обновляем…") : qsTr("Обновить цены")
+                text: financeController.investmentRefreshing ? "Обновляем…" : "Обновить цены"
                 enabled: !financeController.investmentRefreshing
                 onClicked: financeController.refreshInvestmentQuotes()
             }
@@ -294,7 +294,7 @@ Flickable {
                     }
                     MobileText {
                         Layout.fillWidth: true
-                        text: modelData.quantityText + " " + (modelData.quantityUnit || "") + " · " + (MobileTheme.hideAmounts ? "******" : (modelData.hasQuote ? MobileFormat.money(modelData.marketValueMinor, modelData.currency, false) : qsTr("Цена недоступна")))
+                        text: modelData.quantityText + " " + (modelData.quantityUnit || "") + " · " + (MobileTheme.hideAmounts ? "******" : (modelData.hasQuote ? MobileFormat.money(modelData.marketValueMinor, modelData.currency, false) : "Цена недоступна"))
                         font.pixelSize: 12
                         wrapMode: Text.Wrap
                     }
@@ -310,7 +310,7 @@ Flickable {
                         Layout.fillWidth: true
                         font.pixelSize: 12
                         font.family: MobileTheme.mono
-                        text: modelData.hasMarketQuote && !modelData.manualValuation ? (modelData.priceText || "") + " " + (modelData.type === 2 ? "%" : modelData.type >= 9 ? qsTr("пункт.") : (modelData.quoteCurrency || "")) + " · " + (modelData.quoteSourceLabel || "") : ""
+                        text: modelData.hasMarketQuote && !modelData.manualValuation ? (modelData.priceText || "") + " " + (modelData.type === 2 ? "%" : modelData.type >= 9 ? "пункт." : (modelData.quoteCurrency || "")) + " · " + (modelData.quoteSourceLabel || "") : ""
                         visible: text.length > 0
                         wrapMode: Text.Wrap
                         color: MobileTheme.muted
@@ -328,17 +328,17 @@ Flickable {
                         Layout.fillWidth: true
                         MobileButton {
                             Layout.fillWidth: true
-                            text: qsTr("Операция")
+                            text: "Операция"
                             onClicked: dashboard.host.positionOperation(modelData)
                         }
                         MobileIconButton {
                             icon: "sliders"
-                            Accessible.name: qsTr("Изменить позицию")
+                            Accessible.name: "Изменить позицию"
                             onClicked: dashboard.host.editPosition(modelData)
                         }
                         MobileIconButton {
                             icon: "trash"
-                            Accessible.name: qsTr("Удалить позицию")
+                            Accessible.name: "Удалить позицию"
                             onClicked: financeController.deleteInvestmentPosition(modelData.id)
                         }
                     }
@@ -352,14 +352,14 @@ Flickable {
             MobileText {
                 Layout.fillWidth: true
                 visible: financeController.cryptoRefreshing || !!financeController.cryptoLastError
-                text: financeController.cryptoRefreshing ? qsTr("Обновляем балансы и историю…") : financeController.cryptoLastError
+                text: financeController.cryptoRefreshing ? "Обновляем балансы и историю…" : financeController.cryptoLastError
                 font.pixelSize: 12
                 color: MobileTheme.muted
                 wrapMode: Text.Wrap
             }
             MobileButton {
                 Layout.fillWidth: true
-                text: qsTr("Обновить цены")
+                text: "Обновить цены"
                 enabled: !financeController.cryptoRefreshing && financeController.cryptoManualRefreshReady
                 onClicked: financeController.refreshCryptoWallets()
             }
@@ -387,7 +387,7 @@ Flickable {
                 MobileText {
                     font.family: MobileTheme.mono
                     Layout.fillWidth: true
-                    text: qsTr("02. ИСТОРИЯ ОПЕРАЦИЙ")
+                    text: "02. ИСТОРИЯ ОПЕРАЦИЙ"
                     font.pixelSize: 12
                 }
                 MobileIconButton {
@@ -406,7 +406,7 @@ Flickable {
                 font.pixelSize: 16
                 color: MobileTheme.accent
                 placeholderTextColor: MobileTheme.muted
-                placeholderText: qsTr("Поиск по истории")
+                placeholderText: "Поиск по истории"
                 text: dashboard.host.searchText
                 onTextEdited: dashboard.host.searchText = text
                 onActiveFocusChanged: Qt.callLater(dashboard.revealSearch)
@@ -520,7 +520,7 @@ Flickable {
             MobileText {
                 Layout.fillWidth: true
                 visible: dashboard.historyRows.length === 0
-                text: qsTr("Операций не найдено")
+                text: "Операций не найдено"
                 color: MobileTheme.muted
                 topPadding: 24
                 bottomPadding: 24
@@ -529,32 +529,32 @@ Flickable {
     }
     MobileSheet {
         id: sortSheet
-        title: qsTr("Сортировка истории")
+        title: "Сортировка истории"
         Repeater {
             model: [
                 {
                     key: "date",
-                    label: qsTr("Дата")
+                    label: "Дата"
                 },
                 {
                     key: "type",
-                    label: qsTr("Тип")
+                    label: "Тип"
                 },
                 {
                     key: "account",
-                    label: qsTr("Счёт")
+                    label: "Счёт"
                 },
                 {
                     key: "category",
-                    label: qsTr("Категория")
+                    label: "Категория"
                 },
                 {
                     key: "description",
-                    label: qsTr("Описание")
+                    label: "Описание"
                 },
                 {
                     key: "amount",
-                    label: qsTr("Сумма")
+                    label: "Сумма"
                 }
             ]
             MobileListRow {
@@ -572,11 +572,11 @@ Flickable {
             Layout.fillWidth: true
             options: [
                 {
-                    label: qsTr("По возрастанию"),
+                    label: "По возрастанию",
                     value: 1
                 },
                 {
-                    label: qsTr("По убыванию"),
+                    label: "По убыванию",
                     value: -1
                 }
             ]

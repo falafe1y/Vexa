@@ -18,7 +18,7 @@ EditorialDialog {
     anchors.centerIn: parent
     width: Math.min(460, parent.width - 32)
     modal: true
-    title: qsTr("Цена покупки")
+    title: "Цена покупки"
     padding: 24
     background: Rectangle {
         color: (Appearance.desktop ? "#f3eddf" : "#FFFFF8")
@@ -39,31 +39,31 @@ EditorialDialog {
             Layout.fillWidth: true
             wrapMode: Text.WordWrap
             color: (Appearance.desktop ? "#59616a" : "#687483")
-            text: qsTr("Эти монеты попали на счёт не покупкой на бирже, поэтому доходность по ним нужна цена покупки.")
+            text: "Эти монеты попали на счёт не покупкой на бирже, поэтому доходность по ним нужна цена покупки."
         }
 
         RadioButton {
             id: manualMode
             checked: true
-            text: qsTr("Указать среднюю цену покупки и дату")
+            text: "Указать среднюю цену покупки и дату"
         }
         RadioButton {
             id: connectionMode
-            text: qsTr("Считать с момента подключения биржи (цена сегодня)")
+            text: "Считать с момента подключения биржи (цена сегодня)"
         }
 
         EditorialField {
             id: priceField
             visible: manualMode.checked
             Layout.fillWidth: true
-            placeholderText: qsTr("Цена за 1 монету, $")
+            placeholderText: "Цена за 1 монету, $"
             inputMethodHints: Qt.ImhFormattedNumbersOnly
         }
         EditorialField {
             id: dateField
             visible: manualMode.checked
             Layout.fillWidth: true
-            placeholderText: qsTr("Примерная дата покупки, ГГГГ-ММ-ДД")
+            placeholderText: "Примерная дата покупки, ГГГГ-ММ-ДД"
         }
 
         EditorialLabel {
@@ -79,12 +79,12 @@ EditorialDialog {
             spacing: 8
 
             StyledButton {
-                text: qsTr("Отмена")
+                text: "Отмена"
                 onClicked: dialog.close()
             }
             Item { Layout.fillWidth: true }
             StyledButton {
-                text: qsTr("Сбросить")
+                text: "Сбросить"
                 visible: dialog.hasBasis
                 onClicked: {
                     if (dialog.controller.clearCryptoCostBasis(dialog.itemId))
@@ -92,7 +92,7 @@ EditorialDialog {
                 }
             }
             StyledButton {
-                text: qsTr("Сохранить")
+                text: "Сохранить"
                 onClicked: {
                     const price = parseFloat(priceField.text.replace(",", "."));
                     const saved = dialog.controller.setCryptoCostBasis(
@@ -103,7 +103,7 @@ EditorialDialog {
                     if (saved)
                         dialog.close();
                     else
-                        errorLabel.text = qsTr("Проверьте цену и дату: цена больше нуля, дата в формате ГГГГ-ММ-ДД и не позже сегодня.");
+                        errorLabel.text = "Проверьте цену и дату: цена больше нуля, дата в формате ГГГГ-ММ-ДД и не позже сегодня.";
                 }
             }
         }

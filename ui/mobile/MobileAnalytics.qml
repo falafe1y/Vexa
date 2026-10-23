@@ -22,10 +22,10 @@ QtObject {
         if (rows.length === 0)
             return "";
         if (rows[0].resolution === "year")
-            return qsTr("По годам");
+            return "По годам";
         if (rows[0].resolution === "month")
-            return qsTr("По месяцам");
-        return qsTr("По дням");
+            return "По месяцам";
+        return "По дням";
     }
 
     function niceChartStep(range, targetIntervals) {
@@ -86,13 +86,13 @@ QtObject {
         const westernStyle = code !== "RUB";
         if (absolute >= 1000000000) {
             divisor = 1000000000;
-            suffix = westernStyle ? "B" : qsTr("млрд");
+            suffix = westernStyle ? "B" : "млрд";
         } else if (absolute >= 1000000) {
             divisor = 1000000;
-            suffix = westernStyle ? "M" : qsTr("млн");
+            suffix = westernStyle ? "M" : "млн";
         } else if (absolute >= 1000) {
             divisor = 1000;
-            suffix = westernStyle ? "K" : qsTr("тыс.");
+            suffix = westernStyle ? "K" : "тыс.";
         }
         if (westernStyle) {
             const scaledWestern = amount / divisor;
@@ -112,7 +112,7 @@ QtObject {
     }
 
     function expenseMonthLabel(month) {
-        return [qsTr("Янв."), qsTr("Фев."), qsTr("Мар."), qsTr("Апр."), qsTr("Май"), qsTr("Июн."), qsTr("Июл."), qsTr("Авг."), qsTr("Сен."), qsTr("Окт."), qsTr("Ноя."), qsTr("Дек.")][month];
+        return ["Янв.", "Фев.", "Мар.", "Апр.", "Май", "Июн.", "Июл.", "Авг.", "Сен.", "Окт.", "Ноя.", "Дек."][month];
     }
 
     function averageCompletedMonthExpense(rows) {

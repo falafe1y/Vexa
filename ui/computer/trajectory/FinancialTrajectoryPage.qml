@@ -8,7 +8,7 @@ EditorialPage {
     id: page
     required property var theme
     host: theme
-    title: qsTr("Финансовая траектория.")
+    title: "Финансовая траектория."
     readonly property var trajectory: controller.financialTrajectory
     property string scenarioName: "base"
     // The sources the user ticked for the calculation; saved with the next recalculation
@@ -64,20 +64,20 @@ EditorialPage {
         columns: page.host.width <= 850 ? 2 : 4
         metrics: [
             {
-                label: qsTr("Текущий капитал"),
+                label: "Текущий капитал",
                 value: page.money(trajectory.currentMinor)
             },
             {
-                label: qsTr("Накопление в месяц"),
+                label: "Накопление в месяц",
                 value: page.money(trajectory.averageSavingMinor)
             },
             {
-                label: qsTr("К концу прогноза"),
+                label: "К концу прогноза",
                 value: trajectory.forecast.length ? page.money(trajectory.forecast[trajectory.forecast.length
                                                                                    - 1].valueMinor) : "—"
             },
             {
-                label: qsTr("Доля накоплений"),
+                label: "Доля накоплений",
                 value: Number(trajectory.savingRate).toFixed(1).replace(".", ",") + " %"
             }
         ]
@@ -98,8 +98,8 @@ EditorialPage {
             EditorialSection {
                 width: parent.width
                 number: 1
-                title: qsTr("Финансовая траектория")
-                note: qsTr("%1 МЕСЯЦЕВ").arg(trajectory.horizonMonths)
+                title: "Финансовая траектория"
+                note: "%1 МЕСЯЦЕВ".arg(trajectory.horizonMonths)
             }
             EditorialChart {
                 objectName: "editorialTrajectoryChart"
@@ -109,7 +109,7 @@ EditorialPage {
                 currency: trajectory.currency
                 series: [
                     {
-                        label: qsTr("Прогноз"),
+                        label: "Прогноз",
                         rows: trajectory.forecast.map(function (r) {
                             return {
                                 date: r.date,
@@ -118,7 +118,7 @@ EditorialPage {
                         })
                     },
                     {
-                        label: qsTr("С учётом инфляции"),
+                        label: "С учётом инфляции",
                         dashed: true,
                         rows: trajectory.forecast.map(function (r) {
                             return {
@@ -128,7 +128,7 @@ EditorialPage {
                         })
                     },
                     {
-                        label: qsTr("Со сложным процентом"),
+                        label: "Со сложным процентом",
                         dotted: true,
                         rows: trajectory.forecast.map(function (r) {
                             return {
@@ -143,14 +143,14 @@ EditorialPage {
                 width: parent.width
                 entries: [
                     {
-                        label: qsTr("Прогноз")
+                        label: "Прогноз"
                     },
                     {
-                        label: qsTr("С учётом инфляции"),
+                        label: "С учётом инфляции",
                         dashed: true
                     },
                     {
-                        label: qsTr("Со сложным процентом"),
+                        label: "Со сложным процентом",
                         dotted: true
                     }
                 ]
@@ -161,8 +161,7 @@ EditorialPage {
                 wrapMode: Text.WordWrap
                 font.pixelSize: 14
                 color: "#59616a"
-                text: qsTr(
-                          "Доходность применяется к текущей стоимости инвестиций; будущие накопления автоматически не считаются вложенными. Линия «Со сложным процентом» вкладывает накопления каждый месяц и тоже приносит по ним доходность.")
+                text: "Доходность применяется к текущей стоимости инвестиций; будущие накопления автоматически не считаются вложенными. Линия «Со сложным процентом» вкладывает накопления каждый месяц и тоже приносит по ним доходность."
             }
         }
         Item {
@@ -182,7 +181,7 @@ EditorialPage {
                 EditorialSection {
                     width: parent.width
                     number: 2
-                    title: qsTr("Параметры прогноза")
+                    title: "Параметры прогноза"
                 }
                 Row {
                     width: parent.width
@@ -192,15 +191,15 @@ EditorialPage {
                         model: [
                             {
                                 key: "base",
-                                title: qsTr("Базовый")
+                                title: "Базовый"
                             },
                             {
                                 key: "safe",
-                                title: qsTr("Осторожный")
+                                title: "Осторожный"
                             },
                             {
                                 key: "growth",
-                                title: qsTr("Рискованный")
+                                title: "Рискованный"
                             }
                         ]
                         EditorialAction {
@@ -222,7 +221,7 @@ EditorialPage {
                 SettingRow {
                     EditorialText {
                         Layout.fillWidth: true
-                        text: qsTr("Среднее за")
+                        text: "Среднее за"
                         font.pixelSize: 14
                     }
                     EditorialChoice {
@@ -232,15 +231,15 @@ EditorialPage {
                         valueRole: "value"
                         model: [
                             {
-                                text: qsTr("3 месяца"),
+                                text: "3 месяца",
                                 value: 3
                             },
                             {
-                                text: qsTr("6 месяцев"),
+                                text: "6 месяцев",
                                 value: 6
                             },
                             {
-                                text: qsTr("12 месяцев"),
+                                text: "12 месяцев",
                                 value: 12
                             }
                         ]
@@ -250,7 +249,7 @@ EditorialPage {
                 SettingRow {
                     EditorialText {
                         Layout.fillWidth: true
-                        text: qsTr("Горизонт")
+                        text: "Горизонт"
                         font.pixelSize: 14
                     }
                     EditorialChoice {
@@ -260,19 +259,19 @@ EditorialPage {
                         valueRole: "value"
                         model: [
                             {
-                                text: qsTr("6 месяцев"),
+                                text: "6 месяцев",
                                 value: 6
                             },
                             {
-                                text: qsTr("1 год"),
+                                text: "1 год",
                                 value: 12
                             },
                             {
-                                text: qsTr("3 года"),
+                                text: "3 года",
                                 value: 36
                             },
                             {
-                                text: qsTr("5 лет"),
+                                text: "5 лет",
                                 value: 60
                             }
                         ]
@@ -283,7 +282,7 @@ EditorialPage {
                 SettingRow {
                     EditorialText {
                         Layout.fillWidth: true
-                        text: qsTr("Доходность в год, %")
+                        text: "Доходность в год, %"
                         font.pixelSize: 14
                     }
                     EditorialField {
@@ -297,7 +296,7 @@ EditorialPage {
                 SettingRow {
                     EditorialText {
                         Layout.fillWidth: true
-                        text: qsTr("Инфляция в год, %")
+                        text: "Инфляция в год, %"
                         font.pixelSize: 14
                     }
                     EditorialField {
@@ -311,7 +310,7 @@ EditorialPage {
                 SettingRow {
                     EditorialText {
                         Layout.fillWidth: true
-                        text: qsTr("Изменение доходов, %")
+                        text: "Изменение доходов, %"
                         font.pixelSize: 14
                     }
                     EditorialField {
@@ -325,7 +324,7 @@ EditorialPage {
                 SettingRow {
                     EditorialText {
                         Layout.fillWidth: true
-                        text: qsTr("Изменение расходов, %")
+                        text: "Изменение расходов, %"
                         font.pixelSize: 14
                     }
                     EditorialField {
@@ -343,7 +342,7 @@ EditorialPage {
                     }
                     EditorialText {
                         Layout.fillWidth: true
-                        text: qsTr("Разовая покупка")
+                        text: "Разовая покупка"
                         font.pixelSize: 14
                     }
                     EditorialField {
@@ -357,7 +356,7 @@ EditorialPage {
                 SettingRow {
                     EditorialText {
                         Layout.fillWidth: true
-                        text: qsTr("Через, месяцев")
+                        text: "Через, месяцев"
                         font.pixelSize: 14
                     }
                     EditorialChoice {
@@ -384,7 +383,7 @@ EditorialPage {
                     }
                     EditorialText {
                         Layout.fillWidth: true
-                        text: qsTr("Все счета и кошельки")
+                        text: "Все счета и кошельки"
                         font.pixelSize: 14
                     }
                 }
@@ -412,12 +411,12 @@ EditorialPage {
                     wrapMode: Text.WordWrap
                     color: "#b84932"
                     font.pixelSize: 14
-                    text: trajectory.complete ? "" : qsTr("Часть котировок недоступна: расчёт по известным активам.")
+                    text: trajectory.complete ? "" : "Часть котировок недоступна: расчёт по известным активам."
                 }
                 EditorialAction {
                     width: parent.width
                     height: 64
-                    text: qsTr("ПЕРЕСЧИТАТЬ И СОХРАНИТЬ")
+                    text: "ПЕРЕСЧИТАТЬ И СОХРАНИТЬ"
                     onClicked: {
                         page.scenarioName = "custom";
                         page.applySettings();

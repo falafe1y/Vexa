@@ -10,7 +10,7 @@ void FinanceController::initializeBenchmark(){
     connect(this,&FinanceController::performanceChanged,this,&FinanceController::rebuildBenchmarkComparison);
     connect(&benchmarkSearchProvider_,&MoexInvestmentProvider::searchSucceeded,this,[this](const auto& instruments){
         benchmarkSearchResults_.clear();for(const auto& f:instruments)if(f.type()==InvestmentInstrumentType::Fund || f.type()==InvestmentInstrumentType::Etf)benchmarkSearchResults_.append(f);
-        benchmarkSearchBusy_=false;benchmarkSearchError_=benchmarkSearchResults_.isEmpty()?tr("Биржевые фонды по запросу не найдены."):QString();emit benchmarkChanged();
+        benchmarkSearchBusy_=false;benchmarkSearchError_=benchmarkSearchResults_.isEmpty()?QStringLiteral("Биржевые фонды по запросу не найдены."):QString();emit benchmarkChanged();
     });
     connect(&benchmarkSearchProvider_,&MoexInvestmentProvider::searchFailed,this,[this](const QString& error){benchmarkSearchBusy_=false;benchmarkSearchError_=error;emit benchmarkChanged();});
     connect(&benchmarkHistoryProvider_,&InvestmentBenchmarkProvider::failed,this,[this](const QString& error){benchmarkBusy_=false;benchmarkError_=error;emit benchmarkChanged();});
@@ -42,9 +42,9 @@ void FinanceController::rebuildBenchmarkComparison(){
     const bool validPeriod=historyPeriod.first.isValid() && historyPeriod.second.isValid() && historyPeriod.first<=historyPeriod.second;
     const auto request=descriptor.value("key").toString()+"|"+historyPeriod.first.toString(Qt::ISODate)+"|"+historyPeriod.second.toString(Qt::ISODate);
     if(benchmarkBusy_ && (descriptor.isEmpty() || !validPeriod || request!=benchmarkRequest_)){benchmarkHistoryProvider_.cancel();benchmarkBusy_=false;benchmarkRequest_.clear();}
-    benchmarkComparison_={{"available",false},{"points",QVariantList()},{"reason",tr("Выберите индекс или биржевой фонд.")}};
+    benchmarkComparison_={{"available",false},{"points",QVariantList()},{"reason",QStringLiteral("Выберите индекс или биржевой фонд.")}};
     if(!descriptor.isEmpty()){
-        if(portfolio.size()<2)benchmarkComparison_["reason"]=tr("Для сравнения нужны две завершённые дневные оценки и непрерывная история. Текущий день не включён.");
+        if(portfolio.size()<2)benchmarkComparison_["reason"]=QStringLiteral("Для сравнения нужны две завершённые дневные оценки и непрерывная история. Текущий день не включён.");
         else {
             const auto from=QDate::fromString(portfolio.first().toMap().value("date").toString(),Qt::ISODate),to=QDate::fromString(portfolio.last().toMap().value("date").toString(),Qt::ISODate);
             const auto key=descriptor.value("key").toString();
@@ -55,7 +55,7 @@ void FinanceController::rebuildBenchmarkComparison(){
                 benchmarkComparison_=compareInvestmentBenchmark(portfolio,repository_.loadBenchmarkPrices(key),rates,currencyCode(appCurrency_));
                 if(!benchmarkBusy_)benchmarkRequest_=request;
             }else{
-                benchmarkComparison_["reason"]=tr("Для этого периода ещё не загружена полная история ориентира.");
+                benchmarkComparison_["reason"]=QStringLiteral("Для этого периода ещё не загружена полная история ориентира.");
                 if(!restoringDatabase_ && request!=benchmarkRequest_){benchmarkRequest_=request;benchmarkBusy_=true;benchmarkError_.clear();benchmarkRequestedFrom_=from.addDays(-31);benchmarkRequestedTo_=to;benchmarkHistoryProvider_.load(descriptor,benchmarkRequestedFrom_,to);}
             }
         }
@@ -65,7 +65,7 @@ void FinanceController::rebuildBenchmarkComparison(){
     benchmarkComparison_["historyTo"]=historyPeriod.second.toString(Qt::ISODate);
     benchmarkComparison_["historyLoaded"]=!descriptor.isEmpty() && validPeriod && repository_.benchmarkHistoryCovered(descriptor.value("key").toString(),historyPeriod.first,historyPeriod.second);
     benchmarkComparison_["historyFallback"]=dateFilterActive() && dateFilterFrom_>qMin(dateFilterTo_,QDate::currentDate().addDays(-1));
-    if(!validPeriod && !descriptor.isEmpty())benchmarkComparison_["reason"]=tr("Для загрузки истории выберите период, в котором есть завершённые дни. Текущий день не включён.");
+    if(!validPeriod && !descriptor.isEmpty())benchmarkComparison_["reason"]=QStringLiteral("Для загрузки истории выберите период, в котором есть завершённые дни. Текущий день не включён.");
     emit benchmarkChanged();
 }
 void FinanceController::selectBenchmarkIndex(const QString& key){
@@ -75,7 +75,7 @@ void FinanceController::selectBenchmarkIndex(const QString& key){
 }
 void FinanceController::searchBenchmarkFunds(const QString& query){
     benchmarkSearchProvider_.cancelAll();benchmarkSearchResults_.clear();benchmarkSearchError_.clear();const auto text=query.trimmed();
-    if(text.size()<2){benchmarkSearchBusy_=false;benchmarkSearchError_=tr("Введите хотя бы два символа названия или обозначения фонда.");emit benchmarkChanged();return;}
+    if(text.size()<2){benchmarkSearchBusy_=false;benchmarkSearchError_=QStringLiteral("Введите хотя бы два символа названия или обозначения фонда.");emit benchmarkChanged();return;}
     benchmarkSearchBusy_=true;emit benchmarkChanged();benchmarkSearchProvider_.searchFunds(text);
 }
 void FinanceController::selectBenchmarkFund(int index){

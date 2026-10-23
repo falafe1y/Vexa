@@ -14,7 +14,7 @@ Item {
         height: Math.max(72, label.implicitHeight + 32)
         padding: 0
         Accessible.name: disclosure.title
-        Accessible.description: disclosure.expanded ? qsTr("Свернуть") : qsTr("Развернуть")
+        Accessible.description: disclosure.expanded ? "Свернуть" : "Развернуть"
         contentItem: RowLayout {
             spacing: 16
             MobileText {

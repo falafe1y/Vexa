@@ -149,7 +149,7 @@ EditorialDialog {
             categoryLimits: categoryLimits
         });
         if (!result.ok) {
-            formError.text = result.error || qsTr("Не удалось сохранить бюджет");
+            formError.text = result.error || "Не удалось сохранить бюджет";
             return;
         }
         close();
@@ -226,10 +226,10 @@ EditorialDialog {
                 ruleVisible: false
                 Layout.fillWidth: true
                 text: dialog.editingId.length > 0
-                    ? qsTr("Редактирование бюджета") : qsTr("Новый бюджет")
+                    ? "Редактирование бюджета" : "Новый бюджет"
                 color: dialog.textColor
                 }
-            ActionButton { text: qsTr("Закрыть"); onClicked: dialog.close() }
+            ActionButton { text: "Закрыть"; onClicked: dialog.close() }
         }
 
         Rectangle { Layout.fillWidth: true; Layout.leftMargin: 24; Layout.rightMargin: 24; height: 1; color: dialog.accentColor }
@@ -249,11 +249,11 @@ EditorialDialog {
                 x: Appearance.desktop ? 24 : 20
                 spacing: 12
 
-                EditorialLabel { text: qsTr("Название"); color: dialog.mutedColor }
+                EditorialLabel { text: "Название"; color: dialog.mutedColor }
                 Field {
                     id: nameField; objectName: "nameField"
                     Layout.fillWidth: true
-                    placeholderText: qsTr("Например, общий бюджет")
+                    placeholderText: "Например, общий бюджет"
                     maximumLength: 80
                 }
 
@@ -262,18 +262,18 @@ EditorialDialog {
                     spacing: Appearance.desktop ? 12 : 10
                     EditorialColumnLayout {
                         Layout.fillWidth: true
-                        EditorialLabel { text: qsTr("Лимит на месяц"); color: dialog.mutedColor }
+                        EditorialLabel { text: "Лимит на месяц"; color: dialog.mutedColor }
                         Field {
                             id: amountField; objectName: "amountField"
                             Layout.fillWidth: true
-                            placeholderText: qsTr("0,00")
+                            placeholderText: "0,00"
                             inputMethodHints: Qt.ImhFormattedNumbersOnly
                             validator: DoubleValidator { bottom: 0.01; decimals: 2 }
                         }
                     }
                     EditorialColumnLayout {
                         Layout.preferredWidth: Appearance.desktop ? 132 : 130
-                        EditorialLabel { text: qsTr("Валюта"); color: dialog.mutedColor }
+                        EditorialLabel { text: "Валюта"; color: dialog.mutedColor }
                         FormCombo {
                             id: currencyBox; objectName: "currencyBox"
                             Layout.fillWidth: true
@@ -286,12 +286,12 @@ EditorialDialog {
                 Rectangle { Layout.fillWidth: true; height: 1; color: dialog.lineColor }
                 FormCheckBox {
                     id: allAccountsBox; objectName: "allAccountsBox"
-                    text: qsTr("Учитывать все счета")
+                    text: "Учитывать все счета"
                     palette.text: dialog.textColor
                 }
                 EditorialLabel {
                     visible: !allAccountsBox.checked
-                    text: qsTr("Выбранные счета")
+                    text: "Выбранные счета"
                     color: dialog.mutedColor
                 }
                 Repeater {
@@ -311,14 +311,14 @@ EditorialDialog {
                 Rectangle { Layout.fillWidth: true; height: 1; color: dialog.lineColor }
                 FormCheckBox {
                     id: allCategoriesBox; objectName: "allCategoriesBox"
-                    text: qsTr("Учитывать все категории расходов")
+                    text: "Учитывать все категории расходов"
                     palette.text: dialog.textColor
                 }
                 EditorialLabel {
                     Layout.fillWidth: true
                     text: allCategoriesBox.checked
-                        ? qsTr("Отметьте категории, если хотите задать им отдельные лимиты")
-                        : qsTr("Отметьте категории, которые входят в бюджет")
+                        ? "Отметьте категории, если хотите задать им отдельные лимиты"
+                        : "Отметьте категории, которые входят в бюджет"
                     color: dialog.mutedColor
                     font.pixelSize: Appearance.desktop ? 16 : 14
                     wrapMode: Text.WordWrap
@@ -342,7 +342,7 @@ EditorialDialog {
                         Field {
                             visible: parent.selected
                             Layout.preferredWidth: 180
-                            placeholderText: qsTr("Лимит, необязательно")
+                            placeholderText: "Лимит, необязательно"
                             text: parent.limitText
                             inputMethodHints: Qt.ImhFormattedNumbersOnly
                             onTextEdited: categorySelection.setProperty(
@@ -367,9 +367,9 @@ EditorialDialog {
             Layout.fillWidth: true
             Layout.margins: 16
             Item { Layout.fillWidth: true }
-            ActionButton { text: qsTr("Отмена"); onClicked: dialog.close() }
+            ActionButton { text: "Отмена"; onClicked: dialog.close() }
             ActionButton {
-                text: qsTr("Сохранить")
+                text: "Сохранить"
                 primary: true
                 onClicked: dialog.submit()
             }

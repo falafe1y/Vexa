@@ -10,7 +10,7 @@ EditorialPage {
     id: page
     required property var theme
     host: theme
-    title: qsTr("Цели.")
+    title: "Цели."
     readonly property int columns: host.width <= 850 ? 1 : host.width <= 1150 ? 2 : 3
     Component.onCompleted: controller.refreshInvestmentQuotes()
     function money(value, currency) {
@@ -18,9 +18,8 @@ EditorialPage {
         return converted === null ? "—" : theme.money(converted, controller.appCurrency, false);
     }
     function status(row) {
-        return !row.complete ? qsTr("НЕПОЛНЫЙ РАСЧЁТ") : row.achieved ? qsTr("ЦЕЛЬ ДОСТИГНУТА") : row.overdue ? qsTr(
-                                                                                                                    "СРОК ИСТЁК") :
-                                                                                                                qsTr("В ПРОЦЕССЕ");
+        return !row.complete ? "НЕПОЛНЫЙ РАСЧЁТ" : row.achieved ? "ЦЕЛЬ ДОСТИГНУТА" : row.overdue ? "СРОК ИСТЁК" :
+                                                                                                                "В ПРОЦЕССЕ";
     }
     function openDeletion(row) {
         deletion.goalId = row.id;
@@ -59,14 +58,14 @@ EditorialPage {
         EditorialText {
             width: Math.max(0, parent.width - add.width - 24)
             height: 80
-            text: qsTr("Текущий капитал по выбранным источникам.")
+            text: "Текущий капитал по выбранным источникам."
             color: "#59616a"
         }
         EditorialAction {
             id: add
             anchors.right: parent.right
             anchors.verticalCenter: parent.verticalCenter
-            text: qsTr("+ ЦЕЛЬ")
+            text: "+ ЦЕЛЬ"
             onClicked: editor.openForm(null)
         }
         Rectangle {
@@ -112,7 +111,7 @@ EditorialPage {
                         height: 24
                         EditorialText {
                             height: 24
-                            text: String(card.index + 1).padStart(2, "0") + " / " + qsTr("ЦЕЛЬ")
+                            text: String(card.index + 1).padStart(2, "0") + " / " + "ЦЕЛЬ"
                             font.family: "Cousine"
                             font.pixelSize: 12
                             color: "#59616a"
@@ -137,7 +136,7 @@ EditorialPage {
                     EditorialText {
                         width: parent.width
                         height: 48
-                        text: (card.modelData.complete ? "" : qsTr("Известно: ")) + page.money(
+                        text: (card.modelData.complete ? "" : "Известно: ") + page.money(
                                   card.modelData.currentMinor, card.modelData.currency)
                         font.family: "PT Serif"
                         font.pixelSize: 36
@@ -145,7 +144,7 @@ EditorialPage {
                     EditorialText {
                         width: parent.width
                         height: 24
-                        text: qsTr("из %1").arg(page.money(card.modelData.targetMinor, card.modelData.currency))
+                        text: "из %1".arg(page.money(card.modelData.targetMinor, card.modelData.currency))
                         font.pixelSize: 14
                         color: "#59616a"
                     }
@@ -172,8 +171,8 @@ EditorialPage {
                         EditorialText {
                             anchors.right: parent.right
                             height: 24
-                            text: card.modelData.deadline ? qsTr("До %1").arg(card.modelData.deadline.split("-").reverse(
-                                                                                  ).join(".")) : qsTr("Без срока")
+                            text: card.modelData.deadline ? "До %1".arg(card.modelData.deadline.split("-").reverse(
+                                                                                  ).join(".")) : "Без срока"
                             font.family: "Cousine"
                             font.pixelSize: 12
                             color: "#59616a"
@@ -182,7 +181,7 @@ EditorialPage {
                     EditorialText {
                         width: parent.width
                         height: 24
-                        text: qsTr("Осталось %1").arg(page.money(card.modelData.remainingMinor,
+                        text: "Осталось %1".arg(page.money(card.modelData.remainingMinor,
                                                                  card.modelData.currency))
 
                         font.family: "Cousine"
@@ -190,7 +189,7 @@ EditorialPage {
                         color: "#59616a"
                     }
                     EditorialAction {
-                        text: qsTr("РЕДАКТИРОВАТЬ")
+                        text: "РЕДАКТИРОВАТЬ"
                         onClicked: editor.openForm(card.modelData)
                     }
                 }
@@ -208,7 +207,7 @@ EditorialPage {
         width: parent.width
         height: 96
         visible: controller.financialGoals.length === 0
-        text: qsTr("Создайте цель и выберите счета, которые нужно учитывать.")
+        text: "Создайте цель и выберите счета, которые нужно учитывать."
         color: "#59616a"
     }
     EditorialMenu {
@@ -221,7 +220,7 @@ EditorialPage {
 
         GoalMenuItem {
             width: goalContextMenu.availableWidth
-            text: qsTr("Редактировать")
+            text: "Редактировать"
             enabled: goalContextMenu.goalData !== null
             onTriggered: {
                 if (goalContextMenu.goalData)
@@ -241,7 +240,7 @@ EditorialPage {
 
         GoalMenuItem {
             width: goalContextMenu.availableWidth
-            text: qsTr("Удалить")
+            text: "Удалить"
             destructive: true
             enabled: goalContextMenu.goalData !== null
             onTriggered: {
@@ -278,7 +277,7 @@ EditorialPage {
         contentItem: EditorialDialogForm {
             spacing: 16
             EditorialDialogTitle {
-                text: qsTr("Удалить цель?")
+                text: "Удалить цель?"
                 color: theme.accent
             }
             EditorialLabel {
@@ -289,7 +288,7 @@ EditorialPage {
             }
             EditorialLabel {
                 Layout.fillWidth: true
-                text: qsTr("Счета, деньги и операции останутся без изменений.")
+                text: "Счета, деньги и операции останутся без изменений."
                 color: theme.muted
                 wrapMode: Text.WordWrap
             }
@@ -303,17 +302,17 @@ EditorialPage {
                     Layout.fillWidth: true
                 }
                 Action {
-                    text: qsTr("Отмена")
+                    text: "Отмена"
                     onClicked: deletion.close()
                 }
                 Action {
-                    text: qsTr("Удалить")
+                    text: "Удалить"
                     destructive: true
                     onClicked: {
                         if (controller.deleteFinancialGoal(deletion.goalId))
                             deletion.close();
                         else
-                            deletion.errorText = qsTr("Не удалось удалить цель");
+                            deletion.errorText = "Не удалось удалить цель";
                     }
                 }
             }

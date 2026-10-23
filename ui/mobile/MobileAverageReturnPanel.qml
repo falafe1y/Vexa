@@ -78,7 +78,7 @@ ColumnLayout {
                 font.family: MobileTheme.mono
                 color: MobileTheme.muted
                 wrapMode: Text.Wrap
-                text: qsTr("Учтено %1 из %2 · %3 сейчас").arg(group.modelData.counted).arg(group.modelData.shown).arg(MobileFormat.displayMoney(group.modelData.valueMinor, "RUB", false))
+                text: "Учтено %1 из %2 · %3 сейчас".arg(group.modelData.counted).arg(group.modelData.shown).arg(MobileFormat.displayMoney(group.modelData.valueMinor, "RUB", false))
             }
             Repeater {
                 model: group.modelData.slices || []
@@ -112,13 +112,13 @@ ColumnLayout {
         color: MobileTheme.line
     }
     MobileText {
-        text: qsTr("СЧЕТА ДЛЯ РАСЧЁТА")
+        text: "СЧЕТА ДЛЯ РАСЧЁТА"
         font.pixelSize: 12
         font.family: MobileTheme.mono
     }
     MobileCheckRow {
         Layout.fillWidth: true
-        label: qsTr("Объединить криптовалюту и инвестиции")
+        label: "Объединить криптовалюту и инвестиции"
         checked: panel.merged
         onToggled: function (on) {
             financeController.setAverageReturnSelection(panel.excluded, on);
@@ -145,13 +145,13 @@ ColumnLayout {
                 font.family: MobileTheme.mono
                 color: MobileTheme.muted
                 wrapMode: Text.Wrap
-                text: MobileFormat.displayMoney(modelData.valueMinor, "RUB", false) + " · " + (modelData.annualPercent === null || modelData.annualPercent === undefined ? modelData.reason : panel.percent(modelData.annualPercent) + qsTr(" в год"))
+                text: MobileFormat.displayMoney(modelData.valueMinor, "RUB", false) + " · " + (modelData.annualPercent === null || modelData.annualPercent === undefined ? modelData.reason : panel.percent(modelData.annualPercent) + " в год")
             }
             MobileButton {
                 Layout.fillWidth: true
                 Layout.leftMargin: 36
                 visible: !!modelData.untracked
-                text: modelData.basisMode ? qsTr("Цена покупки…") : qsTr("Указать цену покупки")
+                text: modelData.basisMode ? "Цена покупки…" : "Указать цену покупки"
                 onClicked: costBasisSheet.openFor(modelData)
             }
         }
@@ -162,7 +162,7 @@ ColumnLayout {
     MobileText {
         Layout.fillWidth: true
         visible: !panel.items.length
-        text: qsTr("Добавьте позицию, вклад или кошелёк")
+        text: "Добавьте позицию, вклад или кошелёк"
         color: MobileTheme.muted
         wrapMode: Text.Wrap
     }
@@ -172,6 +172,6 @@ ColumnLayout {
         font.family: MobileTheme.mono
         color: MobileTheme.muted
         wrapMode: Text.Wrap
-        text: qsTr("Вес инструмента — сумма денег в нём сейчас. Учитываются инструменты с историей не короче 30 дней. Криптовалюта — монеты на бирже по сделкам за два года; цена покупки переведена в рубли по курсу ЦБ на день сделки. Кошельки и стейблкоины не учитываются. Для монет с вводом или выводом причина исключения указана в списке.")
+        text: "Вес инструмента — сумма денег в нём сейчас. Учитываются инструменты с историей не короче 30 дней. Криптовалюта — монеты на бирже по сделкам за два года; цена покупки переведена в рубли по курсу ЦБ на день сделки. Кошельки и стейблкоины не учитываются. Для монет с вводом или выводом причина исключения указана в списке."
     }
 }

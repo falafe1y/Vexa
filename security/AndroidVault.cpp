@@ -30,7 +30,7 @@ bool invoke(const char* method, const QByteArray& input, QByteArray& output, QSt
                                                            argument.object<jstring>());
     QJniEnvironment env;
     if (!result.isValid() || env.checkAndClearExceptions()) {
-        error = QCoreApplication::translate("AndroidVault", "Не удалось обработать данные в хранилище Android.");
+        error = QStringLiteral("Не удалось обработать данные в хранилище Android.");
         return false;
     }
     output = result.toString().toLatin1();
@@ -47,10 +47,10 @@ bool available(QString& error)
     QJniEnvironment env;
     env.checkAndClearExceptions();
     if (ok) return true;
-    error = QCoreApplication::translate("AndroidVault", "Хранилище Android недоступно. Разблокируйте устройство и повторите попытку.");
+    error = QStringLiteral("Хранилище Android недоступно. Разблокируйте устройство и повторите попытку.");
     return false;
 #else
-    error = QCoreApplication::translate("AndroidVault", "Хранилище Android доступно только на Android.");
+    error = QStringLiteral("Хранилище Android доступно только на Android.");
     return false;
 #endif
 }
@@ -67,7 +67,7 @@ bool read(const QString& name, QByteArray& value, bool& found, QString& error)
     file.close();
     const QByteArray magic(RecordMagic);
     if (!stored.startsWith(magic)) {
-        error = QCoreApplication::translate("AndroidVault", "Сохранённые данные повреждены.");
+        error = QStringLiteral("Сохранённые данные повреждены.");
         return false;
     }
     QByteArray plainBase64;
@@ -78,7 +78,7 @@ bool read(const QString& name, QByteArray& value, bool& found, QString& error)
     return true;
 #else
     Q_UNUSED(name);
-    error = QCoreApplication::translate("AndroidVault", "Хранилище Android доступно только на Android.");
+    error = QStringLiteral("Хранилище Android доступно только на Android.");
     return false;
 #endif
 }
@@ -101,13 +101,13 @@ bool write(const QString& name, const QByteArray& value, QString& error)
     const QByteArray magic(RecordMagic);
     if (!file.open(QIODevice::WriteOnly) || file.write(magic) != magic.size()
         || file.write(sealed) != sealed.size() || !file.commit()) {
-        error = QCoreApplication::translate("AndroidVault", "Не удалось сохранить данные в хранилище Android.");
+        error = QStringLiteral("Не удалось сохранить данные в хранилище Android.");
         return false;
     }
     return true;
 #else
     Q_UNUSED(name); Q_UNUSED(value);
-    error = QCoreApplication::translate("AndroidVault", "Хранилище Android доступно только на Android.");
+    error = QStringLiteral("Хранилище Android доступно только на Android.");
     return false;
 #endif
 }

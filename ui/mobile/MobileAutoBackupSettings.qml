@@ -11,7 +11,7 @@ Item {
 
     FolderDialog {
         id: folderDialog
-        title: qsTr("Папка для автокопий Vexa")
+        title: "Папка для автокопий Vexa"
         onAccepted: databaseProtection.chooseAutoBackupFolder(selectedFolder)
     }
 
@@ -24,7 +24,7 @@ Item {
         MobileText {
             font.family: MobileTheme.serif
             Layout.fillWidth: true
-            text: qsTr("Автокопии")
+            text: "Автокопии"
             color: MobileTheme.accent
             font.pixelSize: 17
             font.weight: Font.DemiBold
@@ -32,7 +32,7 @@ Item {
         MobileText {
             font.family: MobileTheme.mono
             Layout.fillWidth: true
-            text: qsTr("Копия .vexabackup раз в 24 часа по местному времени, пока Vexa открыта. Хранятся 7 последних копий.")
+            text: "Копия .vexabackup раз в 24 часа по местному времени, пока Vexa открыта. Хранятся 7 последних копий."
             wrapMode: Text.Wrap
             color: MobileTheme.muted
             font.pixelSize: MobileTheme.sizeCaption
@@ -41,27 +41,27 @@ Item {
             font.family: MobileTheme.mono
             Layout.fillWidth: true
             visible: !databaseProtection.autoBackupSupported
-            text: qsTr("Автокопии на этой платформе недоступны.")
+            text: "Автокопии на этой платформе недоступны."
             wrapMode: Text.Wrap
             color: MobileTheme.red
             font.pixelSize: MobileTheme.sizeCaption
         }
         MobileCheckRow {
             Layout.fillWidth: true
-            label: qsTr("Делать автокопии")
+            label: "Делать автокопии"
             checked: databaseProtection.autoBackupEnabled
             enabled: databaseProtection.autoBackupSupported
             onToggled: function (nowChecked) { databaseProtection.setAutoBackupEnabled(nowChecked) }
         }
         MobileButton {
             Layout.fillWidth: true
-            text: databaseProtection.autoBackupFolder.length > 0 ? qsTr("Сменить папку") : qsTr("Выбрать папку")
+            text: databaseProtection.autoBackupFolder.length > 0 ? "Сменить папку" : "Выбрать папку"
             enabled: databaseProtection.autoBackupSupported && !databaseProtection.busy
             onClicked: folderDialog.open()
         }
         MobileButton {
             Layout.fillWidth: true
-            text: databaseProtection.autoBackupPasswordSet ? qsTr("Сменить пароль автокопий") : qsTr("Задать пароль автокопий")
+            text: databaseProtection.autoBackupPasswordSet ? "Сменить пароль автокопий" : "Задать пароль автокопий"
             enabled: databaseProtection.autoBackupSupported
             onClicked: passwordSheet.open()
         }
@@ -69,7 +69,7 @@ Item {
             font.family: MobileTheme.mono
             Layout.fillWidth: true
             visible: databaseProtection.autoBackupLast.length > 0
-            text: qsTr("Последняя копия: %1").arg(databaseProtection.autoBackupLast)
+            text: "Последняя копия: %1".arg(databaseProtection.autoBackupLast)
             color: MobileTheme.muted
             font.pixelSize: MobileTheme.sizeCaption
         }
@@ -86,13 +86,13 @@ Item {
 
     MobileSheet {
         id: passwordSheet
-        title: qsTr("Пароль автокопий")
+        title: "Пароль автокопий"
         onOpened: { newPassword.clear(); repeatPassword.clear(); newPassword.forceActiveFocus() }
 
         MobileText {
             font.family: MobileTheme.mono
             Layout.fillWidth: true
-            text: qsTr("Этим паролем открываются автокопии на любом устройстве. Восстановить забытый пароль нельзя.")
+            text: "Этим паролем открываются автокопии на любом устройстве. Восстановить забытый пароль нельзя."
             wrapMode: Text.Wrap
             color: MobileTheme.muted
             font.pixelSize: MobileTheme.sizeCaption
@@ -108,7 +108,7 @@ Item {
             appLineColor: MobileTheme.line
             appAccentColor: MobileTheme.navSelected
             appOnAccentColor: MobileTheme.accentText
-            placeholderText: qsTr("Пароль: 12–1024 символа")
+            placeholderText: "Пароль: 12–1024 символа"
             echoMode: TextInput.Password
         }
         StyledTextField {
@@ -122,21 +122,21 @@ Item {
             appLineColor: MobileTheme.line
             appAccentColor: MobileTheme.navSelected
             appOnAccentColor: MobileTheme.accentText
-            placeholderText: qsTr("Повторите пароль")
+            placeholderText: "Повторите пароль"
             echoMode: TextInput.Password
         }
         MobileText {
             font.family: MobileTheme.mono
             Layout.fillWidth: true
             visible: repeatPassword.text.length > 0 && repeatPassword.text !== newPassword.text
-            text: qsTr("Пароли не совпадают.")
+            text: "Пароли не совпадают."
             color: MobileTheme.red
             font.pixelSize: MobileTheme.sizeCaption
         }
         MobileButton {
             Layout.fillWidth: true
             variant: "primary"
-            text: qsTr("Сохранить пароль")
+            text: "Сохранить пароль"
             enabled: newPassword.text.length > 0 && newPassword.text === repeatPassword.text
             onClicked: {
                 databaseProtection.setAutoBackupPassword(newPassword.text);

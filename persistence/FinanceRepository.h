@@ -268,8 +268,6 @@ public:
     bool saveAnalyticsCurrency(const QString& currency);
     QString loadSelectedAsset() const;
     bool saveSelectedAsset(const QString& asset);
-    QString loadUiLanguage() const;
-    bool saveUiLanguage(const QString& language);
     bool loadAutomaticCurrencyRates() const;
     double loadManualRubToRubRate() const;
     double loadManualUsdToRubRate() const;

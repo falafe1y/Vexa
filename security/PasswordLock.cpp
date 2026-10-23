@@ -1,6 +1,5 @@
 #include "PasswordLock.h"
 #include <argon2.h>
-#include <QCoreApplication>
 #include <QCryptographicHash>
 #include <QDateTime>
 #include <QDir>
@@ -13,7 +12,6 @@
 #include <limits>
 
 namespace {
-QString message(const char* text) { return QCoreApplication::translate("AppAccess", text); }
 QByteArray randomBytes(int size)
 {
     QByteArray bytes(size, '\0');
@@ -76,7 +74,7 @@ bool PasswordLock::read(QJsonObject& record, QString& error)
                  && hashPattern.match(recovery.toString()).hasMatch()))
         || failures < 0 || failures > std::numeric_limits<quint32>::max() || failures != quint32(failures)
         || next < 0 || next > 9007199254740991.0 || next != qint64(next)) {
-        error = message("Запись защиты отсутствует или повреждена. Доступ к данным закрыт.");
+        error = QStringLiteral("Запись защиты отсутствует или повреждена. Доступ к данным закрыт.");
         return false;
     }
     return true;
@@ -88,7 +86,7 @@ bool PasswordLock::write(const QJsonObject& record, QString& error)
     const bool ok = store_->write(encoded, error) && store_->read(saved, error)
         && equalConstantTime(encoded, saved);
     encoded.fill('\0'); saved.fill('\0');
-    if (!ok && error.isEmpty()) error = message("Не удалось подтвердить сохранение защиты. Повторите попытку.");
+    if (!ok && error.isEmpty()) error = QStringLiteral("Не удалось подтвердить сохранение защиты. Повторите попытку.");
     return ok;
 }
 AccessResult PasswordLock::status()
@@ -114,8 +112,8 @@ AccessResult PasswordLock::verifyRecord(QJsonObject& record, const QString& proo
     if (!result.enabled) { result.ok = true; return result; }
     const auto now = clock_();
     result.retryAfter = std::max<qint64>(0, qint64(record.value("nextAttempt").toDouble()) - now);
-    if (result.retryAfter > 0) { result.error = message("Слишком много попыток. Подождите."); return result; }
-    if (proof.isEmpty()) { result.error = message("Введите пароль или код восстановления."); return result; }
+    if (result.retryAfter > 0) { result.error = QStringLiteral("Слишком много попыток. Подождите."); return result; }
+    if (proof.isEmpty()) { result.error = QStringLiteral("Введите пароль или код восстановления."); return result; }
     bool passwordMatches = false;
     // A recovery code also fits this bound; never hash unbounded renderer input.
     if (validPassword(proof)) {
@@ -140,7 +138,7 @@ AccessResult PasswordLock::verifyRecord(QJsonObject& record, const QString& proo
             record["nextAttempt"] = double(now + result.retryAfter);
         }
         if (!write(record, result.error)) return result;
-        result.error = result.retryAfter ? message("Слишком много попыток. Подождите.") : message("Неверный пароль или код восстановления.");
+        result.error = result.retryAfter ? QStringLiteral("Слишком много попыток. Подождите.") : QStringLiteral("Неверный пароль или код восстановления.");
         return result;
     }
     if (record.value("failures").toDouble() != 0 || record.value("nextAttempt").toDouble() != 0) {
@@ -162,7 +160,7 @@ AccessResult PasswordLock::change(const QString& proof, const QString& password,
     AccessResult result;
     if (!store_->available(result.error)) return result;
     if (!disable && !validPassword(password)) {
-        result.error = message("Пароль должен содержать от 1 до 1024 символов."); return result;
+        result.error = QStringLiteral("Пароль должен содержать от 1 до 1024 символов."); return result;
     }
     QJsonObject current;
     if (!read(current, result.error)) return result;
@@ -178,7 +176,7 @@ AccessResult PasswordLock::change(const QString& proof, const QString& password,
         const int status = argon2id_hash_encoded(2, 19 * 1024, 1, utf8.constData(), utf8.size(),
                                                 salt.constData(), salt.size(), 32, encoded, sizeof encoded);
         utf8.fill('\0');
-        if (status != ARGON2_OK) { result.error = message("Не удалось подготовить защиту паролем."); return result; }
+        if (status != ARGON2_OK) { result.error = QStringLiteral("Не удалось подготовить защиту паролем."); return result; }
         const auto code = QString::fromLatin1(randomBytes(16).toHex().toUpper());
         for (int i = 0; i < code.size(); i += 4) {
             if (i) recoveryCode += QLatin1Char('-');
@@ -192,7 +190,7 @@ AccessResult PasswordLock::change(const QString& proof, const QString& password,
     if (!QFile::exists(marker_)) {
         QSaveFile marker(marker_);
         if (!marker.open(QIODevice::WriteOnly) || marker.write("VEXA_ACCESS_1\n") != 14 || !marker.commit()) {
-            result.error = message("Не удалось сохранить состояние защиты."); return result;
+            result.error = QStringLiteral("Не удалось сохранить состояние защиты."); return result;
         }
     }
     if (!write(next, result.error)) return result;

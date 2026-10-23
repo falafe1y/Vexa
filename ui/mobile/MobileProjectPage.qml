@@ -33,7 +33,7 @@ Item {
 
             MobileText {
                 font.family: MobileTheme.mono
-                text: qsTr("Результат проекта")
+                text: "Результат проекта"
                 color: MobileTheme.muted
                 font.pixelSize: MobileTheme.sizeCaption
             }
@@ -55,7 +55,7 @@ Item {
 
                     MobileText {
                         font.family: MobileTheme.mono
-                        text: qsTr("Доходы")
+                        text: "Доходы"
                         color: MobileTheme.muted
                         font.pixelSize: MobileTheme.sizeCaption
                     }
@@ -74,7 +74,7 @@ Item {
 
                     MobileText {
                         font.family: MobileTheme.mono
-                        text: qsTr("Расходы")
+                        text: "Расходы"
                         color: MobileTheme.muted
                         font.pixelSize: MobileTheme.sizeCaption
                     }
@@ -94,13 +94,13 @@ Item {
 
                 MobileButton {
                     Layout.fillWidth: true
-                    text: qsTr("Переименовать")
+                    text: "Переименовать"
                     onClicked: renameSheet.openFor(page.project)
                 }
                 MobileButton {
                     Layout.fillWidth: true
                     variant: "danger"
-                    text: page.confirmingDelete ? qsTr("Точно удалить?") : qsTr("Удалить")
+                    text: page.confirmingDelete ? "Точно удалить?" : "Удалить"
                     onClicked: {
                         if (!page.confirmingDelete) {
                             page.confirmingDelete = true;
@@ -115,7 +115,7 @@ Item {
 
         MobileText {
             font.family: MobileTheme.mono
-            text: qsTr("Операции")
+            text: "Операции"
             color: MobileTheme.muted
             font.pixelSize: MobileTheme.sizeLabel
             font.weight: Font.DemiBold
@@ -143,7 +143,7 @@ Item {
 
                 width: transactions.width
                 first: index === 0
-                title: modelData.categoryName || modelData.description || qsTr("Без категории")
+                title: modelData.categoryName || modelData.description || "Без категории"
                 subtitle: Qt.formatDateTime(new Date(modelData.date), "dd.MM.yyyy") + (modelData.description && modelData.categoryName ? " · " + modelData.description : "")
                 amount: MobileFormat.transactionText(modelData)
                 amountColor: modelData.type === "income" ? MobileTheme.income : modelData.type === "transfer" ? MobileTheme.muted : MobileTheme.red
@@ -156,8 +156,8 @@ Item {
         width: parent.width - 32
         visible: transactions.count === 0
         svg: "qrc:/icons/projects.svg"
-        title: qsTr("Операций пока нет")
-        text: qsTr("Добавьте доход или расход, и они попадут в сводку проекта.")
+        title: "Операций пока нет"
+        text: "Добавьте доход или расход, и они попадут в сводку проекта."
         actionText: ""
         onAction: operationSheet.openNew()
     }
@@ -167,7 +167,7 @@ Item {
 
         property string errorText: ""
 
-        title: qsTr("Название проекта")
+        title: "Название проекта"
 
         function openFor(row) {
             if (!row)
@@ -180,7 +180,7 @@ Item {
         MobileField {
             id: renameField
             Layout.fillWidth: true
-            label: qsTr("Название")
+            label: "Название"
         }
 
         MobileText {
@@ -196,12 +196,12 @@ Item {
         MobileButton {
             Layout.fillWidth: true
             variant: "primary"
-            text: qsTr("Сохранить")
+            text: "Сохранить"
             onClicked: {
                 if (page.project && financeController.renameProject(page.project.id, renameField.text))
                     renameSheet.close();
                 else
-                    renameSheet.errorText = qsTr("Укажите уникальное название проекта");
+                    renameSheet.errorText = "Укажите уникальное название проекта";
             }
         }
     }
@@ -214,7 +214,7 @@ Item {
         property string accountId: ""
         property string errorText: ""
 
-        title: qsTr("Операция проекта")
+        title: "Операция проекта"
 
         function categoriesFor(kind) {
             return financeController.categories.filter(function (item) {
@@ -244,32 +244,32 @@ Item {
             const minor = MobileFormat.minorFromText(amountField.text);
             const date = MobileFormat.dateFromInput(dateField.text);
             if (minor <= 0) {
-                errorText = qsTr("Введите сумму больше нуля");
+                errorText = "Введите сумму больше нуля";
                 return;
             }
             if (!date) {
-                errorText = qsTr("Укажите дату в формате дд.мм.гггг");
+                errorText = "Укажите дату в формате дд.мм.гггг";
                 return;
             }
             if (categoryId.length === 0 || accountId.length === 0) {
-                errorText = qsTr("Выберите категорию и счёт");
+                errorText = "Выберите категорию и счёт";
                 return;
             }
             if (page.project && financeController.addProjectTransaction(page.project.id, minor, descriptionField.text, categoryId, accountId, operationKind, date))
                 close();
             else
-                errorText = qsTr("Не удалось сохранить операцию");
+                errorText = "Не удалось сохранить операцию";
         }
 
         MobileSegmented {
             Layout.fillWidth: true
             options: [
                 {
-                    label: qsTr("Расход"),
+                    label: "Расход",
                     value: "expense"
                 },
                 {
-                    label: qsTr("Доход"),
+                    label: "Доход",
                     value: "income"
                 }
             ]
@@ -282,7 +282,7 @@ Item {
         MobileField {
             id: amountField
             Layout.fillWidth: true
-            label: qsTr("Сумма")
+            label: "Сумма"
             placeholder: "0"
             inputMethodHints: Qt.ImhFormattedNumbersOnly
         }
@@ -290,13 +290,13 @@ Item {
         MobileField {
             id: descriptionField
             Layout.fillWidth: true
-            label: qsTr("Описание")
-            placeholder: qsTr("Необязательно")
+            label: "Описание"
+            placeholder: "Необязательно"
         }
 
         MobileText {
             font.family: MobileTheme.mono
-            text: qsTr("Категория")
+            text: "Категория"
             color: MobileTheme.muted
             font.pixelSize: MobileTheme.sizeCaption
             font.weight: Font.Medium
@@ -320,7 +320,7 @@ Item {
 
         MobileText {
             font.family: MobileTheme.mono
-            text: qsTr("Счёт")
+            text: "Счёт"
             color: MobileTheme.muted
             font.pixelSize: MobileTheme.sizeCaption
             font.weight: Font.Medium
@@ -345,8 +345,8 @@ Item {
         MobileField {
             id: dateField
             Layout.fillWidth: true
-            label: qsTr("Дата")
-            placeholder: qsTr("дд.мм.гггг")
+            label: "Дата"
+            placeholder: "дд.мм.гггг"
         }
 
         MobileText {
@@ -362,7 +362,7 @@ Item {
         MobileButton {
             Layout.fillWidth: true
             variant: "primary"
-            text: qsTr("Сохранить")
+            text: "Сохранить"
             onClicked: operationSheet.save()
         }
     }

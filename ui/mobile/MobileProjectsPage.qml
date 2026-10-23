@@ -76,14 +76,14 @@ Item {
                     MobileText {
                         font.family: MobileTheme.mono
                         Layout.fillWidth: true
-                        text: qsTr("Доходы %1").arg(MobileFormat.displayMoney(projectCard.row.incomeMinor, financeController.appCurrency, false))
+                        text: "Доходы %1".arg(MobileFormat.displayMoney(projectCard.row.incomeMinor, financeController.appCurrency, false))
                         color: MobileTheme.muted
                         font.pixelSize: MobileTheme.sizeCaption
                         elide: Text.ElideRight
                     }
                     MobileText {
                         font.family: MobileTheme.mono
-                        text: qsTr("Расходы %1").arg(MobileFormat.displayMoney(projectCard.row.expenseMinor, financeController.appCurrency, false))
+                        text: "Расходы %1".arg(MobileFormat.displayMoney(projectCard.row.expenseMinor, financeController.appCurrency, false))
                         color: MobileTheme.muted
                         font.pixelSize: MobileTheme.sizeCaption
                         elide: Text.ElideRight
@@ -93,7 +93,7 @@ Item {
                 MobileText {
                     font.family: MobileTheme.mono
                     Layout.fillWidth: true
-                    text: qsTr("Операций: %1").arg(projectCard.row.operationCount)
+                    text: "Операций: %1".arg(projectCard.row.operationCount)
                     color: MobileTheme.muted
                     font.pixelSize: MobileTheme.sizeCaption
                 }
@@ -106,8 +106,8 @@ Item {
         width: parent.width - 32
         visible: list.count === 0
         svg: "qrc:/icons/projects.svg"
-        title: qsTr("Проектов пока нет")
-        text: qsTr("Проект объединяет операции одной задачи или поездки в отдельную сводку.")
+        title: "Проектов пока нет"
+        text: "Проект объединяет операции одной задачи или поездки в отдельную сводку."
         actionText: ""
         onAction: projectSheet.openFor(null)
     }
@@ -118,7 +118,7 @@ Item {
         property string editingId: ""
         property string errorText: ""
 
-        title: qsTr("Новый проект")
+        title: "Новый проект"
 
         function openFor(row) {
             editingId = row ? row.id : "";
@@ -130,8 +130,8 @@ Item {
         MobileField {
             id: nameField
             Layout.fillWidth: true
-            label: qsTr("Название проекта")
-            placeholder: qsTr("Например, ремонт")
+            label: "Название проекта"
+            placeholder: "Например, ремонт"
         }
 
         MobileText {
@@ -147,13 +147,13 @@ Item {
         MobileButton {
             Layout.fillWidth: true
             variant: "primary"
-            text: qsTr("Сохранить")
+            text: "Сохранить"
             onClicked: {
                 const ok = projectSheet.editingId.length > 0 ? financeController.renameProject(projectSheet.editingId, nameField.text) : financeController.addProject(nameField.text);
                 if (ok)
                     projectSheet.close();
                 else
-                    projectSheet.errorText = qsTr("Укажите уникальное название проекта");
+                    projectSheet.errorText = "Укажите уникальное название проекта";
             }
         }
     }

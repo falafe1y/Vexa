@@ -11,7 +11,7 @@ MobileSheet {
     property string errorText: ""
     property bool confirmingDelete: false
 
-    title: editingId.length > 0 ? qsTr("Бюджет") : qsTr("Новый бюджет")
+    title: editingId.length > 0 ? "Бюджет" : "Новый бюджет"
 
     ListModel {
         id: accountModel
@@ -96,14 +96,14 @@ MobileSheet {
         if (result.ok)
             sheet.close();
         else
-            errorText = result.error || qsTr("Не удалось сохранить бюджет");
+            errorText = result.error || "Не удалось сохранить бюджет";
     }
 
     MobileField {
         id: nameField
         Layout.fillWidth: true
-        label: qsTr("Название")
-        placeholder: qsTr("Например, продукты")
+        label: "Название"
+        placeholder: "Например, продукты"
     }
 
     MobileSegmented {
@@ -135,14 +135,14 @@ MobileSheet {
     MobileField {
         id: limitField
         Layout.fillWidth: true
-        label: qsTr("Лимит на месяц")
+        label: "Лимит на месяц"
         placeholder: "0"
         inputMethodHints: Qt.ImhFormattedNumbersOnly
     }
 
     MobileCheckRow {
         Layout.fillWidth: true
-        label: qsTr("Все счета")
+        label: "Все счета"
         checked: sheet.allAccountsChecked
         onToggled: function (nowChecked) {
             sheet.allAccountsChecked = nowChecked;
@@ -174,7 +174,7 @@ MobileSheet {
 
     MobileCheckRow {
         Layout.fillWidth: true
-        label: qsTr("Все категории расходов")
+        label: "Все категории расходов"
         checked: sheet.allCategoriesChecked
         onToggled: function (nowChecked) {
             sheet.allCategoriesChecked = nowChecked;
@@ -232,7 +232,7 @@ MobileSheet {
     MobileButton {
         Layout.fillWidth: true
         variant: "primary"
-        text: qsTr("Сохранить")
+        text: "Сохранить"
         onClicked: sheet.save()
     }
 
@@ -240,7 +240,7 @@ MobileSheet {
         Layout.fillWidth: true
         visible: sheet.editingId.length > 0
         variant: "danger"
-        text: sheet.confirmingDelete ? qsTr("Нажмите ещё раз, чтобы удалить") : qsTr("Удалить бюджет")
+        text: sheet.confirmingDelete ? "Нажмите ещё раз, чтобы удалить" : "Удалить бюджет"
         onClicked: {
             if (!sheet.confirmingDelete) {
                 sheet.confirmingDelete = true;
@@ -249,7 +249,7 @@ MobileSheet {
             if (financeController.deleteBudget(sheet.editingId))
                 sheet.close();
             else
-                sheet.errorText = qsTr("Не удалось удалить бюджет");
+                sheet.errorText = "Не удалось удалить бюджет";
         }
     }
 
@@ -257,7 +257,7 @@ MobileSheet {
         font.family: MobileTheme.serif
         Layout.fillWidth: true
         visible: sheet.editingId.length > 0
-        text: qsTr("Операции бюджета")
+        text: "Операции бюджета"
         color: MobileTheme.accent
         font.pixelSize: MobileTheme.sizeHeading
         font.weight: Font.DemiBold

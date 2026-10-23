@@ -95,19 +95,19 @@ Item {
                 Repeater {
                     model: [
                         {
-                            label: qsTr("Текущий капитал"),
+                            label: "Текущий капитал",
                             value: MobileFormat.displayMoney(page.trajectory.currentMinor, page.trajectory.currency, false)
                         },
                         {
-                            label: qsTr("Накопления в месяц"),
+                            label: "Накопления в месяц",
                             value: MobileFormat.displayMoney(page.trajectory.averageSavingMinor, page.trajectory.currency, false)
                         },
                         {
-                            label: qsTr("К концу прогноза"),
+                            label: "К концу прогноза",
                             value: page.forecast.length > 0 ? MobileFormat.displayMoney(page.forecast[page.forecast.length - 1].valueMinor, page.trajectory.currency, false) : "—"
                         },
                         {
-                            label: qsTr("Доля накоплений"),
+                            label: "Доля накоплений",
                             value: Number(page.trajectory.savingRate).toFixed(1) + "%"
                         }
                     ]
@@ -148,7 +148,7 @@ Item {
                 MobileText {
                     font.family: MobileTheme.serif
                     Layout.fillWidth: true
-                    text: qsTr("Финансовая траектория")
+                    text: "Финансовая траектория"
                     color: MobileTheme.accent
                     font.pixelSize: MobileTheme.sizeHeading
                     font.weight: Font.Normal
@@ -156,7 +156,7 @@ Item {
                 MobileText {
                     font.family: MobileTheme.mono
                     Layout.fillWidth: true
-                    text: qsTr("Сплошная — капитал и прогноз · Пунктир — с инфляцией · Штрих-пунктир — со сложным процентом")
+                    text: "Сплошная — капитал и прогноз · Пунктир — с инфляцией · Штрих-пунктир — со сложным процентом"
                     wrapMode: Text.Wrap
                     color: MobileTheme.muted
                     font.pixelSize: MobileTheme.sizeCaption
@@ -247,15 +247,15 @@ Item {
                     Repeater {
                         model: [
                             {
-                                label: qsTr("Прогноз"),
+                                label: "Прогноз",
                                 dash: []
                             },
                             {
-                                label: qsTr("С инфляцией"),
+                                label: "С инфляцией",
                                 dash: [8, 4]
                             },
                             {
-                                label: qsTr("Сложный процент"),
+                                label: "Сложный процент",
                                 dash: [12, 4, 2, 4]
                             }
                         ]
@@ -288,7 +288,7 @@ Item {
                     font.family: MobileTheme.mono
                     Layout.fillWidth: true
                     visible: page.history.length <= 1
-                    text: qsTr("История начнёт расти со следующего дня: снимок капитала сохраняется один раз в день.")
+                    text: "История начнёт расти со следующего дня: снимок капитала сохраняется один раз в день."
                     wrapMode: Text.Wrap
                     color: MobileTheme.muted
                     font.pixelSize: MobileTheme.sizeCaption
@@ -299,7 +299,7 @@ Item {
                 font.family: MobileTheme.mono
                 Layout.fillWidth: true
                 visible: !page.trajectory.complete
-                text: qsTr("Часть котировок недоступна: прогноз построен по известным активам, снимок за сегодня не сохранён.")
+                text: "Часть котировок недоступна: прогноз построен по известным активам, снимок за сегодня не сохранён."
                 wrapMode: Text.Wrap
                 color: MobileTheme.red
                 font.pixelSize: MobileTheme.sizeCaption
@@ -317,14 +317,14 @@ Item {
 
             MobileButton {
                 Layout.fillWidth: true
-                text: qsTr("Параметры прогноза")
+                text: "Параметры прогноза"
                 onClicked: settingsSheet.openFor()
             }
 
             MobileText {
                 font.family: MobileTheme.mono
                 Layout.fillWidth: true
-                text: qsTr("Прогноз не является инвестиционной рекомендацией. Доходность применяется только к текущей стоимости инвестиций; будущие накопления автоматически не считаются вложенными. Линия со сложным процентом вкладывает накопления и тоже начисляет на них доходность.")
+                text: "Прогноз не является инвестиционной рекомендацией. Доходность применяется только к текущей стоимости инвестиций; будущие накопления автоматически не считаются вложенными. Линия со сложным процентом вкладывает накопления и тоже начисляет на них доходность."
                 wrapMode: Text.Wrap
                 color: MobileTheme.muted
                 font.pixelSize: MobileTheme.sizeCaption
@@ -360,7 +360,7 @@ Item {
             sourceSelection = list;
         }
 
-        title: qsTr("Параметры прогноза")
+        title: "Параметры прогноза"
 
         function openFor() {
             const current = page.trajectory;
@@ -403,35 +403,35 @@ Item {
             spacing: 8
 
             MobileChip {
-                text: qsTr("Осторожный")
+                text: "Осторожный"
                 onClicked: page.scenario("safe")
             }
             MobileChip {
-                text: qsTr("Базовый")
+                text: "Базовый"
                 onClicked: page.scenario("base")
             }
             MobileChip {
-                text: qsTr("Рост")
+                text: "Рост"
                 onClicked: page.scenario("growth")
             }
         }
 
         SheetLabel {
-            text: qsTr("Среднее накопление за")
+            text: "Среднее накопление за"
         }
         MobileSegmented {
             Layout.fillWidth: true
             options: [
                 {
-                    label: qsTr("3 мес"),
+                    label: "3 мес",
                     value: 3
                 },
                 {
-                    label: qsTr("6 мес"),
+                    label: "6 мес",
                     value: 6
                 },
                 {
-                    label: qsTr("12 мес"),
+                    label: "12 мес",
                     value: 12
                 }
             ]
@@ -442,25 +442,25 @@ Item {
         }
 
         SheetLabel {
-            text: qsTr("Горизонт прогноза")
+            text: "Горизонт прогноза"
         }
         MobileSegmented {
             Layout.fillWidth: true
             options: [
                 {
-                    label: qsTr("6 мес"),
+                    label: "6 мес",
                     value: 6
                 },
                 {
-                    label: qsTr("1 год"),
+                    label: "1 год",
                     value: 12
                 },
                 {
-                    label: qsTr("3 года"),
+                    label: "3 года",
                     value: 36
                 },
                 {
-                    label: qsTr("5 лет"),
+                    label: "5 лет",
                     value: 60
                 }
             ]
@@ -473,31 +473,31 @@ Item {
         MobileField {
             id: returnField
             Layout.fillWidth: true
-            label: qsTr("Доходность в год, %")
+            label: "Доходность в год, %"
             inputMethodHints: Qt.ImhPreferNumbers
         }
         MobileField {
             id: inflationField
             Layout.fillWidth: true
-            label: qsTr("Инфляция в год, %")
+            label: "Инфляция в год, %"
             inputMethodHints: Qt.ImhPreferNumbers
         }
         MobileField {
             id: incomeField
             Layout.fillWidth: true
-            label: qsTr("Изменение доходов, %")
+            label: "Изменение доходов, %"
             inputMethodHints: Qt.ImhPreferNumbers
         }
         MobileField {
             id: expenseField
             Layout.fillWidth: true
-            label: qsTr("Изменение расходов, %")
+            label: "Изменение расходов, %"
             inputMethodHints: Qt.ImhPreferNumbers
         }
 
         MobileCheckRow {
             Layout.fillWidth: true
-            label: qsTr("Разовая покупка")
+            label: "Разовая покупка"
             checked: settingsSheet.purchaseEnabled
             onToggled: function (nowChecked) {
                 settingsSheet.purchaseEnabled = nowChecked;
@@ -507,35 +507,35 @@ Item {
             id: purchaseField
             visible: settingsSheet.purchaseEnabled
             Layout.fillWidth: true
-            label: qsTr("Сумма покупки")
+            label: "Сумма покупки"
             inputMethodHints: Qt.ImhFormattedNumbersOnly
         }
         SheetLabel {
             visible: settingsSheet.purchaseEnabled
-            text: qsTr("Через")
+            text: "Через"
         }
         MobileSegmented {
             visible: settingsSheet.purchaseEnabled
             Layout.fillWidth: true
             options: [
                 {
-                    label: qsTr("1 мес"),
+                    label: "1 мес",
                     value: 1
                 },
                 {
-                    label: qsTr("3 мес"),
+                    label: "3 мес",
                     value: 3
                 },
                 {
-                    label: qsTr("6 мес"),
+                    label: "6 мес",
                     value: 6
                 },
                 {
-                    label: qsTr("12 мес"),
+                    label: "12 мес",
                     value: 12
                 },
                 {
-                    label: qsTr("3 года"),
+                    label: "3 года",
                     value: 36
                 }
             ]
@@ -546,11 +546,11 @@ Item {
         }
 
         SheetLabel {
-            text: qsTr("Счета для расчёта")
+            text: "Счета для расчёта"
         }
         MobileCheckRow {
             Layout.fillWidth: true
-            label: qsTr("Все счета и кошельки")
+            label: "Все счета и кошельки"
             checked: settingsSheet.allSources
             onToggled: function (nowChecked) {
                 settingsSheet.allSources = nowChecked;
@@ -582,7 +582,7 @@ Item {
         MobileButton {
             Layout.fillWidth: true
             variant: "primary"
-            text: qsTr("Пересчитать и сохранить")
+            text: "Пересчитать и сохранить"
             onClicked: settingsSheet.save()
         }
     }

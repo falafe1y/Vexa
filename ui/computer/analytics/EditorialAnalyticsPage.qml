@@ -6,7 +6,7 @@ import "../dashboard"
 
 EditorialPage {
     id: page
-    title: qsTr("Аналитика.")
+    title: "Аналитика."
     period: true
     property string inflationError: ""
     property int allocationIndex: 0
@@ -23,26 +23,26 @@ EditorialPage {
     readonly property var accountChoices: [
         {
             id: "",
-            name: qsTr("Все инвестиционные счета")
+            name: "Все инвестиционные счета"
         },
         {
             id: "group:brokerage",
-            name: qsTr("Все брокерские счета")
+            name: "Все брокерские счета"
         },
         {
             id: "group:deposit",
-            name: qsTr("Все вклады")
+            name: "Все вклады"
         }
     ].concat(controller.performanceAccounts || [])
     readonly property var benchmarkChoices: [
         {
             key: "",
-            name: qsTr("Без сравнения")
+            name: "Без сравнения"
         }
     ].concat(controller.benchmarkIndices || []).concat([
                                                            {
                                                                key: "fund",
-                                                               name: qsTr("Биржевой фонд Мосбиржи…")
+                                                               name: "Биржевой фонд Мосбиржи…"
                                                            }
                                                        ])
     readonly property var holdingRows: (page.allocationIndex === 1 ? allocation.types : page.allocationIndex === 2
@@ -135,7 +135,7 @@ EditorialPage {
             width: Math.max(0, parent.width - account.width - 24)
             height: 80
             number: 1
-            title: qsTr("Доходность")
+            title: "Доходность"
         }
         EditorialChoice {
             id: account
@@ -156,48 +156,48 @@ EditorialPage {
         columns: page.host.width <= 850 ? 2 : 3
         metrics: [
             {
-                label: qsTr("Результат за период"),
+                label: "Результат за период",
                 value: page.amount(page.report.gainMinor),
-                hint: qsTr("Без пополнений и выводов"),
+                hint: "Без пополнений и выводов",
                 color: page.tone(page.report.gainMinor)
             },
             {
-                label: qsTr("Доходность за период"),
+                label: "Доходность за период",
                 value: page.percent(page.report.periodPercent),
-                hint: qsTr("С учётом денежных потоков")
+                hint: "С учётом денежных потоков"
             },
             {
-                label: qsTr("Годовой эквивалент"),
+                label: "Годовой эквивалент",
                 value: page.percent(page.report.annualPercent),
-                hint: qsTr("Пересчёт темпа роста на год")
+                hint: "Пересчёт темпа роста на год"
             },
             {
-                label: qsTr("Прибыль после продаж"),
+                label: "Прибыль после продаж",
                 value: page.amount(page.report.realizedMinor),
-                hint: qsTr("После учтённых расходов"),
+                hint: "После учтённых расходов",
                 color: page.tone(page.report.realizedMinor)
             },
             {
-                label: qsTr("Прибыль открытых позиций"),
+                label: "Прибыль открытых позиций",
                 value: page.amount(page.report.unrealizedMinor),
-                hint: qsTr("Относительно стоимости приобретения"),
+                hint: "Относительно стоимости приобретения",
                 color: page.tone(page.report.unrealizedMinor)
             },
             {
-                label: qsTr("После заданной инфляции"),
+                label: "После заданной инфляции",
                 value: page.percent(page.report.realPercent),
-                hint: qsTr("Годовая ставка: %1 %").arg(page.controller.performanceInflation || "—")
+                hint: "Годовая ставка: %1 %".arg(page.controller.performanceInflation || "—")
             }
         ]
     }
     EditorialReportSection {
         width: parent.width
         number: 2
-        title: qsTr("Разложение результата")
+        title: "Разложение результата"
         toolbar: RowLayout {
             spacing: 12
             EditorialText {
-                text: qsTr("Инфляция, % в год")
+                text: "Инфляция, % в год"
                 font.pixelSize: 14
             }
             EditorialField {
@@ -210,10 +210,9 @@ EditorialPage {
             }
             EditorialAction {
                 id: apply
-                text: qsTr("ПРИМЕНИТЬ")
+                text: "ПРИМЕНИТЬ"
                 arrow: false
-                onClicked: page.inflationError = page.controller.setPerformanceInflation(inflation.text) ? "" : qsTr(
-                                                                                                               "Введите ставку больше −100 и не выше 1000 %, до четырёх знаков после запятой.")
+                onClicked: page.inflationError = page.controller.setPerformanceInflation(inflation.text) ? "" : "Введите ставку больше −100 и не выше 1000 %, до четырёх знаков после запятой."
             }
         }
         Note {
@@ -257,23 +256,22 @@ EditorialPage {
         }
         Note {
             visible: !page.available(page.report.gainMinor)
-            text: qsTr("Разложение появится, когда будут известны результат периода и денежные потоки.")
+            text: "Разложение появится, когда будут известны результат периода и денежные потоки."
         }
         Note {
-            text: qsTr("Оценки: %1 — %2 · Дней с оценкой: %3").arg(page.date(page.report.from)).arg(page.date(
+            text: "Оценки: %1 — %2 · Дней с оценкой: %3".arg(page.date(page.report.from)).arg(page.date(
                                                                                                         page.report.to)).arg(
                       page.report.observationCount || 0)
         }
         EditorialAction {
-            text: qsTr("ПОЯСНЕНИЯ К РАСЧЁТУ")
+            text: "ПОЯСНЕНИЯ К РАСЧЁТУ"
             arrow: false
             onClicked: warnings.visible = !warnings.visible
         }
         Note {
             id: warnings
             visible: false
-            text: (page.report.warnings || []).join("\n") || qsTr(
-                      "Пополнения и выводы исключаются из результата. Годовой эквивалент показывает темп роста за период и не является прогнозом.")
+            text: (page.report.warnings || []).join("\n") || "Пополнения и выводы исключаются из результата. Годовой эквивалент показывает темп роста за период и не является прогнозом."
         }
     }
     EditorialAverageReturn {
@@ -285,33 +283,33 @@ EditorialPage {
         objectName: "editorialQualitySection"
         width: parent.width
         number: 4
-        title: qsTr("Качество данных")
+        title: "Качество данных"
         EditorialMetrics {
             width: parent.width
             height: implicitHeight
             columns: 4
             metrics: [
                 {
-                    label: qsTr("Строк оценок"),
+                    label: "Строк оценок",
                     value: String(page.quality.checkedRows || 0)
                 },
                 {
-                    label: qsTr("Препятствуют расчёту"),
+                    label: "Препятствуют расчёту",
                     value: String(page.quality.errors || 0)
                 },
                 {
-                    label: qsTr("Ограничивают разбор"),
+                    label: "Ограничивают разбор",
                     value: String(page.quality.warnings || 0)
                 },
                 {
-                    label: qsTr("Особенности учёта"),
+                    label: "Особенности учёта",
                     value: String(page.quality.notes || 0)
                 }
             ]
         }
         EditorialCheck {
             id: qualityOpen
-            text: qsTr("Показать проблемы (%1)").arg((page.quality.items || []).length)
+            text: "Показать проблемы (%1)".arg((page.quality.items || []).length)
         }
         Column {
             width: parent.width
@@ -324,14 +322,13 @@ EditorialPage {
                     id: severity
                     objectName: "editorialQualitySeverity"
                     Layout.preferredWidth: 280
-                    model: [qsTr("Все проблемы"), qsTr("Препятствуют расчёту"), qsTr("Ограничивают разбор"), qsTr(
-                            "Особенности учёта")]
+                    model: ["Все проблемы", "Препятствуют расчёту", "Ограничивают разбор", "Особенности учёта"]
                 }
                 EditorialField {
                     id: qualitySearch
                     objectName: "editorialQualitySearch"
                     Layout.fillWidth: true
-                    placeholderText: qsTr("Счёт, актив, проблема или дата")
+                    placeholderText: "Счёт, актив, проблема или дата"
                 }
             }
             Repeater {
@@ -354,14 +351,14 @@ EditorialPage {
                         text: modelData.impact
                     }
                     Note {
-                        text: qsTr("Что проверить: %1").arg(modelData.action)
+                        text: "Что проверить: %1".arg(modelData.action)
                     }
                     Rule {}
                 }
             }
             Note {
                 visible: page.qualityRows.length === 0
-                text: qsTr("По выбранному фильтру проблем не найдено.")
+                text: "По выбранному фильтру проблем не найдено."
             }
         }
     }
@@ -369,7 +366,7 @@ EditorialPage {
         objectName: "editorialBenchmarkSection"
         width: parent.width
         number: 5
-        title: qsTr("Сравнение с индексом или фондом")
+        title: "Сравнение с индексом или фондом"
         toolbar: EditorialChoice {
             objectName: "editorialBenchmarkChoice"
             implicitWidth: 360
@@ -388,19 +385,19 @@ EditorialPage {
             width: parent.width
             spacing: 24
             EditorialAction {
-                text: page.controller.benchmarkBusy ? qsTr("ЗАГРУЗКА…") : qsTr("ОБНОВИТЬ ИСТОРИЮ")
+                text: page.controller.benchmarkBusy ? "ЗАГРУЗКА…" : "ОБНОВИТЬ ИСТОРИЮ"
                 enabled: !page.controller.benchmarkBusy && !!page.benchmark.canRefresh
                 onClicked: page.controller.refreshBenchmark()
             }
             EditorialAction {
                 visible: page.benchmarkSelection.kind === "fund"
-                text: qsTr("ВЫБРАТЬ ДРУГОЙ ФОНД")
+                text: "ВЫБРАТЬ ДРУГОЙ ФОНД"
                 onClicked: fundDialog.open()
             }
         }
         Note {
             visible: !page.benchmark.available
-            text: page.benchmark.reason || qsTr("Выберите ориентир для сравнения.")
+            text: page.benchmark.reason || "Выберите ориентир для сравнения."
         }
         Note {
             visible: !!page.controller.benchmarkError
@@ -413,18 +410,18 @@ EditorialPage {
             visible: !!page.benchmark.available
             metrics: [
                 {
-                    label: qsTr("Ваш результат"),
+                    label: "Ваш результат",
                     value: page.percent(page.benchmark.portfolioPercent)
                 },
                 {
-                    label: qsTr("Результат ориентира"),
+                    label: "Результат ориентира",
                     value: page.percent(page.benchmark.benchmarkPercent)
                 },
                 {
-                    label: qsTr("Разница результатов"),
+                    label: "Разница результатов",
                     value: page.available(page.benchmark.differencePoints) ? Number(
                                                                                  page.benchmark.differencePoints).toFixed(
-                                                                                 2).replace(".", ",") + qsTr(" п.п.") :
+                                                                                 2).replace(".", ",") + " п.п." :
                                                                              "—"
                 }
             ]
@@ -437,11 +434,11 @@ EditorialPage {
             percent: true
             series: [
                 {
-                    label: qsTr("Ваш результат"),
+                    label: "Ваш результат",
                     rows: page.series(page.benchmark.points, "portfolio")
                 },
                 {
-                    label: page.benchmarkSelection.symbol || qsTr("Ориентир"),
+                    label: page.benchmarkSelection.symbol || "Ориентир",
                     dashed: true,
                     rows: page.series(page.benchmark.points, "benchmark")
                 }
@@ -451,30 +448,30 @@ EditorialPage {
             width: parent.width
             entries: [
                 {
-                    label: qsTr("Ваш результат")
+                    label: "Ваш результат"
                 },
                 {
-                    label: page.benchmarkSelection.symbol || qsTr("Ориентир"),
+                    label: page.benchmarkSelection.symbol || "Ориентир",
                     dashed: true
                 }
             ]
         }
         Note {
-            text: qsTr("Обе линии начинаются с нуля. Пополнения и выводы исключены из доходности портфеля.")
+            text: "Обе линии начинаются с нуля. Пополнения и выводы исключены из доходности портфеля."
         }
     }
     EditorialReportSection {
         objectName: "editorialDepositSection"
         width: parent.width
         number: 6
-        title: qsTr("Сравнение доходности с вкладом")
+        title: "Сравнение доходности с вкладом"
         RowLayout {
             width: parent.width
             spacing: 24
             ColumnLayout {
                 Layout.preferredWidth: 160
                 EditorialText {
-                    text: qsTr("ГОДОВАЯ СТАВКА, %")
+                    text: "ГОДОВАЯ СТАВКА, %"
                     font.family: "Cousine"
                     font.pixelSize: 12
                     color: "#59616a"
@@ -484,14 +481,14 @@ EditorialPage {
                     objectName: "editorialDepositRate"
                     Layout.fillWidth: true
                     text: (page.controller.performanceDeposit || ({})).rate || ""
-                    placeholderText: qsTr("Укажите ставку")
+                    placeholderText: "Укажите ставку"
                 }
             }
             ColumnLayout {
                 Layout.fillWidth: true
                 Layout.maximumWidth: 400
                 EditorialText {
-                    text: qsTr("КАПИТАЛИЗАЦИЯ")
+                    text: "КАПИТАЛИЗАЦИЯ"
                     font.family: "Cousine"
                     font.pixelSize: 12
                     color: "#59616a"
@@ -500,18 +497,18 @@ EditorialPage {
                     id: depositMode
                     objectName: "editorialDepositMode"
                     Layout.fillWidth: true
-                    model: [qsTr("Без капитализации"), qsTr("Ежемесячная"), qsTr("Ежедневная")]
+                    model: ["Без капитализации", "Ежемесячная", "Ежедневная"]
                     currentIndex: Math.max(0, ["none", "monthly", "daily"].indexOf((page.controller.performanceDeposit
                                                                                     || ({})).capitalization))
                 }
             }
             EditorialAction {
-                text: qsTr("РАССЧИТАТЬ")
+                text: "РАССЧИТАТЬ"
                 Layout.alignment: Qt.AlignBottom
                 onClicked: depositError.text = page.controller.setPerformanceDeposit(depositRate.text, ["none",
                                                                                                         "monthly",
                                                                                                         "daily"][depositMode.currentIndex])
-                           ? "" : qsTr("Укажите ставку от 0 до 1000 %.")
+                           ? "" : "Укажите ставку от 0 до 1000 %."
             }
         }
         Note {
@@ -521,7 +518,7 @@ EditorialPage {
         }
         Note {
             visible: !page.deposit.available
-            text: page.deposit.reason || qsTr("Укажите ставку и накопите дневные оценки выбранных счетов.")
+            text: page.deposit.reason || "Укажите ставку и накопите дневные оценки выбранных счетов."
         }
         EditorialMetrics {
             width: parent.width
@@ -529,15 +526,15 @@ EditorialPage {
             visible: !!page.deposit.available
             metrics: [
                 {
-                    label: qsTr("Результат вложений"),
+                    label: "Результат вложений",
                     value: page.amount(page.deposit.portfolioGainMinor)
                 },
                 {
-                    label: qsTr("Доход условного вклада"),
+                    label: "Доход условного вклада",
                     value: page.amount(page.deposit.depositGainMinor)
                 },
                 {
-                    label: qsTr("Разница результатов"),
+                    label: "Разница результатов",
                     value: page.amount(page.deposit.differenceMinor)
                 }
             ]
@@ -550,11 +547,11 @@ EditorialPage {
             visible: !!page.deposit.available
             series: [
                 {
-                    label: qsTr("Вложения"),
+                    label: "Вложения",
                     rows: page.series(page.deposit.series, "portfolioMinor")
                 },
                 {
-                    label: qsTr("Условный вклад"),
+                    label: "Условный вклад",
                     dashed: true,
                     rows: page.series(page.deposit.series, "depositMinor")
                 }
@@ -564,53 +561,52 @@ EditorialPage {
             width: parent.width
             entries: [
                 {
-                    label: qsTr("Вложения")
+                    label: "Вложения"
                 },
                 {
-                    label: qsTr("Условный вклад"),
+                    label: "Условный вклад",
                     dashed: true
                 }
             ]
         }
         Note {
-            text: qsTr(
-                      "Одинаковый начальный капитал и внешние пополнения/выводы. Ставка постоянная, вклад в валюте отчёта. Налоги и потеря процентов при досрочном закрытии не учитываются.")
+            text: "Одинаковый начальный капитал и внешние пополнения/выводы. Ставка постоянная, вклад в валюте отчёта. Налоги и потеря процентов при досрочном закрытии не учитываются."
         }
     }
     EditorialReportSection {
         objectName: "editorialRiskSection"
         width: parent.width
         number: 7
-        title: qsTr("Волатильность и просадки")
+        title: "Волатильность и просадки"
         EditorialMetrics {
             width: parent.width
             height: implicitHeight
             columns: page.host.width <= 850 ? 2 : 3
             metrics: [
                 {
-                    label: qsTr("Годовая волатильность"),
+                    label: "Годовая волатильность",
                     value: page.percent(page.risk.annualVolatilityPercent),
-                    hint: qsTr("Разброс дневной доходности")
+                    hint: "Разброс дневной доходности"
                 },
                 {
-                    label: qsTr("Максимальная просадка"),
+                    label: "Максимальная просадка",
                     value: page.percent(page.risk.maximumDrawdownPercent),
                     hint: page.date(page.risk.peakDate) + " → " + page.date(page.risk.troughDate)
                 },
                 {
-                    label: qsTr("Просадка на конец периода"),
+                    label: "Просадка на конец периода",
                     value: page.percent(page.risk.currentDrawdownPercent)
                 },
                 {
-                    label: qsTr("Лучший день"),
+                    label: "Лучший день",
                     value: page.percent(page.risk.bestDayPercent)
                 },
                 {
-                    label: qsTr("Худший день"),
+                    label: "Худший день",
                     value: page.percent(page.risk.worstDayPercent)
                 },
                 {
-                    label: qsTr("Дней в расчёте"),
+                    label: "Дней в расчёте",
                     value: page.risk.available ? String(page.risk.returnDays || 0) : "—"
                 }
             ]
@@ -622,7 +618,7 @@ EditorialPage {
             percent: true
             series: [
                 {
-                    label: qsTr("Просадка"),
+                    label: "Просадка",
                     rows: page.series(page.risk.drawdowns, "percent")
                 }
             ]
@@ -631,25 +627,24 @@ EditorialPage {
             width: parent.width
             entries: [
                 {
-                    label: qsTr("Просадка портфеля")
+                    label: "Просадка портфеля"
                 }
             ]
         }
         Note {
-            text: qsTr(
-                      "Просадки считаются по связанной доходности с учётом пополнений и выводов. Это падение инвестиционного результата от предыдущего максимума.")
+            text: "Просадки считаются по связанной доходности с учётом пополнений и выводов. Это падение инвестиционного результата от предыдущего максимума."
         }
     }
     EditorialReportSection {
         objectName: "editorialStructureSection"
         width: parent.width
         number: 8
-        title: qsTr("Структура вложений")
+        title: "Структура вложений"
         toolbar: EditorialChoice {
             objectName: "editorialAllocationGroup"
             currentIndex: page.allocationIndex
             onActivated: page.allocationIndex = currentIndex
-            model: [qsTr("По активам"), qsTr("По типам активов"), qsTr("По счетам"), qsTr("По валютам счетов")]
+            model: ["По активам", "По типам активов", "По счетам", "По валютам счетов"]
         }
         GridLayout {
             width: parent.width
@@ -675,7 +670,7 @@ EditorialPage {
                 Note {
                     Layout.fillWidth: true
                     visible: !page.allocation.pieAvailable
-                    text: qsTr("Для круговых долей нужна полная положительная оценка вложений. Суммы приведены ниже.")
+                    text: "Для круговых долей нужна полная положительная оценка вложений. Суммы приведены ниже."
                 }
                 Repeater {
                     model: page.holdingRows
@@ -717,7 +712,7 @@ EditorialPage {
                 spacing: 16
                 EditorialText {
                     Layout.fillWidth: true
-                    text: qsTr("Вклад активов в результат")
+                    text: "Вклад активов в результат"
                     font.family: "PT Serif"
                     font.pixelSize: 24
                 }
@@ -759,7 +754,7 @@ EditorialPage {
                 }
                 Note {
                     Layout.fillWidth: true
-                    text: qsTr("Валютная переоценка: %1 · Необъяснённая разница: %2").arg(page.amount(
+                    text: "Валютная переоценка: %1 · Необъяснённая разница: %2".arg(page.amount(
                                                                                               page.contributions.fxMinor)).arg(
                               page.amount(page.contributions.unexplainedMinor))
                 }
@@ -770,26 +765,26 @@ EditorialPage {
         objectName: "editorialPaymentsSection"
         width: parent.width
         number: 9
-        title: qsTr("Аналитика выплат")
+        title: "Аналитика выплат"
         EditorialMetrics {
             width: parent.width
             height: implicitHeight
             columns: 4
             metrics: [
                 {
-                    label: qsTr("Получено"),
+                    label: "Получено",
                     value: page.amount(page.payments.netMinor)
                 },
                 {
-                    label: qsTr("До расходов"),
+                    label: "До расходов",
                     value: page.amount(page.payments.grossMinor)
                 },
                 {
-                    label: qsTr("Комиссии выплат"),
+                    label: "Комиссии выплат",
                     value: page.amount(page.payments.feesMinor)
                 },
                 {
-                    label: qsTr("Удержания выплат"),
+                    label: "Удержания выплат",
                     value: page.amount(page.payments.taxMinor)
                 }
             ]
@@ -804,7 +799,7 @@ EditorialPage {
                 Layout.preferredWidth: 0
                 spacing: 8
                 EditorialText {
-                    text: qsTr("Получено по месяцам")
+                    text: "Получено по месяцам"
                     font.family: "PT Serif"
                     font.pixelSize: 24
                 }
@@ -852,7 +847,7 @@ EditorialPage {
                 Layout.alignment: Qt.AlignTop
                 spacing: 16
                 EditorialText {
-                    text: qsTr("Источники выплат")
+                    text: "Источники выплат"
                     font.family: "PT Serif"
                     font.pixelSize: 24
                 }
@@ -865,13 +860,13 @@ EditorialPage {
                     }
                 }
                 Note {
-                    text: qsTr("Суммы до расходов, комиссии и удержания показываются, если они записаны отдельно.")
+                    text: "Суммы до расходов, комиссии и удержания показываются, если они записаны отдельно."
                 }
             }
         }
         EditorialCheck {
             id: paymentsOpen
-            text: qsTr("Показать выплаты (%1)").arg(page.payments.count || 0)
+            text: "Показать выплаты (%1)".arg(page.payments.count || 0)
         }
         Column {
             width: parent.width
@@ -904,13 +899,13 @@ EditorialPage {
                 width: parent.width * .42
                 height: 64
                 number: 10
-                title: qsTr("История расходов по месяцам")
+                title: "История расходов по месяцам"
             }
             EditorialText {
                 anchors.horizontalCenter: parent.horizontalCenter
                 y: page.host.width <= 1500 ? 56 : 20
                 height: 24
-                text: qsTr("В СРЕДНЕМ %1").arg(page.amount(page.host.averageCompletedMonthExpense(
+                text: "В СРЕДНЕМ %1".arg(page.amount(page.host.averageCompletedMonthExpense(
                                                                page.host.expenseRowsForYear(page.expenseYear)), "RUB"))
                 font.family: "Cousine"
                 font.pixelSize: 12
@@ -961,7 +956,7 @@ EditorialPage {
                     const h = Number(r.totalMinor) / max * 196;
                     ctx.fillRect(i * slot + slot * .2, 212 - h, slot * .6, h);
                     ctx.textAlign = "center";
-                    ctx.fillText(Math.round(r.totalMinor / 100000) + qsTr(" тыс."), (i + .5) * slot, 204 - h);
+                    ctx.fillText(Math.round(r.totalMinor / 100000) + " тыс.", (i + .5) * slot, 204 - h);
                     ctx.fillText(page.host.expenseMonthLabel(r.monthIndex), (i + .5) * slot, 232);
                 });
             }
@@ -981,7 +976,7 @@ EditorialPage {
             Layout.fillWidth: true
             Layout.preferredWidth: 0
             number: 11
-            title: qsTr("История капитала в рублях")
+            title: "История капитала в рублях"
             EditorialChart {
                 width: parent.width
                 height: 248
@@ -998,7 +993,7 @@ EditorialPage {
             Layout.fillWidth: true
             Layout.preferredWidth: 0
             number: 12
-            title: qsTr("Капитал в выбранной валюте")
+            title: "Капитал в выбранной валюте"
             toolbar: EditorialChoice {
                 implicitWidth: 96
                 model: ["USD", "EUR", "CNY"]
@@ -1025,7 +1020,7 @@ EditorialPage {
         width: Math.min(620, parent ? parent.width - 32 : 620)
         modal: true
         padding: 24
-        title: qsTr("Биржевой фонд для сравнения")
+        title: "Биржевой фонд для сравнения"
         contentItem: ColumnLayout {
             spacing: 16
             RowLayout {
@@ -1033,18 +1028,18 @@ EditorialPage {
                 TextField {
                     id: fundQuery
                     Layout.fillWidth: true
-                    placeholderText: qsTr("Название или обозначение фонда")
+                    placeholderText: "Название или обозначение фонда"
                     onAccepted: page.controller.searchBenchmarkFunds(text)
                 }
                 Button {
-                    text: qsTr("Найти")
+                    text: "Найти"
                     enabled: !page.controller.benchmarkSearchBusy
                     onClicked: page.controller.searchBenchmarkFunds(fundQuery.text)
                 }
             }
             Label {
                 visible: page.controller.benchmarkSearchBusy
-                text: qsTr("Ищем биржевые фонды…")
+                text: "Ищем биржевые фонды…"
             }
             Label {
                 visible: !!page.controller.benchmarkSearchError
@@ -1068,7 +1063,7 @@ EditorialPage {
                 }
             }
             Button {
-                text: qsTr("Закрыть")
+                text: "Закрыть"
                 onClicked: fundDialog.close()
             }
         }

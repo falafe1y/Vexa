@@ -20,38 +20,38 @@ Flickable {
     FileDialog {
         id: exportDialog
 
-        title: qsTr("Экспорт операций в CSV")
+        title: "Экспорт операций в CSV"
         fileMode: FileDialog.SaveFile
-        nameFilters: [qsTr("CSV-файлы (*.csv)")]
+        nameFilters: ["CSV-файлы (*.csv)"]
         defaultSuffix: "csv"
         onAccepted: {
             const result = financeController.exportTransactionsCsv(selectedFile);
             page.statusOk = result.ok;
-            page.statusText = result.ok ? qsTr("Экспортировано операций: %1").arg(result.count) : qsTr("Не удалось экспортировать: %1").arg(result.error);
+            page.statusText = result.ok ? "Экспортировано операций: %1".arg(result.count) : "Не удалось экспортировать: %1".arg(result.error);
         }
     }
 
     FileDialog {
         id: importDialog
 
-        title: qsTr("Импорт операций из CSV")
+        title: "Импорт операций из CSV"
         fileMode: FileDialog.OpenFile
-        nameFilters: [qsTr("Все файлы (*.*)")]
+        nameFilters: ["Все файлы (*.*)"]
         onAccepted: {
             const result = financeController.importTransactionsCsv(selectedFile);
             page.statusOk = result.ok;
-            page.statusText = result.ok ? qsTr("Импортировано: %1, пропущено дубликатов: %2").arg(result.imported).arg(result.skipped) : qsTr("Не удалось импортировать: %1").arg(result.error);
+            page.statusText = result.ok ? "Импортировано: %1, пропущено дубликатов: %2".arg(result.imported).arg(result.skipped) : "Не удалось импортировать: %1".arg(result.error);
         }
     }
 
     FileDialog {
         id: bankDialog
 
-        title: qsTr("Выберите банковскую выписку")
+        title: "Выберите банковскую выписку"
         fileMode: FileDialog.OpenFile
         // Android greys out every file whose MIME type is not listed by the filters; a statement filter lists CSV's
         // MIME type wrongly, so only "all files" is offered, as in the CSV import. The format is checked on reading.
-        nameFilters: [qsTr("Все файлы (*.*)")]
+        nameFilters: ["Все файлы (*.*)"]
         onAccepted: page.bankStatementChosen(selectedFile)
     }
 
@@ -60,7 +60,7 @@ Flickable {
         id: backupFlow
         onExported: function (path) {
             page.statusOk = true;
-            page.statusText = qsTr("Резервная копия сохранена: %1").arg(path);
+            page.statusText = "Резервная копия сохранена: %1".arg(path);
         }
     }
 
@@ -72,7 +72,7 @@ Flickable {
 
         MobileText {
             font.family: MobileTheme.mono
-            text: qsTr("Операции в CSV")
+            text: "Операции в CSV"
             color: MobileTheme.muted
             font.pixelSize: MobileTheme.sizeLabel
             font.weight: Font.DemiBold
@@ -87,7 +87,7 @@ Flickable {
             MobileText {
                 font.family: MobileTheme.mono
                 Layout.fillWidth: true
-                text: qsTr("Экспорт сохраняет все операции в файл. Импорт добавляет операции из файла и пропускает уже существующие.")
+                text: "Экспорт сохраняет все операции в файл. Импорт добавляет операции из файла и пропускает уже существующие."
                 wrapMode: Text.Wrap
                 color: MobileTheme.muted
                 font.pixelSize: MobileTheme.sizeCaption
@@ -95,27 +95,27 @@ Flickable {
 
             MobileButton {
                 Layout.fillWidth: true
-                text: qsTr("Экспортировать в CSV")
+                text: "Экспортировать в CSV"
                 onClicked: exportDialog.open()
             }
             MobileButton {
                 Layout.fillWidth: true
-                text: qsTr("Импортировать из CSV")
+                text: "Импортировать из CSV"
                 onClicked: importDialog.open()
             }
             MobileButton {
                 Layout.fillWidth: true
-                text: qsTr("Выписка банка")
+                text: "Выписка банка"
                 onClicked: bankDialog.open()
             }
             MobileButton {
                 Layout.fillWidth: true
-                text: qsTr("Сохранить резервную копию")
+                text: "Сохранить резервную копию"
                 onClicked: backupFlow.openExport()
             }
             MobileButton {
                 Layout.fillWidth: true
-                text: qsTr("Восстановить из копии")
+                text: "Восстановить из копии"
                 onClicked: backupFlow.openImport()
             }
 
@@ -132,7 +132,7 @@ Flickable {
 
         MobileText {
             font.family: MobileTheme.mono
-            text: qsTr("Опасная зона")
+            text: "Опасная зона"
             color: MobileTheme.muted
             font.pixelSize: MobileTheme.sizeLabel
             font.weight: Font.DemiBold
@@ -147,7 +147,7 @@ Flickable {
             MobileText {
                 font.family: MobileTheme.mono
                 Layout.fillWidth: true
-                text: qsTr("Удаляет все счета, операции, бюджеты, цели и заметки. Восстановить данные после этого нельзя.")
+                text: "Удаляет все счета, операции, бюджеты, цели и заметки. Восстановить данные после этого нельзя."
                 wrapMode: Text.Wrap
                 color: MobileTheme.muted
                 font.pixelSize: MobileTheme.sizeCaption
@@ -156,7 +156,7 @@ Flickable {
             MobileButton {
                 Layout.fillWidth: true
                 variant: "danger"
-                text: page.confirmingClear ? qsTr("Нажмите ещё раз, чтобы удалить всё") : qsTr("Очистить все данные")
+                text: page.confirmingClear ? "Нажмите ещё раз, чтобы удалить всё" : "Очистить все данные"
                 onClicked: {
                     if (!page.confirmingClear) {
                         page.confirmingClear = true;
@@ -165,7 +165,7 @@ Flickable {
                     page.confirmingClear = false;
                     const result = financeController.clearAllData();
                     page.statusOk = result.ok;
-                    page.statusText = result.ok ? qsTr("Все данные удалены") : qsTr("Не удалось очистить данные: %1").arg(result.error);
+                    page.statusText = result.ok ? "Все данные удалены" : "Не удалось очистить данные: %1".arg(result.error);
                 }
             }
         }

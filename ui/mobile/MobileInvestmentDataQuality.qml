@@ -31,7 +31,7 @@ ColumnLayout {
         if (row.dateFrom)
             parts.push(panel.date(row.dateFrom) + (row.dateTo && row.dateTo !== row.dateFrom ? " — " + panel.date(row.dateTo) : ""));
         if (row.count > 1)
-            parts.push((row.code === "missing_days" ? qsTr("Дней без оценок: %1") : qsTr("Записей: %1")).arg(row.count));
+            parts.push((row.code === "missing_days" ? "Дней без оценок: %1" : "Записей: %1").arg(row.count));
         return parts.join(" · ");
     }
 
@@ -44,7 +44,7 @@ ColumnLayout {
         MobileText {
             font.family: MobileTheme.serif
             Layout.fillWidth: true
-            text: qsTr("Качество данных")
+            text: "Качество данных"
             color: MobileTheme.accent
             font.pixelSize: MobileTheme.sizeHeading
             font.weight: Font.DemiBold
@@ -53,7 +53,7 @@ ColumnLayout {
         MobileButton {
             visible: panel.items.length > 0
             implicitHeight: 40
-            text: panel.detailsOpen ? qsTr("Скрыть проблемы") : qsTr("Показать проблемы (%1)").arg(panel.items.length)
+            text: panel.detailsOpen ? "Скрыть проблемы" : "Показать проблемы (%1)".arg(panel.items.length)
             onClicked: panel.detailsOpen = !panel.detailsOpen
         }
     }
@@ -61,7 +61,7 @@ ColumnLayout {
     MobileText {
         font.family: MobileTheme.mono
         Layout.fillWidth: true
-        text: qsTr("Проверено строк оценок: %1 · Препятствуют расчёту: %2 · Ограничивают разбор: %3 · Особенности: %4").arg(panel.quality.checkedRows || 0).arg(panel.quality.errors || 0).arg(panel.quality.warnings || 0).arg(panel.quality.notes || 0)
+        text: "Проверено строк оценок: %1 · Препятствуют расчёту: %2 · Ограничивают разбор: %3 · Особенности: %4".arg(panel.quality.checkedRows || 0).arg(panel.quality.errors || 0).arg(panel.quality.warnings || 0).arg(panel.quality.notes || 0)
         wrapMode: Text.Wrap
         color: MobileTheme.muted
         font.pixelSize: MobileTheme.sizeCaption
@@ -71,7 +71,7 @@ ColumnLayout {
         font.family: MobileTheme.mono
         visible: panel.items.length === 0
         Layout.fillWidth: true
-        text: qsTr("В проверенных оценках и операциях выбранного периода проблем не найдено. Это проверка записанных данных, а не полный аудит.")
+        text: "В проверенных оценках и операциях выбранного периода проблем не найдено. Это проверка записанных данных, а не полный аудит."
         wrapMode: Text.Wrap
         color: MobileTheme.muted
         font.pixelSize: MobileTheme.sizeCaption
@@ -83,7 +83,7 @@ ColumnLayout {
         spacing: 8
 
         Repeater {
-            model: [qsTr("Все проблемы"), qsTr("Препятствуют расчёту"), qsTr("Ограничивают разбор"), qsTr("Особенности учёта")]
+            model: ["Все проблемы", "Препятствуют расчёту", "Ограничивают разбор", "Особенности учёта"]
 
             delegate: MobileChip {
                 required property string modelData
@@ -98,7 +98,7 @@ ColumnLayout {
     MobileField {
         visible: panel.detailsOpen && panel.items.length > 0
         Layout.fillWidth: true
-        placeholder: qsTr("Счёт, актив, проблема или дата")
+        placeholder: "Счёт, актив, проблема или дата"
         onTextChanged: panel.query = text
     }
 
@@ -140,7 +140,7 @@ ColumnLayout {
             MobileText {
                 font.family: MobileTheme.mono
                 Layout.fillWidth: true
-                text: qsTr("Что проверить: %1").arg(modelData.action)
+                text: "Что проверить: %1".arg(modelData.action)
                 wrapMode: Text.Wrap
                 color: MobileTheme.muted
                 font.pixelSize: MobileTheme.sizeCaption
@@ -149,7 +149,7 @@ ColumnLayout {
                 font.family: MobileTheme.mono
                 Layout.fillWidth: true
                 visible: modelData.code !== "missing_days" && (modelData.dates || []).length > 2
-                text: qsTr("Даты записей: %1").arg((modelData.dates || []).map(panel.date).join(", "))
+                text: "Даты записей: %1".arg((modelData.dates || []).map(panel.date).join(", "))
                 wrapMode: Text.Wrap
                 color: MobileTheme.muted
                 font.pixelSize: MobileTheme.sizeCaption
@@ -161,7 +161,7 @@ ColumnLayout {
         font.family: MobileTheme.mono
         visible: panel.detailsOpen && panel.items.length > 0 && panel.filtered.length === 0
         Layout.fillWidth: true
-        text: qsTr("По выбранному фильтру проблем не найдено.")
+        text: "По выбранному фильтру проблем не найдено."
         color: MobileTheme.muted
         font.pixelSize: MobileTheme.sizeCaption
     }

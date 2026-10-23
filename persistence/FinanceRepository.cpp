@@ -656,7 +656,6 @@ bool FinanceRepository::clearAllUserData()
         QStringLiteral("INSERT INTO settings(key,value) VALUES('app_currency','RUB')"),
         QStringLiteral("INSERT INTO settings(key,value) VALUES('analytics_currency','USD')"),
         QStringLiteral("INSERT INTO settings(key,value) VALUES('selected_asset','fiat')"),
-        QStringLiteral("INSERT INTO settings(key,value) VALUES('ui_language','ru')"),
         QStringLiteral("INSERT INTO settings(key,value) VALUES('automatic_currency_rates','1')"),
         QStringLiteral("INSERT INTO settings(key,value) VALUES('manual_rub_to_rub_rate','1')"),
         QStringLiteral("INSERT INTO settings(key,value) VALUES('manual_usd_to_rub_rate','90.909090909')"),
@@ -3220,31 +3219,6 @@ bool FinanceRepository::saveSelectedAsset(const QString& asset)
     return true;
 }
 
-QString FinanceRepository::loadUiLanguage() const
-{
-    QSqlQuery query(database_);
-    if (query.exec(QStringLiteral(
-            "SELECT value FROM settings WHERE key = 'ui_language'")) &&
-        query.next()) {
-        return query.value(0).toString();
-    }
-    return QStringLiteral("ru");
-}
-
-bool FinanceRepository::saveUiLanguage(const QString& language)
-{
-    QSqlQuery query(database_);
-    query.prepare(QStringLiteral(
-        "INSERT INTO settings(key, value) VALUES('ui_language', ?) "
-        "ON CONFLICT(key) DO UPDATE SET value = excluded.value"));
-    query.addBindValue(language);
-    if (!query.exec()) {
-        setLastError(query.lastError().text());
-        return false;
-    }
-    return true;
-}
-
 bool FinanceRepository::loadAutomaticCurrencyRates() const
 {
     QSqlQuery query(database_);
@@ -4331,8 +4305,6 @@ bool FinanceRepository::seedDefaults()
             "VALUES('analytics_currency','USD')")) ||
         !setting.exec(QStringLiteral(
             "INSERT OR IGNORE INTO settings(key,value) VALUES('selected_asset','fiat')")) ||
-        !setting.exec(QStringLiteral(
-            "INSERT OR IGNORE INTO settings(key,value) VALUES('ui_language','ru')")) ||
         !setting.exec(QStringLiteral(
             "INSERT OR IGNORE INTO settings(key,value) "
             "VALUES('automatic_currency_rates','1')")) ||

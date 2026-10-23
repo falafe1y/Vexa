@@ -130,7 +130,6 @@ Item {
         id: finance
         property string appCurrency: "RUB"
         property string analyticsCurrency: "USD"
-        property string uiLanguage: "ru"
         property var currentCurrencyRates: [
             {
                 code: "RUB",

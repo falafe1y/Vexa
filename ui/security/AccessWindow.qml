@@ -40,15 +40,15 @@ ApplicationWindow {
             EditorialLabel { text: "Vexa."; color: "#031528"; font.family: "PT Serif"; font.pixelSize: 48; font.italic: true }
             EditorialDialogTitle {
                 Layout.fillWidth: true
-                text: appAccess.recoveryCode.length > 0 ? qsTr("Сохраните код восстановления")
-                      : window.recovering ? qsTr("Восстановление доступа") : qsTr("Вход в приложение")
+                text: appAccess.recoveryCode.length > 0 ? "Сохраните код восстановления"
+                      : window.recovering ? "Восстановление доступа" : "Вход в приложение"
                 color: "#031528"
                 wrapMode: Text.WordWrap
             }
             EditorialLabel {
                 visible: appAccess.recoveryCode.length > 0
                 Layout.fillWidth: true
-                text: qsTr("Код позволит войти и установить новый пароль, если вы забудете текущий. При смене пароля выдаётся новый код.")
+                text: "Код позволит войти и установить новый пароль, если вы забудете текущий. При смене пароля выдаётся новый код."
                 color: (Appearance.desktop ? "#59616a" : "#687483")
                 wrapMode: Text.WordWrap
             }
@@ -67,12 +67,12 @@ ApplicationWindow {
                 id: savedCode; objectName: "savedCode"
                 Layout.fillWidth: true
                 visible: appAccess.recoveryCode.length > 0
-                text: qsTr("Я сохранил код восстановления")
+                text: "Я сохранил код восстановления"
             }
             StyledButton {
                 visible: appAccess.recoveryCode.length > 0
                 Layout.fillWidth: true
-                text: qsTr("Продолжить")
+                text: "Продолжить"
                 primary: true
                     dimWhenDisabled: false
                 enabled: savedCode.checked
@@ -85,7 +85,7 @@ ApplicationWindow {
                 StyledTextField {
                     id: proof; objectName: "proof"
                     Layout.fillWidth: true
-                    placeholderText: window.recovering ? qsTr("Код восстановления") : qsTr("Пароль")
+                    placeholderText: window.recovering ? "Код восстановления" : "Пароль"
                     echoMode: TextInput.Password
                     inputMethodHints: Qt.ImhHiddenText | Qt.ImhNoPredictiveText | Qt.ImhNoAutoUppercase
                     enabled: !appAccess.busy
@@ -95,7 +95,7 @@ ApplicationWindow {
                     id: password; objectName: "password"
                     visible: window.recovering
                     Layout.fillWidth: true
-                    placeholderText: qsTr("Новый пароль: 1–1024 символа")
+                    placeholderText: "Новый пароль: 1–1024 символа"
                     echoMode: TextInput.Password
                     inputMethodHints: Qt.ImhHiddenText | Qt.ImhNoPredictiveText | Qt.ImhNoAutoUppercase
                     enabled: !appAccess.busy
@@ -104,14 +104,14 @@ ApplicationWindow {
                     id: confirmation; objectName: "confirmation"
                     visible: window.recovering
                     Layout.fillWidth: true
-                    placeholderText: qsTr("Повторите новый пароль")
+                    placeholderText: "Повторите новый пароль"
                     echoMode: TextInput.Password
                     inputMethodHints: Qt.ImhHiddenText | Qt.ImhNoPredictiveText | Qt.ImhNoAutoUppercase
                     enabled: !appAccess.busy
                 }
                 StyledButton {
                     Layout.fillWidth: true
-                    text: window.recovering ? qsTr("Установить пароль") : qsTr("Войти")
+                    text: window.recovering ? "Установить пароль" : "Войти"
                     primary: true
                     dimWhenDisabled: false
                     enabled: !appAccess.busy && !appAccess.retryAfter && proof.text.length > 0
@@ -125,7 +125,7 @@ ApplicationWindow {
                 StyledButton {
                     Layout.fillWidth: true
                     flat: true
-                    text: window.recovering ? qsTr("Вернуться ко входу") : qsTr("Забыли пароль?")
+                    text: window.recovering ? "Вернуться ко входу" : "Забыли пароль?"
                     enabled: !appAccess.busy
                     onClicked: { window.recovering = !window.recovering; proof.clear(); password.clear(); confirmation.clear() }
                 }
@@ -139,14 +139,14 @@ ApplicationWindow {
             }
             EditorialLabel {
                 visible: appAccess.retryAfter > 0
-                text: qsTr("Повторить через %1 с").arg(appAccess.retryAfter)
+                text: "Повторить через %1 с".arg(appAccess.retryAfter)
                 color: (Appearance.desktop ? "#59616a" : "#687483")
             }
             BusyIndicator { running: appAccess.busy; visible: running; Layout.alignment: Qt.AlignHCenter }
             StyledButton {
                 visible: !appAccess.busy && appAccess.recoveryCode.length === 0 && (!appAccess.ready || appAccess.error.length > 0)
                 Layout.fillWidth: true
-                text: qsTr("Повторить")
+                text: "Повторить"
                 onClicked: appAccess.retry()
             }
             Item { Layout.preferredHeight: 40 }

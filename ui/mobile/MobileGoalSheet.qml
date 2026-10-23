@@ -11,7 +11,7 @@ MobileSheet {
     property string errorText: ""
     property bool confirmingDelete: false
 
-    title: editingId.length > 0 ? qsTr("Цель") : qsTr("Новая цель")
+    title: editingId.length > 0 ? "Цель" : "Новая цель"
 
     ListModel {
         id: sourceModel
@@ -61,14 +61,14 @@ MobileSheet {
         if (result.ok)
             sheet.close();
         else
-            errorText = result.error || qsTr("Не удалось сохранить цель");
+            errorText = result.error || "Не удалось сохранить цель";
     }
 
     MobileField {
         id: nameField
         Layout.fillWidth: true
-        label: qsTr("Название")
-        placeholder: qsTr("Например, отпуск")
+        label: "Название"
+        placeholder: "Например, отпуск"
     }
 
     MobileSegmented {
@@ -100,14 +100,14 @@ MobileSheet {
     MobileField {
         id: targetField
         Layout.fillWidth: true
-        label: qsTr("Сумма цели")
+        label: "Сумма цели"
         placeholder: "0"
         inputMethodHints: Qt.ImhFormattedNumbersOnly
     }
 
     MobileCheckRow {
         Layout.fillWidth: true
-        label: qsTr("Указать срок")
+        label: "Указать срок"
         checked: sheet.hasDeadline
         onToggled: function (nowChecked) {
             sheet.hasDeadline = nowChecked;
@@ -118,13 +118,13 @@ MobileSheet {
         id: deadlineField
         visible: sheet.hasDeadline
         Layout.fillWidth: true
-        label: qsTr("Срок")
-        placeholder: qsTr("дд.мм.гггг")
+        label: "Срок"
+        placeholder: "дд.мм.гггг"
     }
 
     MobileCheckRow {
         Layout.fillWidth: true
-        label: qsTr("Все счета и кошельки")
+        label: "Все счета и кошельки"
         checked: sheet.allSourcesChecked
         onToggled: function (nowChecked) {
             sheet.allSourcesChecked = nowChecked;
@@ -167,7 +167,7 @@ MobileSheet {
     MobileButton {
         Layout.fillWidth: true
         variant: "primary"
-        text: qsTr("Сохранить")
+        text: "Сохранить"
         onClicked: sheet.save()
     }
 
@@ -175,7 +175,7 @@ MobileSheet {
         Layout.fillWidth: true
         visible: sheet.editingId.length > 0
         variant: "danger"
-        text: sheet.confirmingDelete ? qsTr("Нажмите ещё раз, чтобы удалить") : qsTr("Удалить цель")
+        text: sheet.confirmingDelete ? "Нажмите ещё раз, чтобы удалить" : "Удалить цель"
         onClicked: {
             if (!sheet.confirmingDelete) {
                 sheet.confirmingDelete = true;
@@ -184,7 +184,7 @@ MobileSheet {
             if (financeController.deleteFinancialGoal(sheet.editingId))
                 sheet.close();
             else
-                sheet.errorText = qsTr("Не удалось удалить цель");
+                sheet.errorText = "Не удалось удалить цель";
         }
     }
 }

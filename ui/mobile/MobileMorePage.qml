@@ -18,43 +18,43 @@ Flickable {
             model: [
                 {
                     key: "analytics",
-                    title: qsTr("Аналитика"),
-                    subtitle: qsTr("Доходность и структура капитала")
+                    title: "Аналитика",
+                    subtitle: "Доходность и структура капитала"
                 },
                 {
                     key: "budgets",
-                    title: qsTr("Бюджеты"),
-                    subtitle: qsTr("Лимиты и расходы")
+                    title: "Бюджеты",
+                    subtitle: "Лимиты и расходы"
                 },
                 {
                     key: "goals",
-                    title: qsTr("Цели"),
-                    subtitle: qsTr("Накопления и сроки")
+                    title: "Цели",
+                    subtitle: "Накопления и сроки"
                 },
                 {
                     key: "trajectory",
-                    title: qsTr("Траектория"),
-                    subtitle: qsTr("Прогноз капитала")
+                    title: "Траектория",
+                    subtitle: "Прогноз капитала"
                 },
                 {
                     key: "projects",
-                    title: qsTr("Проекты"),
-                    subtitle: qsTr("Доходы и расходы задач")
+                    title: "Проекты",
+                    subtitle: "Доходы и расходы задач"
                 },
                 {
                     key: "notes",
-                    title: qsTr("Заметки"),
-                    subtitle: qsTr("Мысли и планы")
+                    title: "Заметки",
+                    subtitle: "Мысли и планы"
                 },
                 {
                     key: "data",
-                    title: qsTr("Импорт и экспорт"),
-                    subtitle: qsTr("Данные и резервные копии")
+                    title: "Импорт и экспорт",
+                    subtitle: "Данные и резервные копии"
                 },
                 {
                     key: "settings",
-                    title: qsTr("Настройки"),
-                    subtitle: qsTr("Валюта, язык и защита")
+                    title: "Настройки",
+                    subtitle: "Валюта, язык и защита"
                 }
             ]
             delegate: Button {

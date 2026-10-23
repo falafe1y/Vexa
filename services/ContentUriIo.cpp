@@ -42,7 +42,7 @@ bool readAll(const QUrl& url, QByteArray& bytes, QString& error)
     const QJniObject stream = contentResolver().callObjectMethod(
         "openInputStream", "(Landroid/net/Uri;)Ljava/io/InputStream;", uriOf(url).object());
     if (!stream.isValid()) {
-        error = QCoreApplication::translate("ContentUriIo", "Не удалось открыть файл");
+        error = QStringLiteral("Не удалось открыть файл");
         return false;
     }
 
@@ -66,7 +66,7 @@ bool readAll(const QUrl& url, QByteArray& bytes, QString& error)
     env.checkAndClearExceptions();
     env->DeleteLocalRef(buffer);
     if (!ok) {
-        error = QCoreApplication::translate("ContentUriIo", "Не удалось прочитать файл");
+        error = QStringLiteral("Не удалось прочитать файл");
     }
     return ok;
 }
@@ -77,7 +77,7 @@ bool writeAll(const QUrl& url, const QByteArray& bytes, QString& error)
         "openOutputStream", "(Landroid/net/Uri;Ljava/lang/String;)Ljava/io/OutputStream;",
         uriOf(url).object(), QJniObject::fromString(QStringLiteral("wt")).object<jstring>());
     if (!stream.isValid()) {
-        error = QCoreApplication::translate("ContentUriIo", "Не удалось открыть файл для записи");
+        error = QStringLiteral("Не удалось открыть файл для записи");
         return false;
     }
 
@@ -91,7 +91,7 @@ bool writeAll(const QUrl& url, const QByteArray& bytes, QString& error)
     const bool ok = !env.checkAndClearExceptions();
     env->DeleteLocalRef(buffer);
     if (!ok) {
-        error = QCoreApplication::translate("ContentUriIo", "Не удалось записать файл");
+        error = QStringLiteral("Не удалось записать файл");
     }
     return ok;
 }
@@ -112,7 +112,7 @@ bool saveToDownloads(const QString& path, const QString& name, QUrl& saved, QStr
         "insert", "(Landroid/net/Uri;Landroid/content/ContentValues;)Landroid/net/Uri;",
         downloads.object(), values.object());
     if (env.checkAndClearExceptions() || !created.isValid()) {
-        error = QCoreApplication::translate("ContentUriIo", "Не удалось создать файл в папке «Загрузки»");
+        error = QStringLiteral("Не удалось создать файл в папке «Загрузки»");
         return false;
     }
     saved = QUrl(created.toString());
@@ -163,13 +163,13 @@ QString displayName(const QUrl& url)
 #else
 bool readAll(const QUrl&, QByteArray&, QString& error)
 {
-    error = QCoreApplication::translate("ContentUriIo", "Этот адрес файла поддерживается только на Android");
+    error = QStringLiteral("Этот адрес файла поддерживается только на Android");
     return false;
 }
 
 bool writeAll(const QUrl&, const QByteArray&, QString& error)
 {
-    error = QCoreApplication::translate("ContentUriIo", "Этот адрес файла поддерживается только на Android");
+    error = QStringLiteral("Этот адрес файла поддерживается только на Android");
     return false;
 }
 
@@ -180,7 +180,7 @@ QString displayName(const QUrl&)
 
 bool saveToDownloads(const QString&, const QString&, QUrl&, QString& error)
 {
-    error = QCoreApplication::translate("ContentUriIo", "Этот адрес файла поддерживается только на Android");
+    error = QStringLiteral("Этот адрес файла поддерживается только на Android");
     return false;
 }
 
@@ -193,7 +193,7 @@ bool copyFileTo(const QString& path, const QUrl& destination, QString& error)
 {
     QFile file(path);
     if (!file.open(QIODevice::ReadOnly)) {
-        error = QCoreApplication::translate("ContentUriIo", "Не удалось прочитать файл");
+        error = QStringLiteral("Не удалось прочитать файл");
         return false;
     }
     return writeAll(destination, file.readAll(), error);
@@ -207,7 +207,7 @@ bool saveBytesToDownloads(const QByteArray& bytes, const QString& name, QUrl& sa
     }
     QFile file(directory->filePath(name));
     if (!file.open(QIODevice::WriteOnly) || file.write(bytes) != bytes.size()) {
-        error = QCoreApplication::translate("ContentUriIo", "Не удалось подготовить файл");
+        error = QStringLiteral("Не удалось подготовить файл");
         return false;
     }
     file.close();
@@ -224,7 +224,7 @@ std::unique_ptr<QTemporaryDir> temporaryDirectory(QString& error)
             return directory;
         }
     }
-    error = QCoreApplication::translate("ContentUriIo", "Не удалось создать временную папку");
+    error = QStringLiteral("Не удалось создать временную папку");
     return nullptr;
 }
 
@@ -246,7 +246,7 @@ LocalCopy::LocalCopy(const QUrl& url)
     path_ = directory_->filePath(name.isEmpty() ? QStringLiteral("document.csv") : name);
     QFile file(path_);
     if (!file.open(QIODevice::WriteOnly) || file.write(bytes) != bytes.size()) {
-        error_ = QCoreApplication::translate("ContentUriIo", "Не удалось записать файл");
+        error_ = QStringLiteral("Не удалось записать файл");
         path_.clear();
     }
 }

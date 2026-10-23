@@ -26,26 +26,26 @@ EditorialColumnLayout {
         if (row.account) parts.push(row.account)
         if (row.asset) parts.push(row.asset)
         if (row.dateFrom) parts.push(date(row.dateFrom) + (row.dateTo && row.dateTo !== row.dateFrom ? " — " + date(row.dateTo) : ""))
-        if (row.count > 1) parts.push((row.code === "missing_days" ? qsTr("Дней без оценок: %1") : qsTr("Записей: %1")).arg(row.count))
+        if (row.count > 1) parts.push((row.code === "missing_days" ? "Дней без оценок: %1" : "Записей: %1").arg(row.count))
         return parts.join(" · ")
     }
     spacing: 12
     EditorialRowLayout {
         Layout.fillWidth: true
-        EditorialLabel { text: qsTr("Качество данных"); color: panel.ink; font.pixelSize: 17; font.bold: true; Layout.fillWidth: true }
-        StyledButton { visible: panel.items.length > 0; text: panel.detailsOpen ? qsTr("Скрыть проблемы") : qsTr("Показать проблемы (%1)").arg(panel.items.length); onClicked: panel.detailsOpen = !panel.detailsOpen }
+        EditorialLabel { text: "Качество данных"; color: panel.ink; font.pixelSize: 17; font.bold: true; Layout.fillWidth: true }
+        StyledButton { visible: panel.items.length > 0; text: panel.detailsOpen ? "Скрыть проблемы" : "Показать проблемы (%1)".arg(panel.items.length); onClicked: panel.detailsOpen = !panel.detailsOpen }
     }
     EditorialLabel {
         Layout.fillWidth: true; wrapMode: Text.WordWrap; color: panel.muted
-        text: qsTr("Проверено строк оценок: %1 · Препятствуют расчёту: %2 · Ограничивают разбор: %3 · Особенности: %4")
+        text: "Проверено строк оценок: %1 · Препятствуют расчёту: %2 · Ограничивают разбор: %3 · Особенности: %4"
             .arg(panel.quality.checkedRows || 0).arg(panel.quality.errors || 0).arg(panel.quality.warnings || 0).arg(panel.quality.notes || 0)
     }
-    EditorialLabel { visible: panel.items.length === 0; Layout.fillWidth: true; wrapMode: Text.WordWrap; color: panel.muted; text: qsTr("В проверенных оценках и операциях выбранного периода проблем не найдено. Это проверка записанных данных, а не подтверждение их биржевым источником.") }
+    EditorialLabel { visible: panel.items.length === 0; Layout.fillWidth: true; wrapMode: Text.WordWrap; color: panel.muted; text: "В проверенных оценках и операциях выбранного периода проблем не найдено. Это проверка записанных данных, а не подтверждение их биржевым источником." }
     EditorialRowLayout {
         visible: panel.detailsOpen && panel.items.length > 0
         Layout.fillWidth: true
-        StyledComboBox { id: severityFilter; objectName: "qualitySeverity"; Layout.preferredWidth: Appearance.desktop ? 212 : 210; model: [qsTr("Все проблемы"), qsTr("Препятствуют расчёту"), qsTr("Ограничивают разбор"), qsTr("Особенности учёта")] }
-        TextField { id: query; objectName: "qualitySearch"; Layout.fillWidth: true; placeholderText: qsTr("Счёт, актив, проблема или дата"); selectByMouse: true }
+        StyledComboBox { id: severityFilter; objectName: "qualitySeverity"; Layout.preferredWidth: Appearance.desktop ? 212 : 210; model: ["Все проблемы", "Препятствуют расчёту", "Ограничивают разбор", "Особенности учёта"] }
+        TextField { id: query; objectName: "qualitySearch"; Layout.fillWidth: true; placeholderText: "Счёт, актив, проблема или дата"; selectByMouse: true }
     }
     ListView {
         id: list
@@ -67,14 +67,14 @@ EditorialColumnLayout {
                 EditorialLabel { Layout.fillWidth: true; wrapMode: Text.WordWrap; text: modelData.label; color: modelData.severity === "error" ? panel.negative : panel.ink; font.bold: true }
                 EditorialLabel { visible: text.length > 0; Layout.fillWidth: true; wrapMode: Text.WordWrap; text: panel.context(modelData); color: panel.muted; font.pixelSize: 12 }
                 EditorialLabel { Layout.fillWidth: true; wrapMode: Text.WordWrap; text: modelData.impact; color: panel.ink }
-                EditorialLabel { Layout.fillWidth: true; wrapMode: Text.WordWrap; text: qsTr("Что проверить: %1").arg(modelData.action); color: panel.muted }
+                EditorialLabel { Layout.fillWidth: true; wrapMode: Text.WordWrap; text: "Что проверить: %1".arg(modelData.action); color: panel.muted }
                 EditorialLabel {
                     visible: modelData.code !== "missing_days" && (modelData.dates || []).length > 2
                     Layout.fillWidth: true; wrapMode: Text.WordWrap; color: panel.muted; font.pixelSize: 12
-                    text: qsTr("Даты записей: %1").arg((modelData.dates || []).map(panel.date).join(", "))
+                    text: "Даты записей: %1".arg((modelData.dates || []).map(panel.date).join(", "))
                 }
             }
         }
     }
-    EditorialLabel { visible: panel.detailsOpen && panel.items.length > 0 && panel.filtered.length === 0; color: panel.muted; text: qsTr("По выбранному фильтру проблем не найдено.") }
+    EditorialLabel { visible: panel.detailsOpen && panel.items.length > 0 && panel.filtered.length === 0; color: panel.muted; text: "По выбранному фильтру проблем не найдено." }
 }

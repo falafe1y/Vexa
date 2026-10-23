@@ -81,7 +81,7 @@ void FinanceController::rebuildAverageReturn()
         const QString id = QStringLiteral("position:") + position.id();
         const QString title = instrument->symbol() + QStringLiteral(" · ") + instrument->name();
         if (instrument->type() == InvestmentInstrumentType::Future || instrument->type() == InvestmentInstrumentType::Option) {
-            add(id, investments, title, 0, AnnualReturn{std::nullopt, tr("производные не учитываются"), 0});
+            add(id, investments, title, 0, AnnualReturn{std::nullopt, QStringLiteral("производные не учитываются"), 0});
             continue;
         }
         QVector<ReturnFlow> flows;
@@ -96,14 +96,14 @@ void FinanceController::rebuildAverageReturn()
             // A holding that existed before Vexa: its cost is what was put in when it was added
             const QVariant basis = repository_.investmentCostBasis(position.id());
             if (basis.isNull()) {
-                add(id, investments, title, 0, AnnualReturn{std::nullopt, tr("стоимость приобретения неизвестна"), 0});
+                add(id, investments, title, 0, AnnualReturn{std::nullopt, QStringLiteral("стоимость приобретения неизвестна"), 0});
                 continue;
             }
             flows.append({position.createdAtUtc().toMSecsSinceEpoch(), -basis.toLongLong()});
         }
         const InvestmentValuation value = investmentPositionValue(position);
         if (!value.available) {
-            add(id, investments, title, 0, AnnualReturn{std::nullopt, tr("нет актуальной оценки"), 0});
+            add(id, investments, title, 0, AnnualReturn{std::nullopt, QStringLiteral("нет актуальной оценки"), 0});
             continue;
         }
         add(id, investments, title, toApp(value.valueMinor, account->currency()),
@@ -121,7 +121,7 @@ void FinanceController::rebuildAverageReturn()
         add(id, investments, title, toApp(balance, account.currency()),
             rateBasisPoints > 0
                 ? AnnualReturn{rateBasisPoints / 100.0, QString(), 0}
-                : AnnualReturn{std::nullopt, tr("нет ставки в настройках счёта"), 0});
+                : AnnualReturn{std::nullopt, QStringLiteral("нет ставки в настройках счёта"), 0});
     }
     // Crypto: the coins held on exchanges, each measured from its own trades. Crypto wallets are not counted.
     const qint64 usdRubNow = rateProvider_.rateToRubMicros(QStringLiteral("USD"));

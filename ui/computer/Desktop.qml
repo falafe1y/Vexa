@@ -100,17 +100,17 @@ ApplicationWindow {
     readonly property var assets: [
         {
             code: "fiat",
-            title: qsTr("Фиат"),
+            title: "Фиат",
             icon: ""
         },
         {
             code: "crypto",
-            title: qsTr("Криптовалюта"),
+            title: "Криптовалюта",
             icon: ""
         },
         {
             code: "investment",
-            title: qsTr("Инвестиции"),
+            title: "Инвестиции",
             icon: ""
         }
     ]
@@ -120,7 +120,7 @@ ApplicationWindow {
     }
 
     function uiLocale() {
-        return Qt.locale(financeController.uiLanguage === "en" ? "en_US" : "ru_RU");
+        return Qt.locale("ru_RU");
     }
 
     function money(minor, code, sign) {
@@ -132,7 +132,7 @@ ApplicationWindow {
         const whole = Math.floor(absoluteMinor / 100);
         const cents = absoluteMinor % 100;
         const decimals = Math.abs(roundedMinor) % 100 === 0 ? 0 : 2;
-        const decimalSeparator = financeController.uiLanguage === "en" ? "." : ",";
+        const decimalSeparator = ",";
         const groupedWhole = String(whole).replace(/\B(?=(\d{3})+(?!\d))/g, " ");
         const formatted = decimals === 0
                         ? groupedWhole
@@ -150,7 +150,7 @@ ApplicationWindow {
         for (let i = 0; i < assets.length; ++i)
             if (assets[i].code === code)
                 return assets[i].title;
-        return qsTr("Фиат");
+        return "Фиат";
     }
 
     function assetAmount(code) {
@@ -170,10 +170,10 @@ ApplicationWindow {
     }
 
     function exchangeSection(section) {
-        const names = { FundingAccount: qsTr("Финансирование"), UnifiedTradingAccount: qsTr("Торговый счёт"),
-            Earn: qsTr("Накопления"), TradingBot: qsTr("Торговые боты"), CopyTrading: qsTr("Копирование сделок"),
-            CryptoLoans: qsTr("Криптозаймы"), CryptoLoans_legacy: qsTr("Криптозаймы"),
-            Launchpool: qsTr("Пул вознаграждений") };
+        const names = { FundingAccount: "Финансирование", UnifiedTradingAccount: "Торговый счёт",
+            Earn: "Накопления", TradingBot: "Торговые боты", CopyTrading: "Копирование сделок",
+            CryptoLoans: "Криптозаймы", CryptoLoans_legacy: "Криптозаймы",
+            Launchpool: "Пул вознаграждений" };
         return names[section] || section;
     }
 
@@ -223,32 +223,32 @@ ApplicationWindow {
     }
 
     function accountTypeLabel(type) {
-        if (type === "cash") return qsTr("Наличные");
-        if (type === "debit_card") return qsTr("Дебетовая карта");
-        if (type === "credit_card") return qsTr("Кредитная карта");
-        if (type === "crypto_wallet") return qsTr("Криптокошелёк");
-        if (type === "brokerage") return qsTr("Брокер");
-        if (type === "deposit") return qsTr("Вклад");
-        return qsTr("Другой");
+        if (type === "cash") return "Наличные";
+        if (type === "debit_card") return "Дебетовая карта";
+        if (type === "credit_card") return "Кредитная карта";
+        if (type === "crypto_wallet") return "Криптокошелёк";
+        if (type === "brokerage") return "Брокер";
+        if (type === "deposit") return "Вклад";
+        return "Другой";
     }
 
     function accountPrimaryAmount(row) {
-        if (row && row.isExchange) return row.awaitingRefresh ? qsTr("Загружается") : row.hasSnapshot ? root.money(row.valueMinor, row.currency, false) : row.refreshing ? (row.syncProgress >= 0 ? qsTr("Загрузка %1%").arg(row.syncProgress) : qsTr("Загрузка…")) : qsTr("Нет данных");
+        if (row && row.isExchange) return row.awaitingRefresh ? "Загружается" : row.hasSnapshot ? root.money(row.valueMinor, row.currency, false) : row.refreshing ? (row.syncProgress >= 0 ? "Загрузка %1%".arg(row.syncProgress) : "Загрузка…") : "Нет данных";
         if (row && row.isCrypto)
             return row.balanceText + " " + row.symbol;
         if (row && row.isCreditCard)
-            return qsTr("Задолженность: %1").arg(
+            return "Задолженность: %1".arg(
                 root.money(row.debtMinor, row.currency, false)
             );
         return row ? root.money(row.balanceMinor, row.currency, false) : "";
     }
 
     function accountCompactAmount(row) {
-        if (row && row.isExchange) return row.awaitingRefresh ? qsTr("Загружается") : row.hasSnapshot ? root.money(row.valueMinor, row.currency, false) : row.refreshing ? (row.syncProgress >= 0 ? qsTr("Загрузка %1%").arg(row.syncProgress) : qsTr("Загрузка…")) : qsTr("Нет данных");
+        if (row && row.isExchange) return row.awaitingRefresh ? "Загружается" : row.hasSnapshot ? root.money(row.valueMinor, row.currency, false) : row.refreshing ? (row.syncProgress >= 0 ? "Загрузка %1%".arg(row.syncProgress) : "Загрузка…") : "Нет данных";
         if (row && row.isCrypto)
             return row.balanceText + " " + row.symbol;
         if (row && row.isCreditCard)
-            return qsTr("Долг %1 · доступно %2")
+            return "Долг %1 · доступно %2"
                 .arg(root.money(row.debtMinor, row.currency, false))
                 .arg(root.money(row.availableCreditMinor, row.currency, false));
         return row ? root.money(row.balanceMinor, row.currency, false) : "";
@@ -256,7 +256,7 @@ ApplicationWindow {
 
     function accountAvailableCredit(row) {
         return row && row.isCreditCard
-             ? qsTr("Доступно: %1 из %2")
+             ? "Доступно: %1 из %2"
                    .arg(root.money(row.availableCreditMinor, row.currency, false))
                    .arg(root.money(row.creditLimitMinor, row.currency, false))
              : "";
@@ -274,11 +274,11 @@ ApplicationWindow {
         if (!row || !row.isCrypto)
             return "";
         if (row.refreshing)
-            return row.syncProgress >= 0 ? qsTr("Загрузка истории: %1%").arg(row.syncProgress) : qsTr("Обновление баланса…");
+            return row.syncProgress >= 0 ? "Загрузка истории: %1%".arg(row.syncProgress) : "Обновление баланса…";
         if (row.connectionError) return row.connectionError;
         if (!row.hasSnapshot)
-            return qsTr("Баланс ещё не обновлён");
-        const updated = qsTr("Обновлено: %1").arg(
+            return "Баланс ещё не обновлён";
+        const updated = "Обновлено: %1".arg(
             Qt.formatDateTime(row.updatedAt, "dd.MM.yyyy HH:mm")
         );
         return row.priceHasSnapshot
@@ -294,7 +294,7 @@ ApplicationWindow {
         for (let i = 0; i < rows.length; ++i)
             if (rows[i].id === id)
                 return rows[i].name;
-        return qsTr("Другой счёт");
+        return "Другой счёт";
     }
 
     function amountForInput(minor) {
@@ -318,11 +318,11 @@ ApplicationWindow {
 
     function transactionTypeLabel(row) {
         if (row.type === "investment_position")
-            return qsTr("Позиция");
-        if (row.type === "investment_cash") return qsTr("Инвестиция");
+            return "Позиция";
+        if (row.type === "investment_cash") return "Инвестиция";
         if (row.type === "transfer")
-            return qsTr("Перевод");
-        return row.type === "income" ? qsTr("Доход") : qsTr("Расход");
+            return "Перевод";
+        return row.type === "income" ? "Доход" : "Расход";
     }
 
     function indexByRole(model, role, value) {
@@ -460,11 +460,11 @@ ApplicationWindow {
 
     function dateFilterLabel() {
         if (!financeController.dateFilterActive)
-            return qsTr("Все время");
+            return "Все время";
         const from = dateFromIso(financeController.dateFilterFrom);
         const to = dateFromIso(financeController.dateFilterTo);
         if (!from || !to)
-            return qsTr("Все время");
+            return "Все время";
         if (from.getTime() === to.getTime())
             return Qt.formatDate(from, "dd.MM.yyyy");
         return Qt.formatDate(from, "dd.MM.yyyy")
@@ -479,10 +479,10 @@ ApplicationWindow {
         if (rows.length === 0)
             return "";
         if (rows[0].resolution === "year")
-            return qsTr("По годам");
+            return "По годам";
         if (rows[0].resolution === "month")
-            return qsTr("По месяцам");
-        return qsTr("По дням");
+            return "По месяцам";
+        return "По дням";
     }
 
     function averageCompletedMonthExpense(rows) {
@@ -546,9 +546,9 @@ ApplicationWindow {
 
     function expenseMonthLabel(month) {
         return [
-            qsTr("Янв."), qsTr("Фев."), qsTr("Мар."), qsTr("Апр."),
-            qsTr("Май"), qsTr("Июн."), qsTr("Июл."), qsTr("Авг."),
-            qsTr("Сен."), qsTr("Окт."), qsTr("Ноя."), qsTr("Дек.")
+            "Янв.", "Фев.", "Мар.", "Апр.",
+            "Май", "Июн.", "Июл.", "Авг.",
+            "Сен.", "Окт.", "Ноя.", "Дек."
         ][month];
     }
 
@@ -610,13 +610,13 @@ ApplicationWindow {
         const westernStyle = code !== "RUB";
         if (absolute >= 1000000000) {
             divisor = 1000000000;
-            suffix = westernStyle ? "B" : qsTr("млрд");
+            suffix = westernStyle ? "B" : "млрд";
         } else if (absolute >= 1000000) {
             divisor = 1000000;
-            suffix = westernStyle ? "M" : qsTr("млн");
+            suffix = westernStyle ? "M" : "млн";
         } else if (absolute >= 1000) {
             divisor = 1000;
-            suffix = westernStyle ? "K" : qsTr("тыс.");
+            suffix = westernStyle ? "K" : "тыс.";
         }
         if (westernStyle) {
             const scaledWestern = amount / divisor;
@@ -655,7 +655,7 @@ ApplicationWindow {
             return row.transferLabel + " · " + row.rawDescription;
         }
         if (row.recipientSource)
-            return row.recipientName || qsTr("Получатель не определён");
+            return row.recipientName || "Получатель не определён";
         return row.rawDescription || row.description || "—";
     }
 
@@ -679,7 +679,7 @@ ApplicationWindow {
 
     function investmentOperationRow(position) {
         const description = position.symbol + " · " + position.name
-                          + " · " + qsTr("Количество: %1")
+                          + " · " + "Количество: %1"
                                 .arg(position.quantityText);
         return Object.assign({}, position, {
             instrumentType: position.type, type: "investment_position", amount: position.marketValueMinor,
@@ -734,7 +734,7 @@ ApplicationWindow {
                 continue;
             const id = rows[i].categoryId || "none";
             values[id] = (values[id] || 0) + Number(rows[i].displayAmount);
-            names[id] = rows[i].categoryName || qsTr("Без категории");
+            names[id] = rows[i].categoryName || "Без категории";
         }
         const result = [];
         for (const id in values)
@@ -824,7 +824,7 @@ ApplicationWindow {
         const info = brokerageInfo(row.id);
         if (!info)
             return "";
-        return qsTr("Свободно: %1 · заблокировано: %2")
+        return "Свободно: %1 · заблокировано: %2"
             .arg(root.money(info.freeNowMinor, row.currency, false))
             .arg(root.money(info.blockedMarginMinor, row.currency, false));
     }
@@ -841,7 +841,7 @@ ApplicationWindow {
             total += accounts[i].freeNowMinor;
         }
         return accounts.length > 0
-            ? qsTr("Свободно: %1").arg(root.money(total, financeController.appCurrency, false))
+            ? "Свободно: %1".arg(root.money(total, financeController.appCurrency, false))
             : "";
     }
 
@@ -1015,7 +1015,7 @@ ApplicationWindow {
             anchors.centerIn: parent
             width: Math.max(0, parent.width - 24)
             visible: analyticsLineRoot.points.length === 0
-            text: qsTr("Добавьте операцию — здесь появится история капитала")
+            text: "Добавьте операцию — здесь появится история капитала"
             color: root.muted
             font.pixelSize: 16
             horizontalAlignment: Text.AlignHCenter
@@ -1293,17 +1293,17 @@ ApplicationWindow {
                 Layout.preferredHeight: 48
                 spacing: root.cardGap
                 EditorialLabel {
-                    text: page === "overview" ? qsTr("Мои финансы")
-                        : page === "accounts" ? qsTr("Счета")
-                        : page === "categories" ? qsTr("Категории")
-                        : page === "operations" ? qsTr("Операции")
-                        : page === "budgets" ? qsTr("Бюджеты")
-                        : page === "goals" ? qsTr("Цели")
-                        : page === "notes" ? qsTr("Заметки")
-                        : page === "trajectory" ? qsTr("Финансовая траектория")
-                        : page === "projects" ? qsTr("Проекты")
-                        : page === "analytics" ? qsTr("Аналитика")
-                        : qsTr("Настройки")
+                    text: page === "overview" ? "Мои финансы"
+                        : page === "accounts" ? "Счета"
+                        : page === "categories" ? "Категории"
+                        : page === "operations" ? "Операции"
+                        : page === "budgets" ? "Бюджеты"
+                        : page === "goals" ? "Цели"
+                        : page === "notes" ? "Заметки"
+                        : page === "trajectory" ? "Финансовая траектория"
+                        : page === "projects" ? "Проекты"
+                        : page === "analytics" ? "Аналитика"
+                        : "Настройки"
                     color: root.accent
                     font.pixelSize: root.width < 1360 ? 26 : 30
                     font.weight: Font.Bold
@@ -1317,7 +1317,7 @@ ApplicationWindow {
                     controlHeight: 48
                     neo: true
                     font.weight: Font.Bold
-                    text: qsTr("Плановые операции")
+                    text: "Плановые операции"
                     onClicked: recurringTransactionsDialog.openManager()
                 }
                 SoftButton {
@@ -1403,7 +1403,7 @@ ApplicationWindow {
                 Layout.fillWidth: true
                 Layout.preferredHeight: 40
                 EditorialLabel {
-                    text: qsTr("Плановые операции")
+                    text: "Плановые операции"
                     color: root.accent
                     font.pixelSize: 18
                     font.weight: Font.Bold
@@ -1413,7 +1413,7 @@ ApplicationWindow {
                 SoftButton {
                     flat: true
                     neo: schedulePanel.neo
-                    text: qsTr("Все")
+                    text: "Все"
                     implicitWidth: 72
                     Layout.preferredWidth: 72
                     controlHeight: 48
@@ -1428,21 +1428,21 @@ ApplicationWindow {
                 Layout.rightMargin: 12
                 spacing: 8
                 EditorialLabel {
-                    text: qsTr("Название")
+                    text: "Название"
                     color: root.muted
                     font.pixelSize: 16
                     font.weight: Font.Bold
                     Layout.fillWidth: true
                 }
                 EditorialLabel {
-                    text: qsTr("Когда")
+                    text: "Когда"
                     color: root.muted
                     font.pixelSize: 16
                     font.weight: Font.Bold
                     Layout.preferredWidth: 96
                 }
                 EditorialLabel {
-                    text: qsTr("Сумма")
+                    text: "Сумма"
                     color: root.muted
                     font.pixelSize: 16
                     font.weight: Font.Bold
@@ -1459,7 +1459,7 @@ ApplicationWindow {
                     anchors.centerIn: parent
                     width: parent.width
                     visible: schedulePanel.scheduledRows.length === 0
-                    text: qsTr("Плановых операций пока нет")
+                    text: "Плановых операций пока нет"
                     color: root.muted
                     font.pixelSize: 16
                     horizontalAlignment: Text.AlignHCenter
@@ -1506,7 +1506,7 @@ ApplicationWindow {
                             EditorialLabel {
                                 text: modelData.nextDate
                                       ? Qt.formatDate(root.dateFromIso(modelData.nextDate), "dd.MM.yyyy")
-                                      : qsTr("Не назначено")
+                                      : "Не назначено"
                                 color: root.muted
                                 font.pixelSize: 16
                                 Layout.preferredWidth: 96
@@ -1677,9 +1677,9 @@ ApplicationWindow {
             EditorialRowLayout {
                 Layout.fillWidth: true; Layout.preferredHeight: 64
                 Layout.leftMargin: 24; Layout.rightMargin: 24
-                EditorialLabel { text: qsTr("Остатки Bybit"); color: root.accent; font.pixelSize: 18; font.weight: Font.Bold }
+                EditorialLabel { text: "Остатки Bybit"; color: root.accent; font.pixelSize: 18; font.weight: Font.Bold }
                 Item { Layout.fillWidth: true }
-                EditorialLabel { text: qsTr("Стоимость по данным биржи"); color: root.muted; font.pixelSize: 16 }
+                EditorialLabel { text: "Стоимость по данным биржи"; color: root.muted; font.pixelSize: 16 }
             }
             ListView {
                 id: exchangeBalancesList
@@ -1702,7 +1702,7 @@ ApplicationWindow {
                         }
                         EditorialLabel {
                             text: modelData.summary ? Number(modelData.usdValue).toLocaleString(root.uiLocale(), "f", 2) + " $"
-                                : String(modelData.amountText).replace(".", financeController.uiLanguage === "en" ? "." : ",") + " " + modelData.coin
+                                : String(modelData.amountText).replace(".", ",") + " " + modelData.coin
                             color: root.accent; font.pixelSize: 16; font.weight: Font.DemiBold
                         }
                     }
@@ -1756,8 +1756,8 @@ ApplicationWindow {
                 Layout.bottomMargin: 16
 
                 EditorialLabel {
-                    text: qsTr("История %1").arg(
-                        root.selectedCryptoSymbol() || qsTr("криптовалюты")
+                    text: "История %1".arg(
+                        root.selectedCryptoSymbol() || "криптовалюты"
                     )
                     color: root.accent
                     font.pixelSize: 18
@@ -1765,7 +1765,7 @@ ApplicationWindow {
                 }
                 Item { Layout.fillWidth: true }
                 EditorialLabel {
-                    text: qsTr("Последние операции: %1")
+                    text: "Последние операции: %1"
                         .arg(dashboardCryptoHistory.rows.length)
                     color: root.muted
                     font.pixelSize: 16
@@ -1791,35 +1791,35 @@ ApplicationWindow {
                     anchors.rightMargin: 24
 
                     EditorialLabel {
-                        text: qsTr("Дата")
+                        text: "Дата"
                         color: root.muted
                         font.pixelSize: 16
                         font.weight: Font.Bold
                         Layout.preferredWidth: dashboardCryptoHistory.dateColumnWidth
                     }
                     EditorialLabel {
-                        text: qsTr("Направление")
+                        text: "Направление"
                         color: root.muted
                         font.pixelSize: 16
                         font.weight: Font.Bold
                         Layout.preferredWidth: dashboardCryptoHistory.directionColumnWidth
                     }
                     EditorialLabel {
-                        text: qsTr("Описание / адрес")
+                        text: "Описание / адрес"
                         color: root.muted
                         font.pixelSize: 16
                         font.weight: Font.Bold
                         Layout.fillWidth: true
                     }
                     EditorialLabel {
-                        text: qsTr("Счёт / хеш")
+                        text: "Счёт / хеш"
                         color: root.muted
                         font.pixelSize: 16
                         font.weight: Font.Bold
                         Layout.preferredWidth: dashboardCryptoHistory.hashColumnWidth
                     }
                     EditorialLabel {
-                        text: qsTr("Сумма")
+                        text: "Сумма"
                         color: root.muted
                         font.pixelSize: 16
                         font.weight: Font.Bold
@@ -1885,8 +1885,8 @@ ApplicationWindow {
                                 }
                                 EditorialLabel {
                                     text: modelData.direction === "in"
-                                          ? qsTr("Получено")
-                                          : modelData.direction === "neutral" ? qsTr("Без изменения") : qsTr("Отправлено")
+                                          ? "Получено"
+                                          : modelData.direction === "neutral" ? "Без изменения" : "Отправлено"
                                     color: modelData.direction === "in"
                                          ? root.income
                                          : modelData.direction === "neutral" ? root.muted : root.red
@@ -1909,10 +1909,7 @@ ApplicationWindow {
                                     elide: Text.ElideMiddle
                                 }
                                 EditorialLabel {
-                                    readonly property string localizedAmount:
-                                        financeController.uiLanguage === "en"
-                                        ? modelData.amountText
-                                        : modelData.amountText.replace(".", ",")
+                                    readonly property string localizedAmount: modelData.amountText.replace(".", ",")
                                     text: (modelData.direction === "in" ? "+" : modelData.direction === "out" ? "−" : "")
                                           + localizedAmount + " " + modelData.symbol
                                     color: modelData.direction === "in"
@@ -1932,10 +1929,10 @@ ApplicationWindow {
                     anchors.centerIn: parent
                     visible: dashboardCryptoHistory.rows.length === 0
                     text: financeController.cryptoWallets.length === 0
-                          ? qsTr("Сначала добавьте криптокошелёк")
+                          ? "Сначала добавьте криптокошелёк"
                           : financeController.cryptoRefreshing
-                            ? qsTr("Загружаем историю переводов…")
-                            : qsTr("У этого кошелька пока нет переводов %1")
+                            ? "Загружаем историю переводов…"
+                            : "У этого кошелька пока нет переводов %1"
                                   .arg(root.selectedCryptoSymbol())
                     color: root.muted
                     font.pixelSize: 16
@@ -1948,7 +1945,7 @@ ApplicationWindow {
         id: transactionBlock
         objectName: "transactionBlock"
 
-        property string title: qsTr("История операций")
+        property string title: "История операций"
         property var rows: []
         property bool expandToContent: false
         property var viewportFlickable: null
@@ -1993,13 +1990,13 @@ ApplicationWindow {
                     neo: transactionBlock.neo
                     Layout.preferredWidth: 268
                     implicitHeight: 40
-                    placeholderText: qsTr("Поиск по операциям...")
+                    placeholderText: "Поиск по операциям..."
                     text: root.searchText
                     onTextEdited: root.searchText = text
                 }
 
                 SoftButton {
-                    text: qsTr("+ Добавить операцию")
+                    text: "+ Добавить операцию"
                     flat: true
                     neo: transactionBlock.neo
                     controlHeight: 48
@@ -2098,42 +2095,42 @@ ApplicationWindow {
                     anchors.rightMargin: 24
 
                     EditorialLabel {
-                        text: qsTr("Дата")
+                        text: "Дата"
                         color: root.muted
                         font.pixelSize: 16
                         font.weight: Font.Bold
                         Layout.preferredWidth: transactionTable.dateColumnWidth
                     }
                     EditorialLabel {
-                        text: qsTr("Операция")
+                        text: "Операция"
                         color: root.muted
                         font.pixelSize: 16
                         font.weight: Font.Bold
                         Layout.preferredWidth: transactionTable.operationColumnWidth
                     }
                     EditorialLabel {
-                        text: qsTr("Счёт")
+                        text: "Счёт"
                         color: root.muted
                         font.pixelSize: 16
                         font.weight: Font.Bold
                         Layout.preferredWidth: transactionTable.accountColumnWidth
                     }
                     EditorialLabel {
-                        text: qsTr("Категория")
+                        text: "Категория"
                         color: root.muted
                         font.pixelSize: 16
                         font.weight: Font.Bold
                         Layout.preferredWidth: transactionTable.categoryColumnWidth
                     }
                     EditorialLabel {
-                        text: qsTr("Описание")
+                        text: "Описание"
                         color: root.muted
                         font.pixelSize: 16
                         font.weight: Font.Bold
                         Layout.fillWidth: true
                     }
                     EditorialLabel {
-                        text: qsTr("Сумма")
+                        text: "Сумма"
                         color: root.muted
                         font.pixelSize: 16
                         font.weight: Font.Bold
@@ -2375,7 +2372,7 @@ ApplicationWindow {
                 // Label {
                 //     anchors.centerIn: parent
                 //     visible: transactionTable.rows.length === 0
-                //     text: qsTr("Операций пока нет")
+                //     text: "Операций пока нет"
                 //     color: root.muted
                 // }
             }
@@ -2427,10 +2424,10 @@ ApplicationWindow {
                     visible: financeController.selectedAsset !== "investment"
                           || financeController.investmentAccounts.length > 0
                     text: financeController.selectedAsset === "crypto"
-                          ? qsTr("+ Добавить криптовалюту")
+                          ? "+ Добавить криптовалюту"
                           : financeController.selectedAsset === "investment"
-                            ? qsTr("+ Добавить позицию")
-                            : qsTr("+ Добавить счёт")
+                            ? "+ Добавить позицию"
+                            : "+ Добавить счёт"
                     highlighted: true
                     implicitWidth: financeController.selectedAsset === "crypto" ? 220 : 170
                     onClicked: {
@@ -2445,7 +2442,7 @@ ApplicationWindow {
                 SoftButton {
                     neo: true
                     visible: financeController.selectedAsset === "investment"
-                    text: qsTr("+ Добавить счёт")
+                    text: "+ Добавить счёт"
                     onClicked: accountDialog.openForSelectedAsset()
                 }
             }
@@ -2458,8 +2455,8 @@ ApplicationWindow {
                 EditorialLabel {
                     Layout.fillWidth: true
                     text: financeController.cryptoRefreshing
-                          ? qsTr("Обновляем балансы, цены и историю криптовалют…")
-                          : qsTr("Не удалось обновить криптоданные: %1")
+                          ? "Обновляем балансы, цены и историю криптовалют…"
+                          : "Не удалось обновить криптоданные: %1"
                                 .arg(financeController.cryptoLastError)
                     color: financeController.cryptoRefreshing ? root.muted : root.red
                     font.pixelSize: 16
@@ -2470,7 +2467,7 @@ ApplicationWindow {
                     visible: !financeController.cryptoRefreshing
                     enabled: financeController.cryptoManualRefreshReady
                     dimWhenDisabled: true
-                    text: qsTr("Повторить")
+                    text: "Повторить"
                     onClicked: financeController.refreshCryptoWallets()
                 }
             }
@@ -2611,8 +2608,8 @@ ApplicationWindow {
                     anchors.centerIn: parent
                     visible: parent.count === 0
                     text: financeController.selectedAsset === "crypto"
-                          ? qsTr("Добавьте публичный адрес криптокошелька")
-                          : qsTr("У этого актива пока нет счетов")
+                          ? "Добавьте публичный адрес криптокошелька"
+                          : "У этого актива пока нет счетов"
                     color: root.muted
                 }
             }
@@ -2666,8 +2663,8 @@ ApplicationWindow {
                         Layout.bottomMargin: 12
 
                         EditorialLabel {
-                            text: qsTr("История %1").arg(
-                                root.selectedCryptoSymbol() || qsTr("криптовалюты")
+                            text: "История %1".arg(
+                                root.selectedCryptoSymbol() || "криптовалюты"
                             )
                             color: root.accent
                             font.pixelSize: 16
@@ -2675,7 +2672,7 @@ ApplicationWindow {
                         }
                         Item { Layout.fillWidth: true }
                         EditorialLabel {
-                            text: qsTr("Последние операции: %1")
+                            text: "Последние операции: %1"
                                 .arg(financeController.cryptoTransactions.length)
                             color: root.muted
                             font.pixelSize: 16
@@ -2693,31 +2690,31 @@ ApplicationWindow {
                             anchors.rightMargin: 20
 
                             EditorialLabel {
-                                text: qsTr("Дата")
+                                text: "Дата"
                                 color: root.muted
                                 font.pixelSize: 16
                                 Layout.preferredWidth: 128
                             }
                             EditorialLabel {
-                                text: qsTr("Направление")
+                                text: "Направление"
                                 color: root.muted
                                 font.pixelSize: 16
                                 Layout.preferredWidth: 108
                             }
                             EditorialLabel {
-                                text: qsTr("Описание / адрес")
+                                text: "Описание / адрес"
                                 color: root.muted
                                 font.pixelSize: 16
                                 Layout.fillWidth: true
                             }
                             EditorialLabel {
-                                text: qsTr("Счёт / хеш")
+                                text: "Счёт / хеш"
                                 color: root.muted
                                 font.pixelSize: 16
                                 Layout.preferredWidth: 176
                             }
                             EditorialLabel {
-                                text: qsTr("Сумма")
+                                text: "Сумма"
                                 color: root.muted
                                 font.pixelSize: 16
                                 Layout.preferredWidth: 136
@@ -2769,8 +2766,8 @@ ApplicationWindow {
                                     }
                                     EditorialLabel {
                                         text: modelData.direction === "in"
-                                              ? qsTr("Получено")
-                                              : modelData.direction === "neutral" ? qsTr("Без изменения") : qsTr("Отправлено")
+                                              ? "Получено"
+                                              : modelData.direction === "neutral" ? "Без изменения" : "Отправлено"
                                         color: modelData.direction === "in"
                                              ? root.income
                                              : modelData.direction === "neutral" ? root.muted : root.red
@@ -2793,10 +2790,7 @@ ApplicationWindow {
                                         elide: Text.ElideMiddle
                                     }
                                     EditorialLabel {
-                                        readonly property string localizedAmount:
-                                            financeController.uiLanguage === "en"
-                                            ? modelData.amountText
-                                            : modelData.amountText.replace(".", ",")
+                                        readonly property string localizedAmount: modelData.amountText.replace(".", ",")
                                         text: (modelData.direction === "in" ? "+" : modelData.direction === "out" ? "−" : "")
                                               + localizedAmount + " " + modelData.symbol
                                         color: modelData.direction === "in"
@@ -2815,10 +2809,10 @@ ApplicationWindow {
                             anchors.centerIn: parent
                             visible: financeController.cryptoTransactions.length === 0
                             text: financeController.cryptoWallets.length === 0
-                                  ? qsTr("Сначала добавьте криптокошелёк")
+                                  ? "Сначала добавьте криптокошелёк"
                                   : financeController.cryptoRefreshing
-                                    ? qsTr("Загружаем историю переводов…")
-                                    : qsTr("У этого кошелька пока нет переводов %1")
+                                    ? "Загружаем историю переводов…"
+                                    : "У этого кошелька пока нет переводов %1"
                                           .arg(root.selectedCryptoSymbol())
                             color: root.muted
                         }
@@ -2838,7 +2832,7 @@ ApplicationWindow {
         TransactionBlock {
             neo: true
             anchors.fill: parent
-            title: qsTr("История операций")
+            title: "История операций"
             rows: root.visibleTransactions()
         }
     }
@@ -2862,7 +2856,7 @@ ApplicationWindow {
         id: backupDialogs
         onExported: function(path) {
             root.csvStatusOk = true
-            root.csvStatus = qsTr("Резервная копия сохранена: %1").arg(path)
+            root.csvStatus = "Резервная копия сохранена: %1".arg(path)
         }
     }
 
@@ -2878,13 +2872,13 @@ ApplicationWindow {
             const result = financeController.clearAllData();
             if (result.ok) {
                 root.csvStatusOk = true;
-                root.csvStatus = qsTr("Все пользовательские данные удалены");
+                root.csvStatus = "Все пользовательские данные удалены";
                 close();
                 return;
             }
             clearDataError.text = result.error
-                ? qsTr("Не удалось очистить данные: %1").arg(result.error)
-                : qsTr("Не удалось очистить данные");
+                ? "Не удалось очистить данные: %1".arg(result.error)
+                : "Не удалось очистить данные";
         }
 
         onAboutToShow: clearDataError.text = ""
@@ -2912,14 +2906,14 @@ ApplicationWindow {
 
             EditorialDialogTitle {
                 Layout.fillWidth: true
-                text: qsTr("Удалить все данные?")
+                text: "Удалить все данные?"
                 color: root.accent
                 wrapMode: Text.WordWrap
             }
 
             EditorialLabel {
                 Layout.fillWidth: true
-                text: qsTr("Все счета, операции, цели, бюджеты, кошельки и другие пользовательские данные будут удалены. Это действие нельзя отменить.")
+                text: "Все счета, операции, цели, бюджеты, кошельки и другие пользовательские данные будут удалены. Это действие нельзя отменить."
                 color: root.muted
                 font.pixelSize: 16
                 wrapMode: Text.WordWrap
@@ -2939,7 +2933,7 @@ ApplicationWindow {
                     id: clearDataWarningText
                     anchors.fill: parent
                     anchors.margins: 12
-                    text: qsTr("Перед удалением рекомендуем создать резервную копию базы данных.")
+                    text: "Перед удалением рекомендуем создать резервную копию базы данных."
                     color: root.red
                     font.pixelSize: 16
                     font.weight: Font.Medium
@@ -2963,13 +2957,13 @@ ApplicationWindow {
                 SoftButton {
                     neo: true
                     id: clearDataCancelButton; objectName: "clearDataCancelButton"
-                    text: qsTr("Отмена")
+                    text: "Отмена"
                     onClicked: clearDataDialog.close()
                 }
                 SoftButton {
                     neo: true
                     id: clearDataSubmitButton; objectName: "clearDataSubmitButton"
-                    text: qsTr("Удалить всё")
+                    text: "Удалить всё"
                     destructive: true
                     onClicked: clearDataDialog.confirmClear()
                 }
@@ -2979,40 +2973,40 @@ ApplicationWindow {
 
     FileDialog {
         id: exportCsvDialog
-        title: qsTr("Экспорт операций в CSV")
+        title: "Экспорт операций в CSV"
         fileMode: FileDialog.SaveFile
-        nameFilters: [qsTr("CSV-файлы (*.csv)")]
+        nameFilters: ["CSV-файлы (*.csv)"]
         defaultSuffix: "csv"
         onAccepted: {
             const result = financeController.exportTransactionsCsv(selectedFile);
             root.csvStatusOk = result.ok;
             root.csvStatus = result.ok
-                ? qsTr("Экспортировано операций: %1. Файл: %2")
+                ? "Экспортировано операций: %1. Файл: %2"
                     .arg(result.count).arg(result.path)
-                : qsTr("Не удалось экспортировать CSV: %1").arg(result.error);
+                : "Не удалось экспортировать CSV: %1".arg(result.error);
         }
     }
 
     FileDialog {
         id: bankCsvFileDialog
-        title: qsTr("Выберите банковскую выписку")
+        title: "Выберите банковскую выписку"
         fileMode: FileDialog.OpenFile
-        nameFilters: [qsTr("Банковские выписки (*.csv *.xlsx *.pdf)"), qsTr("Все файлы (*)")]
+        nameFilters: ["Банковские выписки (*.csv *.xlsx *.pdf)", "Все файлы (*)"]
         onAccepted: bankCsvImportDialog.openForFile(selectedFile)
     }
 
     FileDialog {
         id: importCsvDialog
-        title: qsTr("Импорт резервной копии Vexa")
+        title: "Импорт резервной копии Vexa"
         fileMode: FileDialog.OpenFile
-        nameFilters: [qsTr("CSV-файлы (*.csv)")]
+        nameFilters: ["CSV-файлы (*.csv)"]
         onAccepted: {
             const result = financeController.importTransactionsCsv(selectedFile);
             root.csvStatusOk = result.ok;
             root.csvStatus = result.ok
-                ? qsTr("Импортировано: %1, пропущено дубликатов: %2")
+                ? "Импортировано: %1, пропущено дубликатов: %2"
                     .arg(result.imported).arg(result.skipped)
-                : qsTr("Не удалось импортировать CSV: %1").arg(result.error);
+                : "Не удалось импортировать CSV: %1".arg(result.error);
         }
     }
 
@@ -3029,7 +3023,7 @@ ApplicationWindow {
         successColor: root.income
         onImportFinished: function(result) {
             root.csvStatusOk = true;
-            root.csvStatus = qsTr("Импортировано: %1, пропущено дубликатов: %2, отклонено строк: %3")
+            root.csvStatus = "Импортировано: %1, пропущено дубликатов: %2, отклонено строк: %3"
                 .arg(result.imported).arg(result.skipped).arg(result.rejected);
         }
     }
@@ -3126,7 +3120,7 @@ ApplicationWindow {
                 apiKey: cryptoApiKeyField.text, apiSecret: cryptoApiSecretField.text
             });
             if (result.ok) close();
-            else cryptoWalletError.text = result.error || qsTr("Не удалось сохранить счёт");
+            else cryptoWalletError.text = result.error || "Не удалось сохранить счёт";
         }
         onClosed: { cryptoApiKeyField.clear(); cryptoApiSecretField.clear(); }
         Shortcut {
@@ -3144,7 +3138,7 @@ ApplicationWindow {
         contentItem: EditorialDialogForm {
             spacing: 16
             EditorialDialogTitle {
-                text: cryptoWalletDialog.editingId ? qsTr("Редактировать криптовалюту") : qsTr("Добавить криптовалюту")
+                text: cryptoWalletDialog.editingId ? "Редактировать криптовалюту" : "Добавить криптовалюту"
                 color: root.accent;  }
             AppTextField {
                 neo: true
@@ -3152,7 +3146,7 @@ ApplicationWindow {
                 id: cryptoNameField
                 objectName: "cryptoNameField"
                 Layout.fillWidth: true
-                placeholderText: qsTr("Название счёта")
+                placeholderText: "Название счёта"
                 maximumLength: 80
             }
             AppComboBox {
@@ -3161,7 +3155,7 @@ ApplicationWindow {
                 id: cryptoSourceBox
                 objectName: "cryptoSourceBox"
                 Layout.fillWidth: true
-                model: [qsTr("Кошелёк"), qsTr("Биржа")]
+                model: ["Кошелёк", "Биржа"]
                 enabled: !cryptoWalletDialog.editingId
                 onActivated: cryptoWalletError.text = ""
             }
@@ -3185,9 +3179,9 @@ ApplicationWindow {
                 Layout.fillWidth: true
                 visible: cryptoSourceBox.currentIndex === 0
                 enabled: !cryptoWalletDialog.editingId
-                placeholderText: cryptoTypeBox.currentIndex === 0 ? qsTr("Публичный адрес TRON (T…)")
-                    : cryptoTypeBox.currentIndex === 1 ? qsTr("Публичный адрес Bitcoin (1…, 3… или bc1…)")
-                    : qsTr("Публичный адрес Ethereum (0x…)")
+                placeholderText: cryptoTypeBox.currentIndex === 0 ? "Публичный адрес TRON (T…)"
+                    : cryptoTypeBox.currentIndex === 1 ? "Публичный адрес Bitcoin (1…, 3… или bc1…)"
+                    : "Публичный адрес Ethereum (0x…)"
                 maximumLength: 90
             }
             AppComboBox {
@@ -3204,7 +3198,7 @@ ApplicationWindow {
                 objectName: "cryptoApiKeyField"
                 Layout.fillWidth: true
                 visible: cryptoSourceBox.currentIndex === 1
-                placeholderText: qsTr("Ключ API")
+                placeholderText: "Ключ API"
                 maximumLength: 256
                 echoMode: TextInput.Password
             }
@@ -3215,16 +3209,16 @@ ApplicationWindow {
                 objectName: "cryptoApiSecretField"
                 Layout.fillWidth: true
                 visible: cryptoSourceBox.currentIndex === 1
-                placeholderText: qsTr("Секретный ключ API")
+                placeholderText: "Секретный ключ API"
                 maximumLength: 256
                 echoMode: TextInput.Password
             }
             EditorialLabel {
                 Layout.fillWidth: true
                 text: cryptoSourceBox.currentIndex === 0
-                    ? qsTr("Введите публичный адрес кошелька.")
-                    : (cryptoWalletDialog.editingId ? qsTr("Оставьте оба поля ключей пустыми, чтобы сохранить подключение.\n") : "")
-                      + qsTr("Bybit: основной сайт, ключ с доступом только на чтение. История торгового счёта и финансирования за последние 30 дней. Ключи сохраняются в защищённом хранилище системы; если оно недоступно — до закрытия приложения.")
+                    ? "Введите публичный адрес кошелька."
+                    : (cryptoWalletDialog.editingId ? "Оставьте оба поля ключей пустыми, чтобы сохранить подключение.\n" : "")
+                      + "Bybit: основной сайт, ключ с доступом только на чтение. История торгового счёта и финансирования за последние 30 дней. Ключи сохраняются в защищённом хранилище системы; если оно недоступно — до закрытия приложения."
                 color: root.muted; font.pixelSize: 16; wrapMode: Text.WordWrap
             }
             EditorialLabel {
@@ -3236,11 +3230,11 @@ ApplicationWindow {
             EditorialRowLayout {
                 Item { Layout.fillWidth: true }
                 SoftButton {
-                    neo: true; id: cryptoCancelButton; objectName: "cryptoCancelButton"; text: qsTr("Отмена"); onClicked: cryptoWalletDialog.close() }
+                    neo: true; id: cryptoCancelButton; objectName: "cryptoCancelButton"; text: "Отмена"; onClicked: cryptoWalletDialog.close() }
                 SoftButton {
                     neo: true
                     id: cryptoSubmitButton; objectName: "cryptoSubmitButton"
-                    text: cryptoWalletDialog.editingId ? qsTr("Сохранить") : qsTr("Добавить")
+                    text: cryptoWalletDialog.editingId ? "Сохранить" : "Добавить"
                     highlighted: true; onClicked: cryptoWalletDialog.submit()
                 }
             }
@@ -3258,8 +3252,8 @@ ApplicationWindow {
         property var editingAccount: null
         property string editingAsset: financeController.selectedAsset
         property var depositPayoutTypes: [
-            { label: qsTr("Ежемесячно"), value: "monthly" },
-            { label: qsTr("Ежедневно"), value: "daily" }
+            { label: "Ежемесячно", value: "monthly" },
+            { label: "Ежедневно", value: "daily" }
         ]
         readonly property bool creditCardSelected:
             accountTypeBox.currentIndex >= 0
@@ -3275,41 +3269,41 @@ ApplicationWindow {
         function typesForAsset(asset) {
             return asset === "fiat" ? [
                 {
-                    label: qsTr("Наличные"),
+                    label: "Наличные",
                     value: "cash"
                 },
                 {
-                    label: qsTr("Дебетовая карта"),
+                    label: "Дебетовая карта",
                     value: "debit_card"
                 },
                 {
-                    label: qsTr("Кредитная карта"),
+                    label: "Кредитная карта",
                     value: "credit_card"
                 },
                 {
-                    label: qsTr("Другой"),
+                    label: "Другой",
                     value: "other"
                 }
             ] : asset === "crypto" ? [
                 {
-                    label: qsTr("Криптокошелёк"),
+                    label: "Криптокошелёк",
                     value: "crypto_wallet"
                 },
                 {
-                    label: qsTr("Другой"),
+                    label: "Другой",
                     value: "other"
                 }
             ] : [
                 {
-                    label: qsTr("Брокер"),
+                    label: "Брокер",
                     value: "brokerage"
                 },
                 {
-                    label: qsTr("Вклад"),
+                    label: "Вклад",
                     value: "deposit"
                 },
                 {
-                    label: qsTr("Другой"),
+                    label: "Другой",
                     value: "other"
                 }
             ];
@@ -3381,7 +3375,7 @@ ApplicationWindow {
                                      )
                                    : 0;
             if (creditCardSelected && creditLimitMinor <= 0) {
-                accountError.text = qsTr("Укажите кредитный лимит");
+                accountError.text = "Укажите кредитный лимит";
                 return;
             }
             const depositAnnualRatePercent = Number(
@@ -3394,16 +3388,16 @@ ApplicationWindow {
                 ? Number(depositPayoutDayField.text)
                 : 0;
             if (depositSelected && initialBalanceMinor <= 0) {
-                accountError.text = qsTr("Укажите сумму вклада");
+                accountError.text = "Укажите сумму вклада";
                 return;
             }
             if (depositSelected && depositAnnualRatePercent <= 0) {
-                accountError.text = qsTr("Укажите годовую процентную ставку");
+                accountError.text = "Укажите годовую процентную ставку";
                 return;
             }
             if (monthlyDepositSelected &&
                 (depositPayoutDay < 1 || depositPayoutDay > 31)) {
-                accountError.text = qsTr("Укажите день выплаты от 1 до 31");
+                accountError.text = "Укажите день выплаты от 1 до 31";
                 return;
             }
             const ok = editingId
@@ -3433,7 +3427,7 @@ ApplicationWindow {
             if (ok)
                 close();
             else
-                accountError.text = qsTr("Проверьте название и параметры счёта");
+                accountError.text = "Проверьте название и параметры счёта";
         }
 
         Shortcut {
@@ -3468,8 +3462,8 @@ ApplicationWindow {
             spacing: 16
             EditorialDialogTitle {
                 text: (accountDialog.editingId
-                       ? qsTr("Редактирование счёта")
-                       : qsTr("Новый счёт"))
+                       ? "Редактирование счёта"
+                       : "Новый счёт")
                       + " · " + root.assetTitle(accountDialog.editingAsset)
                 color: root.accent
                 }
@@ -3478,7 +3472,7 @@ ApplicationWindow {
                 appAccentColor: root.accent
                 id: accountNameField; objectName: "accountNameField"
                 Layout.fillWidth: true
-                placeholderText: qsTr("Название счёта")
+                placeholderText: "Название счёта"
             }
             AppComboBox {
                 neo: true
@@ -3503,14 +3497,14 @@ ApplicationWindow {
                 visible: accountDialog.editingId
                       && accountDialog.editingAccount
                       && accountDialog.editingAccount.transactionCount > 0
-                text: qsTr("Валюту счёта с операциями изменить нельзя")
+                text: "Валюту счёта с операциями изменить нельзя"
                 color: root.muted
                 font.pixelSize: 16
             }
             EditorialLabel {
                 Layout.fillWidth: true
                 visible: accountDialog.creditCardSelected
-                text: qsTr("Кредитный лимит")
+                text: "Кредитный лимит"
                 color: root.muted
                 font.pixelSize: 16
             }
@@ -3520,7 +3514,7 @@ ApplicationWindow {
                 id: accountCreditLimitField; objectName: "accountCreditLimitField"
                 Layout.fillWidth: true
                 visible: accountDialog.creditCardSelected
-                placeholderText: qsTr("Кредитный лимит")
+                placeholderText: "Кредитный лимит"
                 validator: DoubleValidator {
                     bottom: 0.01
                     top: 999999999
@@ -3530,10 +3524,10 @@ ApplicationWindow {
             EditorialLabel {
                 Layout.fillWidth: true
                 text: accountDialog.creditCardSelected
-                      ? qsTr("Задолженность на момент добавления")
+                      ? "Задолженность на момент добавления"
                       : accountDialog.depositSelected
-                        ? qsTr("Сумма вклада")
-                      : accountTypeBox.currentValue === "brokerage" ? qsTr("Деньги на счёте, включая обеспечение") : qsTr("Начальный баланс")
+                        ? "Сумма вклада"
+                      : accountTypeBox.currentValue === "brokerage" ? "Деньги на счёте, включая обеспечение" : "Начальный баланс"
                 color: root.muted
                 font.pixelSize: 16
             }
@@ -3543,10 +3537,10 @@ ApplicationWindow {
                 id: accountBalanceField; objectName: "accountBalanceField"
                 Layout.fillWidth: true
                 placeholderText: accountDialog.creditCardSelected
-                                 ? qsTr("Задолженность на момент добавления")
+                                 ? "Задолженность на момент добавления"
                                  : accountDialog.depositSelected
-                                   ? qsTr("Сумма вклада")
-                                 : accountTypeBox.currentValue === "brokerage" ? qsTr("Деньги на счёте, включая обеспечение") : qsTr("Начальный баланс")
+                                   ? "Сумма вклада"
+                                 : accountTypeBox.currentValue === "brokerage" ? "Деньги на счёте, включая обеспечение" : "Начальный баланс"
                 validator: DoubleValidator {
                     bottom: accountDialog.creditCardSelected
                             || accountDialog.depositSelected ? 0 : -999999999
@@ -3557,7 +3551,7 @@ ApplicationWindow {
             EditorialLabel {
                 Layout.fillWidth: true
                 visible: accountDialog.depositSelected
-                text: qsTr("Годовая ставка, %")
+                text: "Годовая ставка, %"
                 color: root.muted
                 font.pixelSize: 16
             }
@@ -3567,7 +3561,7 @@ ApplicationWindow {
                 id: depositRateField; objectName: "depositRateField"
                 Layout.fillWidth: true
                 visible: accountDialog.depositSelected
-                placeholderText: qsTr("Например, 13")
+                placeholderText: "Например, 13"
                 validator: DoubleValidator {
                     bottom: 0.01
                     top: 1000
@@ -3577,7 +3571,7 @@ ApplicationWindow {
             EditorialLabel {
                 Layout.fillWidth: true
                 visible: accountDialog.depositSelected
-                text: qsTr("Начисление процентов")
+                text: "Начисление процентов"
                 color: root.muted
                 font.pixelSize: 16
             }
@@ -3593,7 +3587,7 @@ ApplicationWindow {
             EditorialLabel {
                 Layout.fillWidth: true
                 visible: accountDialog.monthlyDepositSelected
-                text: qsTr("День выплаты")
+                text: "День выплаты"
                 color: root.muted
                 font.pixelSize: 16
             }
@@ -3603,13 +3597,13 @@ ApplicationWindow {
                 id: depositPayoutDayField; objectName: "depositPayoutDayField"
                 Layout.fillWidth: true
                 visible: accountDialog.monthlyDepositSelected
-                placeholderText: qsTr("От 1 до 31")
+                placeholderText: "От 1 до 31"
                 validator: IntValidator { bottom: 1; top: 31 }
             }
             EditorialLabel {
                 Layout.fillWidth: true
                 visible: accountDialog.creditCardSelected
-                text: qsTr("Кредитный лимит не считается активом. Расходы увеличивают задолженность, а перевод на кредитку её погашает.")
+                text: "Кредитный лимит не считается активом. Расходы увеличивают задолженность, а перевод на кредитку её погашает."
                 color: root.muted
                 font.pixelSize: 16
                 wrapMode: Text.WordWrap
@@ -3619,13 +3613,13 @@ ApplicationWindow {
                 id: creditDebtCheck; objectName: "creditDebtCheck"
                 Layout.fillWidth: true
                 visible: accountDialog.creditCardSelected
-                text: qsTr("Учитывать долг?")
+                text: "Учитывать долг?"
                 checked: true
             }
             EditorialLabel {
                 Layout.fillWidth: true
                 visible: accountDialog.creditCardSelected && !creditDebtCheck.checked
-                text: qsTr("Долг не учитывается нигде: ни в суммах, ни в целях и траектории. В них входит только положительный остаток карты.")
+                text: "Долг не учитывается нигде: ни в суммах, ни в целях и траектории. В них входит только положительный остаток карты."
                 color: root.muted
                 font.pixelSize: 16
                 wrapMode: Text.WordWrap
@@ -3642,13 +3636,13 @@ ApplicationWindow {
                 SoftButton {
                     neo: true
                     id: accountCancelButton; objectName: "accountCancelButton"
-                    text: qsTr("Отмена")
+                    text: "Отмена"
                     onClicked: accountDialog.close()
                 }
                 SoftButton {
                     neo: true
                     id: accountSubmitButton; objectName: "accountSubmitButton"
-                    text: accountDialog.editingId ? qsTr("Сохранить") : qsTr("Добавить")
+                    text: accountDialog.editingId ? "Сохранить" : "Добавить"
                     highlighted: true
                     onClicked: accountDialog.submit()
                 }
@@ -3665,7 +3659,7 @@ ApplicationWindow {
 
         AppMenuItem {
             width: categoryContextMenu.availableWidth
-            text: qsTr("Редактировать")
+            text: "Редактировать"
             enabled: categoryContextMenu.categoryData !== null
             onTriggered: {
                 if (categoryContextMenu.categoryData)
@@ -3685,7 +3679,7 @@ ApplicationWindow {
 
         AppMenuItem {
             width: categoryContextMenu.availableWidth
-            text: qsTr("Удалить")
+            text: "Удалить"
             destructive: true
             enabled: categoryContextMenu.categoryData !== null
             onTriggered: {
@@ -3720,7 +3714,7 @@ ApplicationWindow {
             if (ok)
                 close();
             else
-                deleteCategoryError.text = qsTr("Не удалось удалить категорию");
+                deleteCategoryError.text = "Не удалось удалить категорию";
         }
 
         Shortcut {
@@ -3747,13 +3741,13 @@ ApplicationWindow {
             spacing: 16
 
             EditorialDialogTitle {
-                text: qsTr("Удалить категорию?")
+                text: "Удалить категорию?"
                 color: root.accent
                 }
 
             EditorialLabel {
                 Layout.fillWidth: true
-                text: qsTr("Категория исчезнет из доступных для новых операций. Уже созданные операции сохранятся.")
+                text: "Категория исчезнет из доступных для новых операций. Уже созданные операции сохранятся."
                 color: root.muted
                 font.pixelSize: 16
                 wrapMode: Text.WordWrap
@@ -3794,13 +3788,13 @@ ApplicationWindow {
                 SoftButton {
                     neo: true
                     id: deleteCategoryCancelButton; objectName: "deleteCategoryCancelButton"
-                    text: qsTr("Отмена")
+                    text: "Отмена"
                     onClicked: deleteCategoryDialog.close()
                 }
                 SoftButton {
                     neo: true
                     id: deleteCategorySubmitButton; objectName: "deleteCategorySubmitButton"
-                    text: qsTr("Удалить")
+                    text: "Удалить"
                     destructive: true
                     onClicked: deleteCategoryDialog.confirmDelete()
                 }
@@ -3817,7 +3811,7 @@ ApplicationWindow {
 
         AppMenuItem {
             width: budgetContextMenu.availableWidth
-            text: qsTr("Редактировать")
+            text: "Редактировать"
             enabled: budgetContextMenu.budgetData !== null
             onTriggered: {
                 if (budgetContextMenu.budgetData)
@@ -3837,7 +3831,7 @@ ApplicationWindow {
 
         AppMenuItem {
             width: budgetContextMenu.availableWidth
-            text: qsTr("Удалить")
+            text: "Удалить"
             destructive: true
             enabled: budgetContextMenu.budgetData !== null
             onTriggered: {
@@ -3858,7 +3852,7 @@ ApplicationWindow {
 
         AppMenuItem {
             width: projectContextMenu.availableWidth
-            text: qsTr("Редактировать")
+            text: "Редактировать"
             enabled: projectContextMenu.projectData !== null
             onTriggered: {
                 if (projectContextMenu.projectData)
@@ -3878,7 +3872,7 @@ ApplicationWindow {
 
         AppMenuItem {
             width: projectContextMenu.availableWidth
-            text: qsTr("Удалить")
+            text: "Удалить"
             destructive: true
             enabled: projectContextMenu.projectData !== null
             onTriggered: {
@@ -3899,7 +3893,7 @@ ApplicationWindow {
 
         AppMenuItem {
             width: accountContextMenu.availableWidth
-            text: qsTr("Редактировать")
+            text: "Редактировать"
             visible: accountContextMenu.accountData !== null
             enabled: visible
             onTriggered: {
@@ -3923,7 +3917,7 @@ ApplicationWindow {
 
         AppMenuItem {
             width: accountContextMenu.availableWidth
-            text: qsTr("Удалить")
+            text: "Удалить"
             destructive: true
             enabled: accountContextMenu.accountData !== null
             onTriggered: {
@@ -3959,8 +3953,8 @@ ApplicationWindow {
                 close();
             else
                 deleteAccountError.text = row && row.isCrypto
-                                        ? qsTr("Не удалось удалить криптовалюту")
-                                        : qsTr("Не удалось удалить счёт");
+                                        ? "Не удалось удалить криптовалюту"
+                                        : "Не удалось удалить счёт";
         }
 
         Shortcut {
@@ -3989,8 +3983,8 @@ ApplicationWindow {
             EditorialDialogTitle {
                 text: deleteAccountDialog.accountData
                       && deleteAccountDialog.accountData.isCrypto
-                      ? qsTr("Удалить криптовалюту?")
-                      : qsTr("Удалить счёт?")
+                      ? "Удалить криптовалюту?"
+                      : "Удалить счёт?"
                 color: root.accent
                 }
 
@@ -3998,11 +3992,11 @@ ApplicationWindow {
                 Layout.fillWidth: true
                 text: deleteAccountDialog.accountData
                       && deleteAccountDialog.accountData.isCrypto
-                      ? qsTr("Публичный адрес и сохранённые данные баланса и истории будут удалены. Средства в блокчейне это не затронет.")
+                      ? "Публичный адрес и сохранённые данные баланса и истории будут удалены. Средства в блокчейне это не затронет."
                       : deleteAccountDialog.accountData
                       && deleteAccountDialog.accountData.transactionCount > 0
-                      ? qsTr("Счёт и все связанные операции будут удалены. Связанные переводы удалятся целиком. Это действие нельзя отменить.")
-                      : qsTr("Счёт будет удалён. Это действие нельзя отменить.")
+                      ? "Счёт и все связанные операции будут удалены. Связанные переводы удалятся целиком. Это действие нельзя отменить."
+                      : "Счёт будет удалён. Это действие нельзя отменить."
                 color: root.muted
                 font.pixelSize: 16
                 wrapMode: Text.WordWrap
@@ -4038,7 +4032,7 @@ ApplicationWindow {
                                 )
                                 + (deleteAccountDialog.accountData.isCrypto
                                    ? ""
-                                   : " · " + qsTr("операций: ")
+                                   : " · " + "операций: "
                                      + deleteAccountDialog.accountData.transactionCount)
                               : ""
                         color: root.muted
@@ -4063,13 +4057,13 @@ ApplicationWindow {
                 SoftButton {
                     neo: true
                     id: deleteAccountCancelButton; objectName: "deleteAccountCancelButton"
-                    text: qsTr("Отмена")
+                    text: "Отмена"
                     onClicked: deleteAccountDialog.close()
                 }
                 SoftButton {
                     neo: true
                     id: deleteAccountSubmitButton; objectName: "deleteAccountSubmitButton"
-                    text: qsTr("Удалить")
+                    text: "Удалить"
                     destructive: true
                     onClicked: deleteAccountDialog.confirmDelete()
                 }
@@ -4098,13 +4092,13 @@ ApplicationWindow {
         width: 224
         padding: 8
         AppMenuItem {
-            text: qsTr("Отменить")
+            text: "Отменить"
             onTriggered: {
                 if (historySelectionMenu.selection) historySelectionMenu.selection.clear();
             }
         }
         AppMenuItem {
-            text: qsTr("Удалить")
+            text: "Удалить"
             destructive: true
             onTriggered: {
                 deleteSelectedHistoryDialog.rows = historySelectionMenu.selection.selectedRows.slice();
@@ -4124,7 +4118,7 @@ ApplicationWindow {
         anchors.centerIn: parent
         width: 440
         padding: 24
-        title: qsTr("Удалить выделенные операции?")
+        title: "Удалить выделенные операции?"
         header: EditorialLabel {
             text: deleteSelectedHistoryDialog.title
             color: root.accent
@@ -4141,23 +4135,23 @@ ApplicationWindow {
         }
         contentItem: EditorialDialogForm {
             spacing: 16
-            EditorialLabel { text: qsTr("Выделено операций: %1").arg(deleteSelectedHistoryDialog.rows.length); color: root.accent; font.pixelSize: 16 }
-            EditorialLabel { Layout.fillWidth: true; text: qsTr("Переводы будут удалены вместе с парной операцией."); color: root.muted; font.pixelSize: 16; wrapMode: Text.WordWrap }
+            EditorialLabel { text: "Выделено операций: %1".arg(deleteSelectedHistoryDialog.rows.length); color: root.accent; font.pixelSize: 16 }
+            EditorialLabel { Layout.fillWidth: true; text: "Переводы будут удалены вместе с парной операцией."; color: root.muted; font.pixelSize: 16; wrapMode: Text.WordWrap }
             EditorialLabel { visible: text.length > 0; text: deleteSelectedHistoryDialog.errorText; color: root.red; font.pixelSize: 16; Layout.fillWidth: true; wrapMode: Text.WordWrap }
             EditorialRowLayout {
                 Layout.alignment: Qt.AlignRight
                 spacing: 16
                 SoftButton {
-                    neo: true; text: qsTr("Отмена"); onClicked: deleteSelectedHistoryDialog.close() }
+                    neo: true; text: "Отмена"; onClicked: deleteSelectedHistoryDialog.close() }
                 SoftButton {
                     neo: true
-                    text: qsTr("Удалить")
+                    text: "Удалить"
                     destructive: true
                     onClicked: {
                         if (financeController.deleteHistoryRows(deleteSelectedHistoryDialog.rows)) {
                             if (historySelectionMenu.selection) historySelectionMenu.selection.clear();
                             deleteSelectedHistoryDialog.close();
-                        } else deleteSelectedHistoryDialog.errorText = qsTr("Не удалось удалить операции. Данные не изменены.");
+                        } else deleteSelectedHistoryDialog.errorText = "Не удалось удалить операции. Данные не изменены.";
                     }
                 }
             }
@@ -4173,7 +4167,7 @@ ApplicationWindow {
 
         AppMenuItem {
             width: transactionContextMenu.availableWidth
-            text: qsTr("Редактировать")
+            text: "Редактировать"
             enabled: transactionContextMenu.transactionData !== null
                   && !transactionContextMenu.transactionData.transactionId
                   && transactionContextMenu.transactionData.type !== "investment_cash" && !transactionContextMenu.transactionData.investmentTransfer
@@ -4200,7 +4194,7 @@ ApplicationWindow {
 
         AppMenuItem {
             width: transactionContextMenu.availableWidth
-            text: qsTr("Удалить")
+            text: "Удалить"
             destructive: true
             enabled: transactionContextMenu.transactionData !== null
                      && transactionContextMenu.transactionData.type !== "investment_cash" && !transactionContextMenu.transactionData.investmentTransfer
@@ -4243,8 +4237,8 @@ ApplicationWindow {
             else
                 deleteTransactionError.text = row
                     && row.type === "investment_position"
-                    ? qsTr("Не удалось удалить инвестиционную позицию")
-                    : qsTr("Не удалось удалить операцию");
+                    ? "Не удалось удалить инвестиционную позицию"
+                    : "Не удалось удалить операцию";
         }
 
         Shortcut {
@@ -4274,8 +4268,8 @@ ApplicationWindow {
                 text: deleteTransactionDialog.transactionData
                       && deleteTransactionDialog.transactionData.type
                          === "investment_position"
-                      ? qsTr("Удалить инвестиционную позицию?")
-                      : qsTr("Удалить операцию?")
+                      ? "Удалить инвестиционную позицию?"
+                      : "Удалить операцию?"
                 color: root.accent
                 }
 
@@ -4283,12 +4277,12 @@ ApplicationWindow {
                 Layout.fillWidth: true
                 text: deleteTransactionDialog.transactionData
                       && deleteTransactionDialog.transactionData.type === "transfer"
-                      ? qsTr("Будут удалены обе части перевода. Баланс и статистика будут пересчитаны.")
+                      ? "Будут удалены обе части перевода. Баланс и статистика будут пересчитаны."
                       : deleteTransactionDialog.transactionData
                         && deleteTransactionDialog.transactionData.type
                            === "investment_position"
-                        ? qsTr("Позиция будет удалена. Записанные движения денег сохранятся. Для продажи или исполнения используйте кнопку «Операция».")
-                      : qsTr("Это действие нельзя отменить. Баланс и статистика будут пересчитаны.")
+                        ? "Позиция будет удалена. Записанные движения денег сохранятся. Для продажи или исполнения используйте кнопку «Операция»."
+                      : "Это действие нельзя отменить. Баланс и статистика будут пересчитаны."
                 color: root.muted
                 font.pixelSize: 16
                 wrapMode: Text.WordWrap
@@ -4311,10 +4305,10 @@ ApplicationWindow {
                               ? (deleteTransactionDialog.transactionData.rawDescription
                                  || deleteTransactionDialog.transactionData.description
                                  || (deleteTransactionDialog.transactionData.type === "transfer"
-                                     ? qsTr("Перевод")
+                                     ? "Перевод"
                                      : deleteTransactionDialog.transactionData.type === "income"
-                                         ? qsTr("Доход")
-                                         : qsTr("Расход")))
+                                         ? "Доход"
+                                         : "Расход"))
                               : ""
                         color: root.accent
                         font.pixelSize: 16
@@ -4355,13 +4349,13 @@ ApplicationWindow {
                 SoftButton {
                     neo: true
                     id: deleteTransactionCancelButton; objectName: "deleteTransactionCancelButton"
-                    text: qsTr("Отмена")
+                    text: "Отмена"
                     onClicked: deleteTransactionDialog.close()
                 }
                 SoftButton {
                     neo: true
                     id: deleteTransactionSubmitButton; objectName: "deleteTransactionSubmitButton"
-                    text: qsTr("Удалить")
+                    text: "Удалить"
                     destructive: true
                     onClicked: deleteTransactionDialog.confirmDelete()
                 }
@@ -4408,9 +4402,7 @@ ApplicationWindow {
             if (ok)
                 close();
             else
-                projectError.text = qsTr(
-                    "Укажите уникальное название проекта"
-                );
+                projectError.text = "Укажите уникальное название проекта";
         }
 
         onClosed: editingId = ""
@@ -4428,8 +4420,8 @@ ApplicationWindow {
             spacing: 16
             EditorialDialogTitle {
                 text: projectDialog.editingId.length > 0
-                      ? qsTr("Редактирование проекта")
-                      : qsTr("Новый проект")
+                      ? "Редактирование проекта"
+                      : "Новый проект"
                 color: root.accent
                 }
             AppTextField {
@@ -4437,7 +4429,7 @@ ApplicationWindow {
                 appAccentColor: root.accent
                 id: projectNameField; objectName: "projectNameField"
                 Layout.fillWidth: true
-                placeholderText: qsTr("Название проекта")
+                placeholderText: "Название проекта"
                 maximumLength: 80
                 onAccepted: projectDialog.submit()
             }
@@ -4452,12 +4444,12 @@ ApplicationWindow {
                 Item { Layout.fillWidth: true }
                 SoftButton {
                     neo: true
-                    text: qsTr("Отмена")
+                    text: "Отмена"
                     onClicked: projectDialog.close()
                 }
                 SoftButton {
                     neo: true
-                    text: qsTr("Сохранить")
+                    text: "Сохранить"
                     highlighted: true
                     onClicked: projectDialog.submit()
                 }
@@ -4486,7 +4478,7 @@ ApplicationWindow {
                 close();
                 return;
             }
-            deleteProjectError.text = qsTr("Не удалось удалить проект");
+            deleteProjectError.text = "Не удалось удалить проект";
         }
 
         onClosed: projectData = null
@@ -4503,7 +4495,7 @@ ApplicationWindow {
         contentItem: EditorialDialogForm {
             spacing: 16
             EditorialDialogTitle {
-                text: qsTr("Удалить проект?")
+                text: "Удалить проект?"
                 color: root.accent
                 }
             EditorialLabel {
@@ -4518,7 +4510,7 @@ ApplicationWindow {
             }
             EditorialLabel {
                 Layout.fillWidth: true
-                text: qsTr("Операции останутся на своих счетах и продолжат учитываться в общем балансе. Проект будет скрыт из списка.")
+                text: "Операции останутся на своих счетах и продолжат учитываться в общем балансе. Проект будет скрыт из списка."
                 color: root.muted
                 font.pixelSize: 16
                 wrapMode: Text.WordWrap
@@ -4533,12 +4525,12 @@ ApplicationWindow {
                 Item { Layout.fillWidth: true }
                 SoftButton {
                     neo: true
-                    text: qsTr("Отмена")
+                    text: "Отмена"
                     onClicked: deleteProjectDialog.close()
                 }
                 SoftButton {
                     neo: true
-                    text: qsTr("Удалить")
+                    text: "Удалить"
                     destructive: true
                     onClicked: deleteProjectDialog.confirmDelete()
                 }
@@ -4567,7 +4559,7 @@ ApplicationWindow {
                 close();
                 return;
             }
-            deleteBudgetError.text = qsTr("Не удалось удалить бюджет");
+            deleteBudgetError.text = "Не удалось удалить бюджет";
         }
 
         onClosed: budgetData = null
@@ -4584,7 +4576,7 @@ ApplicationWindow {
         contentItem: EditorialDialogForm {
             spacing: 16
             EditorialDialogTitle {
-                text: qsTr("Удалить бюджет?")
+                text: "Удалить бюджет?"
                 color: root.accent
                 }
             EditorialLabel {
@@ -4598,7 +4590,7 @@ ApplicationWindow {
             }
             EditorialLabel {
                 Layout.fillWidth: true
-                text: qsTr("История операций и счета не изменятся. Будет удалён только бюджет и его месячные лимиты.")
+                text: "История операций и счета не изменятся. Будет удалён только бюджет и его месячные лимиты."
                 color: root.muted
                 font.pixelSize: 16
                 wrapMode: Text.WordWrap
@@ -4613,12 +4605,12 @@ ApplicationWindow {
                 Item { Layout.fillWidth: true }
                 SoftButton {
                     neo: true
-                    text: qsTr("Отмена")
+                    text: "Отмена"
                     onClicked: deleteBudgetDialog.close()
                 }
                 SoftButton {
                     neo: true
-                    text: qsTr("Удалить")
+                    text: "Удалить"
                     destructive: true
                     onClicked: deleteBudgetDialog.confirmDelete()
                 }
@@ -4639,7 +4631,7 @@ ApplicationWindow {
         contentItem: EditorialDialogForm {
             spacing: 16
             EditorialDialogTitle {
-                text: qsTr("Операция по счёту")
+                text: "Операция по счёту"
                 color: root.accent
             }
             EditorialColumnLayout {
@@ -4647,7 +4639,7 @@ ApplicationWindow {
                 spacing: 6
                 EditorialAction {
                     objectName: "investmentChooseBroker"
-                    text: qsTr("Брокер")
+                    text: "Брокер"
                     enabled: investmentOperationChooser.broker !== null
                     onClicked: {
                         investmentOperationChooser.close();
@@ -4658,7 +4650,7 @@ ApplicationWindow {
                     Layout.fillWidth: true
                     text: investmentOperationChooser.broker
                           ? investmentOperationChooser.broker.name
-                          : qsTr("Брокерского счёта нет")
+                          : "Брокерского счёта нет"
                     color: root.muted
                     font.pixelSize: 14
                 }
@@ -4668,7 +4660,7 @@ ApplicationWindow {
                 spacing: 6
                 EditorialAction {
                     objectName: "investmentChooseDeposit"
-                    text: qsTr("Вклад")
+                    text: "Вклад"
                     enabled: investmentOperationChooser.deposit !== null
                     onClicked: {
                         investmentOperationChooser.close();
@@ -4679,7 +4671,7 @@ ApplicationWindow {
                     Layout.fillWidth: true
                     text: investmentOperationChooser.deposit
                           ? investmentOperationChooser.deposit.name
-                          : qsTr("Вклада нет")
+                          : "Вклада нет"
                     color: root.muted
                     font.pixelSize: 14
                 }
@@ -4843,30 +4835,30 @@ ApplicationWindow {
 
         function submit() {
             if (!financeController.allAccounts.length) {
-                operationError.text = qsTr("Сначала добавьте счёт");
+                operationError.text = "Сначала добавьте счёт";
                 return;
             }
             const isTransfer = operationType.currentIndex === 2;
             if (!operationAccount.model.length
                 || operationAccount.currentIndex < 0) {
-                operationError.text = qsTr("Для выбранной операции нет доступного счёта");
+                operationError.text = "Для выбранной операции нет доступного счёта";
                 return;
             }
             if (isTransfer && financeController.allAccounts.length < 2) {
-                operationError.text = qsTr("Для перевода нужны два счёта");
+                operationError.text = "Для перевода нужны два счёта";
                 return;
             }
             if (isTransfer && transferTargetAccount.currentIndex < 0) {
-                operationError.text = qsTr("Выберите счёт назначения");
+                operationError.text = "Выберите счёт назначения";
                 return;
             }
             if (isTransfer && operationAccount.model[operationAccount.currentIndex].id
                     === transferTargetAccount.model[transferTargetAccount.currentIndex].id) {
-                operationError.text = qsTr("Выберите разные счета");
+                operationError.text = "Выберите разные счета";
                 return;
             }
             if (!isTransfer && !operationCategory.model.length) {
-                operationError.text = qsTr("Сначала добавьте категорию");
+                operationError.text = "Сначала добавьте категорию";
                 return;
             }
             const account = operationAccount.model[operationAccount.currentIndex];
@@ -4934,8 +4926,8 @@ ApplicationWindow {
                 close();
             else
                 operationError.text = isTransfer
-                    ? qsTr("Проверьте сумму и выбранные счета")
-                    : qsTr("Проверьте сумму, счёт и категорию");
+                    ? "Проверьте сумму и выбранные счета"
+                    : "Проверьте сумму, счёт и категорию";
         }
 
         Shortcut {
@@ -4977,12 +4969,12 @@ ApplicationWindow {
             spacing: 16
             EditorialDialogTitle {
                 text: operationDialog.editingId
-                      ? qsTr("Редактирование операции")
+                      ? "Редактирование операции"
                       : operationDialog.editingProjectId.length > 0
-                        ? qsTr("Новая операция проекта · %1").arg(
+                        ? "Новая операция проекта · %1".arg(
                               root.projectName(operationDialog.editingProjectId)
                           )
-                        : qsTr("Новая операция")
+                        : "Новая операция"
                 color: root.accent
                 }
             AppComboBox {
@@ -4991,8 +4983,8 @@ ApplicationWindow {
                 id: operationType; objectName: "operationType"
                 Layout.fillWidth: true
                 model: operationDialog.editingProjectId.length > 0
-                     ? [qsTr("Доход"), qsTr("Расход")]
-                     : [qsTr("Доход"), qsTr("Расход"), qsTr("Перевод")]
+                     ? ["Доход", "Расход"]
+                     : ["Доход", "Расход", "Перевод"]
                 onActivated: {
                     operationCategory.currentIndex = 0;
                     if (currentIndex === 2)
@@ -5006,7 +4998,7 @@ ApplicationWindow {
             }
             EditorialLabel {
                 visible: operationType.currentIndex === 2
-                text: qsTr("Откуда")
+                text: "Откуда"
                 color: root.muted
                 font.pixelSize: 16
             }
@@ -5024,12 +5016,12 @@ ApplicationWindow {
                         || operationType.currentIndex === 2
                         ? "displayName" : "name"
                 enabled: count > 0
-                emptyText: qsTr("Добавьте счёт")
+                emptyText: "Добавьте счёт"
                 onActivated: operationDialog.pickedSourceId = model[currentIndex].id
             }
             EditorialLabel {
                 visible: operationType.currentIndex === 2
-                text: qsTr("Куда")
+                text: "Куда"
                 color: root.muted
                 font.pixelSize: 16
             }
@@ -5042,7 +5034,7 @@ ApplicationWindow {
                 model: financeController.allAccounts
                 textRole: "displayName"
                 enabled: count > 0
-                emptyText: qsTr("Добавьте счёт")
+                emptyText: "Добавьте счёт"
                 onActivated: operationDialog.pickedTargetId = model[currentIndex].id
             }
             AppComboBox {
@@ -5074,14 +5066,14 @@ ApplicationWindow {
                 }
                 textRole: "label"
                 enabled: count > 0
-                emptyText: qsTr("Добавьте категорию")
+                emptyText: "Добавьте категорию"
             }
             AppTextField {
                 neo: true
                 appAccentColor: root.accent
                 id: operationAmount; objectName: "operationAmount"
                 Layout.fillWidth: true
-                placeholderText: qsTr("Сумма")
+                placeholderText: "Сумма"
                 validator: DoubleValidator {
                     bottom: 0.01
                     top: 999999999
@@ -5093,14 +5085,14 @@ ApplicationWindow {
                 appAccentColor: root.accent
                 id: operationDescription; objectName: "operationDescription"
                 Layout.fillWidth: true
-                placeholderText: qsTr("Описание")
+                placeholderText: "Описание"
             }
             EditorialColumnLayout {
                 Layout.fillWidth: true
                 spacing: 8
 
                 EditorialLabel {
-                    text: qsTr("Дата операции")
+                    text: "Дата операции"
                     color: root.muted
                     font.pixelSize: 16
                 }
@@ -5160,13 +5152,13 @@ ApplicationWindow {
                 SoftButton {
                     neo: true
                     id: operationCancelButton; objectName: "operationCancelButton"
-                    text: qsTr("Отмена")
+                    text: "Отмена"
                     onClicked: operationDialog.close()
                 }
                 SoftButton {
                     neo: true
                     id: operationSubmitButton; objectName: "operationSubmitButton"
-                    text: qsTr("Сохранить")
+                    text: "Сохранить"
                     highlighted: true
                     onClicked: operationDialog.submit()
                 }
@@ -5270,7 +5262,7 @@ ApplicationWindow {
             spacing: 16
 
             EditorialDialogTitle {
-                text: qsTr("Период")
+                text: "Период"
                 color: root.accent
                 }
 
@@ -5282,7 +5274,7 @@ ApplicationWindow {
                     neo: true
                     Layout.fillWidth: true
                     Layout.minimumWidth: 0
-                    text: qsTr("Этот месяц")
+                    text: "Этот месяц"
                     onClicked: {
                         const to = dateFilterDialog.normalizedDate(new Date());
                         dateFilterDialog.applyRange(
@@ -5295,7 +5287,7 @@ ApplicationWindow {
                     neo: true
                     Layout.fillWidth: true
                     Layout.minimumWidth: 0
-                    text: qsTr("Этот год")
+                    text: "Этот год"
                     onClicked: {
                         const to = dateFilterDialog.normalizedDate(new Date());
                         dateFilterDialog.applyRange(
@@ -5308,7 +5300,7 @@ ApplicationWindow {
                     neo: true
                     Layout.fillWidth: true
                     Layout.minimumWidth: 0
-                    text: qsTr("Все время")
+                    text: "Все время"
                     onClicked: {
                         financeController.clearDateFilter();
                         dateFilterDialog.close();
@@ -5423,12 +5415,12 @@ ApplicationWindow {
                 }
                 SoftButton {
                     neo: true
-                    text: qsTr("Отмена")
+                    text: "Отмена"
                     onClicked: dateFilterDialog.close()
                 }
                 SoftButton {
                     neo: true
-                    text: qsTr("Применить")
+                    text: "Применить"
                     highlighted: true
                     enabled: dateFilterDialog.pendingFrom !== null
                     onClicked: dateFilterDialog.applyCurrentSelection()
@@ -5483,7 +5475,7 @@ ApplicationWindow {
             spacing: 16
 
             EditorialDialogTitle {
-                text: qsTr("Дата операции")
+                text: "Дата операции"
                 color: root.accent
                 }
 
@@ -5591,12 +5583,12 @@ ApplicationWindow {
                 }
                 SoftButton {
                     neo: true
-                    text: qsTr("Сегодня")
+                    text: "Сегодня"
                     onClicked: operationDateDialog.chooseDate(new Date())
                 }
                 SoftButton {
                     neo: true
-                    text: qsTr("Отмена")
+                    text: "Отмена"
                     onClicked: operationDateDialog.close()
                 }
             }
@@ -5648,7 +5640,7 @@ ApplicationWindow {
                 categoryNameField.clear();
                 categoryError.text = "";
             } else {
-                categoryError.text = qsTr("Не удалось сохранить категорию");
+                categoryError.text = "Не удалось сохранить категорию";
             }
         }
 
@@ -5666,8 +5658,8 @@ ApplicationWindow {
             spacing: 12
             EditorialDialogTitle {
                 text: categoryDialog.editingId.length > 0
-                      ? qsTr("Изменить категорию")
-                      : qsTr("Категории")
+                      ? "Изменить категорию"
+                      : "Категории"
                 color: root.accent
                 }
             EditorialRowLayout {
@@ -5677,14 +5669,14 @@ ApplicationWindow {
                     appAccentColor: root.accent
                     id: categoryNameField; objectName: "categoryNameField"
                     Layout.fillWidth: true
-                    placeholderText: qsTr("Название категории")
+                    placeholderText: "Название категории"
                     onAccepted: categoryDialog.submit()
                 }
                 AppComboBox {
                     neo: true
                     appAccentColor: root.accent
                     id: categoryType; objectName: "categoryType"
-                    model: [qsTr("Доход"), qsTr("Расход")]
+                    model: ["Доход", "Расход"]
                     enabled: categoryDialog.editingId.length === 0
                 }
             }
@@ -5699,12 +5691,12 @@ ApplicationWindow {
                 }
                 SoftButton {
                     neo: true
-                    text: qsTr("Закрыть")
+                    text: "Закрыть"
                     onClicked: categoryDialog.close()
                 }
                 SoftButton {
                     neo: true
-                    text: qsTr("Сохранить")
+                    text: "Сохранить"
                     highlighted: true
                     onClicked: categoryDialog.submit()
                 }

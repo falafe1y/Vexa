@@ -2,7 +2,6 @@
 #include "InvestmentValuation.h"
 #include "InvestmentRiskCalculator.h"
 #include "../core/InvestmentQuote.h"
-#include <QCoreApplication>
 #include <QJsonDocument>
 #include <QJsonObject>
 #include <QMap>
@@ -14,7 +13,6 @@
 #include <algorithm>
 
 namespace {
-QString tr(const char* text){return QCoreApplication::translate("InvestmentPerformance",text);}
 std::optional<qint64> checked(__int128_t n){
     if(n>std::numeric_limits<qint64>::max() || n<std::numeric_limits<qint64>::min())return {};
     return static_cast<qint64>(n);
@@ -129,33 +127,33 @@ void Calculation::buildPoints(){
 std::optional<qint64> Calculation::sumPoint(const Point& p,const QDate& conversionDate,bool validate){
     __int128_t total=0;
     for(const auto& a:accounts)if(a.createdAt<=p.at && !p.rows.contains("cash:"+a.id)){
-        if(validate)warn(tr("В дневной оценке отсутствует денежный остаток счёта."));return {};
+        if(validate)warn(QStringLiteral("В дневной оценке отсутствует денежный остаток счёта."));return {};
     }
     for(auto it=histories.cbegin();it!=histories.cend();++it){
         const auto h=stateAt(it.key(),p.at);
         if(!h.isEmpty() && accounts.contains(h.value("account_id").toString()) && h.value("quantity_micros").toLongLong()>0 && !p.rows.contains("position:"+it.key())){
-            if(validate)warn(tr("В дневной оценке отсутствует открытая позиция."));return {};
+            if(validate)warn(QStringLiteral("В дневной оценке отсутствует открытая позиция."));return {};
         }
     }
     for(const auto& row:p.rows){
-        if(millis(row,"observed_at")!=p.at){if(validate)warn(tr("Оценки счетов записаны на разное время."));return {};}
+        if(millis(row,"observed_at")!=p.at){if(validate)warn(QStringLiteral("Оценки счетов записаны на разное время."));return {};}
         if(validate){
             const auto issues=row.value("issues").toString().split(';',Qt::SkipEmptyParts);
             const bool needsFx=row.value("currency").toString()!=in.currency;
             for(const auto& issue:issues)if(issue=="history_changed" || issue=="missing_valuation" || issue=="missing_price" || issue=="value_overflow"
                 || issue=="stale_valuation" || issue=="unknown_valuation_date" || issue=="missing_quote_fx" || (needsFx && (issue=="missing_fx" || issue=="estimated_fx" || issue=="stale_fx"))){
-                warn(issue=="history_changed"?tr("Прошлые оценки требуют пересчёта после исправления истории."):tr("Для части периода нет достоверных цен или курсов."));return {};
+                warn(issue=="history_changed"?QStringLiteral("Прошлые оценки требуют пересчёта после исправления истории."):QStringLiteral("Для части периода нет достоверных цен или курсов."));return {};
             }
             const auto details=json(row.value("details_json")),settings=details.value("settings").toObject();
             const auto quoteCurrency=details.value("quoteCurrency").toString();
             if(!settings.value("manual").toBool() && !quoteCurrency.isEmpty() && quoteCurrency!=row.value("currency").toString()
                 && settings.value("fx").toString().toLongLong()<=0 && !rate(quoteCurrency,p.date)){
-                warn(tr("Неизвестен исторический курс валюты котировки."));return {};
+                warn(QStringLiteral("Неизвестен исторический курс валюты котировки."));return {};
             }
         }
-        const auto native=integer(row.value("value_minor"));if(!native){if(validate)warn(tr("В дневной оценке есть неизвестная стоимость актива."));return {};}
+        const auto native=integer(row.value("value_minor"));if(!native){if(validate)warn(QStringLiteral("В дневной оценке есть неизвестная стоимость актива."));return {};}
         const auto money=convert(*native,row.value("currency").toString(),conversionDate,json(row.value("details_json")).value("fxSource").toString());
-        if(!money){if(validate)warn(tr("Не найден исторический курс для выбранной валюты отчёта."));return {};}total+=*money;
+        if(!money){if(validate)warn(QStringLiteral("Не найден исторический курс для выбранной валюты отчёта."));return {};}total+=*money;
     }
     return checked(total);
 }
@@ -168,7 +166,7 @@ void Calculation::buildFlows(){
         if(tx.categoryId()=="transfer-in" || tx.categoryId()=="transfer-out"){
             const bool incoming=tx.categoryId()=="transfer-in";const auto suffix=incoming?QStringLiteral("-in"):QStringLiteral("-out");
             const auto other=tx.id().endsWith(suffix)?txs.value(tx.id().left(tx.id().size()-suffix.size())+(incoming?"-out":"-in"),nullptr):nullptr;
-            if(!other){unknownFlows.append({e.at,tr("У перевода отсутствует связанная операция.")});}
+            if(!other){unknownFlows.append({e.at,QStringLiteral("У перевода отсутствует связанная операция.")});}
             else if(accounts.contains(other->accountId()))continue;
         }
         (e.income?incomes:flows).append(e);
@@ -182,13 +180,13 @@ void Calculation::buildFlows(){
                 const auto amount=importedValue(h);
                 const auto signedAmount=amount?((kind=="opening")?amount:checked(-__int128_t(*amount))):std::nullopt;
                 if(signedAmount)flows.append({millis(h,"recorded_at"),*signedAmount,h.value("account_id").toString(),h.value("currency").toString(),false,"position:"+it.key()});
-                else unknownFlows.append({millis(h,"recorded_at"),tr("Неизвестна стоимость переноса или удаления позиции.")});
+                else unknownFlows.append({millis(h,"recorded_at"),QStringLiteral("Неизвестна стоимость переноса или удаления позиции.")});
             }else if(!linked && kind=="correction" && !previous.isEmpty()
                 && (accounts.contains(h.value("account_id").toString()) || accounts.contains(previous.value("account_id").toString()))
                 && (h.value("quantity_micros")!=previous.value("quantity_micros") || h.value("instrument_id")!=previous.value("instrument_id")
                     || h.value("account_id")!=previous.value("account_id")
                     || json(h.value("state_json")).value("settings").toObject().value("direction").toInt(1)!=json(previous.value("state_json")).value("settings").toObject().value("direction").toInt(1))){
-                unknownFlows.append({millis(h,"recorded_at"),tr("Позиция перенесена или исправлена без связанной денежной операции.")});
+                unknownFlows.append({millis(h,"recorded_at"),QStringLiteral("Позиция перенесена или исправлена без связанной денежной операции.")});
             }
             previous=h;
         }
@@ -210,7 +208,7 @@ std::optional<qint64> Calculation::unrealized(const Point& p,const QDate& conver
 
 QVariantMap Calculation::assetInfo(const QVariantMap& row)const {
     const auto source=row.value("source_id").toString(),account=row.value("account_id").toString();
-    if(source.startsWith("cash:"))return {{"id",source},{"label",tr("Деньги · ")+accounts.value(account).name},{"type",tr("Деньги")}};
+    if(source.startsWith("cash:"))return {{"id",source},{"label",QStringLiteral("Деньги · ")+accounts.value(account).name},{"type",QStringLiteral("Деньги")}};
     const auto h=stateAt(source.mid(9),millis(row,"observed_at"));
     const auto state=json(h.value("state_json"));
     auto id=row.value("instrument_id").toString();if(id.isEmpty())id=h.value("instrument_id").toString();
@@ -221,17 +219,17 @@ QVariantMap Calculation::assetInfo(const QVariantMap& row)const {
         if(type<0)type=instrument.value("type").toInt();
         break;
     }
-    if(label.isEmpty())label=id.isEmpty()?tr("Позиция · ")+source.mid(9):id;
-    const QStringList types{tr("Акции"),tr("Биржевые фонды"),tr("Облигации"),tr("Фонды"),tr("Другие активы"),
-        tr("Привилегированные акции"),tr("Депозитарные расписки"),tr("Металлы"),tr("Валюта"),tr("Фьючерсы"),tr("Опционы")};
-    return {{"id",id.isEmpty()?source:"instrument:"+id},{"label",label},{"typeCode",type},{"type",type>=0 && type<types.size()?types[type]:tr("Тип не указан")}};
+    if(label.isEmpty())label=id.isEmpty()?QStringLiteral("Позиция · ")+source.mid(9):id;
+    const QStringList types{QStringLiteral("Акции"),QStringLiteral("Биржевые фонды"),QStringLiteral("Облигации"),QStringLiteral("Фонды"),QStringLiteral("Другие активы"),
+        QStringLiteral("Привилегированные акции"),QStringLiteral("Депозитарные расписки"),QStringLiteral("Металлы"),QStringLiteral("Валюта"),QStringLiteral("Фьючерсы"),QStringLiteral("Опционы")};
+    return {{"id",id.isEmpty()?source:"instrument:"+id},{"label",label},{"typeCode",type},{"type",type>=0 && type<types.size()?types[type]:QStringLiteral("Тип не указан")}};
 }
 QVariantMap Calculation::operationAsset(const InvestmentOperation& op)const {
     const auto h=byOperation.value(op.id);
     auto instrument=op.instrumentId;if(instrument.isEmpty())instrument=h.value("instrument_id").toString();
     auto position=op.positionId;if(position.isEmpty())position=h.value("position_id").toString();
     if(position.isEmpty() && instrument.isEmpty())return {{"id","unassigned:"+op.accountId},
-        {"label",tr("Операции без привязки · ")+accounts.value(op.accountId).name},{"type",tr("Без привязки")}};
+        {"label",QStringLiteral("Операции без привязки · ")+accounts.value(op.accountId).name},{"type",QStringLiteral("Без привязки")}};
     return assetInfo({{"source_id","position:"+position},{"account_id",op.accountId},{"instrument_id",instrument},
                       {"observed_at",qMax(op.occurredAtUtc.toMSecsSinceEpoch(),millis(h,"recorded_at"))}});
 }
@@ -316,7 +314,7 @@ QVariantMap Calculation::payments(qint64 endAt,const QDate& to){
         const auto nativeGross=fee && tax?checked(__int128_t(native)+ *fee+ *tax):std::nullopt;
         const auto g=nativeGross?convert(*nativeGross,currency,date):std::nullopt;
         const auto key=asset.value("id").toString(),month=date.toString("yyyy-MM");
-        auto& byKind=kinds[kind];byKind.label=kind=="dividend"?tr("Дивиденды"):kind=="coupon"?tr("Купоны"):tr("Проценты по вкладам");
+        auto& byKind=kinds[kind];byKind.label=kind=="dividend"?QStringLiteral("Дивиденды"):kind=="coupon"?QStringLiteral("Купоны"):QStringLiteral("Проценты по вкладам");
         auto& byAsset=assets[key];byAsset.label=asset.value("label").toString();months[month].label=month;
         for(auto* summary:{&total,&byKind,&byAsset,&months[month]})add(*summary,n,g,f,t);
         events.append(QVariantMap{{"id",id},{"date",date.toString(Qt::ISODate)},{"at",at},{"kind",byKind.label},{"asset",byAsset.label},
@@ -353,42 +351,42 @@ QVariantMap Calculation::dataQuality(const Point* opening,const Point* closing,c
         if((code=="missing_fx" || code=="estimated_fx" || code=="stale_fx") && currency==in.currency)return;
         QString label,impact,action,severity="error";
         if(code=="cost_unknown"){
-            severity="warning";label=tr("Неизвестна стоимость приобретения");impact=tr("Абсолютная прибыль открытой позиции недоступна. Доходность между достоверными оценками может быть доступна.");
-            action=tr("Проверьте историю покупок и исходную стоимость позиции.");
+            severity="warning";label=QStringLiteral("Неизвестна стоимость приобретения");impact=QStringLiteral("Абсолютная прибыль открытой позиции недоступна. Доходность между достоверными оценками может быть доступна.");
+            action=QStringLiteral("Проверьте историю покупок и исходную стоимость позиции.");
         }else if(code=="history_changed"){
-            label=tr("История исправлена после записи оценки");impact=tr("Эта дневная оценка не используется как достоверная для доходности.");
-            action=tr("Проверьте исправленные операции. Ранее записанные оценки не восстанавливаются автоматически.");
+            label=QStringLiteral("История исправлена после записи оценки");impact=QStringLiteral("Эта дневная оценка не используется как достоверная для доходности.");
+            action=QStringLiteral("Проверьте исправленные операции. Ранее записанные оценки не восстанавливаются автоматически.");
         }else if(code=="missing_valuation" || code=="missing_price"){
-            label=tr("Неизвестна стоимость или цена актива");impact=tr("Нельзя полностью оценить капитал и доходность на эту дату.");
-            action=tr("Обновите котировку или задайте ручную оценку с её датой. Это обновит текущую оценку, а не пропущенную прошлую.");
+            label=QStringLiteral("Неизвестна стоимость или цена актива");impact=QStringLiteral("Нельзя полностью оценить капитал и доходность на эту дату.");
+            action=QStringLiteral("Обновите котировку или задайте ручную оценку с её датой. Это обновит текущую оценку, а не пропущенную прошлую.");
         }else if(code=="stale_valuation" || code=="unknown_valuation_date"){
-            label=code=="stale_valuation"?tr("Оценка актива устарела"):tr("Неизвестна дата оценки");impact=tr("Стоимость не считается достоверной для выбранной даты.");
-            action=tr("Обновите текущую котировку или дату ручной оценки. Проверьте проблемные прошлые даты отдельно.");
+            label=code=="stale_valuation"?QStringLiteral("Оценка актива устарела"):QStringLiteral("Неизвестна дата оценки");impact=QStringLiteral("Стоимость не считается достоверной для выбранной даты.");
+            action=QStringLiteral("Обновите текущую котировку или дату ручной оценки. Проверьте проблемные прошлые даты отдельно.");
         }else if(code=="missing_fx" || code=="missing_quote_fx" || code=="missing_report_fx"){
-            label=tr("Не найден исторический курс валюты");impact=tr("Невозможно достоверно перевести сумму в валюту оценки или отчёта.");
-            action=tr("Проверьте валюты и сохранённые курсы на дату записи. Обновление сегодняшнего курса не заменяет прошлый.");
+            label=QStringLiteral("Не найден исторический курс валюты");impact=QStringLiteral("Невозможно достоверно перевести сумму в валюту оценки или отчёта.");
+            action=QStringLiteral("Проверьте валюты и сохранённые курсы на дату записи. Обновление сегодняшнего курса не заменяет прошлый.");
         }else if(code=="estimated_fx" || code=="stale_fx"){
-            label=code=="estimated_fx"?tr("Использован приблизительный курс"):tr("Валютный курс устарел");impact=tr("Перевод в валюту отчёта не считается достоверным.");
-            action=tr("Проверьте сохранённый курс и его дату.");
+            label=code=="estimated_fx"?QStringLiteral("Использован приблизительный курс"):QStringLiteral("Валютный курс устарел");impact=QStringLiteral("Перевод в валюту отчёта не считается достоверным.");
+            action=QStringLiteral("Проверьте сохранённый курс и его дату.");
         }else if(code=="value_overflow"){
-            label=tr("Сумма выходит за допустимый диапазон");impact=tr("Стоимость или итог не вычисляются.");action=tr("Проверьте количество, цену, валютный курс и денежные суммы.");
+            label=QStringLiteral("Сумма выходит за допустимый диапазон");impact=QStringLiteral("Стоимость или итог не вычисляются.");action=QStringLiteral("Проверьте количество, цену, валютный курс и денежные суммы.");
         }else{
-            severity="warning";label=tr("Дополнительное ограничение оценки");impact=tr("Для записи сохранён признак качества: ")+code;
-            action=tr("Проверьте исходную оценку и пояснения к расчёту.");
+            severity="warning";label=QStringLiteral("Дополнительное ограничение оценки");impact=QStringLiteral("Для записи сохранён признак качества: ")+code;
+            action=QStringLiteral("Проверьте исходную оценку и пояснения к расчёту.");
         }
         add(code,severity,label,impact,action,account,asset,date);
     };
     const auto first=opening?opening->date:(in.from.isValid()?in.from.addDays(-1):to);
     int checkedRows=0;
-    if(!opening)add("missing_opening","error",tr("Нет начальной дневной оценки"),tr("Недоступны доходность и вклад активов за период."),tr("Начальная оценка должна быть записана перед началом выбранного периода. При отсутствии истории выберите более поздний период."),{},{},in.from.isValid()?in.from.addDays(-1):QDate());
-    if(!closing)add("missing_closing","error",tr("Нет конечной дневной оценки"),tr("Недоступен полный результат на конец периода."),tr("Оценки записываются при работающем приложении. Выберите дату с сохранённой оценкой."),{},{},to);
-    if(opening && closing && closing->at<=opening->at)add("short_history","info",tr("Недостаточно дневных оценок"),tr("Одна оценка показывает стоимость, но не изменение капитала во времени."),tr("Нужны как минимум две оценки на разные даты; для волатильности — три. Приложение должно работать в дни записи оценок."));
+    if(!opening)add("missing_opening","error",QStringLiteral("Нет начальной дневной оценки"),QStringLiteral("Недоступны доходность и вклад активов за период."),QStringLiteral("Начальная оценка должна быть записана перед началом выбранного периода. При отсутствии истории выберите более поздний период."),{},{},in.from.isValid()?in.from.addDays(-1):QDate());
+    if(!closing)add("missing_closing","error",QStringLiteral("Нет конечной дневной оценки"),QStringLiteral("Недоступен полный результат на конец периода."),QStringLiteral("Оценки записываются при работающем приложении. Выберите дату с сохранённой оценкой."),{},{},to);
+    if(opening && closing && closing->at<=opening->at)add("short_history","info",QStringLiteral("Недостаточно дневных оценок"),QStringLiteral("Одна оценка показывает стоимость, но не изменение капитала во времени."),QStringLiteral("Нужны как минимум две оценки на разные даты; для волатильности — три. Приложение должно работать в дни записи оценок."));
     QDate gap;
     const auto flushGap=[&](const QDate& last){
         if(!gap.isValid())return;
         const auto count=gap.daysTo(last)+1;
-        add("missing_days","error",tr("Пропущены дневные оценки"),tr("Непрерывная доходность, риск и сравнение за этот период недоступны."),
-            tr("Выберите непрерывный период с оценками. История не достраивается текущими ценами."),{},{},gap,gap.toString(Qt::ISODate));
+        add("missing_days","error",QStringLiteral("Пропущены дневные оценки"),QStringLiteral("Непрерывная доходность, риск и сравнение за этот период недоступны."),
+            QStringLiteral("Выберите непрерывный период с оценками. История не достраивается текущими ценами."),{},{},gap,gap.toString(Qt::ISODate));
         auto& p=problems["missing_days|||"+gap.toString(Qt::ISODate)];p.count=int(count);p.row["dateTo"]=last.toString(Qt::ISODate);
         gap={};
     };
@@ -397,11 +395,11 @@ QVariantMap Calculation::dataQuality(const Point* opening,const Point* closing,c
     for(auto it=points.cbegin();it!=points.cend();++it){const auto& p=it.value();if(p.date<first || p.date>to)continue;
         if(expected<p.date){gap=expected;flushGap(p.date.addDays(-1));}expected=p.date.addDays(1);
         for(const auto& a:accounts)if(a.createdAt<=p.at && !p.rows.contains("cash:"+a.id))
-            add("missing_cash","error",tr("Не записан денежный остаток счёта"),tr("Дневная оценка капитала неполная."),tr("Проверьте состав счёта и сохранённую историю оценок."),a.id,tr("Деньги"),p.date);
+            add("missing_cash","error",QStringLiteral("Не записан денежный остаток счёта"),QStringLiteral("Дневная оценка капитала неполная."),QStringLiteral("Проверьте состав счёта и сохранённую историю оценок."),a.id,QStringLiteral("Деньги"),p.date);
         for(auto h=histories.cbegin();h!=histories.cend();++h){const auto state=stateAt(h.key(),p.at);
             if(!state.isEmpty() && accounts.contains(state.value("account_id").toString()) && state.value("quantity_micros").toLongLong()>0 && !p.rows.contains("position:"+h.key())){
                 const auto row=QVariantMap{{"source_id","position:"+h.key()},{"account_id",state.value("account_id")},{"instrument_id",state.value("instrument_id")},{"observed_at",p.at}};
-                add("missing_position","error",tr("Не записана открытая позиция"),tr("Дневная оценка капитала неполная."),tr("Проверьте позицию и её историю на указанную дату."),state.value("account_id").toString(),assetInfo(row).value("label").toString(),p.date);
+                add("missing_position","error",QStringLiteral("Не записана открытая позиция"),QStringLiteral("Дневная оценка капитала неполная."),QStringLiteral("Проверьте позицию и её историю на указанную дату."),state.value("account_id").toString(),assetInfo(row).value("label").toString(),p.date);
             }
         }
         for(const auto& row:p.rows){++checkedRows;
@@ -414,45 +412,45 @@ QVariantMap Calculation::dataQuality(const Point* opening,const Point* closing,c
             if(position && margined(row))issues.removeAll("cost_unknown");
             if(position && !margined(row) && (type==9 || type==10)){
                 issues.removeAll("cost_unknown");
-                add("unsupported_basis","info",tr("Для контракта неприменим обычный учёт стоимости"),tr("Абсолютная прибыль по стоимости приобретения не рассчитывается; изменение достоверной оценки и денежные расчёты учитываются отдельно."),tr("Проверьте тип контракта и записанные денежные расчёты."),account,asset,p.date);
+                add("unsupported_basis","info",QStringLiteral("Для контракта неприменим обычный учёт стоимости"),QStringLiteral("Абсолютная прибыль по стоимости приобретения не рассчитывается; изменение достоверной оценки и денежные расчёты учитываются отдельно."),QStringLiteral("Проверьте тип контракта и записанные денежные расчёты."),account,asset,p.date);
             }else if(position && !margined(row) && row.value("cost_basis_minor").isNull() && !issues.contains("cost_unknown"))issues.append("cost_unknown");
-            if(millis(row,"observed_at")!=p.at)add("different_times","error",tr("Оценки записаны на разное время"),tr("Из этих строк нельзя получить единый достоверный капитал."),tr("Проверьте дневную оценку всех выбранных счетов."),account,asset,p.date);
+            if(millis(row,"observed_at")!=p.at)add("different_times","error",QStringLiteral("Оценки записаны на разное время"),QStringLiteral("Из этих строк нельзя получить единый достоверный капитал."),QStringLiteral("Проверьте дневную оценку всех выбранных счетов."),account,asset,p.date);
             const auto n=integer(row.value("value_minor"));
             if(n && !convert(*n,currency,p.date,json(row.value("details_json")).value("fxSource").toString()) && !issues.contains("missing_fx"))issues.append("missing_report_fx");
             const auto details=json(row.value("details_json")),settings=details.value("settings").toObject();const auto quoteCurrency=details.value("quoteCurrency").toString();
             if(!settings.value("manual").toBool() && !quoteCurrency.isEmpty() && quoteCurrency!=currency && settings.value("fx").toString().toLongLong()<=0 && !rate(quoteCurrency,p.date) && !issues.contains("missing_quote_fx"))issues.append("missing_quote_fx");
             for(const auto& issue:issues)snapshotIssue(issue,account,asset,p.date,currency);
         }
-        if(!p.total && !errorDates.contains(p.date))add("invalid_total","error",tr("Не удалось вычислить достоверный капитал"),tr("Доходность на эту дату недоступна."),tr("Проверьте цены, курсы, валюту котировки и диапазон сумм."),{},{},p.date);
+        if(!p.total && !errorDates.contains(p.date))add("invalid_total","error",QStringLiteral("Не удалось вычислить достоверный капитал"),QStringLiteral("Доходность на эту дату недоступна."),QStringLiteral("Проверьте цены, курсы, валюту котировки и диапазон сумм."),{},{},p.date);
     }
     if(expected<=to){gap=expected;flushGap(to);}
     const auto endAt=closing?closing->at:QDateTime(to.addDays(1),QTime(0,0),QTimeZone::systemTimeZone()).toMSecsSinceEpoch()-1;
     const auto included=[&](qint64 at){return at<=endAt && day(at)<=to && (!in.from.isValid() || day(at)>=in.from);};
     for(const auto& op:in.operations)if(accounts.contains(op.accountId) && included(op.occurredAtUtc.toMSecsSinceEpoch())){
         const auto asset=operationAsset(op).value("label").toString();const auto d=op.occurredAtUtc.toLocalTime().date();
-        if(!op.feeMinor && op.kind!="fee")add("unknown_fee","warning",tr("Комиссия не записана отдельно"),tr("Чистое денежное движение известно, но полный отдельный итог комиссий и сумма выплаты до расходов недоступны."),tr("При записи операции укажите известную комиссию отдельно, а её отсутствие — явным нулём. Старые записи сверяйте с выпиской."),op.accountId,asset,d);
-        if(!op.taxMinor)add("unknown_tax","warning",tr("Удержание не записано отдельно"),tr("Чистое денежное движение известно, но полный отдельный итог удержаний и сумма выплаты до расходов недоступны."),tr("При записи операции укажите известное удержание отдельно, а его отсутствие — явным нулём. Старые записи сверяйте с выпиской."),op.accountId,asset,d);
+        if(!op.feeMinor && op.kind!="fee")add("unknown_fee","warning",QStringLiteral("Комиссия не записана отдельно"),QStringLiteral("Чистое денежное движение известно, но полный отдельный итог комиссий и сумма выплаты до расходов недоступны."),QStringLiteral("При записи операции укажите известную комиссию отдельно, а её отсутствие — явным нулём. Старые записи сверяйте с выпиской."),op.accountId,asset,d);
+        if(!op.taxMinor)add("unknown_tax","warning",QStringLiteral("Удержание не записано отдельно"),QStringLiteral("Чистое денежное движение известно, но полный отдельный итог удержаний и сумма выплаты до расходов недоступны."),QStringLiteral("При записи операции укажите известное удержание отдельно, а его отсутствие — явным нулём. Старые записи сверяйте с выпиской."),op.accountId,asset,d);
         if(!convert(op.cashDeltaMinor,accounts.value(op.accountId).currency,d))snapshotIssue("missing_report_fx",op.accountId,asset,d,accounts.value(op.accountId).currency);
         if(op.kind=="sell" || op.kind=="expiry" || op.kind=="amortization"){
             const auto h=byOperation.value(op.id);const auto state=json(h.value("state_json"));const auto pricing=state.value("terms").toObject().value("pricing").toString();
             const bool margin=pricing=="future" || pricing=="margined_option" || (state.value("type").toInt(-1)==9 && state.value("settings").toObject().value("manual").toBool());
-            if(!margin && h.value("realized_net_minor").isNull())add("unknown_sale_cost","warning",tr("Неизвестна прибыль закрытой части позиции"),tr("Полный итог прибыли после продаж недоступен. Вклад между оценками может быть известен."),tr("Проверьте покупки, стоимость проданной части и связь продажи с историей позиции."),op.accountId,asset,d);
+            if(!margin && h.value("realized_net_minor").isNull())add("unknown_sale_cost","warning",QStringLiteral("Неизвестна прибыль закрытой части позиции"),QStringLiteral("Полный итог прибыли после продаж недоступен. Вклад между оценками может быть известен."),QStringLiteral("Проверьте покупки, стоимость проданной части и связь продажи с историей позиции."),op.accountId,asset,d);
         }
     }
     for(const auto& flow:unknownFlows)if(included(flow.first) && (!opening || flow.first>opening->at))
-        add("unknown_flow","error",flow.second,tr("Нельзя отделить изменение капитала от пополнений и выводов."),tr("Проверьте связанные переводы, переносы и исправления позиции."),{},{},day(flow.first),flow.second);
+        add("unknown_flow","error",flow.second,QStringLiteral("Нельзя отделить изменение капитала от пополнений и выводов."),QStringLiteral("Проверьте связанные переводы, переносы и исправления позиции."),{},{},day(flow.first),flow.second);
     for(const auto* events:{&flows,&incomes})for(const auto& e:*events)if(included(e.at) && (!opening || e.at>opening->at) && !convert(e.amount,e.currency,day(e.at)))
-        snapshotIssue("missing_report_fx",e.account,tr("Денежный поток"),day(e.at),e.currency);
+        snapshotIssue("missing_report_fx",e.account,QStringLiteral("Денежный поток"),day(e.at),e.currency);
     for(const auto& tx:in.transactions)if(accounts.contains(tx.accountId()) && tx.categoryId()=="deposit_interest" && included(tx.date().toMSecsSinceEpoch()))
-        add("deposit_net_only","info",tr("Проценты по вкладу записаны чистой суммой"),tr("Полученная сумма известна, но расходы и сумма до удержаний не записаны отдельно."),tr("Сверьте чистую сумму с выпиской. Этот вид записи не содержит отдельных полей расходов."),tx.accountId(),tr("Проценты по вкладу"),tx.date().toLocalTime().date());
+        add("deposit_net_only","info",QStringLiteral("Проценты по вкладу записаны чистой суммой"),QStringLiteral("Полученная сумма известна, но расходы и сумма до удержаний не записаны отдельно."),QStringLiteral("Сверьте чистую сумму с выпиской. Этот вид записи не содержит отдельных полей расходов."),tx.accountId(),QStringLiteral("Проценты по вкладу"),tx.date().toLocalTime().date());
     if(opening && closing && closing->at>opening->at && errorDates.isEmpty() && !report.value("gainMinor").isNull() && report.value("periodPercent").isNull())
-        add("return_base","info",tr("Нет подходящей базы для процентной доходности"),tr("Денежный результат может быть известен, но цепочку процентной доходности построить не удалось."),tr("Проверьте наличие положительного капитала и дневные пополнения и выводы. Пустые дни не создают доходность."));
+        add("return_base","info",QStringLiteral("Нет подходящей базы для процентной доходности"),QStringLiteral("Денежный результат может быть известен, но цепочку процентной доходности построить не удалось."),QStringLiteral("Проверьте наличие положительного капитала и дневные пополнения и выводы. Пустые дни не создают доходность."));
     const auto risk=report.value("risk").toMap();
     if(risk.value("available").toBool() && risk.value("returnDays").toInt()<2)
-        add("short_risk_history","info",tr("Для волатильности ещё мало наблюдений"),tr("Доходность и просадка могут быть доступны, но волатильность пока не вычисляется."),tr("Нужны минимум два дня доходности с положительной базой — как минимум три дневные оценки."));
+        add("short_risk_history","info",QStringLiteral("Для волатильности ещё мало наблюдений"),QStringLiteral("Доходность и просадка могут быть доступны, но волатильность пока не вычисляется."),QStringLiteral("Нужны минимум два дня доходности с положительной базой — как минимум три дневные оценки."));
     for(const auto& component:report.value("breakdown").toList()){const auto row=component.toMap();if(row.value("code")!="unexplained" || row.value("amountMinor").isNull())continue;
         const auto difference=row.value("amountMinor").toLongLong();if(std::abs(static_cast<long double>(difference))>qMax<long double>(5,std::abs(report.value("gainMinor").toDouble())*0.000001L))
-            add("unexplained_result","warning",tr("Разложение не объясняет весь результат"),tr("Сумма отдельных составляющих отличается от результата периода; разница оставлена отдельной строкой."),tr("Проверьте историю позиций, записанные выплаты и расходы."));
+            add("unexplained_result","warning",QStringLiteral("Разложение не объясняет весь результат"),QStringLiteral("Сумма отдельных составляющих отличается от результата периода; разница оставлена отдельной строкой."),QStringLiteral("Проверьте историю позиций, записанные выплаты и расходы."));
     }
     QVariantList items;int errors=0,notices=0,notes=0;
     for(auto& p:problems){auto dates=p.dates.values();std::sort(dates.begin(),dates.end());p.row["dates"]=dates;p.row["count"]=p.count;
@@ -467,7 +465,7 @@ QVariantMap Calculation::dataQuality(const Point* opening,const Point* closing,c
 QVariantMap Calculation::depositComparison(const Point* opening,const Point* closing){
     QVariantMap result{{"available",false},{"configured",bool(in.depositAnnualRateUnits)},
         {"capitalization",in.depositCapitalization},{"currency",in.currency},{"series",QVariantList()}};
-    const auto fail=[&](const char* reason){result["reason"]=tr(reason);return result;};
+    const auto fail=[&](const char* reason){result["reason"]=QString::fromUtf8(reason);return result;};
     if(!in.depositAnnualRateUnits)return fail("Укажите годовую ставку для сравнения с вкладом.");
     const auto rateUnits=*in.depositAnnualRateUnits;
     if(rateUnits<0 || rateUnits>10'000'000 || (in.depositCapitalization!="none"
@@ -540,10 +538,10 @@ QVariantMap Calculation::run(){
     QVariantMap result{{"currency",in.currency},{"warnings",QStringList()},{"accountCount",accounts.size()}};
     if(accounts.isEmpty()){
         result["depositComparison"]=depositComparison(nullptr,nullptr);
-        result["warnings"]=QStringList{tr("Добавьте инвестиционный счёт.")};
+        result["warnings"]=QStringList{QStringLiteral("Добавьте инвестиционный счёт.")};
         result["dataQuality"]=QVariantMap{{"checkedRows",0},{"errors",0},{"warnings",0},{"notes",1},
-            {"items",QVariantList{QVariantMap{{"code","no_accounts"},{"severity","info"},{"label",tr("Нет инвестиционных счетов")},
-                {"impact",tr("Инвестиционная аналитика пока недоступна.")},{"action",tr("Добавьте брокерский счёт или вклад.")},{"count",1}}}}};
+            {"items",QVariantList{QVariantMap{{"code","no_accounts"},{"severity","info"},{"label",QStringLiteral("Нет инвестиционных счетов")},
+                {"impact",QStringLiteral("Инвестиционная аналитика пока недоступна.")},{"action",QStringLiteral("Добавьте брокерский счёт или вклад.")},{"count",1}}}}};
         return result;
     }
     buildPoints();buildFlows();
@@ -553,8 +551,8 @@ QVariantMap Calculation::run(){
     const Point* opening=nullptr;
     if(in.from.isValid()) {const auto before=in.from.addDays(-1);if(points.contains(before))opening=&points[before];}
     else if(!points.isEmpty() && points.firstKey()<=to)opening=&points.first();
-    if(!closing)warn(tr("Нет дневной оценки на конец выбранного периода."));
-    if(!opening)warn(tr("Нет дневной оценки перед началом выбранного периода."));
+    if(!closing)warn(QStringLiteral("Нет дневной оценки на конец выбранного периода."));
+    if(!opening)warn(QStringLiteral("Нет дневной оценки перед началом выбранного периода."));
     const auto startAt=opening?opening->at:std::numeric_limits<qint64>::min();
     const auto endAt=closing?closing->at:QDateTime(to.addDays(1),QTime(0,0),QTimeZone::systemTimeZone()).toMSecsSinceEpoch()-1;
     const auto window=[&](qint64 at){return at<=endAt && (!in.from.isValid() || day(at)>=in.from) && day(at)<=to;};
@@ -602,8 +600,8 @@ QVariantMap Calculation::run(){
     if(closing){endUnrealized=unrealized(*closing,closing->date,closingComplete);endBaseUnrealized=unrealized(*closing,baseDate,closingBaseComplete);}
     if(opening){startUnrealized=unrealized(*opening,opening->date,openingComplete);startBaseUnrealized=unrealized(*opening,baseDate,openingBaseComplete);}
     result["unrealizedMinor"]=closing && closing->total && closingComplete?value(endUnrealized):QVariant();result["knownUnrealizedMinor"]=value(endUnrealized);
-    if(!soldComplete)warn(tr("Для части продаж неизвестна стоимость приобретения."));
-    if(!closingComplete || !openingComplete)warn(tr("Для части позиций неизвестна стоимость приобретения или её метод неприменим."));
+    if(!soldComplete)warn(QStringLiteral("Для части продаж неизвестна стоимость приобретения."));
+    if(!closingComplete || !openingComplete)warn(QStringLiteral("Для части позиций неизвестна стоимость приобретения или её метод неприменим."));
     std::optional<qint64> gain,gainBase,netFlow,fx,unrealizedChange;
     std::optional<long double> period,annual,inflationAdjusted;
     InvestmentRisk risk;
@@ -614,7 +612,7 @@ QVariantMap Calculation::run(){
         __int128_t external=0,fixedExternal=0;
         for(const auto& e:flows)if(interval(e.at)){
             const auto n=convert(e.amount,e.currency,day(e.at)),fixed=convert(e.amount,e.currency,baseDate);
-            if(!n || !fixed){flowsComplete=false;warn(tr("Не найден курс валюты денежного потока."));}
+            if(!n || !fixed){flowsComplete=false;warn(QStringLiteral("Не найден курс валюты денежного потока."));}
             else {external+=*n;fixedExternal+=*fixed;}
         }
         netFlow=checked(external);
@@ -651,8 +649,8 @@ QVariantMap Calculation::run(){
             if(std::isfinite(yearly))annual=yearly*100;
             if(in.annualInflationPercent && *in.annualInflationPercent>-100){const auto adjusted=factor/std::pow(1+ *in.annualInflationPercent/100.0L,days/365.25L)-1;
                 if(std::isfinite(adjusted))inflationAdjusted=adjusted*100;}
-        }else warn(tr("Для доходности нужна непрерывная история дневных оценок и денежных потоков."));
-    }else warn(tr("Для доходности нужны достоверные оценки как минимум на две даты."));
+        }else warn(QStringLiteral("Для доходности нужна непрерывная история дневных оценок и денежных потоков."));
+    }else warn(QStringLiteral("Для доходности нужны достоверные оценки как минимум на две даты."));
     if(endUnrealized && startUnrealized && closingComplete && openingComplete)unrealizedChange=checked(__int128_t(*endUnrealized)- *startUnrealized);
     result["gainMinor"]=value(gain);result["externalFlowMinor"]=value(netFlow);result["periodPercent"]=real(period);
     result["annualPercent"]=real(annual);result["realPercent"]=real(inflationAdjusted);result["unrealizedChangeMinor"]=value(unrealizedChange);
@@ -679,15 +677,15 @@ QVariantMap Calculation::run(){
     };
     std::optional<qint64> positionsResult;
     if(endBaseUnrealized && startBaseUnrealized)positionsResult=checked(soldBase+__int128_t(*endBaseUnrealized)- *startBaseUnrealized+tradeCharges);
-    component("positions",tr("Продажи и переоценка позиций"),positionsResult,soldComplete && openingBaseComplete && closingBaseComplete && chargesComplete);
-    component("income",tr("Дивиденды, купоны и проценты"),checked(income),incomeComplete && chargesComplete);
-    component("fees",tr("Комиссии"),checked(-fee),chargesComplete);component("tax",tr("Удержания"),checked(-tax),chargesComplete);
-    component("fx",tr("Валютная переоценка счетов"),fx,bool(fx));
+    component("positions",QStringLiteral("Продажи и переоценка позиций"),positionsResult,soldComplete && openingBaseComplete && closingBaseComplete && chargesComplete);
+    component("income",QStringLiteral("Дивиденды, купоны и проценты"),checked(income),incomeComplete && chargesComplete);
+    component("fees",QStringLiteral("Комиссии"),checked(-fee),chargesComplete);component("tax",QStringLiteral("Удержания"),checked(-tax),chargesComplete);
+    component("fx",QStringLiteral("Валютная переоценка счетов"),fx,bool(fx));
     const auto residual=gain?checked(__int128_t(*gain)-explained):std::nullopt;
-    component("unexplained",tr("Необъяснённая разница"),residual,bool(residual));
+    component("unexplained",QStringLiteral("Необъяснённая разница"),residual,bool(residual));
     if(residual && std::abs(static_cast<long double>(*residual))>qMax<long double>(5,std::abs(static_cast<long double>(gain.value_or(0)))*0.000001L))
-        warn(tr("Разложение результата неполное: часть изменения капитала не объяснена записями."));
-    if(!chargesComplete)warn(tr("Часть комиссий и удержаний не указана отдельно."));
+        warn(QStringLiteral("Разложение результата неполное: часть изменения капитала не объяснена записями."));
+    if(!chargesComplete)warn(QStringLiteral("Часть комиссий и удержаний не указана отдельно."));
     result["allocation"]=allocation(closing);
     result["contributions"]=contributions(opening,closing,baseDate,gain,fx);
     result["payments"]=payments(endAt,to);

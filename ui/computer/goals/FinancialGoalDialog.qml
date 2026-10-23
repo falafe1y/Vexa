@@ -67,7 +67,7 @@ EditorialDialog {
         for (let j = 0; j < selected.length; ++j) {
             if (seen.indexOf(selected[j]) < 0)
                 sources.append({sourceId: selected[j],
-                    label: qsTr("Недоступный счёт или кошелёк"), selected: true});
+                    label: "Недоступный счёт или кошелёк", selected: true});
         }
         syncingSourceSelection = true;
         allSources.checked = useAllSources;
@@ -140,7 +140,7 @@ EditorialDialog {
     }
     contentItem: EditorialColumnLayout {
         spacing: Appearance.desktop ? 16 : 14
-        EditorialDialogTitle { text: dialog.editingId ? qsTr("Редактирование цели") : qsTr("Новая финансовая цель")
+        EditorialDialogTitle { text: dialog.editingId ? "Редактирование цели" : "Новая финансовая цель"
             color: theme.accent;  }
         EditorialScrollView {
             id: scroll; objectName: "scroll"
@@ -151,10 +151,10 @@ EditorialDialog {
             EditorialColumnLayout {
                 width: scroll.availableWidth
                 spacing: 12
-                EditorialLabel { text: qsTr("Название"); color: theme.muted }
+                EditorialLabel { text: "Название"; color: theme.muted }
                 Field { id: nameField; objectName: "nameField"; Layout.fillWidth: true; maximumLength: 80
-                    placeholderText: qsTr("Например, финансовая независимость") }
-                EditorialLabel { text: qsTr("Сумма и валюта цели"); color: theme.muted }
+                    placeholderText: "Например, финансовая независимость" }
+                EditorialLabel { text: "Сумма и валюта цели"; color: theme.muted }
                 EditorialRowLayout {
                     Layout.fillWidth: true
                     Field { id: amountField; objectName: "amountField"; implicitWidth: 160; Layout.minimumWidth: 0; Layout.fillWidth: true; maximumLength: 15
@@ -164,15 +164,15 @@ EditorialDialog {
                         implicitHeight: 44; Layout.preferredWidth: Appearance.desktop ? 112 : 110
                     }
                 }
-                FormCheckBox { id: limited; objectName: "limited"; text: qsTr("Указать срок") }
+                FormCheckBox { id: limited; objectName: "limited"; text: "Указать срок" }
                 Field { id: deadlineField; objectName: "deadlineField"; visible: limited.checked; Layout.fillWidth: true
-                    placeholderText: qsTr("ДД.ММ.ГГГГ"); maximumLength: 10 }
+                    placeholderText: "ДД.ММ.ГГГГ"; maximumLength: 10 }
                 EditorialLabel { visible: limited.checked; Layout.fillWidth: true
-                    text: qsTr("Срок включительно. После него цель продолжит обновляться.")
+                    text: "Срок включительно. После него цель продолжит обновляться."
                     color: theme.muted; font.pixelSize: Appearance.desktop ? 16 : 14; wrapMode: Text.WordWrap }
                 FormCheckBox {
                     id: allSources; objectName: "allSources"
-                    text: qsTr("Учитывать весь текущий капитал")
+                    text: "Учитывать весь текущий капитал"
                     palette.windowText: theme.accent
                     onToggled: {
                         if (!dialog.syncingSourceSelection)
@@ -202,8 +202,8 @@ EditorialDialog {
             Layout.fillWidth: true; wrapMode: Text.WordWrap; color: theme.red }
         EditorialRowLayout {
             Item { Layout.fillWidth: true }
-            Action { text: qsTr("Отмена"); onClicked: dialog.close() }
-            Action { text: qsTr("Сохранить"); primary: true; onClicked: dialog.submit() }
+            Action { text: "Отмена"; onClicked: dialog.close() }
+            Action { text: "Сохранить"; primary: true; onClicked: dialog.submit() }
         }
     }
 }

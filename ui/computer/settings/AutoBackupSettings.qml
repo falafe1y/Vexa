@@ -12,7 +12,7 @@ Item {
 
     FolderDialog {
         id: folderDialog
-        title: qsTr("Папка для автокопий Vexa")
+        title: "Папка для автокопий Vexa"
         onAccepted: databaseProtection.chooseAutoBackupFolder(selectedFolder)
     }
 
@@ -23,40 +23,40 @@ Item {
         width: Math.min(480, parent.width - 32)
         padding: 24
         modal: true
-        title: databaseProtection.autoBackupPasswordSet ? qsTr("Сменить пароль автокопий") : qsTr("Пароль автокопий")
+        title: databaseProtection.autoBackupPasswordSet ? "Сменить пароль автокопий" : "Пароль автокопий"
         onClosed: { newPassword.clear(); repeatPassword.clear() }
         background: Rectangle { color: (Appearance.desktop ? "#f3eddf" : "#FFFFF8"); radius: Appearance.desktop ? 0 : 12; border.color: (Appearance.desktop ? "#bbb5a8" : "#D8D7C7") }
         contentItem: EditorialDialogForm {
             spacing: 12
             EditorialLabel {
                 Layout.fillWidth: true
-                text: qsTr("Этим паролем открываются автокопии на любом устройстве. Восстановить забытый пароль нельзя.")
+                text: "Этим паролем открываются автокопии на любом устройстве. Восстановить забытый пароль нельзя."
                 color: "#031528"; font.pixelSize: Appearance.desktop ? 16 : 14; wrapMode: Text.WordWrap
             }
             StyledTextField {
                 id: newPassword
                 Layout.fillWidth: true
-                placeholderText: qsTr("Пароль: 12–1024 символа")
+                placeholderText: "Пароль: 12–1024 символа"
                 echoMode: TextInput.Password
             }
             StyledTextField {
                 id: repeatPassword
                 Layout.fillWidth: true
-                placeholderText: qsTr("Повторите пароль")
+                placeholderText: "Повторите пароль"
                 echoMode: TextInput.Password
             }
             EditorialLabel {
                 Layout.fillWidth: true
                 visible: repeatPassword.text.length > 0 && repeatPassword.text !== newPassword.text
-                text: qsTr("Пароли не совпадают.")
+                text: "Пароли не совпадают."
                 color: "#b03a2e"; wrapMode: Text.WordWrap
             }
             EditorialRowLayout {
                 Layout.fillWidth: true
-                StyledButton { text: qsTr("Отмена"); onClicked: passwordDialog.close() }
+                StyledButton { text: "Отмена"; onClicked: passwordDialog.close() }
                 Item { Layout.fillWidth: true }
                 StyledButton {
-                    text: qsTr("Сохранить")
+                    text: "Сохранить"
                     primary: true
                     enabled: newPassword.text.length > 0 && newPassword.text === repeatPassword.text
                     onClicked: {
@@ -76,52 +76,52 @@ Item {
         width: Math.min(520, parent.width - 32)
         padding: 24
         modal: true
-        title: qsTr("Автокопии")
+        title: "Автокопии"
         background: Rectangle { color: (Appearance.desktop ? "#f3eddf" : "#FFFFF8"); radius: Appearance.desktop ? 0 : 12; border.color: (Appearance.desktop ? "#bbb5a8" : "#D8D7C7") }
         contentItem: EditorialDialogForm {
             spacing: 16
             EditorialLabel {
                 Layout.fillWidth: true
-                text: qsTr("Копия .vexabackup раз в 24 часа по местному времени, пока Vexa открыта. Хранятся 7 последних копий, старые удаляются.")
+                text: "Копия .vexabackup раз в 24 часа по местному времени, пока Vexa открыта. Хранятся 7 последних копий, старые удаляются."
                 color: "#031528"; font.pixelSize: Appearance.desktop ? 16 : 14; wrapMode: Text.WordWrap
             }
             EditorialLabel {
                 Layout.fillWidth: true
                 visible: !databaseProtection.autoBackupSupported
-                text: qsTr("Автокопии на этой платформе недоступны.")
+                text: "Автокопии на этой платформе недоступны."
                 color: "#b03a2e"; wrapMode: Text.WordWrap
             }
             StyledCheckBox {
                 id: enabledBox
-                text: qsTr("Делать автокопии")
+                text: "Делать автокопии"
                 enabled: databaseProtection.autoBackupSupported
                 checked: databaseProtection.autoBackupEnabled
                 onClicked: databaseProtection.setAutoBackupEnabled(checked)
             }
             EditorialLabel {
                 Layout.fillWidth: true
-                text: databaseProtection.autoBackupFolder.length > 0 ? qsTr("Папка выбрана.") : qsTr("Папка не выбрана.")
+                text: databaseProtection.autoBackupFolder.length > 0 ? "Папка выбрана." : "Папка не выбрана."
                 color: "#59616a"; wrapMode: Text.WordWrap
             }
             StyledButton {
-                text: qsTr("Выбрать папку")
+                text: "Выбрать папку"
                 enabled: databaseProtection.autoBackupSupported && !databaseProtection.busy
                 onClicked: folderDialog.open()
             }
             EditorialLabel {
                 Layout.fillWidth: true
-                text: databaseProtection.autoBackupPasswordSet ? qsTr("Пароль автокопий задан.") : qsTr("Пароль автокопий не задан.")
+                text: databaseProtection.autoBackupPasswordSet ? "Пароль автокопий задан." : "Пароль автокопий не задан."
                 color: "#59616a"; wrapMode: Text.WordWrap
             }
             StyledButton {
-                text: databaseProtection.autoBackupPasswordSet ? qsTr("Сменить пароль") : qsTr("Задать пароль")
+                text: databaseProtection.autoBackupPasswordSet ? "Сменить пароль" : "Задать пароль"
                 enabled: databaseProtection.autoBackupSupported
                 onClicked: passwordDialog.open()
             }
             EditorialLabel {
                 Layout.fillWidth: true
                 visible: databaseProtection.autoBackupLast.length > 0
-                text: qsTr("Последняя копия: %1").arg(databaseProtection.autoBackupLast)
+                text: "Последняя копия: %1".arg(databaseProtection.autoBackupLast)
                 color: "#59616a"
             }
             EditorialLabel {
@@ -133,7 +133,7 @@ Item {
             EditorialRowLayout {
                 Layout.fillWidth: true
                 Item { Layout.fillWidth: true }
-                StyledButton { text: qsTr("Закрыть"); primary: true; onClicked: settingsDialog.close() }
+                StyledButton { text: "Закрыть"; primary: true; onClicked: settingsDialog.close() }
             }
         }
     }

@@ -54,7 +54,7 @@ ApplicationWindow {
             }
             EditorialDialogTitle {
                 Layout.fillWidth: true
-                text: databaseProtection.busy ? qsTr("Подготовка базы…") : databaseProtection.restartRequired ? qsTr("Требуется перезапуск") : qsTr("Не удалось открыть базу")
+                text: databaseProtection.busy ? "Подготовка базы…" : databaseProtection.restartRequired ? "Требуется перезапуск" : "Не удалось открыть базу"
                 color: "#031528"
                 wrapMode: Text.WordWrap
             }
@@ -83,12 +83,12 @@ ApplicationWindow {
             }
             StyledButton {
                 visible: !databaseProtection.busy && !databaseProtection.restartRequired && databaseProtection.error.length > 0
-                text: qsTr("Восстановить из копии")
+                text: "Восстановить из копии"
                 onClicked: recoveryDialogs.openImport()
             }
             StyledButton {
                 visible: !databaseProtection.busy
-                text: databaseProtection.restartRequired ? qsTr("Перезапустить") : qsTr("Повторить")
+                text: databaseProtection.restartRequired ? "Перезапустить" : "Повторить"
                 onClicked: databaseProtection.restartRequired ? databaseProtection.restart() : databaseProtection.prepare()
             }
         }

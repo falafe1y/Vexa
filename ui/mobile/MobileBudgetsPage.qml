@@ -87,7 +87,7 @@ Item {
                     }
                     MobileText {
                         font.family: MobileTheme.mono
-                        text: budgetCard.row.allAccounts ? qsTr("Все счета") : qsTr("Часть счетов")
+                        text: budgetCard.row.allAccounts ? "Все счета" : "Часть счетов"
                         color: MobileTheme.muted
                         font.pixelSize: MobileTheme.sizeCaption
                     }
@@ -107,7 +107,7 @@ Item {
                     }
                     MobileText {
                         font.family: MobileTheme.sans
-                        text: qsTr("из %1").arg(MobileFormat.money(budgetCard.row.displayLimitMinor, budgetCard.row.displayCurrency, false))
+                        text: "из %1".arg(MobileFormat.money(budgetCard.row.displayLimitMinor, budgetCard.row.displayCurrency, false))
                         color: MobileTheme.muted
                         font.pixelSize: MobileTheme.sizeBody
                     }
@@ -121,7 +121,7 @@ Item {
                 MobileText {
                     font.family: MobileTheme.mono
                     Layout.fillWidth: true
-                    text: budgetCard.remaining < 0 ? qsTr("Превышено на %1").arg(MobileFormat.money(-budgetCard.remaining, budgetCard.row.displayCurrency, false)) : qsTr("Осталось %1").arg(MobileFormat.money(budgetCard.remaining, budgetCard.row.displayCurrency, false))
+                    text: budgetCard.remaining < 0 ? "Превышено на %1".arg(MobileFormat.money(-budgetCard.remaining, budgetCard.row.displayCurrency, false)) : "Осталось %1".arg(MobileFormat.money(budgetCard.remaining, budgetCard.row.displayCurrency, false))
                     color: budgetCard.remaining < 0 ? MobileTheme.red : MobileTheme.muted
                     font.pixelSize: MobileTheme.sizeCaption
                 }
@@ -130,7 +130,7 @@ Item {
                     font.family: MobileTheme.mono
                     Layout.fillWidth: true
                     visible: budgetCard.row.rateMissing
-                    text: qsTr("Нет курса для пересчёта в валюту бюджета")
+                    text: "Нет курса для пересчёта в валюту бюджета"
                     wrapMode: Text.Wrap
                     color: MobileTheme.red
                     font.pixelSize: MobileTheme.sizeCaption
@@ -183,8 +183,8 @@ Item {
         width: parent.width - 32
         visible: list.count === 0
         svg: "qrc:/icons/budgets.svg"
-        title: qsTr("Бюджетов пока нет")
-        text: qsTr("Создайте бюджет на месяц по счетам или категориям и следите за остатком.")
+        title: "Бюджетов пока нет"
+        text: "Создайте бюджет на месяц по счетам или категориям и следите за остатком."
         actionText: ""
         onAction: budgetSheet.openFor(null)
     }

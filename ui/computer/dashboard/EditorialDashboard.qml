@@ -89,7 +89,7 @@ Flickable {
     function colStart(index) { let value = 0; for (let i = 0; i < index; ++i) value += columns[i]; return Math.round(mainWidth * value / 4) * 4; }
     function colWidth(index) { return index === 5 ? mainWidth - colStart(index) : colStart(index + 1) - colStart(index); }
     function assetBalance(code) { return code === "all" ? Data.currentCapital(controller) : host.assetAmount(code); }
-    function money(minor, code, sign, digits) { return Data.money(minor, code, sign, digits, controller.uiLanguage); }
+    function money(minor, code, sign, digits) { return Data.money(minor, code, sign, digits); }
     function scheduledAmount() {
         if (!nextEvent) return "";
         const converted = Data.convertMinor(nextEvent.amount, nextEvent.currency, controller.appCurrency, controller.currentCurrencyRates);
@@ -97,16 +97,14 @@ Flickable {
     }
     function scheduledMonth() {
         if (!nextEvent) return "";
-        const months = controller.uiLanguage === "en" ? ["JAN", "FEB", "MAR", "APR", "MAY", "JUN", "JUL", "AUG", "SEP", "OCT", "NOV", "DEC"]
-            : ["ЯНВ.", "ФЕВР.", "МАР.", "АПР.", "МАЙ", "ИЮН.", "ИЮЛ.", "АВГ.", "СЕНТ.", "ОКТ.", "НОЯБ.", "ДЕК."];
+        const months = ["ЯНВ.", "ФЕВР.", "МАР.", "АПР.", "МАЙ", "ИЮН.", "ИЮЛ.", "АВГ.", "СЕНТ.", "ОКТ.", "НОЯБ.", "ДЕК."];
         return months[Data.dateValue(nextEvent.nextDate).getMonth()];
     }
     function caption(code) {
         const count = Data.accountCount(controller.allAccounts, controller.cryptoWallets, code);
-        if (controller.uiLanguage === "en") return count + (count === 1 ? " account" : " accounts");
         const mod100 = count % 100, mod10 = count % 10;
-        return count + " " + (mod100 >= 11 && mod100 <= 14 ? qsTr("счетов")
-            : mod10 === 1 ? qsTr("счёт") : mod10 >= 2 && mod10 <= 4 ? qsTr("счёта") : qsTr("счетов"));
+        return count + " " + (mod100 >= 11 && mod100 <= 14 ? "счетов"
+            : mod10 === 1 ? "счёт" : mod10 >= 2 && mod10 <= 4 ? "счёта" : "счетов");
     }
     QtObject {
         id: historySelection
@@ -183,12 +181,12 @@ Flickable {
         closePolicy: Popup.CloseOnPressOutside
         EditorialMenuItem {
             objectName: "editorialHistorySelectAll"
-            text: qsTr("Выделить все")
+            text: "Выделить все"
             onTriggered: historySelection.selectAll()
         }
         EditorialMenuItem {
             objectName: "editorialHistoryDeleteSelected"
-            text: qsTr("Удалить")
+            text: "Удалить"
             enabled: view.selectedRows.length > 0
             onTriggered: view.host.editorialDeleteHistory(historySelection)
         }
@@ -230,7 +228,7 @@ Flickable {
             id: masthead
             width: parent.width; height: implicitHeight
             host: view.host; controller: view.controller
-            title: qsTr("Мои финансы."); planned: true; period: true
+            title: "Мои финансы."; planned: true; period: true
         }
         Item {
             id: summary
@@ -240,7 +238,7 @@ Flickable {
             Rule { width: parent.width }
             Rule { y: parent.height - 1; width: parent.width }
             Repeater {
-                model: [ ["all", qsTr("ВСЕ АКТИВЫ")], ["fiat", qsTr("ФИАТ")], ["crypto", qsTr("КРИПТО")], ["investment", qsTr("ИНВЕСТИЦИИ")] ]
+                model: [ ["all", "ВСЕ АКТИВЫ"], ["fiat", "ФИАТ"], ["crypto", "КРИПТО"], ["investment", "ИНВЕСТИЦИИ"] ]
                 delegate: Button {
                     id: assetButton
                     required property int index
@@ -292,8 +290,8 @@ Flickable {
                 Heading {
                     id: accountsHead
                     y: view.topInset; width: parent.width; number: "01."
-                    title: qsTr("СЧЕТА / ") + (view.controller.selectedAsset === "crypto" ? qsTr("КРИПТА") : view.host.assetTitle(view.controller.selectedAsset).toUpperCase())
-                    action: qsTr("+ ДОБАВИТЬ СЧЁТ")
+                    title: "СЧЕТА / " + (view.controller.selectedAsset === "crypto" ? "КРИПТА" : view.host.assetTitle(view.controller.selectedAsset).toUpperCase())
+                    action: "+ ДОБАВИТЬ СЧЁТ"
                     onActivated: view.host.editorialAddAccount()
                 }
                 readonly property int numberWidth: view.small ? 20 : view.medium ? 24 : 32
@@ -320,7 +318,7 @@ Flickable {
                         readonly property bool credit: modelData.isCreditCard === true
                         readonly property string primaryText: credit ? view.money(modelData.debtMinor, modelData.currency, false, 2) : view.host.accountCompactAmount(modelData)
                         width: accounts.width - 8; height: 64; padding: 0; hoverEnabled: true
-                        Accessible.name: modelData.name + " " + (credit ? qsTr("Долг ") : "") + primaryText
+                        Accessible.name: modelData.name + " " + (credit ? "Долг " : "") + primaryText
                         ToolTip.visible: hovered && primaryAmount.truncated
                         ToolTip.delay: 500
                         ToolTip.text: Accessible.name
@@ -331,7 +329,7 @@ Flickable {
                                 x: accountsPanel.numberWidth + accountsPanel.gap; height: 56; y: (parent.height - height) / 2
                                 width: Math.max(0, accountAmounts.x - x - accountsPanel.gap)
                                 EditorialText { y: 4; height: 24; width: parent.width; text: accountButton.modelData.name; font.bold: true; font.pixelSize: view.small ? 14 : 16 }
-                                EditorialText { y: 32; height: 20; width: parent.width; text: accountButton.modelData.isExchange ? qsTr("Биржевой счёт") : accountButton.modelData.isCrypto ? (accountButton.modelData.symbol + " · " + accountButton.modelData.network) : view.host.accountTypeLabel(accountButton.modelData.type); font.pixelSize: view.small ? 12 : 14; color: "#59616a" }
+                                EditorialText { y: 32; height: 20; width: parent.width; text: accountButton.modelData.isExchange ? "Биржевой счёт" : accountButton.modelData.isCrypto ? (accountButton.modelData.symbol + " · " + accountButton.modelData.network) : view.host.accountTypeLabel(accountButton.modelData.type); font.pixelSize: view.small ? 12 : 14; color: "#59616a" }
                             }
                             Item {
                                 id: accountAmounts
@@ -347,7 +345,7 @@ Flickable {
                                 EditorialText {
                                     id: debtLabel; objectName: "editorialCreditDebtLabel"
                                     visible: accountButton.credit; height: parent.height; width: accountAmounts.labelWidth - 8
-                                    text: qsTr("Долг"); font.pixelSize: view.small ? 12 : 14; color: "#59616a"
+                                    text: "Долг"; font.pixelSize: view.small ? 12 : 14; color: "#59616a"
                                 }
                                 Serif {
                                     id: primaryAmount; objectName: "editorialAccountPrimaryAmount"
@@ -366,7 +364,7 @@ Flickable {
                         onClicked: view.selectAccount(modelData)
                         TapHandler { acceptedButtons: Qt.RightButton; onTapped: (point) => view.host.openAccountContextMenu(accountButton.modelData, accountButton, point.position.x, point.position.y) }
                     }
-                    Mono { visible: accounts.count === 0; anchors.fill: parent; horizontalAlignment: Text.AlignHCenter; text: qsTr("Счетов пока нет. Добавьте первый счёт.") }
+                    Mono { visible: accounts.count === 0; anchors.fill: parent; horizontalAlignment: Text.AlignHCenter; text: "Счетов пока нет. Добавьте первый счёт." }
                 }
             }
             Item {
@@ -377,7 +375,7 @@ Flickable {
                 Rule { visible: view.narrow; width: parent.width }
                 Item {
                     x: view.narrow ? 0 : view.inset; y: view.topInset; width: parent.width - x; height: parent.height - y - view.topInset
-                    Heading { id: horizonHead; width: parent.width; number: "02."; title: qsTr("НА ГОРИЗОНТЕ"); action: qsTr("ВСЕ СОБЫТИЯ"); onActivated: view.host.editorialSchedule(null) }
+                    Heading { id: horizonHead; width: parent.width; number: "02."; title: "НА ГОРИЗОНТЕ"; action: "ВСЕ СОБЫТИЯ"; onActivated: view.host.editorialSchedule(null) }
                     Button {
                         id: event
                         y: 32 + (view.compact ? 16 : 24); width: parent.width; height: 80; padding: 0
@@ -394,9 +392,9 @@ Flickable {
                                 x: (view.small ? 56 : 64) + (view.small ? 12 : 16); width: parent.width - x; height: 80
                                 Serif { width: Math.max(0, parent.width - eventAmount.width - 16); height: 40; text: view.nextEvent ? view.nextEvent.name : ""; font.pixelSize: view.small ? 22 : view.medium ? 24 : 28 }
                                 Serif { id: eventAmount; anchors.right: parent.right; height: 40; text: view.scheduledAmount(); font.pixelSize: view.small ? 22 : view.medium ? 24 : 28; color: view.nextEvent && view.nextEvent.type === "income" ? "#2e5947" : "#b84932" }
-                                Mono { y: 48; width: parent.width; height: 24; text: view.nextEvent ? qsTr("ПЛАНОВЫЙ ") + view.host.transactionTypeLabel(view.nextEvent).toUpperCase() + " · " + Data.dateValue(view.nextEvent.nextDate).getFullYear() : "" }
+                                Mono { y: 48; width: parent.width; height: 24; text: view.nextEvent ? "ПЛАНОВЫЙ " + view.host.transactionTypeLabel(view.nextEvent).toUpperCase() + " · " + Data.dateValue(view.nextEvent.nextDate).getFullYear() : "" }
                             }
-                            Mono { visible: !view.nextEvent; anchors.fill: parent; text: qsTr("Плановых операций нет"); horizontalAlignment: Text.AlignHCenter }
+                            Mono { visible: !view.nextEvent; anchors.fill: parent; text: "Плановых операций нет"; horizontalAlignment: Text.AlignHCenter }
                         }
                         background: Rectangle { color: event.hovered ? "#06031528" : "transparent"; border.width: event.activeFocus ? 1 : 0; border.color: "#b84932" }
                         onClicked: view.host.editorialSchedule(view.nextEvent)
@@ -411,13 +409,13 @@ Flickable {
             Item {
                 id: capital
                 y: view.topInset; width: view.leftWidth - (view.narrow ? 0 : view.inset); height: (view.narrow ? 264 : analytics.height) - y * 2
-                Heading { width: parent.width; number: "03."; title: qsTr("ИСТОРИЯ КАПИТАЛА"); note: view.capitalRows.length ? Data.shortDate(view.capitalRows[0].date) + " — " + Data.shortDate(view.capitalRows[view.capitalRows.length - 1].date) : "" }
+                Heading { width: parent.width; number: "03."; title: "ИСТОРИЯ КАПИТАЛА"; note: view.capitalRows.length ? Data.shortDate(view.capitalRows[0].date) + " — " + Data.shortDate(view.capitalRows[view.capitalRows.length - 1].date) : "" }
                 Canvas {
                     id: chart
                     objectName: "editorialCapitalChart"
                     y: 32 + (view.compact ? 8 : 16); width: parent.width; height: view.compact ? 152 : 168
                     Accessible.role: Accessible.Graphic
-                    Accessible.name: qsTr("История общего капитала, ") + view.controller.appCurrency
+                    Accessible.name: "История общего капитала, " + view.controller.appCurrency
                     property var rows: view.capitalRows
                     property var axisScale: view.capitalScale
                     onRowsChanged: requestPaint()
@@ -437,7 +435,7 @@ Flickable {
                         axisScale.ticks.forEach(function(value, i) {
                             const yp = (16 + i * 24) * scaleY;
                             c.beginPath(); c.moveTo(left, yp); c.lineTo(right, yp); c.stroke();
-                            c.textAlign = "right"; c.fillText(Data.capitalTickLabel(value, view.controller.uiLanguage), left - 24, yp + 4);
+                            c.textAlign = "right"; c.fillText(Data.capitalTickLabel(value), left - 24, yp + 4);
                         });
                         c.beginPath(); rows.forEach(function(r, i) { if (i === 0) c.moveTo(x(i), y(r.totalMinor)); else c.lineTo(x(i), y(r.totalMinor)); });
                         c.lineTo(x(rows.length - 1), 136 * scaleY); c.lineTo(x(0), 136 * scaleY); c.closePath(); c.fillStyle = "#0f031528"; c.fill();
@@ -448,7 +446,7 @@ Flickable {
                         [0, Math.floor((rows.length - 1) / 2), rows.length - 1].forEach(function(index, i) { c.textAlign = ["left", "center", "right"][i]; c.fillText(Data.shortDate(rows[index].date), left + i * (right - left) / 2, 164 * scaleY); });
                     }
                 }
-                Mono { visible: !view.capitalRows.length; y: chart.y; width: parent.width; height: chart.height; text: qsTr("История капитала появится после добавления данных."); horizontalAlignment: Text.AlignHCenter }
+                Mono { visible: !view.capitalRows.length; y: chart.y; width: parent.width; height: chart.height; text: "История капитала появится после добавления данных."; horizontalAlignment: Text.AlignHCenter }
             }
             Item {
                 id: expense
@@ -458,7 +456,7 @@ Flickable {
                 Rule { visible: view.narrow; width: parent.width }
                 Item {
                     x: view.narrow ? 0 : view.inset; y: view.topInset; width: parent.width - x; height: parent.height - y * 2
-                    Heading { width: parent.width; number: "04."; title: qsTr("АНАТОМИЯ РАСХОДОВ"); note: view.small ? "" : view.controller.dateFilterActive ? qsTr("ЗА ПЕРИОД") : qsTr("ЗА ВСЁ ВРЕМЯ") }
+                    Heading { width: parent.width; number: "04."; title: "АНАТОМИЯ РАСХОДОВ"; note: view.small ? "" : view.controller.dateFilterActive ? "ЗА ПЕРИОД" : "ЗА ВСЁ ВРЕМЯ" }
                     Item {
                         y: 32 + (view.compact ? 8 : 16); width: parent.width; height: view.compact ? 152 : 168
                         Canvas {
@@ -466,7 +464,7 @@ Flickable {
                             objectName: "editorialExpenseDonut"
                             width: view.compact ? 152 : 168; height: width
                             Accessible.role: Accessible.Graphic
-                            Accessible.name: qsTr("Расходы по категориям: ") + view.expenseLegend.map(function(g) { return g.name + " " + view.money(g.amount, view.controller.appCurrency, false, 0); }).join(", ")
+                            Accessible.name: "Расходы по категориям: " + view.expenseLegend.map(function(g) { return g.name + " " + view.money(g.amount, view.controller.appCurrency, false, 0); }).join(", ")
                             anchors.verticalCenter: parent.verticalCenter
                             property var groups: view.expenseLegend
                             onGroupsChanged: requestPaint()
@@ -500,7 +498,7 @@ Flickable {
                                 }
                             }
                         }
-                        Mono { visible: !view.expenseGroups.length; x: donut.width + 24; width: parent.width - x; height: parent.height; text: qsTr("За период расходов нет.") }
+                        Mono { visible: !view.expenseGroups.length; x: donut.width + 24; width: parent.width - x; height: parent.height; text: "За период расходов нет." }
                     }
                 }
             }
@@ -508,21 +506,21 @@ Flickable {
         Item {
             id: historyToolbar
             y: analytics.y + analytics.height; width: parent.width; height: view.narrow ? 104 : 56
-            Heading { x: 0; y: view.narrow ? 8 : 12; width: view.narrow ? parent.width : Math.max(0, search.x - 16); number: "05."; title: qsTr("РЕЕСТР ОПЕРАЦИЙ") }
+            Heading { x: 0; y: view.narrow ? 8 : 12; width: view.narrow ? parent.width : Math.max(0, search.x - 16); number: "05."; title: "РЕЕСТР ОПЕРАЦИЙ" }
             EditorialAction {
                 id: addOperation
                 objectName: "editorialAddOperation"
                 anchors.right: parent.right; y: view.narrow ? 56 : 12
                 width: view.small ? 160 : view.medium ? 176 : 192
-                text: view.controller.selectedAsset === "crypto" ? qsTr("ОБНОВИТЬ ЦЕНЫ") : qsTr("+ НОВАЯ ОПЕРАЦИЯ")
+                text: view.controller.selectedAsset === "crypto" ? "ОБНОВИТЬ ЦЕНЫ" : "+ НОВАЯ ОПЕРАЦИЯ"
                 enabled: view.controller.selectedAsset !== "crypto" || view.controller.cryptoManualRefreshReady
                 underline: true
                 onClicked: { if (view.controller.selectedAsset === "crypto") view.controller.refreshCryptoWallets(); else if (view.controller.selectedAsset === "investment") investmentMenu.open(); else view.host.openNewOperationForSelectedAsset(); }
                 EditorialMenu {
                     id: investmentMenu
                     y: parent.height; width: 256
-                    EditorialMenuItem { text: qsTr("Операция по счёту"); enabled: view.controller.investmentAccounts.length > 0; onTriggered: view.host.openNewOperationForSelectedAsset() }
-                    EditorialMenuItem { text: qsTr("Добавить позицию"); enabled: view.controller.investmentAccounts.length > 0; onTriggered: view.host.editorialAddPosition() }
+                    EditorialMenuItem { text: "Операция по счёту"; enabled: view.controller.investmentAccounts.length > 0; onTriggered: view.host.openNewOperationForSelectedAsset() }
+                    EditorialMenuItem { text: "Добавить позицию"; enabled: view.controller.investmentAccounts.length > 0; onTriggered: view.host.editorialAddPosition() }
                 }
             }
             TextField {
@@ -532,7 +530,7 @@ Flickable {
                 width: view.narrow ? addOperation.x - 16 : view.small ? 184 : 224; height: 40
                 padding: 0; font.family: "Arimo"; font.pixelSize: 14
                 color: "#031528"; placeholderTextColor: "#59616a"; selectionColor: "#be7b56"
-                placeholderText: qsTr("Поиск по операциям…")
+                placeholderText: "Поиск по операциям…"
                 text: view.host.searchText
                 onTextEdited: view.host.searchText = text
                 background: Item { Rule { y: parent.height - 1; width: parent.width; color: search.activeFocus ? "#b84932" : "#031528" } }
@@ -555,13 +553,13 @@ Flickable {
             Rule { width: parent.width }
             Rule { y: parent.height - 1; width: parent.width }
             Repeater {
-                model: [["date", qsTr("ДАТА")], ["type", qsTr("ТИП")], ["account", qsTr("СЧЁТ")], ["category", qsTr("КАТЕГОРИЯ")], ["description", qsTr("ОПИСАНИЕ")], ["amount", qsTr("СУММА")]]
+                model: [["date", "ДАТА"], ["type", "ТИП"], ["account", "СЧЁТ"], ["category", "КАТЕГОРИЯ"], ["description", "ОПИСАНИЕ"], ["amount", "СУММА"]]
                 delegate: Button {
                     id: sortButton
                     required property var modelData
                     required property int index
                     x: view.colStart(index); width: view.colWidth(index); height: 40; visible: width > 0; padding: 0
-                    Accessible.name: qsTr("Сортировать: ") + modelData[1]
+                    Accessible.name: "Сортировать: " + modelData[1]
                     contentItem: Mono { text: sortButton.modelData[1]; rightPadding: sortButton.index === 5 ? 0 : 12; horizontalAlignment: sortButton.index === 5 ? Text.AlignRight : Text.AlignLeft }
                     background: Rectangle { color: sortButton.hovered ? "#08031528" : "transparent"; border.width: sortButton.activeFocus ? 1 : 0; border.color: "#b84932" }
                     onClicked: view.sortBy(modelData[0])
@@ -616,12 +614,12 @@ Flickable {
                     }
                 }
             }
-            Mono { visible: view.historyRows.length === 0; anchors.fill: parent; horizontalAlignment: Text.AlignHCenter; text: qsTr("Операций не найдено. Измените поиск или снимите фильтр.") }
+            Mono { visible: view.historyRows.length === 0; anchors.fill: parent; horizontalAlignment: Text.AlignHCenter; text: "Операций не найдено. Измените поиск или снимите фильтр." }
         }
         Item {
             id: historyFooter
             y: historyBody.y + historyBody.height; width: parent.width; height: 48
-            Mono { height: parent.height; width: parent.width; text: view.historyRows.length + " / " + qsTr("ОПЕРАЦИЙ · КОНЕЦ РЕЕСТРА") }
+            Mono { height: parent.height; width: parent.width; text: view.historyRows.length + " / " + "ОПЕРАЦИЙ · КОНЕЦ РЕЕСТРА" }
         }
     }
 }

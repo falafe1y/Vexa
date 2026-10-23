@@ -35,7 +35,7 @@ ColumnLayout {
     MobileText {
         font.family: MobileTheme.serif
         Layout.fillWidth: true
-        text: qsTr("Колебания и просадки")
+        text: "Колебания и просадки"
         color: MobileTheme.accent
         font.pixelSize: MobileTheme.sizeHeading
         font.weight: Font.DemiBold
@@ -50,39 +50,39 @@ ColumnLayout {
         Repeater {
             model: [
                 {
-                    title: qsTr("Годовая волатильность"),
+                    title: "Годовая волатильность",
                     value: panel.percent(panel.risk.annualVolatilityPercent),
-                    hint: qsTr("Разброс дневной доходности, приведённый к году"),
+                    hint: "Разброс дневной доходности, приведённый к году",
                     metric: "volatility"
                 },
                 {
-                    title: qsTr("Максимальная просадка"),
+                    title: "Максимальная просадка",
                     value: panel.percent(panel.risk.maximumDrawdownPercent),
-                    hint: panel.risk.peakDate ? panel.date(panel.risk.peakDate) + " → " + panel.date(panel.risk.troughDate) : qsTr("Падение от предыдущего максимума за выбранный период"),
+                    hint: panel.risk.peakDate ? panel.date(panel.risk.peakDate) + " → " + panel.date(panel.risk.troughDate) : "Падение от предыдущего максимума за выбранный период",
                     metric: "maximum_drawdown"
                 },
                 {
-                    title: qsTr("Просадка на конец периода"),
+                    title: "Просадка на конец периода",
                     value: panel.percent(panel.risk.currentDrawdownPercent),
-                    hint: qsTr("Ниже максимума, достигнутого в этом периоде"),
+                    hint: "Ниже максимума, достигнутого в этом периоде",
                     metric: "current_drawdown"
                 },
                 {
-                    title: qsTr("Лучший день"),
+                    title: "Лучший день",
                     value: panel.percent(panel.risk.bestDayPercent),
                     hint: panel.date(panel.risk.bestDay),
                     metric: "best_day"
                 },
                 {
-                    title: qsTr("Худший день"),
+                    title: "Худший день",
                     value: panel.percent(panel.risk.worstDayPercent),
                     hint: panel.date(panel.risk.worstDay),
                     metric: "worst_day"
                 },
                 {
-                    title: qsTr("Дней доходности в расчёте"),
+                    title: "Дней доходности в расчёте",
                     value: panel.risk.available ? String(panel.risk.returnDays || 0) : "—",
-                    hint: qsTr("Дни, когда была положительная база для расчёта"),
+                    hint: "Дни, когда была положительная база для расчёта",
                     metric: "risk_days"
                 }
             ]
@@ -136,7 +136,7 @@ ColumnLayout {
         wrapMode: Text.Wrap
         color: MobileTheme.muted
         font.pixelSize: MobileTheme.sizeCaption
-        text: !panel.risk.available ? qsTr("Для расчёта нужна непрерывная история оценок и известные денежные потоки. Причины пропусков указаны в пояснениях к расчёту.") : !panel.available(panel.risk.annualVolatilityPercent) ? qsTr("Для волатильности нужны минимум два дня доходности — три дневные оценки. Просадки и лучший/худший день уже доступны.") : qsTr("Выборочное отклонение дневной доходности × √365,25. Дни с нулевым капиталом и без движений исключены из волатильности. Короткая история даёт менее устойчивую оценку.")
+        text: !panel.risk.available ? "Для расчёта нужна непрерывная история оценок и известные денежные потоки. Причины пропусков указаны в пояснениях к расчёту." : !panel.available(panel.risk.annualVolatilityPercent) ? "Для волатильности нужны минимум два дня доходности — три дневные оценки. Просадки и лучший/худший день уже доступны." : "Выборочное отклонение дневной доходности × √365,25. Дни с нулевым капиталом и без движений исключены из волатильности. Короткая история даёт менее устойчивую оценку."
     }
 
     MobileText {
@@ -146,13 +146,13 @@ ColumnLayout {
         wrapMode: Text.Wrap
         color: MobileTheme.muted
         font.pixelSize: MobileTheme.sizeCaption
-        text: panel.risk.recoveryDate ? qsTr("Максимальная просадка восстановилась: %1").arg(panel.date(panel.risk.recoveryDate)) : qsTr("Максимальная просадка не восстановилась к концу выбранного периода.")
+        text: panel.risk.recoveryDate ? "Максимальная просадка восстановилась: %1".arg(panel.date(panel.risk.recoveryDate)) : "Максимальная просадка не восстановилась к концу выбранного периода."
     }
 
     MobileText {
         font.family: MobileTheme.sans
         Layout.fillWidth: true
-        text: qsTr("Просадка относительно предыдущего максимума")
+        text: "Просадка относительно предыдущего максимума"
         wrapMode: Text.Wrap
         color: MobileTheme.accent
         font.pixelSize: MobileTheme.sizeBody
@@ -196,6 +196,6 @@ ColumnLayout {
         wrapMode: Text.Wrap
         color: MobileTheme.muted
         font.pixelSize: MobileTheme.sizeCaption
-        text: qsTr("Просадки считаются по связанной доходности с учётом пополнений и выводов. Это падение инвестиционного результата, а не денежного остатка. Начальный максимум задан на начало выбранного периода; оценка текущего дня может быть неполной.")
+        text: "Просадки считаются по связанной доходности с учётом пополнений и выводов. Это падение инвестиционного результата, а не денежного остатка. Начальный максимум задан на начало выбранного периода; оценка текущего дня может быть неполной."
     }
 }

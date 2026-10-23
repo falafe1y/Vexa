@@ -54,7 +54,6 @@ Item {
         property string selectedAccountId: ""
         property string selectedCryptoWalletId: ""
         property string appCurrency: "RUB"
-        property string uiLanguage: "ru"
         property var currentCurrencyRates: [{code:"RUB",rate:1},{code:"USD",rate:100},{code:"EUR",rate:120},{code:"CNY",rate:14}]
         property real balanceMinorUnits: 26545617
         property var allAccounts: Array.from({length: 12}, function(_, i) { return {id: "a" + i, name: ["Альфа | На каждый день", "Альфа | Грядущие траты", "Наличные"][i % 3] + (i > 2 ? " " + i : ""), type: i === 2 ? "cash" : "debit_card", asset: "fiat", currency: "RUB", balanceMinor: i === 0 ? 1645554 : i === 1 ? 3000000 : i === 2 ? 600000 : 0}; })
@@ -226,7 +225,7 @@ Item {
                 rows.forEach(function(row) { verify(row.totalMinor > scale.minimum && row.totalMinor < scale.maximum); });
             });
             const scale = Data.capitalScale(financeMock.capitalHistory);
-            const labels = scale.ticks.map(function(value) { return Data.capitalTickLabel(value, "ru"); });
+            const labels = scale.ticks.map(function(value) { return Data.capitalTickLabel(value); });
             compare(new Set(labels).size, 6);
         }
         function test_navigation_and_actions() {

@@ -50,13 +50,13 @@ void BackupRestoreControllerTest::replacementRefreshesSettingsAndNotes() {
     QTemporaryDir dir; const auto path=dir.filePath("data.db"), source=dir.filePath("source.db"), backup=dir.filePath("copy.db");
     QVERIFY(seed(path)); QVERIFY(seed(source));
     { FinanceRepository r(source); QVERIFY(r.saveNotes("Из копии")); QVERIFY(r.saveAppCurrency("EUR"));
-      QVERIFY(r.saveAnalyticsCurrency("CNY")); QVERIFY(r.saveUiLanguage("en")); QVERIFY(r.saveManualCurrencyRates(1,95,105,14));
+      QVERIFY(r.saveAnalyticsCurrency("CNY")); QVERIFY(r.saveManualCurrencyRates(1,95,105,14));
       QVERIFY(r.insertAccount({"restored","Из копии",AssetType::Fiat,AccountType::Cash,Currency::RUB})); QVERIFY(r.backupDatabase(backup)); }
     FinanceController c(nullptr,path); c.setNotesText("Несохранённый текущий текст");
     const auto result=c.restoreDatabase(QUrl::fromLocalFile(backup));
     QVERIFY2(result.value("ok").toBool(),qPrintable(result.value("error").toString()));
     QCOMPARE(c.notesText(),QStringLiteral("Из копии")); QCOMPARE(c.appCurrency(),QStringLiteral("EUR"));
-    QCOMPARE(c.analyticsCurrency(),QStringLiteral("CNY")); QCOMPARE(c.uiLanguage(),QStringLiteral("en")); QCOMPARE(c.manualUsdToRubRate(),95.0);
+    QCOMPARE(c.analyticsCurrency(),QStringLiteral("CNY")); QCOMPARE(c.manualUsdToRubRate(),95.0);
     const auto previous=result.value("previousBackupPath").toString(); QVERIFY(QFile::exists(previous));
     { FinanceRepository r(previous); QString saved; QVERIFY(r.loadNotes(saved)); QCOMPARE(saved,QStringLiteral("Несохранённый текущий текст")); }
     QTest::qWait(850);

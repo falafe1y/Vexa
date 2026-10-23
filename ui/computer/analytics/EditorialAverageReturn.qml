@@ -16,7 +16,7 @@ Column {
         const accounts = controller.allAccounts || [];
         const positions = controller.investmentPositions || [];
         items.forEach(function (item) {
-            let key = item.group, name = item.group === "crypto" ? qsTr("Криптовалюта") : qsTr("Инвестиции");
+            let key = item.group, name = item.group === "crypto" ? "Криптовалюта" : "Инвестиции";
             if (item.id.indexOf("deposit:") === 0) {
                 key = item.id.substr(8);
                 name = item.title;
@@ -70,11 +70,11 @@ Column {
         EditorialSection {
             Layout.fillWidth: true
             number: 3
-            title: qsTr("Средняя годовая доходность")
+            title: "Средняя годовая доходность"
         }
         EditorialCheck {
             objectName: "editorialReturnMerged"
-            text: qsTr("Объединить криптовалюту и инвестиции")
+            text: "Объединить криптовалюту и инвестиции"
             checked: panel.merged
             onToggled: panel.controller.setAverageReturnSelection(panel.excluded, checked)
         }
@@ -142,7 +142,7 @@ Column {
                         }
                         EditorialText {
                             Layout.fillWidth: true
-                            text: qsTr("УЧТЕНО %1 ИЗ %2").arg(figure.modelData.counted).arg(figure.modelData.shown)
+                            text: "УЧТЕНО %1 ИЗ %2".arg(figure.modelData.counted).arg(figure.modelData.shown)
                             font.family: "Cousine"
                             font.pixelSize: 12
                             color: "#59616a"
@@ -180,7 +180,7 @@ Column {
     EditorialText {
         width: parent.width
         height: 64
-        text: qsTr("Учитываемые счета и инструменты")
+        text: "Учитываемые счета и инструменты"
         font.family: "PT Serif"
         font.pixelSize: 24
     }
@@ -253,7 +253,7 @@ Column {
                             EditorialAction {
                                 objectName: "editorialCostBasis"
                                 visible: !!instrument.modelData.untracked
-                                text: instrument.modelData.basisMode ? qsTr("Цена покупки…") : qsTr("Указать цену покупки")
+                                text: instrument.modelData.basisMode ? "Цена покупки…" : "Указать цену покупки"
                                 textSize: 11
                                 arrow: false
                                 onClicked: costBasisDialog.open()
@@ -280,8 +280,7 @@ Column {
     EditorialText {
         width: parent.width
         height: implicitHeight
-        text: qsTr(
-                  "Учитываются инструменты с историей от 30 дней. Кошельки и стейблкоины в среднюю доходность не входят.")
+        text: "Учитываются инструменты с историей от 30 дней. Кошельки и стейблкоины в среднюю доходность не входят."
         wrapMode: Text.WordWrap
         font.pixelSize: 14
         color: "#59616a"

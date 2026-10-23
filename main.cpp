@@ -7,7 +7,6 @@
 #include <QQmlContext>
 #include <QQuickStyle>
 #include <QLocale>
-#include <QTranslator>
 #include <QDir>
 #include <QLockFile>
 #include <QStandardPaths>
@@ -61,6 +60,7 @@ int main(int argc, char *argv[])
     app.setFont(interfaceFont);
 
     QQuickStyle::setStyle(QStringLiteral("Basic"));
+    QLocale::setDefault(QLocale(QLocale::Russian, QLocale::Russia));
 
     // Keep the existing application data directory; branding does not migrate user data.
     const auto dataDirectory = QStandardPaths::writableLocation(QStandardPaths::AppDataLocation);
@@ -88,7 +88,6 @@ int main(int argc, char *argv[])
     QObject::connect(&appAccess, &AppAccess::changed, &app, syncSystemLock);
     WindowScrollInput windowScrollInput;
     NotebookLayout notebookLayout;
-    QTranslator translator;
     std::unique_ptr<FinanceController> financeController;
     std::unique_ptr<QQmlApplicationEngine> financeEngine;
     QQmlApplicationEngine databaseEngine;
@@ -103,18 +102,6 @@ int main(int argc, char *argv[])
     accessEngine.loadFromModule("Vexa", "AccessWindow");
     if (accessEngine.rootObjects().isEmpty()) return 1;
 
-    const auto applyUiLanguage = [&] {
-        QCoreApplication::removeTranslator(&translator);
-        const bool english = financeController && financeController->uiLanguage() == QStringLiteral("en");
-        QLocale::setDefault(english ? QLocale(QLocale::English, QLocale::UnitedStates)
-                                   : QLocale(QLocale::Russian, QLocale::Russia));
-        if (english && translator.load(QStringLiteral(":/i18n/qml_en.qm")))
-            QCoreApplication::installTranslator(&translator);
-        accessEngine.retranslate();
-        databaseEngine.retranslate();
-        if (financeEngine) financeEngine->retranslate();
-        if (financeController) financeController->retranslate();
-    };
     const auto closeFinance = [&] {
         financeEngine.reset();
         financeController.reset();
@@ -147,9 +134,6 @@ int main(int argc, char *argv[])
         financeEngine->rootContext()->setContextProperty("windowScrollInput", &windowScrollInput);
         financeEngine->rootContext()->setContextProperty("notebookLayout", &notebookLayout);
         financeEngine->rootContext()->setContextProperty("financeController", financeController.get());
-        QObject::connect(financeController.get(), &FinanceController::uiLanguageChanged,
-                         financeEngine.get(), applyUiLanguage);
-        applyUiLanguage();
         QObject::connect(financeEngine.get(), &QQmlApplicationEngine::objectCreationFailed,
                          &app, [] { QCoreApplication::exit(-1); }, Qt::QueuedConnection);
 #if defined(Q_OS_ANDROID) || defined(Q_OS_IOS)

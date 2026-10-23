@@ -5,21 +5,21 @@ import "../dashboard"
 
 EditorialPage {
     id: page
-    title: qsTr("Категории.")
+    title: "Категории."
     Item {
         width: parent.width
         height: 80
         EditorialText {
             width: Math.max(0, parent.width - manage.width - 24)
             height: parent.height
-            text: qsTr("Доходы и расходы — в отдельных списках.")
+            text: "Доходы и расходы — в отдельных списках."
             color: "#59616a"
         }
         EditorialAction {
             id: manage
             anchors.right: parent.right
             anchors.verticalCenter: parent.verticalCenter
-            text: qsTr("+ УПРАВЛЕНИЕ КАТЕГОРИЯМИ")
+            text: "+ УПРАВЛЕНИЕ КАТЕГОРИЯМИ"
             onClicked: page.host.editorialManageCategories()
         }
         Rectangle {
@@ -59,7 +59,7 @@ EditorialPage {
                     EditorialSection {
                         width: parent.width
                         number: group.index + 1
-                        title: group.index === 0 ? qsTr("Доход") : qsTr("Расход")
+                        title: group.index === 0 ? "Доход" : "Расход"
                         note: String(group.rows.length)
                     }
                     Repeater {

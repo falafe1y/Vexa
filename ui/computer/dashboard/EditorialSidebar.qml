@@ -32,10 +32,10 @@ Rectangle {
         x: sidebar.pad; y: brand.y + brand.height
         width: parent.width - sidebar.pad * 2
         Repeater {
-            model: [ ["overview", qsTr("Обзор")], ["categories", qsTr("Категории")],
-                ["goals", qsTr("Цели")], ["notes", qsTr("Заметки")],
-                ["trajectory", qsTr("Траектория")], ["budgets", qsTr("Бюджеты")],
-                ["projects", qsTr("Проекты")], ["analytics", qsTr("Аналитика")] ]
+            model: [ ["overview", "Обзор"], ["categories", "Категории"],
+                ["goals", "Цели"], ["notes", "Заметки"],
+                ["trajectory", "Траектория"], ["budgets", "Бюджеты"],
+                ["projects", "Проекты"], ["analytics", "Аналитика"] ]
             delegate: Button {
                 id: nav
                 required property var modelData
@@ -85,7 +85,7 @@ Rectangle {
             EditorialText {
                 x: 16; y: 64; width: parent.width - 32; height: 48
                 font.family: "Cousine"; font.pixelSize: 12
-                text: qsTr("Для тех, кто уважает свои деньги")
+                text: "Для тех, кто уважает свои деньги"
                 wrapMode: Text.WordWrap; elide: Text.ElideNone
                 lineHeightMode: Text.FixedHeight; lineHeight: 16
             }
@@ -95,14 +95,14 @@ Rectangle {
             id: settings
             objectName: "editorialNav_settings"
             width: parent.width; height: 40; padding: 0; hoverEnabled: true
-            Accessible.name: qsTr("Настройки")
+            Accessible.name: "Настройки"
             contentItem: Item {
                 EditorialText {
                     width: 16; height: 24; anchors.verticalCenter: parent.verticalCenter
                     x: sidebar.rail ? (parent.width - width) / 2 : 0
                     text: "⚙"; font.pixelSize: 14; color: "#59616a"
                 }
-                EditorialText { visible: !sidebar.rail; x: 32; width: parent.width - 32; height: parent.height; text: qsTr("Настройки"); font.pixelSize: 14; color: settings.hovered ? "#b84932" : "#031528" }
+                EditorialText { visible: !sidebar.rail; x: 32; width: parent.width - 32; height: parent.height; text: "Настройки"; font.pixelSize: 14; color: settings.hovered ? "#b84932" : "#031528" }
             }
             background: Rectangle { color: "transparent" }
             onClicked: sidebar.host.page = "settings"

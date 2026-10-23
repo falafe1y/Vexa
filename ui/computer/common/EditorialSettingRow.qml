@@ -19,7 +19,7 @@ Item {
         EditorialText {
             width: parent.width
             height: 24
-            text: String(section.number).padStart(2, "0") + " / " + qsTr("НАСТРОЙКИ")
+            text: String(section.number).padStart(2, "0") + " / " + "НАСТРОЙКИ"
             font.family: "Cousine"
             font.pixelSize: 12
             color: "#59616a"

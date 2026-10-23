@@ -62,20 +62,20 @@ Rectangle {
         spacing: 12
 
         EditorialDialogTitle {
-            text: qsTr("Средняя годовая доходность")
+            text: "Средняя годовая доходность"
             color: panel.ink
             Layout.fillWidth: true
         }
 
         StyledCheckBox {
-            text: qsTr("Объединить криптовалюту и инвестиции?")
+            text: "Объединить криптовалюту и инвестиции?"
             checked: panel.merged
             onToggled: panel.setMerged(checked)
         }
 
         EditorialLabel {
             visible: panel.items.length === 0
-            text: qsTr("Пока нет инструментов: добавьте позицию, вклад или кошелёк.")
+            text: "Пока нет инструментов: добавьте позицию, вклад или кошелёк."
             color: panel.muted
             wrapMode: Text.WordWrap
             Layout.fillWidth: true
@@ -135,7 +135,7 @@ Rectangle {
                     Layout.fillWidth: true
                 }
                 EditorialLabel {
-                    text: qsTr("учтено %1 из %2 · денег сейчас %3")
+                    text: "учтено %1 из %2 · денег сейчас %3"
                         .arg(modelData.counted).arg(modelData.shown).arg(panel.moneyText(modelData.valueMinor))
                     color: panel.muted
                     font.pixelSize: Appearance.desktop ? 16 : 13
@@ -198,7 +198,7 @@ Rectangle {
         }
 
         EditorialLabel {
-            text: qsTr("Вес инструмента — сумма денег в нём сейчас. Учитываются инструменты с историей не короче 30 дней. Криптовалюта — монеты на бирже по сделкам за два года; цена покупки переведена в рубли по курсу ЦБ на день сделки. Кошельки и стейблкоины не учитываются. Если монета пришла не сделкой (ввод или вывод), доходность не считается, причина написана в списке.")
+            text: "Вес инструмента — сумма денег в нём сейчас. Учитываются инструменты с историей не короче 30 дней. Криптовалюта — монеты на бирже по сделкам за два года; цена покупки переведена в рубли по курсу ЦБ на день сделки. Кошельки и стейблкоины не учитываются. Если монета пришла не сделкой (ввод или вывод), доходность не считается, причина написана в списке."
             color: panel.muted
             font.pixelSize: Appearance.desktop ? 16 : 13
             wrapMode: Text.WordWrap

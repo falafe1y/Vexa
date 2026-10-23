@@ -7,15 +7,15 @@ import "../common/EditorialStyle.js" as Appearance
 EditorialColumnLayout {
     function openConfirmation() { confirmation.open(); }
     readonly property bool onAndroid: Qt.platform.os === "android"
-    readonly property string keyPlace: onAndroid ? qsTr("Android Keystore этого устройства") : qsTr("системного хранилища Windows")
+    readonly property string keyPlace: onAndroid ? "Android Keystore этого устройства" : "системного хранилища Windows"
     spacing: 16
-    EditorialLabel { text: qsTr("Шифрование базы"); color: "#031528"; font.pixelSize: 17; font.bold: true }
+    EditorialLabel { text: "Шифрование базы"; color: "#031528"; font.pixelSize: 17; font.bold: true }
     EditorialLabel {
         Layout.fillWidth: true
         text: (databaseProtection.encrypted
-            ? qsTr("Локальная база зашифрована. Ключ хранится в %1.").arg(keyPlace)
-            : qsTr("Шифрование защищает файл базы. Оно независимо от пароля входа в Vexa."))
-            + ((onAndroid && databaseProtection.encrypted) ? qsTr(" При удалении Vexa ключ пропадёт: храните копию .vexabackup.") : "")
+            ? "Локальная база зашифрована. Ключ хранится в %1.".arg(keyPlace)
+            : "Шифрование защищает файл базы. Оно независимо от пароля входа в Vexa.")
+            + ((onAndroid && databaseProtection.encrypted) ? " При удалении Vexa ключ пропадёт: храните копию .vexabackup." : "")
         color: (Appearance.desktop ? "#59616a" : "#687483")
         wrapMode: Text.WordWrap
     }
@@ -23,15 +23,15 @@ EditorialColumnLayout {
         visible: !appAccess.storeAvailable || !databaseProtection.supported
         Layout.fillWidth: true
         text: (!appAccess.storeAvailable
-               ? (!appAccess.storeChecked ? qsTr("Проверяем системное хранилище…")
-                  : (appAccess.storeError || qsTr("Системное хранилище недоступно."))) : "")
+               ? (!appAccess.storeChecked ? "Проверяем системное хранилище…"
+                  : (appAccess.storeError || "Системное хранилище недоступно.")) : "")
               + ((!appAccess.storeAvailable && !databaseProtection.supported) ? "\n" : "")
-              + (!databaseProtection.supported ? qsTr("Шифрование базы на этой платформе пока не поддерживается.") : "")
+              + (!databaseProtection.supported ? "Шифрование базы на этой платформе пока не поддерживается." : "")
         color: (Appearance.desktop ? "#59616a" : "#687483")
         wrapMode: Text.WordWrap
     }
     StyledButton {
-        text: databaseProtection.encrypted ? qsTr("Отключить шифрование") : qsTr("Включить шифрование")
+        text: databaseProtection.encrypted ? "Отключить шифрование" : "Включить шифрование"
         enabled: databaseProtection.supported && appAccess.storeChecked && appAccess.storeAvailable && databaseProtection.ready && !databaseProtection.busy
         onClicked: confirmation.open()
     }
@@ -42,27 +42,27 @@ EditorialColumnLayout {
         width: Math.min(480, parent.width - 32)
         padding: 24
         modal: true
-        title: databaseProtection.encrypted ? qsTr("Отключить шифрование базы?") : qsTr("Зашифровать базу?")
+        title: databaseProtection.encrypted ? "Отключить шифрование базы?" : "Зашифровать базу?"
         background: Rectangle { color: (Appearance.desktop ? "#f3eddf" : "#FFFFF8"); radius: Appearance.desktop ? 0 : 12; border.color: (Appearance.desktop ? "#bbb5a8" : "#D8D7C7") }
         contentItem: EditorialDialogForm {
             spacing: 16
             EditorialLabel {
                 Layout.fillWidth: true
                 text: (databaseProtection.encrypted
-                    ? qsTr("После отключения файл базы будет доступен без ключа. Ключ сохранится для чтения ранее зашифрованных копий.")
-                    : qsTr("База будет зашифрована ключом из %1. Для её открытия потребуется этот ключ. Старые копии останутся без изменений.").arg(keyPlace))
-                    + (onAndroid ? qsTr(" Нужен перезапуск: закройте Vexa и откройте её снова.") : qsTr(" Vexa перезапустится."))
-                    + ((onAndroid && !databaseProtection.encrypted) ? qsTr(" При удалении Vexa ключ пропадёт: храните копию .vexabackup.") : "")
+                    ? "После отключения файл базы будет доступен без ключа. Ключ сохранится для чтения ранее зашифрованных копий."
+                    : "База будет зашифрована ключом из %1. Для её открытия потребуется этот ключ. Старые копии останутся без изменений.".arg(keyPlace))
+                    + (onAndroid ? " Нужен перезапуск: закройте Vexa и откройте её снова." : " Vexa перезапустится.")
+                    + ((onAndroid && !databaseProtection.encrypted) ? " При удалении Vexa ключ пропадёт: храните копию .vexabackup." : "")
                 color: "#031528"
                 font.pixelSize: Appearance.desktop ? 16 : 14
                 wrapMode: Text.WordWrap
             }
             EditorialRowLayout {
                 Layout.fillWidth: true
-                StyledButton { text: qsTr("Отмена"); onClicked: confirmation.close() }
+                StyledButton { text: "Отмена"; onClicked: confirmation.close() }
                 Item { Layout.fillWidth: true }
                 StyledButton {
-                    text: qsTr("Продолжить")
+                    text: "Продолжить"
                     primary: true
                     enabled: databaseProtection.supported && appAccess.storeAvailable && databaseProtection.ready && !databaseProtection.busy
                     onClicked: { confirmation.close(); databaseProtection.requestChange(!databaseProtection.encrypted) }

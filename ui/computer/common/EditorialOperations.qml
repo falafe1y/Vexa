@@ -73,7 +73,7 @@ Item {
             color: "#031528"
         }
         Repeater {
-            model: [qsTr("ДАТА"), qsTr("КАТЕГОРИЯ"), qsTr("ОПИСАНИЕ"), qsTr("СУММА")]
+            model: ["ДАТА", "КАТЕГОРИЯ", "ОПИСАНИЕ", "СУММА"]
             EditorialText {
                 required property string modelData
                 required property int index
@@ -147,7 +147,7 @@ Item {
         visible: table.rows.length === 0
         width: parent.width
         height: 64
-        text: qsTr("Операций пока нет")
+        text: "Операций пока нет"
         color: "#59616a"
     }
     onVisibleChanged: if (!visible)
@@ -175,11 +175,11 @@ Item {
     EditorialMenu {
         id: menu
         EditorialMenuItem {
-            text: qsTr("Выделить все")
+            text: "Выделить все"
             onTriggered: table.selectAll()
         }
         EditorialMenuItem {
-            text: qsTr("Удалить выделенные")
+            text: "Удалить выделенные"
             onTriggered: table.host.editorialDeleteHistory(table)
         }
     }

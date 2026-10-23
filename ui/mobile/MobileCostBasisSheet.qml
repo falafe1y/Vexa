@@ -12,7 +12,7 @@ MobileSheet {
     property string mode: "manual"
     property string errorText: ""
 
-    title: qsTr("Цена покупки")
+    title: "Цена покупки"
 
     function openFor(item) {
         itemId = item.id;
@@ -36,7 +36,7 @@ MobileSheet {
         if (saved)
             sheet.close();
         else
-            sheet.errorText = qsTr("Проверьте цену и дату: цена больше нуля, дата в формате ГГГГ-ММ-ДД и не позже сегодня.");
+            sheet.errorText = "Проверьте цену и дату: цена больше нуля, дата в формате ГГГГ-ММ-ДД и не позже сегодня.";
     }
 
     MobileText {
@@ -49,7 +49,7 @@ MobileSheet {
 
     MobileText {
         Layout.fillWidth: true
-        text: qsTr("Эти монеты попали на счёт не покупкой на бирже, поэтому доходность по ним нужна цена покупки.")
+        text: "Эти монеты попали на счёт не покупкой на бирже, поэтому доходность по ним нужна цена покупки."
         color: MobileTheme.muted
         font.pixelSize: MobileTheme.sizeCaption
         wrapMode: Text.Wrap
@@ -59,11 +59,11 @@ MobileSheet {
         Layout.fillWidth: true
         options: [
             {
-                label: qsTr("Средняя цена и дата"),
+                label: "Средняя цена и дата",
                 value: "manual"
             },
             {
-                label: qsTr("С подключения"),
+                label: "С подключения",
                 value: "connection"
             }
         ]
@@ -76,7 +76,7 @@ MobileSheet {
     MobileText {
         Layout.fillWidth: true
         visible: sheet.mode === "connection"
-        text: qsTr("Цена покупки будет равна цене на сегодня.")
+        text: "Цена покупки будет равна цене на сегодня."
         color: MobileTheme.muted
         font.pixelSize: MobileTheme.sizeCaption
         wrapMode: Text.Wrap
@@ -86,7 +86,7 @@ MobileSheet {
         id: priceField
         visible: sheet.mode === "manual"
         Layout.fillWidth: true
-        label: qsTr("Цена за 1 монету, $")
+        label: "Цена за 1 монету, $"
         placeholder: "0"
         inputMethodHints: Qt.ImhFormattedNumbersOnly
     }
@@ -95,8 +95,8 @@ MobileSheet {
         id: dateField
         visible: sheet.mode === "manual"
         Layout.fillWidth: true
-        label: qsTr("Примерная дата покупки")
-        placeholder: qsTr("ГГГГ-ММ-ДД")
+        label: "Примерная дата покупки"
+        placeholder: "ГГГГ-ММ-ДД"
     }
 
     MobileText {
@@ -112,25 +112,25 @@ MobileSheet {
     MobileButton {
         Layout.fillWidth: true
         variant: "primary"
-        text: qsTr("Сохранить")
+        text: "Сохранить"
         onClicked: sheet.save()
     }
 
     MobileButton {
         Layout.fillWidth: true
         visible: sheet.basisMode.length > 0
-        text: qsTr("Сбросить")
+        text: "Сбросить"
         onClicked: {
             if (financeController.clearCryptoCostBasis(sheet.itemId))
                 sheet.close();
             else
-                sheet.errorText = qsTr("Не удалось сбросить цену покупки");
+                sheet.errorText = "Не удалось сбросить цену покупки";
         }
     }
 
     MobileButton {
         Layout.fillWidth: true
-        text: qsTr("Отмена")
+        text: "Отмена"
         onClicked: sheet.close()
     }
 }

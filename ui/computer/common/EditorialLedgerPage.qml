@@ -9,7 +9,7 @@ EditorialPage {
     readonly property var entries: budget ? controller.budgets : controller.projects
     readonly property var selected: budget ? host.selectedBudget() : host.selectedProject()
     readonly property var operations: budget ? controller.budgetTransactions : controller.projectTransactions
-    title: budget ? qsTr("Бюджеты.") : qsTr("Проекты.")
+    title: budget ? "Бюджеты." : "Проекты."
     RowLayout {
         width: parent.width
         spacing: 0
@@ -33,13 +33,13 @@ EditorialPage {
                     height: 48
                     EditorialText {
                         height: 32
-                        text: page.budget ? qsTr("МОИ БЮДЖЕТЫ") : qsTr("МОИ ПРОЕКТЫ")
+                        text: page.budget ? "МОИ БЮДЖЕТЫ" : "МОИ ПРОЕКТЫ"
                         font.family: "Cousine"
                         font.pixelSize: 12
                     }
                     EditorialAction {
                         anchors.right: parent.right
-                        text: page.budget ? qsTr("+ БЮДЖЕТ") : qsTr("+ ПРОЕКТ")
+                        text: page.budget ? "+ БЮДЖЕТ" : "+ ПРОЕКТ"
                         onClicked: page.host.editorialNewLedger(page.budget)
                     }
                 }
@@ -79,8 +79,7 @@ EditorialPage {
                                 text: page.budget ? page.host.money(entry.modelData.displaySpentMinor,
                                                                     entry.modelData.displayCurrency, false) + " / "
                                                     + page.host.money(entry.modelData.displayLimitMinor,
-                                                                      entry.modelData.displayCurrency, false) : qsTr(
-                                                        "%1 операций").arg(entry.modelData.operationCount)
+                                                                      entry.modelData.displayCurrency, false) : "%1 операций".arg(entry.modelData.operationCount)
                                 font.family: "Cousine"
                                 font.pixelSize: 12
                                 color: "#59616a"
@@ -99,11 +98,10 @@ EditorialPage {
                             EditorialText {
                                 width: parent.width
                                 height: 24
-                                text: page.budget ? (entry.modelData.allAccounts ? qsTr("ВСЕ СЧЕТА") : qsTr(
-                                                                                       "СЧЕТОВ: %1").arg((
+                                text: page.budget ? (entry.modelData.allAccounts ? "ВСЕ СЧЕТА" : "СЧЕТОВ: %1".arg((
                                                                                                              entry.modelData.accountIds
                                                                                                              || []).length)) :
-                                                    qsTr("Результат %1").arg(page.host.money(entry.modelData.resultMinor,
+                                                    "Результат %1".arg(page.host.money(entry.modelData.resultMinor,
                                                                                              page.controller.appCurrency,
                                                                                              false))
                                 font.family: "Cousine"
@@ -147,8 +145,7 @@ EditorialPage {
                 EditorialText {
                     width: Math.max(0, parent.width - (page.budget ? month.width : add.width) - 24)
                     height: parent.height
-                    text: page.selected ? page.selected.name : page.budget ? qsTr("Бюджет не выбран") : qsTr(
-                                                                                 "Проект не выбран")
+                    text: page.selected ? page.selected.name : page.budget ? "Бюджет не выбран" : "Проект не выбран"
                     font.family: "PT Serif"
                     font.pixelSize: page.small ? 28 : 36
                 }
@@ -183,7 +180,7 @@ EditorialPage {
                     visible: !page.budget && !!page.selected
                     anchors.right: parent.right
                     anchors.verticalCenter: parent.verticalCenter
-                    text: qsTr("+ НОВАЯ ОПЕРАЦИЯ")
+                    text: "+ НОВАЯ ОПЕРАЦИЯ"
                     onClicked: page.host.editorialProjectOperation()
                 }
             }
@@ -193,19 +190,19 @@ EditorialPage {
                 visible: !!page.selected
                 metrics: !page.selected ? [] : page.budget ? [
                                                                  {
-                                                                     label: qsTr("Лимит"),
+                                                                     label: "Лимит",
                                                                      value: page.host.money(
                                                                                 page.selected.displayLimitMinor,
                                                                                 page.selected.displayCurrency, false)
                                                                  },
                                                                  {
-                                                                     label: qsTr("Потрачено"),
+                                                                     label: "Потрачено",
                                                                      value: page.host.money(
                                                                                 page.selected.displaySpentMinor,
                                                                                 page.selected.displayCurrency, false)
                                                                  },
                                                                  {
-                                                                     label: qsTr("Осталось"),
+                                                                     label: "Осталось",
                                                                      value: page.host.money(
                                                                                 page.selected.displayLimitMinor
                                                                                 - page.selected.displaySpentMinor,
@@ -213,20 +210,20 @@ EditorialPage {
                                                                  }
                                                              ] : [
                                                                  {
-                                                                     label: qsTr("Доходы проекта"),
+                                                                     label: "Доходы проекта",
                                                                      value: page.host.money(page.selected.incomeMinor,
                                                                                             page.controller.appCurrency,
                                                                                             false),
                                                                      color: "#2e5947"
                                                                  },
                                                                  {
-                                                                     label: qsTr("Расходы проекта"),
+                                                                     label: "Расходы проекта",
                                                                      value: page.host.money(page.selected.expenseMinor,
                                                                                             page.controller.appCurrency,
                                                                                             false)
                                                                  },
                                                                  {
-                                                                     label: qsTr("Результат проекта"),
+                                                                     label: "Результат проекта",
                                                                      value: page.host.money(page.selected.resultMinor,
                                                                                             page.controller.appCurrency,
                                                                                             false)
@@ -237,7 +234,7 @@ EditorialPage {
                 visible: !!page.selected && !!page.selected.rateMissing
                 width: parent.width
                 height: visible ? 48 : 0
-                text: qsTr("Проверьте курсы валют: часть сумм не пересчитана.")
+                text: "Проверьте курсы валют: часть сумм не пересчитана."
                 color: "#b84932"
             }
             Item {
@@ -248,7 +245,7 @@ EditorialPage {
             EditorialSection {
                 width: parent.width
                 visible: page.budget && !!page.selected
-                title: qsTr("Категории")
+                title: "Категории"
                 number: 1
             }
             Repeater {
@@ -298,9 +295,9 @@ EditorialPage {
             }
             EditorialSection {
                 width: parent.width
-                title: page.budget ? qsTr("Операции бюджета") : qsTr("Операции проекта")
+                title: page.budget ? "Операции бюджета" : "Операции проекта"
                 number: page.budget ? 2 : 1
-                note: qsTr("%1 ОПЕРАЦИЙ").arg(page.operations.length)
+                note: "%1 ОПЕРАЦИЙ".arg(page.operations.length)
             }
             EditorialOperations {
                 width: parent.width
