@@ -1,4 +1,4 @@
-#include "../services/RecurringScheduleCalculator.h"
+#include "../core/model/RecurringScheduleCalculator.h"
 
 #include <QtTest>
 

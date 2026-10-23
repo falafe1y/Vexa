@@ -191,12 +191,6 @@ qt_add_qml_module(vexa
         SOURCES services/InvestmentRiskCalculator.h
         SOURCES services/InvestmentPerformanceCalculator.h
         SOURCES interface/FinanceControllerPerformance.cpp
-        SOURCES services/BalanceCalculator.h
-        SOURCES services/BalanceCalculator.cpp
-        SOURCES services/TransactionDateFilter.h
-        SOURCES services/TransactionDateFilter.cpp
-        SOURCES services/DateSliceCalculator.h
-        SOURCES services/DateSliceCalculator.cpp
         SOURCES services/CsvCodec.h
         SOURCES services/CsvCodec.cpp
         SOURCES services/ContentUriIo.h
@@ -214,10 +208,6 @@ qt_add_qml_module(vexa
         SOURCES services/XlsxReader.cpp
         SOURCES services/CapitalHistoryCalculator.h
         SOURCES services/CapitalHistoryCalculator.cpp
-        SOURCES services/RecurringScheduleCalculator.h
-        SOURCES services/RecurringScheduleCalculator.cpp
-        SOURCES services/DepositInterestCalculator.h
-        SOURCES services/DepositInterestCalculator.cpp
         SOURCES services/CurrencyRateCache.h
         SOURCES services/CurrencyRateCache.cpp
         SOURCES services/CbrCurrencyRateProvider.h
@@ -359,7 +349,6 @@ add_test(
 
 add_executable(BalanceCalculatorTest
     tests/BalanceCalculatorTest.cpp
-    services/BalanceCalculator.cpp
 )
 
 target_link_libraries(BalanceCalculatorTest
@@ -376,12 +365,11 @@ add_test(
 
 add_executable(TransactionDateFilterTest
     tests/TransactionDateFilterTest.cpp
-    services/TransactionDateFilter.cpp
-    services/DateSliceCalculator.cpp
 )
 
 target_link_libraries(TransactionDateFilterTest
     PRIVATE
+        core_model
         Qt6::Core
         Qt6::Test
 )
@@ -393,11 +381,11 @@ add_test(
 
 add_executable(DepositInterestCalculatorTest
     tests/DepositInterestCalculatorTest.cpp
-    services/DepositInterestCalculator.cpp
 )
 
 target_link_libraries(DepositInterestCalculatorTest
     PRIVATE
+        core_model
         Qt6::Core
         Qt6::Test
 )
@@ -600,11 +588,11 @@ add_test(NAME FinancialTrajectoryCalculatorTest COMMAND FinancialTrajectoryCalcu
 
 add_executable(RecurringScheduleCalculatorTest
     tests/RecurringScheduleCalculatorTest.cpp
-    services/RecurringScheduleCalculator.cpp
 )
 
 target_link_libraries(RecurringScheduleCalculatorTest
     PRIVATE
+        core_model
         Qt6::Core
         Qt6::Test
 )

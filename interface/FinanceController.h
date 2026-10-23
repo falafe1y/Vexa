@@ -2,7 +2,7 @@
 
 #include "../core/model/Transaction.h"
 #include "../persistence/FinanceRepository.h"
-#include "../services/BalanceCalculator.h"
+#include "../core/model/BalanceCalculator.h"
 #include "../services/BankCsvImporter.h"
 #include "../services/CapitalHistoryCalculator.h"
 #include "../services/InvestmentValuation.h"
@@ -11,7 +11,7 @@
 #include "../core/model/CurrencyConverter.h"
 #include "../services/CryptoProvider.h"
 #include "../services/BybitProvider.h"
-#include "../services/DepositInterestCalculator.h"
+#include "../core/model/DepositInterestCalculator.h"
 #include "../services/MoexInvestmentProvider.h"
 #include "../services/FinancialGoalCalculator.h"
 #include "../core/model/FinancialTrajectory.h"

@@ -1,8 +1,8 @@
 #pragma once
 
-#include "../core/model/Money.h"
-#include "../core/model/Transaction.h"
-#include "../core/model/CurrencyConverter.h"
+#include "Money.h"
+#include "Transaction.h"
+#include "CurrencyConverter.h"
 
 #include <QVector>
 

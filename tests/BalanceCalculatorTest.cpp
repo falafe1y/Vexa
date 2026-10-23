@@ -1,5 +1,5 @@
 #include "../core/model/Transaction.h"
-#include "../services/BalanceCalculator.h"
+#include "../core/model/BalanceCalculator.h"
 #include "../core/model/CurrencyConverter.h"
 #include "TestCurrencyRateProvider.h"
 

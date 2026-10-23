@@ -1,7 +1,7 @@
 #pragma once
 
-#include "../core/model/Account.h"
-#include "../core/model/Transaction.h"
+#include "Account.h"
+#include "Transaction.h"
 
 #include <QDate>
 #include <QVector>

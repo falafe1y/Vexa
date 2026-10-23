@@ -4,6 +4,8 @@ add_library(core_model STATIC
     Account.h
     AnalyticsHistory.h
     Asset.h
+    BalanceCalculator.cpp
+    BalanceCalculator.h
     Budget.h
     Category.h
     CryptoTransaction.h
@@ -13,6 +15,10 @@ add_library(core_model STATIC
     CurrencyConverter.cpp
     CurrencyConverter.h
     CurrencyRateProvider.h
+    DateSliceCalculator.cpp
+    DateSliceCalculator.h
+    DepositInterestCalculator.cpp
+    DepositInterestCalculator.h
     DepositSettings.h
     FinancialGoal.h
     FinancialTrajectory.h
@@ -24,8 +30,12 @@ add_library(core_model STATIC
     InvestmentTerms.h
     Money.h
     Project.h
+    RecurringScheduleCalculator.cpp
+    RecurringScheduleCalculator.h
     RecurringTransaction.h
     Transaction.h
+    TransactionDateFilter.cpp
+    TransactionDateFilter.h
     TransactionRecipient.h
 )
 target_link_libraries(core_model PUBLIC Qt6::Core)

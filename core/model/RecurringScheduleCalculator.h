@@ -1,6 +1,6 @@
 #pragma once
 
-#include "../core/model/RecurringTransaction.h"
+#include "RecurringTransaction.h"
 
 #include <QDate>
 #include <QVector>

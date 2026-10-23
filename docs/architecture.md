@@ -2,7 +2,7 @@
 
 Решение — ADR-031 (слои) и ADR-032 (имена) в `docs/ADR.md`. Здесь — целевая схема и план по шагам с отметками.
 
-Дата последнего обновления: 23.10.2026.
+Дата последнего обновления: 24.10.2026.
 
 ## Целевая схема
 
@@ -46,7 +46,7 @@ core/
 - [x] 1.3 Файлы `core/*` перенесены в `core/model/`, библиотека — `core_model`, добавлена обёртка `core`. Приложение и тесты контроллера линкуются с `core`, остальные тесты — с `core_model`.
 - [ ] 1.4 Перенести чистые расчёты из `services/` в `core/model/`, по группам, каждая — отдельный коммит:
   - [x] 1.4.1 Деньги и валюты: `CurrencyConverter`, интерфейс `CurrencyRateProvider` — в `core/model/`, `TestCurrencyRateProvider` — в `tests/`.
-  - [ ] 1.4.2 Операции и балансы: `BalanceCalculator`, `TransactionDateFilter`, `DateSliceCalculator`, `RecurringScheduleCalculator`, `DepositInterestCalculator`.
+  - [x] 1.4.2 Операции и балансы: `BalanceCalculator`, `TransactionDateFilter`, `DateSliceCalculator`, `RecurringScheduleCalculator`, `DepositInterestCalculator`.
   - [ ] 1.4.3 Инвестиции: `InvestmentReturn`, `InvestmentValuation`, `InvestmentRiskCalculator`, `InvestmentBenchmark`, `InvestmentPerformanceCalculator`, `CryptoCostBasis`.
   - [ ] 1.4.4 Планирование: `FinancialGoalCalculator`, `FinancialTrajectoryCalculator`, `CapitalHistoryCalculator`.
 - [ ] 1.5 Подпапки внутри `core/model/`: `money/`, `accounts/`, `transactions/`, `investments/`, `crypto/`, `planning/`.
