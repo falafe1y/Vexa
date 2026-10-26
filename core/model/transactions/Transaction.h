@@ -1,6 +1,6 @@
 #pragma once
 
-#include "Money.h"
+#include "../money/Money.h"
 #include "TransactionRecipient.h"
 
 #include <QDateTime>

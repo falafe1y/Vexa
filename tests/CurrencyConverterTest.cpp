@@ -1,5 +1,5 @@
-#include "../core/model/Money.h"
-#include "../core/model/CurrencyConverter.h"
+#include "../core/model/money/Money.h"
+#include "../core/model/money/CurrencyConverter.h"
 #include "TestCurrencyRateProvider.h"
 
 #include <QtTest>

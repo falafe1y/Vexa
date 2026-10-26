@@ -1,8 +1,8 @@
 #pragma once
 
 #include "FinancialGoal.h"
-#include "Money.h"
-#include "CurrencyRateProvider.h"
+#include "../money/Money.h"
+#include "../money/CurrencyRateProvider.h"
 #include <QVector>
 
 struct GoalAssetValue

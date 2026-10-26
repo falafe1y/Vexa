@@ -1,4 +1,4 @@
-#include "../core/model/InvestmentPerformanceCalculator.h"
+#include "../core/model/analytics/InvestmentPerformanceCalculator.h"
 #include <QtTest>
 #include <QTimeZone>
 #include <QJsonDocument>

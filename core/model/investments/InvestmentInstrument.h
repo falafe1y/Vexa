@@ -1,6 +1,6 @@
 #pragma once
 
-#include "Currency.h"
+#include "../money/Currency.h"
 #include "InvestmentTerms.h"
 
 #include <QString>

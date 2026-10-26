@@ -1,4 +1,4 @@
-#include "../core/model/InvestmentReturn.h"
+#include "../core/model/analytics/InvestmentReturn.h"
 #include <QtTest>
 
 namespace {

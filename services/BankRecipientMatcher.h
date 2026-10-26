@@ -1,7 +1,7 @@
 #pragma once
 #include "BankCsvImporter.h"
-#include "../core/model/Category.h"
-#include "../core/model/TransactionRecipient.h"
+#include "../core/model/transactions/Category.h"
+#include "../core/model/transactions/TransactionRecipient.h"
 
 struct BankRecipientRule {
     QString pattern;

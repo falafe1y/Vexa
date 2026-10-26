@@ -1,6 +1,6 @@
 #include "storage/CipherDriver.h"
 #include "../persistence/FinanceRepository.h"
-#include "../core/model/InvestmentValuation.h"
+#include "../core/model/investments/InvestmentValuation.h"
 #include <QTemporaryDir>
 #include <QSqlQuery>
 #include <QSqlError>

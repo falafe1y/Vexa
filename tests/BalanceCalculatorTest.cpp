@@ -1,6 +1,6 @@
-#include "../core/model/Transaction.h"
-#include "../core/model/BalanceCalculator.h"
-#include "../core/model/CurrencyConverter.h"
+#include "../core/model/transactions/Transaction.h"
+#include "../core/model/accounts/BalanceCalculator.h"
+#include "../core/model/money/CurrencyConverter.h"
 #include "TestCurrencyRateProvider.h"
 
 #include <QtTest>

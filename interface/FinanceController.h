@@ -1,20 +1,20 @@
 #pragma once
 
-#include "../core/model/Transaction.h"
+#include "../core/model/transactions/Transaction.h"
 #include "../persistence/FinanceRepository.h"
-#include "../core/model/BalanceCalculator.h"
+#include "../core/model/accounts/BalanceCalculator.h"
 #include "../services/BankCsvImporter.h"
-#include "../core/model/CapitalHistoryCalculator.h"
-#include "../core/model/InvestmentValuation.h"
+#include "../core/model/analytics/CapitalHistoryCalculator.h"
+#include "../core/model/investments/InvestmentValuation.h"
 #include "../services/InvestmentBenchmarkProvider.h"
 #include "../services/CbrCurrencyRateProvider.h"
-#include "../core/model/CurrencyConverter.h"
+#include "../core/model/money/CurrencyConverter.h"
 #include "../services/CryptoProvider.h"
 #include "../services/BybitProvider.h"
-#include "../core/model/DepositInterestCalculator.h"
+#include "../core/model/accounts/DepositInterestCalculator.h"
 #include "../services/MoexInvestmentProvider.h"
-#include "../core/model/FinancialGoalCalculator.h"
-#include "../core/model/FinancialTrajectory.h"
+#include "../core/model/planning/FinancialGoalCalculator.h"
+#include "../core/model/analytics/FinancialTrajectory.h"
 
 #include <QDateTime>
 #include <QDate>

@@ -1,6 +1,6 @@
 #pragma once
 
-#include "Account.h"
+#include "../accounts/Account.h"
 #include "Transaction.h"
 
 #include <QDate>

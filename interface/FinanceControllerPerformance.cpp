@@ -1,7 +1,7 @@
 #include "FinanceController.h"
-#include "../core/model/InvestmentPerformanceCalculator.h"
-#include "../core/model/CryptoCostBasis.h"
-#include "../core/model/InvestmentReturn.h"
+#include "../core/model/analytics/InvestmentPerformanceCalculator.h"
+#include "../core/model/crypto/CryptoCostBasis.h"
+#include "../core/model/analytics/InvestmentReturn.h"
 #include <QSet>
 #include <QRegularExpression>
 #include <cmath>

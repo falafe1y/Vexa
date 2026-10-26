@@ -1,4 +1,4 @@
-#include "../core/model/InvestmentRiskCalculator.h"
+#include "../core/model/analytics/InvestmentRiskCalculator.h"
 #include <cmath>
 #include <cstdlib>
 #include <iostream>

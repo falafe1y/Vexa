@@ -1,5 +1,5 @@
-#include "../core/model/TransactionDateFilter.h"
-#include "../core/model/DateSliceCalculator.h"
+#include "../core/model/transactions/TransactionDateFilter.h"
+#include "../core/model/transactions/DateSliceCalculator.h"
 
 #include <QTimeZone>
 #include <QtTest>

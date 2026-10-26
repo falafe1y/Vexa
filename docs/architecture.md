@@ -49,7 +49,15 @@ core/
   - [x] 1.4.2 Операции и балансы: `BalanceCalculator`, `TransactionDateFilter`, `DateSliceCalculator`, `RecurringScheduleCalculator`, `DepositInterestCalculator`.
   - [x] 1.4.3 Инвестиции: `InvestmentReturn`, `InvestmentValuation`, `InvestmentRiskCalculator`, `InvestmentPerformanceCalculator`, `CryptoCostBasis`. `InvestmentBenchmark` не перенесён: в нём вместе расчёт и разбор ответов Мосбиржи, делится в 2.5.
   - [x] 1.4.4 Планирование: `FinancialGoalCalculator`, `FinancialTrajectoryCalculator`, `CapitalHistoryCalculator`.
-- [ ] 1.5 Подпапки внутри `core/model/`: `money/`, `accounts/`, `transactions/`, `investments/`, `crypto/`, `planning/`.
+- [x] 1.5 Подпапки внутри `core/model/`. Библиотека остаётся одна — `core_model`. Группировка по смыслу (на какой вопрос о деньгах отвечает), а не по экранам. Раскладка согласована 24.10.2026:
+  - `money/` — сколько и в какой валюте: `Money`, `Currency`, `CurrencyConverter`, `CurrencyRateProvider`;
+  - `accounts/` — что лежит на счетах: `Account`, `Asset`, `BalanceCalculator`, `DepositSettings`, `DepositInterestCalculator`;
+  - `transactions/` — движения денег: `Transaction`, `TransactionRecipient`, `Category`, `RecurringTransaction`, `RecurringScheduleCalculator`, `TransactionDateFilter`, `DateSliceCalculator`;
+  - `investments/` — чем владею и сколько стоит: `InvestmentInstrument`, `InvestmentMarketInstrument`, `InvestmentTerms`, `InvestmentPosition`, `InvestmentQuote`, `InvestmentOperation`, `InvestmentValuation`;
+  - `crypto/` — монеты и их себестоимость: `CryptoWallet`, `CryptoTransaction`, `CryptoCostBasis`;
+  - `planning/` — что задумано: `Budget`, `Project`, `FinancialGoal`, `FinancialGoalCalculator`;
+  - `analytics/` — как идут дела с капиталом и вложениями: `AnalyticsHistory`, `InvestmentPerformanceCalculator`, `InvestmentRiskCalculator`, `InvestmentReturn`, `CapitalHistoryCalculator`, `FinancialTrajectory`, `FinancialTrajectoryCalculator`.
+  - Include'ы относительные: внутри подпапки `"Money.h"`, между подпапками `"../money/Money.h"`, снаружи `"../core/model/money/Money.h"`.
 - [ ] 1.6 Замер сборки «после»; проверить, что `core_model` линкуется только с Qt Core.
 
 Не трогаем на этом этапе: банковский импорт (`BankCategoryMatcher`, `BankImportReview` завязаны на чтение файлов, распутываются в 2.4), парсеры ответов API (уходят в `core/api`), `QVariantMap` на входе и выходе `InvestmentPerformanceCalculator` (свои структуры — позже).
@@ -72,7 +80,7 @@ core/
   - [ ] 2.3.11 `AccountRepository` — счета, настройки вкладов, ставки
   - [ ] 2.3.12 `TransactionRepository` — операции, переводы, сводка
 - [ ] 2.4 Распутать банковский импорт: структуры и логика правил (`BankCategoryRule`, `BankRecipientRule`, сопоставление) — в `core/model`, загрузка словаря и чтение файлов — в `core/system`.
-- [ ] 2.5 Провайдеры и парсеры ответов — в `core/api/`. `services/InvestmentBenchmark` разделить: `parseBenchmarkPage`, `mergeBenchmarkRows` и список индексов `investmentBenchmarkIndices` — в `core/api` (Мосбиржа), `compareInvestmentBenchmark` — в `core/model`.
+- [ ] 2.5 Провайдеры и парсеры ответов — в `core/api/`. `services/InvestmentBenchmark` разделить: `parseBenchmarkPage`, `mergeBenchmarkRows` и список индексов `investmentBenchmarkIndices` — в `core/api` (Мосбиржа), `compareInvestmentBenchmark` — в `core/model/analytics/`.
 - [ ] 2.6 Файлы и форматы — в `core/system/`: `CsvCodec`, `XlsxReader`, `PdfStatementReader`, `ContentUriIo`. Разбор форматов отделить от доступа к файлам: `PdfStatementReader` делится на получение слов (`pdftotext`/PDFBox) и раскладку в строки (`parsePages`). Как понимать выписку по профилю банка (`BankCsvImporter`) — в `core/model`.
 - [ ] 2.7 Бэкап, восстановление и очистка базы — `DatabaseMaintenance` в `core/db/`.
 - [ ] 2.8 `FinanceRepository` опустел — удалить.

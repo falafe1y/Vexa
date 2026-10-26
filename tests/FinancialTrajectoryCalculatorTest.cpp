@@ -1,4 +1,4 @@
-#include "../core/model/FinancialTrajectoryCalculator.h"
+#include "../core/model/analytics/FinancialTrajectoryCalculator.h"
 
 #include <cmath>
 #include <cstdlib>

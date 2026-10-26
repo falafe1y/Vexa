@@ -1,4 +1,4 @@
-#include "../core/model/CryptoCostBasis.h"
+#include "../core/model/crypto/CryptoCostBasis.h"
 #include <QtTest>
 
 namespace {

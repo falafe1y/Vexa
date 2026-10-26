@@ -1,6 +1,6 @@
 #pragma once
 
-#include "InvestmentReturn.h"
+#include "../analytics/InvestmentReturn.h"
 
 #include <QDate>
 #include <QMap>

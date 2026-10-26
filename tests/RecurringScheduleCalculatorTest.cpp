@@ -1,4 +1,4 @@
-#include "../core/model/RecurringScheduleCalculator.h"
+#include "../core/model/transactions/RecurringScheduleCalculator.h"
 
 #include <QtTest>
 

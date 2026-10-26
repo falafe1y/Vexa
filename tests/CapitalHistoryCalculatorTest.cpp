@@ -1,4 +1,4 @@
-#include "../core/model/CapitalHistoryCalculator.h"
+#include "../core/model/analytics/CapitalHistoryCalculator.h"
 
 #include <QtTest>
 

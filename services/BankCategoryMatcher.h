@@ -2,7 +2,7 @@
 
 #include "BankCsvImporter.h"
 #include "BankRecipientMatcher.h"
-#include "../core/model/Category.h"
+#include "../core/model/transactions/Category.h"
 #include <QSet>
 
 struct BankCategoryRule

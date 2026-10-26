@@ -1,4 +1,4 @@
-#include "../core/model/DepositInterestCalculator.h"
+#include "../core/model/accounts/DepositInterestCalculator.h"
 
 #include <QtTest>
 

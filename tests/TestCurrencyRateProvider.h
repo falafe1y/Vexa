@@ -1,6 +1,6 @@
 #pragma once
 
-#include "../core/model/CurrencyRateProvider.h"
+#include "../core/model/money/CurrencyRateProvider.h"
 
 class TestCurrencyRateProvider final : public CurrencyRateProvider
 {

@@ -49,7 +49,7 @@
 
 **Перевод между брокерами.** Для бюджета — ничего: деньги переложены из одного кармана в другой. Для портфеля «каждый брокер отдельно» — вывод с одного и взнос на другой. Для портфеля «все брокеры» — ничего, деньги остались внутри набора. Оба вида верны для своей границы; какие портфели показывать по умолчанию, решается в ADR-012.
 
-**Код.** `core/model/InvestmentPerformanceCalculator.cpp` (`buildFlows`), `interface/FinanceControllerPerformance.cpp` (состав счетов портфеля), `persistence/FinanceRepository.cpp` (`loadSummary`).
+**Код.** `core/model/analytics/InvestmentPerformanceCalculator.cpp` (`buildFlows`), `interface/FinanceControllerPerformance.cpp` (состав счетов портфеля), `persistence/FinanceRepository.cpp` (`loadSummary`).
 
 ---
 
@@ -61,7 +61,7 @@
 - Прибыль в рублях = стоимость на конец + всё выведенное − всё внесённое.
 - Годовая доходность берётся из TWR.
 
-**Код.** `core/model/InvestmentPerformanceCalculator.cpp`.
+**Код.** `core/model/analytics/InvestmentPerformanceCalculator.cpp`.
 
 ---
 
@@ -158,7 +158,7 @@
 
 **Зачем эмитенту.** Вернуть долг частями по графику, а не одной суммой в конце: меньше риск не отдать всё сразу. Инвестор получает деньги раньше, а купоны после этого считаются с меньшего номинала.
 
-**Код.** `persistence/FinanceRepositoryHistory.cpp` (себестоимость погашенной части пропорционально номиналу, результат), `core/model/InvestmentPerformanceCalculator.cpp` (погашение и исполнение — в блоке «Продажи и переоценка позиций»). Операции: «Частичное погашение номинала» и «Погашение / исполнение» в диалоге операции по облигации.
+**Код.** `persistence/FinanceRepositoryHistory.cpp` (себестоимость погашенной части пропорционально номиналу, результат), `core/model/analytics/InvestmentPerformanceCalculator.cpp` (погашение и исполнение — в блоке «Продажи и переоценка позиций»). Операции: «Частичное погашение номинала» и «Погашение / исполнение» в диалоге операции по облигации.
 
 ---
 
@@ -240,7 +240,7 @@
 
 **Решение.** Комиссия банка по вкладу — расход. В бюджете это расход. В портфеле это убыток: стоимость вклада уменьшилась, деньги в поток не выводятся. Налог на машину или другой расход с вклада остаются выводом из портфеля (ADR-014).
 
-**Код.** `persistence/FinanceRepository.cpp` (встроенная категория), `core/model/InvestmentPerformanceCalculator.cpp` (`buildFlows`).
+**Код.** `persistence/FinanceRepository.cpp` (встроенная категория), `core/model/analytics/InvestmentPerformanceCalculator.cpp` (`buildFlows`).
 
 ---
 
@@ -263,7 +263,7 @@
 ---
 
 ## ADR-020. Средняя годовая доходность по инструментам
-**Статус:** Открыто (20.10.2026): часть про шифрование и пароль на Android заменена ADR-025. Принято пользователем (16.10.2026). Реализовано: блок «Средняя годовая доходность» в аналитике, `core/model/InvestmentReturn.cpp`, `FinanceController::rebuildAverageReturn`. Тесты: `AverageReturnTest`, `AverageReturnControllerTest`. Криптовалюта на бирже считается по сделкам, кошельки не участвуют (см. ADR-021).
+**Статус:** Открыто (20.10.2026): часть про шифрование и пароль на Android заменена ADR-025. Принято пользователем (16.10.2026). Реализовано: блок «Средняя годовая доходность» в аналитике, `core/model/analytics/InvestmentReturn.cpp`, `FinanceController::rebuildAverageReturn`. Тесты: `AverageReturnTest`, `AverageReturnControllerTest`. Криптовалюта на бирже считается по сделкам, кошельки не участвуют (см. ADR-021).
 
 **Решение.**
 - Годовая доходность инструмента — доходность с учётом сроков денег (XIRR): вложения и выводы с датами плюс текущая стоимость. Для одной покупки это обычный рост в процентах, пересчитанный на год.
@@ -282,7 +282,7 @@
 
 ## ADR-021. Доходность криптовалюты по сделкам биржи
 
-**Статус:** Открыто (20.10.2026): часть про шифрование и пароль на Android заменена ADR-025. Принято пользователем (16.10.2026). Реализовано: `core/model/CryptoCostBasis.cpp` (расчёт по монете), `services/CbrFxHistory.cpp` (курсы ЦБ по датам), `services/BybitProvider.cpp` (поля сделок, окно два года, цены), `FinanceController::rebuildAverageReturn`. Тесты: `CryptoCostBasisTest`, `CbrFxHistoryTest`, `BybitProviderTest`.
+**Статус:** Открыто (20.10.2026): часть про шифрование и пароль на Android заменена ADR-025. Принято пользователем (16.10.2026). Реализовано: `core/model/crypto/CryptoCostBasis.cpp` (расчёт по монете), `services/CbrFxHistory.cpp` (курсы ЦБ по датам), `services/BybitProvider.cpp` (поля сделок, окно два года, цены), `FinanceController::rebuildAverageReturn`. Тесты: `CryptoCostBasisTest`, `CbrFxHistoryTest`, `BybitProviderTest`.
 
 **Контекст.** Биржа Bybit отдаёт журнал операций (`/v5/account/transaction-log`). У строк сделок есть пара, сторона, цена (`tradePrice`), количество (`qty`), изменение баланса (`change`) и идентификатор сделки. Журнал хранится два года, окно одного запроса не больше семи дней. Крипто-кошелёк по адресу таких данных не даёт: покупка не видна.
 
@@ -307,7 +307,7 @@
 
 ## ADR-022. Учёт долга по кредитной карте
 
-**Статус:** Открыто (20.10.2026): часть про шифрование и пароль на Android заменена ADR-025. Принято пользователем (16.10.2026). Реализовано: `core/model/Account.h` (флаг и `countedBalanceMinor`), `persistence/FinanceRepository.cpp` (колонка `counts_debt`, шаг `migrateCreditDebtFlag`), `FinanceController::assetBalanceMinor` и `calculateCapitalHistory`, диалог счёта в `ui/computer/Desktop.qml`. Тесты: `CreditDebtFlagControllerTest`. Исправлено 18.10.2026: цели, текущий капитал и история траектории раньше вычитали долг карты без галочки (`goalAssetValues`, `financialTrajectory`).
+**Статус:** Открыто (20.10.2026): часть про шифрование и пароль на Android заменена ADR-025. Принято пользователем (16.10.2026). Реализовано: `core/model/accounts/Account.h` (флаг и `countedBalanceMinor`), `persistence/FinanceRepository.cpp` (колонка `counts_debt`, шаг `migrateCreditDebtFlag`), `FinanceController::assetBalanceMinor` и `calculateCapitalHistory`, диалог счёта в `ui/computer/Desktop.qml`. Тесты: `CreditDebtFlagControllerTest`. Исправлено 18.10.2026: цели, текущий капитал и история траектории раньше вычитали долг карты без галочки (`goalAssetValues`, `financialTrajectory`).
 
 **Решение.**
 - У каждой кредитной карты есть галочка «Учитывать долг?». По умолчанию она включена: долг вычитается из суммы фиата и из истории капитала, как и раньше.
@@ -431,7 +431,7 @@
 ---
 
 ## ADR-031. Архитектура: UI → service → core, правила в core/model
-**Статус:** Принято (23.10.2026). В работе: шаги 1.1–1.4 плана сделаны (библиотека `core_model` в `core/model/`, зависит только от Qt Core; обёртка `core` подключает весь слой). План и отметки шагов — `docs/architecture.md`.
+**Статус:** Принято (23.10.2026). В работе: шаги 1.1–1.5 плана сделаны (библиотека `core_model` в `core/model/`, зависит только от Qt Core; обёртка `core` подключает весь слой). План и отметки шагов — `docs/architecture.md`.
 
 **Решение.** Код делится на три слоя. Зависимости идут только сверху вниз:
 - **UI** — только отрисовка и ввод: QML и тонкая прослойка под конкретный экран (модели списков, форматирование «1 234,50 ₽»).

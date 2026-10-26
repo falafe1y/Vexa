@@ -2,7 +2,7 @@
 #include "HistorySavepoint.h"
 #include "storage/CipherDriver.h"
 
-#include "../core/model/Currency.h"
+#include "../core/model/money/Currency.h"
 
 #include <QDir>
 #include <QMap>

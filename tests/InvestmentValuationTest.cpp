@@ -1,4 +1,4 @@
-#include "../core/model/InvestmentValuation.h"
+#include "../core/model/investments/InvestmentValuation.h"
 #include <QtTest>
 
 class InvestmentValuationTest : public QObject {

@@ -10,16 +10,16 @@
 #include "../services/BankCsvImporter.h"
 #include "../services/BankCategoryMatcher.h"
 #include "../services/BankImportReview.h"
-#include "../core/model/CapitalHistoryCalculator.h"
-#include "../core/model/DateSliceCalculator.h"
-#include "../core/model/DepositInterestCalculator.h"
-#include "../core/model/RecurringScheduleCalculator.h"
+#include "../core/model/analytics/CapitalHistoryCalculator.h"
+#include "../core/model/transactions/DateSliceCalculator.h"
+#include "../core/model/accounts/DepositInterestCalculator.h"
+#include "../core/model/transactions/RecurringScheduleCalculator.h"
 #include "../services/ContentUriIo.h"
 #include "../services/CsvCodec.h"
 #include "../services/CryptoParser.h"
-#include "../core/model/TransactionDateFilter.h"
+#include "../core/model/transactions/TransactionDateFilter.h"
 #include "../services/TronUsdtParser.h"
-#include "../core/model/FinancialTrajectoryCalculator.h"
+#include "../core/model/analytics/FinancialTrajectoryCalculator.h"
 
 #include <QDebug>
 #include <QCoreApplication>

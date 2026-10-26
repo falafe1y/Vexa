@@ -1,7 +1,7 @@
 #pragma once
 
 #include "Asset.h"
-#include "Currency.h"
+#include "../money/Currency.h"
 
 #include <QString>
 #include <QtGlobal>

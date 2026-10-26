@@ -1,7 +1,7 @@
 #include "../services/CurrencyRateCache.h"
-#include "../core/model/CurrencyRateProvider.h"
+#include "../core/model/money/CurrencyRateProvider.h"
 #include "../services/CbrCurrencyRateProvider.h"
-#include "../core/model/CurrencyConverter.h"
+#include "../core/model/money/CurrencyConverter.h"
 
 #include <QFile>
 #include <QTemporaryDir>

@@ -1,6 +1,6 @@
-#include "../core/model/InvestmentInstrument.h"
-#include "../core/model/InvestmentPosition.h"
-#include "../core/model/InvestmentQuote.h"
+#include "../core/model/investments/InvestmentInstrument.h"
+#include "../core/model/investments/InvestmentPosition.h"
+#include "../core/model/investments/InvestmentQuote.h"
 
 #include <QTimeZone>
 #include <QtTest>
