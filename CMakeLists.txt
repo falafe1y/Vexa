@@ -292,6 +292,11 @@ option(VEXA_BUILD_TESTS "Build unit and QML tests" ${VEXA_BUILD_TESTS_DEFAULT})
 if(VEXA_BUILD_TESTS)
 enable_testing()
 
+# core/model may depend only on Qt Core; this catches what linking cannot.
+add_test(NAME CoreModelIncludesTest
+    COMMAND ${CMAKE_COMMAND} -DMODEL_DIR=${CMAKE_CURRENT_SOURCE_DIR}/core/model
+            -P ${CMAKE_CURRENT_SOURCE_DIR}/cmake/CheckCoreModelIncludes.cmake)
+
 if (NOT ANDROID)
 find_package(Qt6 REQUIRED COMPONENTS Test)
 

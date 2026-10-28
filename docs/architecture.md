@@ -2,7 +2,7 @@
 
 Решение — ADR-031 (слои) и ADR-032 (имена) в `docs/ADR.md`. Здесь — целевая схема и план по шагам с отметками.
 
-Дата последнего обновления: 24.10.2026.
+Дата последнего обновления: 26.10.2026.
 
 ## Целевая схема
 
@@ -58,7 +58,15 @@ core/
   - `planning/` — что задумано: `Budget`, `Project`, `FinancialGoal`, `FinancialGoalCalculator`;
   - `analytics/` — как идут дела с капиталом и вложениями: `AnalyticsHistory`, `InvestmentPerformanceCalculator`, `InvestmentRiskCalculator`, `InvestmentReturn`, `CapitalHistoryCalculator`, `FinancialTrajectory`, `FinancialTrajectoryCalculator`.
   - Include'ы относительные: внутри подпапки `"Money.h"`, между подпапками `"../money/Money.h"`, снаружи `"../core/model/money/Money.h"`.
-- [ ] 1.6 Замер сборки «после»; проверить, что `core_model` линкуется только с Qt Core.
+- [x] 1.6 Замер и проверка (26.10.2026):
+  - Полная сборка с тестами: 741 компиляция до этапа 1 (коммит `b6e5115`) → 567 после (−174, −23 %). Файлы проекта: 542 компиляции 101 уникального файла → 368. `Currency.cpp` раньше компилировался 25 раз, теперь один. Оставшиеся повторы — `FinanceRepository.cpp` и `FinanceRepositoryHistory.cpp` (по 18 раз) и файлы `services/` (по 12–13 раз); уйдут на этапе 2, когда станут библиотеками.
+  - `core_model` линкуется только с Qt Core и получает только пути заголовков Qt Core. В исходниках модели нет подключений SQL, сети, файлов, QML и GUI.
+  - Дыра в проверке компилятором: `#include <QSqlQuery>` в модели не соберётся, но `#include <QtSql/QSqlQuery>` соберётся — системный Qt кладёт `/usr/include/qt6` в пути заголовков. Классы ввода-вывода из Qt Core (`QFile`, `QDir`, `QProcess`, `QStandardPaths`) компилятор тоже не остановит. Закрыто шагом 1.7.
+
+- [x] 1.7 Тест-сторож `CoreModelIncludesTest` (`cmake/CheckCoreModelIncludes.cmake`, запускается `ctest` без сборки). Падает, если в `core/model` есть:
+  - заголовки других модулей Qt через префикс (`<QtSql/…>`, `<QtNetwork/…>`, `<QtGui/…>`, `<QtQml/…>`, `<QtQuick…/…>` и др.);
+  - классы базы, сети, UI, файлов, процессов, таймеров и потоков, в том числе из Qt Core (`QSql…`, `QNetwork…`, `QFile`, `QDir`, `QProcess`, `QStandardPaths`, `QSettings`, `QTimer`, `QThread`, `QFuture`, `QCoreApplication` и др.), в любом написании: `<QFile>`, `<QtCore/QFile>`, `<qfile.h>`;
+  - локальные заголовки вне `core/model` (`"../../../services/…"`).
 
 Не трогаем на этом этапе: банковский импорт (`BankCategoryMatcher`, `BankImportReview` завязаны на чтение файлов, распутываются в 2.4), парсеры ответов API (уходят в `core/api`), `QVariantMap` на входе и выходе `InvestmentPerformanceCalculator` (свои структуры — позже).
 
