@@ -448,6 +448,7 @@ FinanceController::FinanceController(QObject* parent, const QString& databasePat
     , repository_(databasePath, databaseKey)
     , notes_(repository_.database())
     , settings_(repository_.database())
+    , bankImport_(repository_.database())
     , currencyConverter_(rateProvider_)
     , balanceCalculator_(currencyConverter_)
 {
@@ -818,8 +819,8 @@ FinanceController::FinanceController(QObject* parent, const QString& databasePat
     cryptoCostBasis_ = repository_.loadCryptoCostBasis();
     archivedCategoryIds_ = repository_.loadArchivedCategoryIds();
     summary_ = repository_.loadSummary();
-    for (const FinanceRepository::BankCsvProfileRecord& record :
-         repository_.loadBankCsvProfiles()) {
+    for (const BankImportRepository::BankCsvProfileRecord& record :
+         bankImport_.loadBankCsvProfiles()) {
         QJsonParseError parseError;
         const QJsonDocument document = QJsonDocument::fromJson(
             record.configurationJson.toUtf8(), &parseError);
@@ -1350,7 +1351,7 @@ QVariantMap FinanceController::restoreDatabase(const QUrl& fileUrl)
         if (price.fetchedAtUtc.isValid()) cryptoPricesFetchedAtUtc_[symbol] = price.fetchedAtUtc;
     }
     bankCsvProfiles_.clear();
-    for (const auto& record : repository_.loadBankCsvProfiles()) {
+    for (const auto& record : bankImport_.loadBankCsvProfiles()) {
         const auto document = QJsonDocument::fromJson(record.configurationJson.toUtf8());
         if (!document.isObject()) continue;
         auto profile = BankCsvProfile::fromJson(document.object());
@@ -2017,7 +2018,7 @@ QVariantMap FinanceController::previewBankImport(
         if (isTransfer(transaction)) existingIds.insert(transferId(transaction));
     }
     QString linkError;
-    const auto bankLinks = repository_.loadBankImportLinks(&linkError);
+    const auto bankLinks = bankImport_.loadBankImportLinks(&linkError);
     if (!linkError.isEmpty()) { result["error"] = linkError; return result; }
     for (auto it = bankLinks.cbegin(); it != bankLinks.cend(); ++it) existingIds.insert(it.key());
     QHash<QString, int> fingerprintOccurrences;
@@ -2177,9 +2178,9 @@ QVariantMap FinanceController::saveBankCsvProfile(const QVariantMap& values)
 
     const QString configuration = QString::fromUtf8(
         QJsonDocument(profile.toJson()).toJson(QJsonDocument::Compact));
-    if (!repository_.saveBankCsvProfile(
+    if (!bankImport_.saveBankCsvProfile(
             profile.id, profile.name, configuration)) {
-        result[QStringLiteral("error")] = repository_.lastError();
+        result[QStringLiteral("error")] = bankImport_.lastError();
         return result;
     }
 
@@ -2215,7 +2216,7 @@ bool FinanceController::deleteBankCsvProfile(const QString& id)
             return profile.id == id;
         });
     if (existing == bankCsvProfiles_.end() ||
-        !repository_.deleteBankCsvProfile(id)) {
+        !bankImport_.deleteBankCsvProfile(id)) {
         return false;
     }
     bankCsvProfiles_.erase(existing);
@@ -2395,7 +2396,7 @@ QString FinanceController::normalizeBankCategoryText(const QString& text) const
 QVariantMap FinanceController::bankCategoryRules() const
 {
     QString error;
-    const auto rules = repository_.loadBankCategoryRules(&error);
+    const auto rules = bankImport_.loadBankCategoryRules(&error);
     QVariantList items;
     for (const auto& rule : rules) {
         QString name;
@@ -2417,18 +2418,18 @@ QVariantMap FinanceController::deleteBankCategoryRule(const QString& pattern,
     if ((type != QStringLiteral("income") && type != QStringLiteral("expense")) ||
         (matchMode != QStringLiteral("exact") && matchMode != QStringLiteral("contains")))
         return {{QStringLiteral("ok"), false}, {QStringLiteral("error"), QStringLiteral("Некорректное правило")}};
-    const bool ok = repository_.deleteBankCategoryRule(BankCategoryMatcher::normalize(pattern), matchMode,
+    const bool ok = bankImport_.deleteBankCategoryRule(BankCategoryMatcher::normalize(pattern), matchMode,
         type == QStringLiteral("income") ? CategoryType::Income : CategoryType::Expense);
-    return {{QStringLiteral("ok"), ok}, {QStringLiteral("error"), ok ? QString() : repository_.lastError()}};
+    return {{QStringLiteral("ok"), ok}, {QStringLiteral("error"), ok ? QString() : bankImport_.lastError()}};
 }
 
 QVariantMap FinanceController::resolveBankImportRows(const QVariantList& rows,
     const QVariantMap& choices) const
 {
     QString error;
-    const auto categories = repository_.loadBankCategoryRules(&error);
+    const auto categories = bankImport_.loadBankCategoryRules(&error);
     if (!error.isEmpty()) return {{"ok", false}, {"error", error}};
-    const auto recipients = repository_.loadBankRecipientRules(&error);
+    const auto recipients = bankImport_.loadBankRecipientRules(&error);
     if (!error.isEmpty()) return {{"ok", false}, {"error", error}};
     auto review = BankImportReview::resolve(rows, choices, categories_,
         archivedCategoryIds_, categories, recipients);
@@ -2485,7 +2486,7 @@ QVariantMap FinanceController::bankImportTransferDetails(const QVariantMap& row,
     result["sourceMinor"] = income ? peerMinor : ownMinor;
     result["targetMinor"] = income ? ownMinor : peerMinor;
     QString error;
-    const auto links = repository_.loadBankImportLinks(&error);
+    const auto links = bankImport_.loadBankImportLinks(&error);
     if (!error.isEmpty()) return fail(error);
     QSet<QString> linkedLegs;
     for (auto it = links.cbegin(); it != links.cend(); ++it) linkedLegs.insert(it.value());
@@ -2533,7 +2534,7 @@ QVariantMap FinanceController::bankImportTransferDetails(const QVariantMap& row,
 QVariantMap FinanceController::bankRecipientRules() const
 {
     QString error;
-    const auto rules = repository_.loadBankRecipientRules(&error);
+    const auto rules = bankImport_.loadBankRecipientRules(&error);
     QVariantList items;
     for (const auto& rule : rules)
         items.append(QVariantMap{{"pattern", rule.pattern}, {"field", rule.field},
@@ -2548,9 +2549,9 @@ QVariantMap FinanceController::deleteBankRecipientRule(const QString& pattern,
     if ((type != "income" && type != "expense") || (matchMode != "exact" && matchMode != "contains") ||
         (field != "description" && field != "recipient" && field != "bank_recipient" && field != "recipient_id"))
         return {{"ok", false}, {"error", QStringLiteral("Некорректное правило получателя")}};
-    const bool ok = repository_.deleteBankRecipientRule(BankRecipientMatcher::normalize(pattern), field,
+    const bool ok = bankImport_.deleteBankRecipientRule(BankRecipientMatcher::normalize(pattern), field,
         matchMode, type == "income" ? CategoryType::Income : CategoryType::Expense);
-    return {{"ok", ok}, {"error", ok ? QString() : repository_.lastError()}};
+    return {{"ok", ok}, {"error", ok ? QString() : bankImport_.lastError()}};
 }
 
 QVariantMap FinanceController::importBankCsv(
@@ -2621,9 +2622,9 @@ QVariantMap FinanceController::importBankCsv(
         return nullptr;
     };
     QString ruleError;
-    const auto rules = repository_.loadBankCategoryRules(&ruleError);
+    const auto rules = bankImport_.loadBankCategoryRules(&ruleError);
     if (!ruleError.isEmpty()) { result["error"] = ruleError; return result; }
-    const auto recipientRules = repository_.loadBankRecipientRules(&ruleError);
+    const auto recipientRules = bankImport_.loadBankRecipientRules(&ruleError);
     if (!ruleError.isEmpty()) { result["error"] = ruleError; return result; }
     const QVariantMap choices = options.value("choices").toMap();
     const bool requireReview = options.value("requireReview", true).toBool();
@@ -2632,7 +2633,7 @@ QVariantMap FinanceController::importBankCsv(
         existingIds.insert(transaction.id());
         if (isTransfer(transaction)) existingIds.insert(transferId(transaction));
     }
-    const auto previousLinks = repository_.loadBankImportLinks(&ruleError);
+    const auto previousLinks = bankImport_.loadBankImportLinks(&ruleError);
     if (!ruleError.isEmpty()) { result["error"] = ruleError; return result; }
     for (auto it = previousLinks.cbegin(); it != previousLinks.cend(); ++it) existingIds.insert(it.key());
     QHash<QString, int> fingerprintOccurrences, legacyFingerprintOccurrences;

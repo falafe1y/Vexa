@@ -1,15 +1,8 @@
 #pragma once
 #include "BankCsvImporter.h"
+#include "../core/model/transactions/BankRecipientRule.h"
 #include "../core/model/transactions/Category.h"
 #include "../core/model/transactions/TransactionRecipient.h"
-
-struct BankRecipientRule {
-    QString pattern;
-    QString field = QStringLiteral("description");
-    QString matchMode = QStringLiteral("contains");
-    CategoryType type = CategoryType::Expense;
-    QString name;
-};
 
 struct BankRecipientMatch {
     TransactionRecipient recipient;

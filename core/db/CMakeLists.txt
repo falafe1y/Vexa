@@ -1,5 +1,7 @@
 # Core database: the SQLCipher connection, the schema and the repositories.
 add_library(core_db STATIC
+    BankImportRepository.cpp
+    BankImportRepository.h
     Database.cpp
     Database.h
     DatabaseSchema.cpp

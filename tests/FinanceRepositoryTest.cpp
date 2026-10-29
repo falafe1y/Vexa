@@ -1,4 +1,5 @@
 #include "../persistence/FinanceRepository.h"
+#include "../core/db/BankImportRepository.h"
 #include "../core/db/SettingsRepository.h"
 #include "../core/db/NotesRepository.h"
 
@@ -128,7 +129,7 @@ void FinanceRepositoryTest::cnyMigrationPreservesData()
     QCOMPARE(original.id(),QString("original-tx"));
     QCOMPARE(original.description(),QString("Исходное описание"));
     QCOMPARE(original.money().currency(),Currency::RUB);
-    QCOMPARE(migrated.loadBankImportLinks().value("statement-row"),QString("original-tx"));
+    QCOMPARE(BankImportRepository(migrated.database()).loadBankImportLinks().value("statement-row"),QString("original-tx"));
     QVERIFY(migrated.insertAccount({"cny","Юани",AssetType::Fiat,AccountType::DebitCard,Currency::CNY,10000}));
     QVERIFY(migrated.insertTransaction(Transaction("cny-tx","cny","groceries",Money(500,Currency::CNY),
         TransactionType::Expense,date,"Расход в юанях")));
@@ -317,7 +318,7 @@ void FinanceRepositoryTest::restoresCompositeKeysAndRelatedRows()
     QVERIFY2(current.restoreDatabase(backup), qPrintable(current.lastError()));
     QCOMPARE(current.loadAccounts().size(), 2);
     QCOMPARE(current.loadTransactions().size(), 2);
-    QCOMPARE(current.loadBankCategoryRules().size(), 1);
+    QCOMPARE(BankImportRepository(current.database()).loadBankCategoryRules().size(), 1);
     qint64 added = -1;
     QVERIFY2(current.restoreDatabase(backup, &added), qPrintable(current.lastError()));
     QVERIFY(added > 0);
@@ -469,7 +470,7 @@ void FinanceRepositoryTest::clearsAllUserDataAndResetsSettings()
         QStringLiteral("goal"), QStringLiteral("Цель"), Currency::RUB,
         100'000, {}, true, {}};
     QVERIFY(repository.saveFinancialGoal(goal, false));
-    QVERIFY(repository.saveBankCsvProfile(
+    QVERIFY(BankImportRepository(repository.database()).saveBankCsvProfile(
         QStringLiteral("profile"), QStringLiteral("Импорт"), QStringLiteral("{}")));
 
     QVERIFY2(repository.clearAllUserData(), qPrintable(repository.lastError()));
@@ -477,7 +478,7 @@ void FinanceRepositoryTest::clearsAllUserDataAndResetsSettings()
     QVERIFY(repository.loadTransactions().isEmpty());
     QVERIFY(repository.loadFinancialGoals().isEmpty());
     QVERIFY(repository.loadCapitalSnapshots().isEmpty());
-    QVERIFY(repository.loadBankCsvProfiles().isEmpty());
+    QVERIFY(BankImportRepository(repository.database()).loadBankCsvProfiles().isEmpty());
     QVERIFY(repository.loadCategories().isEmpty());
     QCOMPARE(SettingsRepository(repository.database()).loadAppCurrency(), QStringLiteral("RUB"));
     FinanceRepository reopened(directory.filePath(QStringLiteral("clear.sqlite3")));
@@ -954,12 +955,12 @@ void FinanceRepositoryTest::storesBankCsvProfiles()
     {
         FinanceRepository repository(databasePath);
         QVERIFY2(repository.isOpen(), qPrintable(repository.lastError()));
-        QVERIFY2(repository.saveBankCsvProfile(
+        QVERIFY2(BankImportRepository(repository.database()).saveBankCsvProfile(
                      QStringLiteral("alpha"),
                      QStringLiteral("Альфа-Банк"),
                      QStringLiteral("{\"dateColumn\":0}")),
                  qPrintable(repository.lastError()));
-        QVERIFY2(repository.saveBankCsvProfile(
+        QVERIFY2(BankImportRepository(repository.database()).saveBankCsvProfile(
                      QStringLiteral("alpha"),
                      QStringLiteral("Альфа-Банк обновлённый"),
                      QStringLiteral("{\"dateColumn\":2}")),
@@ -969,15 +970,15 @@ void FinanceRepositoryTest::storesBankCsvProfiles()
     {
         FinanceRepository repository(databasePath);
         QVERIFY2(repository.isOpen(), qPrintable(repository.lastError()));
-        const auto profiles = repository.loadBankCsvProfiles();
+        const auto profiles = BankImportRepository(repository.database()).loadBankCsvProfiles();
         QCOMPARE(profiles.size(), 1);
         QCOMPARE(profiles.constFirst().id, QStringLiteral("alpha"));
         QCOMPARE(profiles.constFirst().name,
                  QStringLiteral("Альфа-Банк обновлённый"));
         QCOMPARE(profiles.constFirst().configurationJson,
                  QStringLiteral("{\"dateColumn\":2}"));
-        QVERIFY(repository.deleteBankCsvProfile(QStringLiteral("alpha")));
-        QVERIFY(repository.loadBankCsvProfiles().isEmpty());
+        QVERIFY(BankImportRepository(repository.database()).deleteBankCsvProfile(QStringLiteral("alpha")));
+        QVERIFY(BankImportRepository(repository.database()).loadBankCsvProfiles().isEmpty());
     }
 }
 
@@ -2008,7 +2009,7 @@ void FinanceRepositoryTest::bankCategoryRulesPersistAndRollbackWithImport()
             Money(100, account.currency()), TransactionType::Expense,
             QDateTime::currentDateTimeUtc(), QStringLiteral("PYATEROCHKA 123"));
         QVERIFY2(repository.insertTransactions({transaction}, {rule}), qPrintable(repository.lastError()));
-        QCOMPARE(repository.loadBankCategoryRules().size(), 1);
+        QCOMPARE(BankImportRepository(repository.database()).loadBankCategoryRules().size(), 1);
         const Transaction failed(QStringLiteral("category-failed"), account.id(), rule.categoryId,
             Money(100, account.currency()), TransactionType::Expense,
             QDateTime::currentDateTimeUtc(), QStringLiteral("PYATEROCHKA 999"));
@@ -2017,22 +2018,22 @@ void FinanceRepositoryTest::bankCategoryRulesPersistAndRollbackWithImport()
         QVERIFY(!repository.insertTransactions({failed}, {invalid}));
         for (const auto& item : repository.loadTransactions())
             QVERIFY(item.id() != QStringLiteral("category-failed"));
-        QCOMPARE(repository.loadBankCategoryRules().size(), 1);
+        QCOMPARE(BankImportRepository(repository.database()).loadBankCategoryRules().size(), 1);
     }
     {
         FinanceRepository reopened(path);
-        const auto rules = reopened.loadBankCategoryRules();
+        const auto rules = BankImportRepository(reopened.database()).loadBankCategoryRules();
         QCOMPARE(rules.size(), 1);
         QCOMPARE(rules.front().pattern, QStringLiteral("пятерочка"));
         QCOMPARE(rules.front().categoryId, QStringLiteral("groceries"));
         const QString backupPath = directory.filePath(QStringLiteral("backup.sqlite3"));
         QVERIFY(reopened.backupDatabase(backupPath));
         FinanceRepository backup(backupPath);
-        QCOMPARE(backup.loadBankCategoryRules().size(), 1);
+        QCOMPARE(BankImportRepository(backup.database()).loadBankCategoryRules().size(), 1);
         QVERIFY(reopened.archiveCategory(QStringLiteral("groceries")));
-        QVERIFY(reopened.loadBankCategoryRules().isEmpty());
+        QVERIFY(BankImportRepository(reopened.database()).loadBankCategoryRules().isEmpty());
         QVERIFY(reopened.clearAllUserData());
-        QVERIFY(reopened.loadBankCategoryRules().isEmpty());
+        QVERIFY(BankImportRepository(reopened.database()).loadBankCategoryRules().isEmpty());
     }
 }
 

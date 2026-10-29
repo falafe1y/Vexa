@@ -14,6 +14,8 @@ add_library(core_model STATIC
     accounts/DepositInterestCalculator.cpp
     accounts/DepositInterestCalculator.h
     accounts/DepositSettings.h
+    transactions/BankCategoryRule.h
+    transactions/BankRecipientRule.h
     transactions/Category.h
     transactions/DateSliceCalculator.cpp
     transactions/DateSliceCalculator.h

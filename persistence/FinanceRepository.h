@@ -3,7 +3,8 @@
 #include "storage/DatabaseEncryption.h"
 
 #include "../core/model/transactions/Transaction.h"
-#include "../services/BankCategoryMatcher.h"
+#include "../core/model/transactions/BankCategoryRule.h"
+#include "../core/model/transactions/BankRecipientRule.h"
 #include "../core/model/transactions/RecurringTransaction.h"
 #include "../core/model/accounts/DepositSettings.h"
 #include "../core/model/transactions/Category.h"
@@ -46,13 +47,6 @@ public:
     {
         qint64 priceUsdMicros = 0;
         QDateTime fetchedAtUtc;
-    };
-
-    struct BankCsvProfileRecord
-    {
-        QString id;
-        QString name;
-        QString configurationJson;
     };
 
     struct RecurringOccurrence
@@ -173,12 +167,6 @@ public:
                             const QVector<BankRecipientRule>& recipientRules = {},
                             const QMap<QString, QString>& bankLinks = {},
                             const QSet<QString>& replacedBankTransactions = {});
-    QMap<QString, QString> loadBankImportLinks(QString* error = nullptr) const;
-    QVector<BankRecipientRule> loadBankRecipientRules(QString* error = nullptr) const;
-    bool deleteBankRecipientRule(const QString& pattern, const QString& field, const QString& mode, CategoryType type);
-    QVector<BankCategoryRule> loadBankCategoryRules(QString* error = nullptr) const;
-    bool deleteBankCategoryRule(const QString& pattern, const QString& matchMode,
-                                CategoryType type);
     bool updateTransaction(const Transaction& transaction);
     bool replaceTransaction(
         const QString& currentId,
@@ -263,13 +251,6 @@ public:
     bool hasInvestmentOperations(const QString& positionId) const;
     bool updateCategoryName(const QString& id, const QString& name);
     bool archiveCategory(const QString& id);
-    QVector<BankCsvProfileRecord> loadBankCsvProfiles();
-    bool saveBankCsvProfile(
-        const QString& id,
-        const QString& name,
-        const QString& configurationJson
-        );
-    bool deleteBankCsvProfile(const QString& id);
 
 private:
     bool migrateAnalyticsHistorySchema();

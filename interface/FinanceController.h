@@ -4,6 +4,7 @@
 #include "../persistence/FinanceRepository.h"
 #include "../core/db/NotesRepository.h"
 #include "../core/db/SettingsRepository.h"
+#include "../core/db/BankImportRepository.h"
 #include "../core/model/accounts/BalanceCalculator.h"
 #include "../services/BankCsvImporter.h"
 #include "../core/model/analytics/CapitalHistoryCalculator.h"
@@ -811,6 +812,7 @@ private:
     FinanceRepository repository_;
     NotesRepository notes_;
     SettingsRepository settings_;
+    BankImportRepository bankImport_;
     CbrCurrencyRateProvider rateProvider_;
     CurrencyConverter currencyConverter_;
     BalanceCalculator balanceCalculator_;

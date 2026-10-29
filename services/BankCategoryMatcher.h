@@ -2,17 +2,9 @@
 
 #include "BankCsvImporter.h"
 #include "BankRecipientMatcher.h"
+#include "../core/model/transactions/BankCategoryRule.h"
 #include "../core/model/transactions/Category.h"
 #include <QSet>
-
-struct BankCategoryRule
-{
-    QString pattern;
-    QString matchMode = QStringLiteral("exact");
-    QString categoryId;
-    CategoryType type = CategoryType::Expense;
-    QString field = QStringLiteral("legacy");
-};
 
 struct BankCategorySuggestion
 {

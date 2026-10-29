@@ -77,7 +77,7 @@ core/
 - [ ] 2.3 Репозитории по одному, каждый — отдельный коммит, вызовы переключаются с `FinanceRepository` на новый репозиторий:
   - [x] 2.3.1 `NotesRepository` — `load`/`save` заметок; `FinanceController` держит его рядом с `FinanceRepository` и получает соединение через временный `FinanceRepository::database()`
   - [x] 2.3.2 `SettingsRepository` — валюта приложения и аналитики, выбранный раздел, автоматические и ручные курсы (13 методов). Настройки крипты, бенчмарка и доходности в таблице `settings` пока у `FinanceRepository`, уйдут в свои репозитории
-  - [ ] 2.3.3 `BankImportRepository` — профили CSV, правила категорий и получателей, связи импорта
+  - [x] 2.3.3 `BankImportRepository` — профили CSV, правила категорий и получателей, связи импорта (8 методов). Перед этим типы правил `BankCategoryRule` и `BankRecipientRule` вынесены в `core/model/transactions/` (часть 2.4), и `persistence/FinanceRepository.h` больше не подключает `services/`. Запись правил вместе с операциями при импорте (`insertTransactions`) пока у `FinanceRepository`, уйдёт в 2.3.12
   - [ ] 2.3.4 `CryptoRepository` — кошельки, биржи, цены, себестоимость
   - [ ] 2.3.5 Бюджеты, цели, траектория, снимки капитала
   - [ ] 2.3.6 `ProjectRepository`
@@ -87,7 +87,7 @@ core/
   - [ ] 2.3.10 `MarketHistoryRepository` — дневные оценки, история цен и курсов, бенчмарк
   - [ ] 2.3.11 `AccountRepository` — счета, настройки вкладов, ставки
   - [ ] 2.3.12 `TransactionRepository` — операции, переводы, сводка
-- [ ] 2.4 Распутать банковский импорт: структуры и логика правил (`BankCategoryRule`, `BankRecipientRule`, сопоставление) — в `core/model`, загрузка словаря и чтение файлов — в `core/system`.
+- [ ] 2.4 Распутать банковский импорт: структуры (сделано в 2.3.3) и логика правил (`BankCategoryRule`, `BankRecipientRule`, сопоставление) — в `core/model`, загрузка словаря и чтение файлов — в `core/system`.
 - [ ] 2.5 Провайдеры и парсеры ответов — в `core/api/`. `services/InvestmentBenchmark` разделить: `parseBenchmarkPage`, `mergeBenchmarkRows` и список индексов `investmentBenchmarkIndices` — в `core/api` (Мосбиржа), `compareInvestmentBenchmark` — в `core/model/analytics/`.
 - [ ] 2.6 Файлы и форматы — в `core/system/`: `CsvCodec`, `XlsxReader`, `PdfStatementReader`, `ContentUriIo`. Разбор форматов отделить от доступа к файлам: `PdfStatementReader` делится на получение слов (`pdftotext`/PDFBox) и раскладку в строки (`parsePages`). Как понимать выписку по профилю банка (`BankCsvImporter`) — в `core/model`.
 - [ ] 2.7 Бэкап, восстановление и очистка базы — `DatabaseMaintenance` в `core/db/`.

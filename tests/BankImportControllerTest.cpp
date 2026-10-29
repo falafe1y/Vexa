@@ -1,4 +1,5 @@
 #include "storage/CipherDriver.h"
+#include "../core/db/BankImportRepository.h"
 #include "../core/db/SettingsRepository.h"
 #include "../interface/FinanceController.h"
 #include <QFile>
@@ -88,7 +89,7 @@ void BankImportControllerTest::staleChoicesAndRecipientChangesAreRejected() {
     const auto fresh=c.previewBankImport(QUrl::fromLocalFile(file),profile());
     QCOMPARE(preview.value("operationRows").toList().front().toMap().value("rowKey"),fresh.value("operationRows").toList().front().toMap().value("rowKey"));
     QVERIFY(!c.importBankCsv(QUrl::fromLocalFile(file),"bank-profile",{{"choices",choices}}).value("ok").toBool());
-    FinanceRepository r(path);QVERIFY(r.loadTransactions().isEmpty());QVERIFY(r.loadBankRecipientRules().isEmpty());
+    FinanceRepository r(path);QVERIFY(r.loadTransactions().isEmpty());QVERIFY(BankImportRepository(r.database()).loadBankRecipientRules().isEmpty());
     QVariantMap extra{{"removed-row",QVariantMap{{"fingerprint","stale"}}}};
     QVERIFY(!c.importBankCsv(QUrl::fromLocalFile(file),"bank-profile",{{"choices",extra},{"requireReview",false}}).value("ok").toBool());
 }
@@ -111,15 +112,15 @@ void BankImportControllerTest::rollbackBackupAndRestoreKeepRecipients() {
     const BankCategoryRule category{"пятерочка","exact","groceries",CategoryType::Expense,"recipient"};
     const BankRecipientRule alias{"shop alpha","description","contains",CategoryType::Expense,"Пятёрочка"};
     auto invalid=alias;invalid.field="missing";
-    QVERIFY(!r.insertTransactions({t},{category},{invalid}));QVERIFY(r.loadTransactions().isEmpty());QVERIFY(r.loadBankCategoryRules().isEmpty());
+    QVERIFY(!r.insertTransactions({t},{category},{invalid}));QVERIFY(r.loadTransactions().isEmpty());QVERIFY(BankImportRepository(r.database()).loadBankCategoryRules().isEmpty());
     QVERIFY2(r.insertTransactions({t},{category},{alias}),qPrintable(r.lastError()));
     const auto copy=dir.filePath("backup.db");QVERIFY(r.backupDatabase(copy));
     FinanceRepository restored(dir.filePath("restored.db"));qint64 added=0;QString previous;QVERIFY2(restored.restoreDatabase(copy,&added,&previous),qPrintable(restored.lastError()));
-    QCOMPARE(restored.loadBankRecipientRules().size(),1);QCOMPARE(restored.loadBankCategoryRules().front().field,QString("recipient"));
+    QCOMPARE(BankImportRepository(restored.database()).loadBankRecipientRules().size(),1);QCOMPARE(BankImportRepository(restored.database()).loadBankCategoryRules().front().field,QString("recipient"));
     QCOMPARE(restored.loadTransactions().front().recipient().name,QString("Пятёрочка"));
     QVERIFY(restored.restoreDatabase(copy,&added,&previous));QVERIFY(added>0);
     auto renamed=t;QVERIFY(restored.updateTransaction(renamed));QCOMPARE(restored.loadTransactions().front().recipient().name,QString("Пятёрочка"));
-    QVERIFY(restored.clearAllUserData());QVERIFY(restored.loadBankRecipientRules().isEmpty());
+    QVERIFY(restored.clearAllUserData());QVERIFY(BankImportRepository(restored.database()).loadBankRecipientRules().isEmpty());
 }
 void BankImportControllerTest::migratesAndRestoresOlderSchema() {
     QTemporaryDir dir;const auto old=dir.filePath("old.db");QVERIFY(seed(old));
@@ -132,10 +133,10 @@ void BankImportControllerTest::migratesAndRestoresOlderSchema() {
     QSqlDatabase::removeDatabase(connection);
     FinanceRepository restored(dir.filePath("current.db"));qint64 added=0;QVERIFY2(restored.restoreDatabase(old,&added),qPrintable(restored.lastError()));
     QCOMPARE(restored.loadTransactions().front().description(),QString("Старое описание"));QVERIFY(restored.loadTransactions().front().recipient().name.isEmpty());
-    QCOMPARE(restored.loadBankCategoryRules().front().field,QString("legacy"));
+    QCOMPARE(BankImportRepository(restored.database()).loadBankCategoryRules().front().field,QString("legacy"));
     FinanceRepository migrated(old);QVERIFY2(migrated.isOpen(),qPrintable(migrated.lastError()));
     QCOMPARE(migrated.loadTransactions().front().description(),QString("Старое описание"));QVERIFY(migrated.loadTransactions().front().recipient().name.isEmpty());
-    QCOMPARE(migrated.loadBankCategoryRules().front().field,QString("legacy"));QVERIFY(migrated.loadBankRecipientRules().isEmpty());
+    QCOMPARE(BankImportRepository(migrated.database()).loadBankCategoryRules().front().field,QString("legacy"));QVERIFY(BankImportRepository(migrated.database()).loadBankRecipientRules().isEmpty());
 }
 
 namespace {
@@ -186,12 +187,12 @@ void BankImportControllerTest::transfersPersistAndStatementsJoinWithoutDuplicate
     for(const auto& t:txs) {QVERIFY(t.categoryId().startsWith("transfer-"));if(t.accountId()=="bank")bank-=t.money().minorUnits();else second+=t.money().minorUnits();}
     QCOMPARE(bank,qint64(-10000));QCOMPARE(second,qint64(10000));const auto summary=r.loadSummary();
     QCOMPARE(summary.income[0],qint64(0));QCOMPARE(summary.expense[0],qint64(0));QCOMPARE(summary.balance[0],qint64(0));
-    QCOMPARE(r.loadBankImportLinks().size(),2);QVERIFY(r.loadBankImportLinks().contains(incomingRowKey));
+    QCOMPARE(BankImportRepository(r.database()).loadBankImportLinks().size(),2);QVERIFY(BankImportRepository(r.database()).loadBankImportLinks().contains(incomingRowKey));
     QVERIFY(r.backupDatabase(copy));FinanceRepository restored(dir.filePath("restored.db"));QVERIFY(restored.restoreDatabase(copy));
-    QCOMPARE(restored.loadBankImportLinks().size(),2);QCOMPARE(restored.loadTransactions().size(),2);
+    QCOMPARE(BankImportRepository(restored.database()).loadBankImportLinks().size(),2);QCOMPARE(restored.loadTransactions().size(),2);
     FinanceController reopened(nullptr,path);auto secondProfile=profile();secondProfile["id"]="second-profile";secondProfile["name"]="Второй банк";secondProfile["accountId"]="second";
     QCOMPARE(reopened.previewBankImport(QUrl::fromLocalFile(file),secondProfile).value("duplicateCount").toInt(),1);
-    const auto pair=txs.front().id();QVERIFY(reopened.deleteTransaction(pair));QVERIFY(r.loadBankImportLinks().isEmpty());
+    const auto pair=txs.front().id();QVERIFY(reopened.deleteTransaction(pair));QVERIFY(BankImportRepository(r.database()).loadBankImportLinks().isEmpty());
 }
 void BankImportControllerTest::ordinaryCounterpartIsCombinedAtomically() {
     QTemporaryDir dir;const auto path=dir.filePath("data.db"),file=dir.filePath("bank.csv");QVERIFY(seed(path));QVERIFY(seedSecond(path));
@@ -207,7 +208,7 @@ void BankImportControllerTest::ordinaryCounterpartIsCombinedAtomically() {
     choice["transferMatchId"]=match.value("value");const auto result=c.importBankCsv(QUrl::fromLocalFile(file),"bank-profile",{{"choices",choicesFor(preview,choice)}});
     QVERIFY2(result.value("ok").toBool(),qPrintable(result.value("error").toString()));QCOMPARE(r.loadTransactions().size(),2);
     QCOMPARE(r.loadSummary().income[0],qint64(0));QCOMPARE(r.loadSummary().expense[0],qint64(0));
-    QVERIFY(r.loadBankImportLinks().contains(original.id()));
+    QVERIFY(BankImportRepository(r.database()).loadBankImportLinks().contains(original.id()));
     for(const auto& tx:r.loadTransactions())if(tx.accountId()=="second") {
         QCOMPARE(tx.description(),original.description());QCOMPARE(tx.date(),original.date());
     }
@@ -261,10 +262,10 @@ void BankImportControllerTest::repeatedMatchAndLinkFailureRollBack() {
         choice["transferMatchId"]=details.value("matches").toList().front().toMap().value("value");choices[row.value("rowKey").toString()]=choice;
     }
     QVERIFY(!c.importBankCsv(QUrl::fromLocalFile(file),"bank-profile",{{"choices",choices}}).value("ok").toBool());
-    FinanceRepository r(path);QCOMPARE(r.loadTransactions().size(),2);QVERIFY(r.loadBankImportLinks().isEmpty());
+    FinanceRepository r(path);QCOMPARE(r.loadTransactions().size(),2);QVERIFY(BankImportRepository(r.database()).loadBankImportLinks().isEmpty());
     const Transaction invalid("bad","bank","groceries",Money(1,Currency::RUB),TransactionType::Expense,QDateTime::currentDateTimeUtc(),"Test");
-    QVERIFY(!r.insertTransactions({invalid},{},{},{{"alias","missing-transfer"}}));QCOMPARE(r.loadTransactions().size(),2);QVERIFY(r.loadBankImportLinks().isEmpty());
-    QVERIFY(r.clearAllUserData());QVERIFY(r.loadBankImportLinks().isEmpty());
+    QVERIFY(!r.insertTransactions({invalid},{},{},{{"alias","missing-transfer"}}));QCOMPARE(r.loadTransactions().size(),2);QVERIFY(BankImportRepository(r.database()).loadBankImportLinks().isEmpty());
+    QVERIFY(r.clearAllUserData());QVERIFY(BankImportRepository(r.database()).loadBankImportLinks().isEmpty());
 }
 
 void BankImportControllerTest::editingKeepsStatementIdentities() {
@@ -279,13 +280,13 @@ void BankImportControllerTest::editingKeepsStatementIdentities() {
     QVERIFY(r.replaceTransactionWithTransfer(currentId,
         Transaction("edited-out","bank","transfer-out",Money(10000,Currency::RUB),TransactionType::Expense,date,"Исправленный перевод"),
         Transaction("edited-in","second","transfer-in",Money(10000,Currency::RUB),TransactionType::Income,date,"Исправленный перевод")));
-    QCOMPARE(r.loadBankImportLinks().value(row.value("rowKey").toString()),QString("edited-out"));
+    QCOMPARE(BankImportRepository(r.database()).loadBankImportLinks().value(row.value("rowKey").toString()),QString("edited-out"));
     FinanceController reopened(nullptr,path);QCOMPARE(reopened.previewBankImport(QUrl::fromLocalFile(file),profile()).value("duplicateCount").toInt(),1);
     QVERIFY(r.replaceTransaction("edited-out",Transaction("ordinary","bank","other_expense",Money(10000,Currency::RUB),
         TransactionType::Expense,date,"Изменено на расход")));
-    QCOMPARE(r.loadBankImportLinks().value(row.value("rowKey").toString()),QString("ordinary"));
+    QCOMPARE(BankImportRepository(r.database()).loadBankImportLinks().value(row.value("rowKey").toString()),QString("ordinary"));
     FinanceController ordinary(nullptr,path);QCOMPARE(ordinary.previewBankImport(QUrl::fromLocalFile(file),profile()).value("duplicateCount").toInt(),1);
-    QVERIFY(r.deleteTransaction("ordinary"));QVERIFY(r.loadBankImportLinks().isEmpty());
+    QVERIFY(r.deleteTransaction("ordinary"));QVERIFY(BankImportRepository(r.database()).loadBankImportLinks().isEmpty());
 }
 
 void BankImportControllerTest::cnyAccountImportAndSettingsSurviveRestart() {
