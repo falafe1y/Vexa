@@ -1,4 +1,5 @@
 #include "../services/BybitProvider.h"
+#include "../core/db/CryptoRepository.h"
 #include "../persistence/FinanceRepository.h"
 #include <QtTest>
 #include <QNetworkReply>
@@ -166,22 +167,22 @@ private slots:
         QVariantList oldRows{QVariantMap{{"transactionId", "uta:old"}, {"occurredAtMs", qint64(1700000000000)}, {"amountText", "1"}}};
         {
             FinanceRepository repository(path); QVERIFY2(repository.isOpen(), qPrintable(repository.lastError()));
-            QVERIFY(repository.saveCryptoExchange({{"id", "a"}, {"name", "Мой Bybit"}}));
-            QVERIFY(repository.saveCryptoExchangeSnapshot("a", {}, oldRows, 1700000000000));
+            QVERIFY(CryptoRepository(repository.database()).saveCryptoExchange({{"id", "a"}, {"name", "Мой Bybit"}}));
+            QVERIFY(CryptoRepository(repository.database()).saveCryptoExchangeSnapshot("a", {}, oldRows, 1700000000000));
             QVariantList updated{QVariantMap{{"transactionId", "uta:old"}, {"occurredAtMs", qint64(1700000000000)}, {"amountText", "2"}},
                                  QVariantMap{{"transactionId", "fund:new"}, {"occurredAtMs", qint64(1700000001000)}, {"amountText", "3"}}};
-            QVERIFY(repository.saveCryptoExchangeSnapshot("a", {}, updated, 1700000002000));
-            QVERIFY(repository.saveCryptoExchangeSnapshot("a", {}, updated, 1700000002000));
-            QCOMPARE(repository.loadCryptoExchanges()[0].toMap().value("history").toList().size(), 2);
-            QVERIFY(!repository.saveCryptoExchangeSnapshot("a", {}, {QVariantMap{{"transactionId", "broken"}}}, 1700000003000));
+            QVERIFY(CryptoRepository(repository.database()).saveCryptoExchangeSnapshot("a", {}, updated, 1700000002000));
+            QVERIFY(CryptoRepository(repository.database()).saveCryptoExchangeSnapshot("a", {}, updated, 1700000002000));
+            QCOMPARE(CryptoRepository(repository.database()).loadCryptoExchanges()[0].toMap().value("history").toList().size(), 2);
+            QVERIFY(!CryptoRepository(repository.database()).saveCryptoExchangeSnapshot("a", {}, {QVariantMap{{"transactionId", "broken"}}}, 1700000003000));
         }
         {
-            FinanceRepository repository(path); const auto rows = repository.loadCryptoExchanges(); QCOMPARE(rows.size(), 1);
+            FinanceRepository repository(path); const auto rows = CryptoRepository(repository.database()).loadCryptoExchanges(); QCOMPARE(rows.size(), 1);
             QCOMPARE(rows[0].toMap().value("name").toString(), QString("Мой Bybit"));
             QCOMPARE(rows[0].toMap().value("history").toList().size(), 2);
             QVERIFY(repository.deleteHistoryRows({QVariantMap{{"isExchange", true}, {"walletId", "a"}, {"transactionId", "uta:old"}}}));
-            QCOMPARE(repository.loadCryptoExchanges()[0].toMap().value("history").toList().size(), 1);
-            QVERIFY(repository.clearAllUserData()); QVERIFY(repository.loadCryptoExchanges().isEmpty());
+            QCOMPARE(CryptoRepository(repository.database()).loadCryptoExchanges()[0].toMap().value("history").toList().size(), 1);
+            QVERIFY(repository.clearAllUserData()); QVERIFY(CryptoRepository(repository.database()).loadCryptoExchanges().isEmpty());
         }
     }
 };

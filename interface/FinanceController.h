@@ -5,6 +5,7 @@
 #include "../core/db/NotesRepository.h"
 #include "../core/db/SettingsRepository.h"
 #include "../core/db/BankImportRepository.h"
+#include "../core/db/CryptoRepository.h"
 #include "../core/model/accounts/BalanceCalculator.h"
 #include "../services/BankCsvImporter.h"
 #include "../core/model/analytics/CapitalHistoryCalculator.h"
@@ -813,6 +814,7 @@ private:
     NotesRepository notes_;
     SettingsRepository settings_;
     BankImportRepository bankImport_;
+    CryptoRepository crypto_;
     CbrCurrencyRateProvider rateProvider_;
     CurrencyConverter currencyConverter_;
     BalanceCalculator balanceCalculator_;

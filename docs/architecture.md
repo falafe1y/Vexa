@@ -2,7 +2,7 @@
 
 Решение — ADR-031 (слои) и ADR-032 (имена) в `docs/ADR.md`. Здесь — целевая схема и план по шагам с отметками.
 
-Дата последнего обновления: 29.10.2026.
+Дата последнего обновления: 30.10.2026.
 
 ## Целевая схема
 
@@ -78,7 +78,7 @@ core/
   - [x] 2.3.1 `NotesRepository` — `load`/`save` заметок; `FinanceController` держит его рядом с `FinanceRepository` и получает соединение через временный `FinanceRepository::database()`
   - [x] 2.3.2 `SettingsRepository` — валюта приложения и аналитики, выбранный раздел, автоматические и ручные курсы (13 методов). Настройки крипты, бенчмарка и доходности в таблице `settings` пока у `FinanceRepository`, уйдут в свои репозитории
   - [x] 2.3.3 `BankImportRepository` — профили CSV, правила категорий и получателей, связи импорта (8 методов). Перед этим типы правил `BankCategoryRule` и `BankRecipientRule` вынесены в `core/model/transactions/` (часть 2.4), и `persistence/FinanceRepository.h` больше не подключает `services/`. Запись правил вместе с операциями при импорте (`insertTransactions`) пока у `FinanceRepository`, уйдёт в 2.3.12
-  - [ ] 2.3.4 `CryptoRepository` — кошельки, биржи, цены, себестоимость
+  - [x] 2.3.4 `CryptoRepository` — кошельки, биржи, сделки, снимки, чтение цен, себестоимость, состояние обновлений в `settings` (23 метода). `saveCryptoPrice` пока у `FinanceRepository`: в одной транзакции пишет цену и историю цен (`savePriceHistory`), переедет вместе с историей в 2.3.10
   - [ ] 2.3.5 Бюджеты, цели, траектория, снимки капитала
   - [ ] 2.3.6 `ProjectRepository`
   - [ ] 2.3.7 `CategoryRepository`

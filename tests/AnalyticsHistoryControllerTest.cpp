@@ -1,4 +1,5 @@
 #include "../interface/FinanceController.h"
+#include "../core/db/CryptoRepository.h"
 #include "../core/db/SettingsRepository.h"
 #include <QTemporaryDir>
 #include <QStandardPaths>
@@ -16,7 +17,7 @@ private slots:
          InvestmentPositionSettings settings;settings.manualValuation=true;settings.manualValueMinor=30000;settings.valuedAtUtc=QDateTime::currentDateTimeUtc();
          QVERIFY(r.saveInvestmentBundle({"stock","TEST","","Акция",InvestmentInstrumentType::Stock,Currency::RUB},
             {"position","broker","stock",3'000'000,100'000'000,{},{},settings},{},false,{},30100));
-         QVERIFY(r.insertCryptoWallet({"wallet","address","BITCOIN","BTC",8}));}
+         QVERIFY(CryptoRepository(r.database()).insertCryptoWallet({"wallet","address","BITCOIN","BTC",8}));}
         {FinanceController c(nullptr,path);c.setAppCurrency("EUR");}
         FinanceRepository r(path);const auto fiat=r.loadDailyValuations(AssetDailyValuation::Fiat);
         bool found=false;for(const auto& row:fiat)if(row.toMap().value("source_id").toString()=="cash:fiat"){

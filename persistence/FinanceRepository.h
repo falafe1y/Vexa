@@ -43,12 +43,6 @@ public:
         std::array<qint64, kCurrencyCount> expense{};
     };
 
-    struct CryptoPriceSnapshot
-    {
-        qint64 priceUsdMicros = 0;
-        QDateTime fetchedAtUtc;
-    };
-
     struct RecurringOccurrence
     {
         QDate date;
@@ -71,8 +65,6 @@ public:
     QVariantList loadPriceHistory(AssetDailyValuation::Kind kind, const QString& assetId);
     QVariantList loadFxHistory(const QString& currency);
     bool saveHistoricalFxRates(const QVector<HistoricalFxRate>& rates);
-    qint64 loadCryptoHistoryFromMs(const QString& exchangeId) const;
-    bool saveCryptoHistoryFromMs(const QString& exchangeId, qint64 fromMs);
     QVariantList loadPerformanceAccounts();
     QVariantMap loadAccountCreationDates();
     QVariantList loadAllPositionHistory();
@@ -130,25 +122,10 @@ public:
     QVector<DepositSettings> loadDepositSettings();
     QVector<Category> loadCategories();
     QVector<Account> loadAccounts();
-    QVector<CryptoWallet> loadCryptoWallets();
-    QString cryptoWalletName(const QString& id) const;
-    bool setCryptoWalletName(const QString& id, const QString& name);
-    QVariantList loadCryptoExchanges() const;
-    bool saveCryptoExchange(const QVariantMap& account);
-    bool saveCryptoExchangeSnapshot(const QString& id, const QVariantList& holdings,
-                                   const QVariantList& operations, qint64 fetchedAtMs);
-    bool deleteCryptoExchange(const QString& id);
-    QVector<CryptoTransaction> loadCryptoTransactions();
     QVector<InvestmentInstrument> loadInvestmentInstruments();
     QVector<InvestmentPosition> loadInvestmentPositions();
     QVector<InvestmentQuote> loadInvestmentQuotes();
-    CryptoPriceSnapshot loadCryptoPrice(const QString& symbol) const;
-    QDateTime loadCryptoRefreshAttemptUtc() const;
-    QDateTime loadCryptoPriceAttemptUtc() const;
-    QString loadCryptoManualState() const;
     // Purchase price of the coins without trades, by "exchangeId|coin"
-    QVariantMap loadCryptoCostBasis() const;
-    bool saveCryptoCostBasis(const QString& exchangeId, const QString& coin, const QVariantMap& basis);
     // Rate history of deposits by account id: a list of {"from": "yyyy-MM-dd", "bps": int}, sorted by day
     QVariantMap loadDepositRateSteps() const;
     bool saveDepositRateSteps(const QString& accountId, const QVariantList& steps);
@@ -210,26 +187,11 @@ public:
         const QDate& generatedThrough,
         int* insertedCount = nullptr
         );
-    bool insertCryptoWallet(const CryptoWallet& wallet);
-    bool updateCryptoWalletBalance(
-        const QString& id,
-        qint64 balanceAtomic,
-        const QDateTime& fetchedAtUtc
-        );
-    bool deleteCryptoWallet(const QString& id);
-    bool replaceCryptoTransactions(
-        const QString& walletId,
-        const QVector<CryptoTransaction>& transactions,
-        const QDateTime& fetchedAtUtc
-        );
     bool saveCryptoPrice(
         const QString& symbol,
         qint64 priceUsdMicros,
         const QDateTime& fetchedAtUtc
         );
-    bool saveCryptoRefreshAttemptUtc(const QDateTime& attemptedAtUtc);
-    bool saveCryptoPriceAttemptUtc(const QDateTime& attemptedAtUtc);
-    bool saveCryptoManualState(const QString& state);
     bool insertInvestmentInstrument(const InvestmentInstrument& instrument);
     bool updateInvestmentInstrument(const InvestmentInstrument& instrument);
     bool archiveInvestmentInstrument(const QString& id);

@@ -431,23 +431,3 @@ bool FinanceRepository::saveHistoricalFxRates(const QVector<HistoricalFxRate>& r
 }
 
 // The first day of the exchange history that was read completely; 0 while the exchange was never read that far back
-qint64 FinanceRepository::loadCryptoHistoryFromMs(const QString& exchangeId) const
-{
-    QSqlQuery q(database_);
-    q.prepare("SELECT value FROM settings WHERE key=?");
-    q.addBindValue(QStringLiteral("crypto_history_from:") + exchangeId);
-    return q.exec() && q.next() ? q.value(0).toLongLong() : 0;
-}
-
-bool FinanceRepository::saveCryptoHistoryFromMs(const QString& exchangeId, qint64 fromMs)
-{
-    QSqlQuery q(database_);
-    q.prepare("INSERT INTO settings(key,value) VALUES(?,?) ON CONFLICT(key) DO UPDATE SET value=excluded.value");
-    q.addBindValue(QStringLiteral("crypto_history_from:") + exchangeId);
-    q.addBindValue(QString::number(fromMs));
-    if (!q.exec()) {
-        setLastError(q.lastError().text());
-        return false;
-    }
-    return true;
-}

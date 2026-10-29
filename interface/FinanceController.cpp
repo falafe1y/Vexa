@@ -449,6 +449,7 @@ FinanceController::FinanceController(QObject* parent, const QString& databasePat
     , notes_(repository_.database())
     , settings_(repository_.database())
     , bankImport_(repository_.database())
+    , crypto_(repository_.database())
     , currencyConverter_(rateProvider_)
     , balanceCalculator_(currencyConverter_)
 {
@@ -529,15 +530,15 @@ FinanceController::FinanceController(QObject* parent, const QString& databasePat
     });
     connect(&bybitProvider_, &BybitProvider::snapshotReady, this,
             [this](const QString& id, const QVariantList& holdings, const QVariantList& operations, qint64 fetchedAtMs) {
-        if (!repository_.saveCryptoExchangeSnapshot(id, holdings, operations, fetchedAtMs)) {
+        if (!crypto_.saveCryptoExchangeSnapshot(id, holdings, operations, fetchedAtMs)) {
             exchangeErrors_[id] = QStringLiteral("Не удалось сохранить данные Bybit");
             setCryptoLastError(exchangeErrors_[id]);
             return;
         }
-        cryptoExchanges_ = repository_.loadCryptoExchanges();
+        cryptoExchanges_ = crypto_.loadCryptoExchanges();
         exchangeErrors_.remove(id);
         if (cryptoBackfillFromMs_.contains(id))
-            repository_.saveCryptoHistoryFromMs(id, cryptoBackfillFromMs_.take(id));
+            crypto_.saveCryptoHistoryFromMs(id, cryptoBackfillFromMs_.take(id));
         rebuildAverageReturn();
         emit performanceChanged();
         emit cryptoWalletsChanged(); emit cryptoTransactionsChanged(); emit balanceChanged();
@@ -570,10 +571,10 @@ FinanceController::FinanceController(QObject* parent, const QString& databasePat
                 if (wallet.id() != walletId) {
                     continue;
                 }
-                if (!repository_.updateCryptoWalletBalance(
+                if (!crypto_.updateCryptoWalletBalance(
                         walletId, balanceAtomic, fetchedAtUtc)) {
                     qWarning() << "Failed to save crypto-wallet balance:"
-                               << repository_.lastError();
+                               << crypto_.lastError();
                     return;
                 }
                 wallet.setBalance(balanceAtomic, fetchedAtUtc);
@@ -593,10 +594,10 @@ FinanceController::FinanceController(QObject* parent, const QString& databasePat
             )
         {
             finishCryptoWalletRequest(walletId);
-            if (!repository_.replaceCryptoTransactions(
+            if (!crypto_.replaceCryptoTransactions(
                     walletId, transactions, fetchedAtUtc)) {
                 qWarning() << "Failed to save crypto transaction history:"
-                           << repository_.lastError();
+                           << crypto_.lastError();
                 return;
             }
 
@@ -774,11 +775,11 @@ FinanceController::FinanceController(QObject* parent, const QString& databasePat
     budgets_ = repository_.loadBudgets();
     financialGoals_ = repository_.loadFinancialGoals();
     trajectorySettings_ = repository_.loadFinancialTrajectorySettings();
-    cryptoWallets_ = repository_.loadCryptoWallets();
-    for (const auto& wallet : cryptoWallets_) cryptoWalletNames_[wallet.id()] = repository_.cryptoWalletName(wallet.id());
-    cryptoExchanges_ = repository_.loadCryptoExchanges();
+    cryptoWallets_ = crypto_.loadCryptoWallets();
+    for (const auto& wallet : cryptoWallets_) cryptoWalletNames_[wallet.id()] = crypto_.cryptoWalletName(wallet.id());
+    cryptoExchanges_ = crypto_.loadCryptoExchanges();
     QTimer::singleShot(0, this, [this] { refreshCryptoExchanges(false); });
-    cryptoTransactions_ = repository_.loadCryptoTransactions();
+    cryptoTransactions_ = crypto_.loadCryptoTransactions();
     investmentInstruments_ = repository_.loadInvestmentInstruments();
     investmentPositions_ = repository_.loadInvestmentPositions();
     investmentQuotes_ = repository_.loadInvestmentQuotes();
@@ -800,8 +801,8 @@ FinanceController::FinanceController(QObject* parent, const QString& databasePat
     for (const QString& symbol : {QStringLiteral("USDT"),
                                   QStringLiteral("BTC"),
                                   QStringLiteral("ETH")}) {
-        const FinanceRepository::CryptoPriceSnapshot price =
-            repository_.loadCryptoPrice(symbol);
+        const CryptoRepository::CryptoPriceSnapshot price =
+            crypto_.loadCryptoPrice(symbol);
         if (price.priceUsdMicros > 0) {
             cryptoPricesUsdMicros_.insert(symbol, price.priceUsdMicros);
         }
@@ -812,11 +813,11 @@ FinanceController::FinanceController(QObject* parent, const QString& databasePat
     if (!cryptoPricesUsdMicros_.contains(QStringLiteral("USDT"))) {
         cryptoPricesUsdMicros_.insert(QStringLiteral("USDT"), 1'000'000);
     }
-    lastCryptoRefreshAttemptUtc_ = repository_.loadCryptoRefreshAttemptUtc();
+    lastCryptoRefreshAttemptUtc_ = crypto_.loadCryptoRefreshAttemptUtc();
     // Kept in the database, so that a restart neither resets the cooldown nor refreshes prices at once
-    lastCryptoPriceAttemptUtc_ = repository_.loadCryptoPriceAttemptUtc();
-    loadManualCryptoState(repository_.loadCryptoManualState());
-    cryptoCostBasis_ = repository_.loadCryptoCostBasis();
+    lastCryptoPriceAttemptUtc_ = crypto_.loadCryptoPriceAttemptUtc();
+    loadManualCryptoState(crypto_.loadCryptoManualState());
+    cryptoCostBasis_ = crypto_.loadCryptoCostBasis();
     archivedCategoryIds_ = repository_.loadArchivedCategoryIds();
     summary_ = repository_.loadSummary();
     for (const BankImportRepository::BankCsvProfileRecord& record :
@@ -1337,16 +1338,16 @@ QVariantMap FinanceController::restoreDatabase(const QUrl& fileUrl)
     budgets_ = repository_.loadBudgets();
     financialGoals_ = repository_.loadFinancialGoals();
     trajectorySettings_ = repository_.loadFinancialTrajectorySettings();
-    cryptoWallets_ = repository_.loadCryptoWallets();
-    for (const auto& wallet : cryptoWallets_) cryptoWalletNames_[wallet.id()] = repository_.cryptoWalletName(wallet.id());
-    cryptoExchanges_ = repository_.loadCryptoExchanges();
-    cryptoTransactions_ = repository_.loadCryptoTransactions();
+    cryptoWallets_ = crypto_.loadCryptoWallets();
+    for (const auto& wallet : cryptoWallets_) cryptoWalletNames_[wallet.id()] = crypto_.cryptoWalletName(wallet.id());
+    cryptoExchanges_ = crypto_.loadCryptoExchanges();
+    cryptoTransactions_ = crypto_.loadCryptoTransactions();
     investmentInstruments_ = repository_.loadInvestmentInstruments();
     investmentPositions_ = repository_.loadInvestmentPositions();
     investmentQuotes_ = repository_.loadInvestmentQuotes();
     investmentOperations_ = repository_.loadInvestmentOperations();
     for (const QString& symbol : {QStringLiteral("USDT"), QStringLiteral("BTC"), QStringLiteral("ETH")}) {
-        const auto price = repository_.loadCryptoPrice(symbol);
+        const auto price = crypto_.loadCryptoPrice(symbol);
         if (price.priceUsdMicros > 0) cryptoPricesUsdMicros_[symbol] = price.priceUsdMicros;
         if (price.fetchedAtUtc.isValid()) cryptoPricesFetchedAtUtc_[symbol] = price.fetchedAtUtc;
     }
@@ -1375,10 +1376,10 @@ QVariantMap FinanceController::restoreDatabase(const QUrl& fileUrl)
     }
     if (!cryptoPricesUsdMicros_.contains(QStringLiteral("USDT")))
         cryptoPricesUsdMicros_.insert(QStringLiteral("USDT"), 1'000'000);
-    lastCryptoRefreshAttemptUtc_ = repository_.loadCryptoRefreshAttemptUtc();
-    lastCryptoPriceAttemptUtc_ = repository_.loadCryptoPriceAttemptUtc();
-    loadManualCryptoState(repository_.loadCryptoManualState());
-    cryptoCostBasis_ = repository_.loadCryptoCostBasis();
+    lastCryptoRefreshAttemptUtc_ = crypto_.loadCryptoRefreshAttemptUtc();
+    lastCryptoPriceAttemptUtc_ = crypto_.loadCryptoPriceAttemptUtc();
+    loadManualCryptoState(crypto_.loadCryptoManualState());
+    cryptoCostBasis_ = crypto_.loadCryptoCostBasis();
     refreshBudgetMonthLimits();
     emit accountsChanged();
     emit categoriesChanged();
@@ -3285,8 +3286,8 @@ bool FinanceController::setCryptoCostBasis(
     } else {
         return false;
     }
-    if (!repository_.saveCryptoCostBasis(exchangeId, coin, basis)) {
-        qWarning() << "Failed to save crypto cost basis:" << repository_.lastError();
+    if (!crypto_.saveCryptoCostBasis(exchangeId, coin, basis)) {
+        qWarning() << "Failed to save crypto cost basis:" << crypto_.lastError();
         return false;
     }
     cryptoCostBasis_.insert(exchangeId + QLatin1Char('|') + coin, basis);
@@ -3302,8 +3303,8 @@ bool FinanceController::clearCryptoCostBasis(const QString& itemId)
     if (parts.size() != 3 || parts.at(0) != QStringLiteral("crypto")) {
         return false;
     }
-    if (!repository_.saveCryptoCostBasis(parts.at(1), parts.at(2), QVariantMap())) {
-        qWarning() << "Failed to clear crypto cost basis:" << repository_.lastError();
+    if (!crypto_.saveCryptoCostBasis(parts.at(1), parts.at(2), QVariantMap())) {
+        qWarning() << "Failed to clear crypto cost basis:" << crypto_.lastError();
         return false;
     }
     cryptoCostBasis_.remove(parts.at(1) + QLatin1Char('|') + parts.at(2));
@@ -4394,13 +4395,13 @@ QVariantMap FinanceController::saveCryptoConnection(const QVariantMap& values)
     if (kind == "wallet") {
         if (!id.isEmpty()) {
             const auto found = std::find_if(cryptoWallets_.cbegin(), cryptoWallets_.cend(), [&id](const CryptoWallet& wallet) { return wallet.id() == id; });
-            if (found == cryptoWallets_.cend() || !repository_.setCryptoWalletName(id, name)) return {{"ok", false}, {"error", QStringLiteral("Не удалось сохранить название кошелька")}};
+            if (found == cryptoWallets_.cend() || !crypto_.setCryptoWalletName(id, name)) return {{"ok", false}, {"error", QStringLiteral("Не удалось сохранить название кошелька")}};
         } else {
             // Keep the existing public-wallet validation and refresh path.
             auto result = addCryptoWallet(values.value("symbol").toString(), values.value("address").toString());
             if (!result.value("ok").toBool()) return result;
             id = cryptoWallets_.constLast().id();
-            if (!repository_.setCryptoWalletName(id, name)) return {{"ok", false}, {"error", QStringLiteral("Кошелёк добавлен, но название не сохранилось")}};
+            if (!crypto_.setCryptoWalletName(id, name)) return {{"ok", false}, {"error", QStringLiteral("Кошелёк добавлен, но название не сохранилось")}};
         }
         cryptoWalletNames_[id] = name; setSelectedCryptoWalletId(id); emit cryptoWalletsChanged(); return {{"ok", true}};
     }
@@ -4418,8 +4419,8 @@ QVariantMap FinanceController::saveCryptoConnection(const QVariantMap& values)
         if (!allowed.match(key).hasMatch() || !allowed.match(secret).hasMatch()) return {{"ok", false}, {"error", QStringLiteral("Введите ключ API и секретный ключ, созданные Bybit")}};
     }
     if (id.isEmpty()) id = QUuid::createUuid().toString(QUuid::WithoutBraces);
-    if (!repository_.saveCryptoExchange({{"id", id}, {"name", name}})) return {{"ok", false}, {"error", QStringLiteral("Не удалось сохранить биржевой счёт")}};
-    cryptoExchanges_ = repository_.loadCryptoExchanges();
+    if (!crypto_.saveCryptoExchange({{"id", id}, {"name", name}})) return {{"ok", false}, {"error", QStringLiteral("Не удалось сохранить биржевой счёт")}};
+    cryptoExchanges_ = crypto_.loadCryptoExchanges();
     if (!key.isEmpty()) {
         exchangeCredentials_[id] = {key, secret}; exchangeCredentialWarnings_.remove(id);
         auto* watcher = new QFutureWatcher<bool>(this);
@@ -4471,7 +4472,7 @@ void FinanceController::startExchangeRefresh(const QString& id)
     const qint64 now = QDateTime::currentMSecsSinceEpoch();
     const qint64 fetched = account->toMap().value("fetchedAtMs").toLongLong();
     qint64 from = now - 2LL * 86400000;
-    if (repository_.loadCryptoHistoryFromMs(id) == 0) {
+    if (crypto_.loadCryptoHistoryFromMs(id) == 0) {
         from = now - 729LL * 86400000;
         cryptoBackfillFromMs_.insert(id, from);
     } else if (fetched > 0) {
@@ -4537,9 +4538,9 @@ QVariantMap FinanceController::addCryptoWallet(
         spec.network,
         spec.symbol,
         spec.decimals);
-    if (!repository_.insertCryptoWallet(wallet)) {
+    if (!crypto_.insertCryptoWallet(wallet)) {
         qWarning() << "Failed to save crypto wallet:"
-                   << repository_.lastError();
+                   << crypto_.lastError();
         result[QStringLiteral("error")] = QStringLiteral("Не удалось сохранить криптокошелёк");
         return result;
     }
@@ -4553,10 +4554,10 @@ QVariantMap FinanceController::addCryptoWallet(
     setCryptoLastError(QString());
     emit cryptoWalletsChanged();
     lastCryptoRefreshAttemptUtc_ = QDateTime::currentDateTimeUtc();
-    if (!repository_.saveCryptoRefreshAttemptUtc(
+    if (!crypto_.saveCryptoRefreshAttemptUtc(
             lastCryptoRefreshAttemptUtc_)) {
         qWarning() << "Failed to save crypto refresh time:"
-                   << repository_.lastError();
+                   << crypto_.lastError();
     }
     startCryptoBalanceRequest(cryptoWallets_.constLast());
     startCryptoTransactionRequest(cryptoWallets_.constLast());
@@ -4568,7 +4569,7 @@ QVariantMap FinanceController::addCryptoWallet(
         : kCryptoPriceIntervalMs;
     if (priceAgeMs < 0 || priceAgeMs >= kCryptoPriceIntervalMs) {
         lastCryptoPriceAttemptUtc_ = QDateTime::currentDateTimeUtc();
-        repository_.saveCryptoPriceAttemptUtc(lastCryptoPriceAttemptUtc_);
+        crypto_.saveCryptoPriceAttemptUtc(lastCryptoPriceAttemptUtc_);
         startCryptoPriceRequest();
     }
     scheduleNextCryptoRefresh(
@@ -4582,12 +4583,12 @@ bool FinanceController::deleteCryptoWallet(const QString& id)
 {
     for (const auto& value : cryptoExchanges_) {
         if (value.toMap().value("id").toString() != id) continue;
-        if (!repository_.deleteCryptoExchange(id)) return false;
+        if (!crypto_.deleteCryptoExchange(id)) return false;
         if (refreshingCryptoWalletIds_.contains(id)) { bybitProvider_.cancel(id); finishCryptoWalletRequest(id); finishCryptoRequest(); }
         exchangeCredentials_.remove(id); exchangeErrors_.remove(id); exchangeCredentialWarnings_.remove(id);
         exchangeProgress_.remove(id);
         (void)QtConcurrent::run([id] { ExchangeCredentials::remove(id); });
-        cryptoExchanges_ = repository_.loadCryptoExchanges();
+        cryptoExchanges_ = crypto_.loadCryptoExchanges();
         if (selectedCryptoWalletId_ == id) {
             selectedCryptoWalletId_ = cryptoWallets_.isEmpty() ? (cryptoExchanges_.isEmpty() ? QString() : cryptoExchanges_.constFirst().toMap().value("id").toString()) : cryptoWallets_.constFirst().id();
             emit selectedCryptoWalletIdChanged();
@@ -4602,10 +4603,10 @@ bool FinanceController::deleteCryptoWallet(const QString& id)
             break;
         }
     }
-    if (walletIndex < 0 || !repository_.deleteCryptoWallet(id)) {
+    if (walletIndex < 0 || !crypto_.deleteCryptoWallet(id)) {
         if (walletIndex >= 0) {
             qWarning() << "Failed to delete crypto wallet:"
-                       << repository_.lastError();
+                       << crypto_.lastError();
         }
         return false;
     }
@@ -4660,9 +4661,9 @@ void FinanceController::refreshCryptoWallets()
     if (manualCryptoRefreshes_.size() >= kManualCryptoRefreshLimit) {
         cryptoManualLockUntilUtc_ = now.addMSecs(kManualCryptoLockMs);
         manualCryptoRefreshes_.clear();
-        if (!repository_.saveCryptoManualState(manualCryptoStateText())) {
+        if (!crypto_.saveCryptoManualState(manualCryptoStateText())) {
             qWarning() << "Failed to save manual crypto refresh state:"
-                       << repository_.lastError();
+                       << crypto_.lastError();
         }
         emit cryptoWalletsChanged();
         QTimer::singleShot(
@@ -4673,9 +4674,9 @@ void FinanceController::refreshCryptoWallets()
     }
 
     manualCryptoRefreshes_.append(now);
-    if (!repository_.saveCryptoManualState(manualCryptoStateText())) {
+    if (!crypto_.saveCryptoManualState(manualCryptoStateText())) {
         qWarning() << "Failed to save manual crypto refresh state:"
-                   << repository_.lastError();
+                   << crypto_.lastError();
     }
     lastCryptoPriceAttemptUtc_ = QDateTime();
     lastCryptoRefreshAttemptUtc_ = QDateTime();
@@ -4741,18 +4742,18 @@ void FinanceController::refreshCryptoWalletsNow()
     };
     if (due(lastCryptoPriceAttemptUtc_, kCryptoPriceIntervalMs)) {
         lastCryptoPriceAttemptUtc_ = now;
-        if (!repository_.saveCryptoPriceAttemptUtc(lastCryptoPriceAttemptUtc_)) {
+        if (!crypto_.saveCryptoPriceAttemptUtc(lastCryptoPriceAttemptUtc_)) {
             qWarning() << "Failed to save crypto price time:"
-                       << repository_.lastError();
+                       << crypto_.lastError();
         }
         startCryptoPriceRequest();
     }
     if (due(lastCryptoRefreshAttemptUtc_, kCryptoRefreshIntervalMs)) {
         lastCryptoRefreshAttemptUtc_ = now;
-        if (!repository_.saveCryptoRefreshAttemptUtc(
+        if (!crypto_.saveCryptoRefreshAttemptUtc(
                 lastCryptoRefreshAttemptUtc_)) {
             qWarning() << "Failed to save crypto refresh time:"
-                       << repository_.lastError();
+                       << crypto_.lastError();
         }
         for (const CryptoWallet& wallet : std::as_const(cryptoWallets_)) {
             startCryptoBalanceRequest(wallet);
@@ -5453,8 +5454,8 @@ bool FinanceController::deleteHistoryRows(const QVariantList& rows)
     }
     transactions_ = repository_.loadTransactions();
     investmentPositions_ = repository_.loadInvestmentPositions();
-    cryptoTransactions_ = repository_.loadCryptoTransactions();
-    cryptoExchanges_ = repository_.loadCryptoExchanges();
+    cryptoTransactions_ = crypto_.loadCryptoTransactions();
+    cryptoExchanges_ = crypto_.loadCryptoExchanges();
     summary_ = repository_.loadSummary();
     emit transactionsChanged();
     emit investmentPositionsChanged();

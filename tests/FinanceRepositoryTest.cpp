@@ -1,4 +1,5 @@
 #include "../persistence/FinanceRepository.h"
+#include "../core/db/CryptoRepository.h"
 #include "../core/db/BankImportRepository.h"
 #include "../core/db/SettingsRepository.h"
 #include "../core/db/NotesRepository.h"
@@ -998,9 +999,9 @@ void FinanceRepositoryTest::storesCryptoWalletAndPriceSnapshots()
         const CryptoWallet wallet(
             QStringLiteral("tron-wallet"),
             QStringLiteral("TR7NHqjeKQxGTCi8q8ZY4pL8otSzgjLj6t"));
-        QVERIFY2(repository.insertCryptoWallet(wallet),
+        QVERIFY2(CryptoRepository(repository.database()).insertCryptoWallet(wallet),
                  qPrintable(repository.lastError()));
-        QVERIFY2(repository.updateCryptoWalletBalance(
+        QVERIFY2(CryptoRepository(repository.database()).updateCryptoWalletBalance(
                      wallet.id(), 12'345'678, balanceFetchedAt),
                  qPrintable(repository.lastError()));
         QVERIFY2(repository.saveCryptoPrice(
@@ -1009,7 +1010,7 @@ void FinanceRepositoryTest::storesCryptoWalletAndPriceSnapshots()
         QVERIFY2(repository.saveCryptoPrice(
                      QStringLiteral("BTC"), 112'345'000'000, priceFetchedAt),
                  qPrintable(repository.lastError()));
-        QVERIFY2(repository.saveCryptoRefreshAttemptUtc(priceFetchedAt),
+        QVERIFY2(CryptoRepository(repository.database()).saveCryptoRefreshAttemptUtc(priceFetchedAt),
                  qPrintable(repository.lastError()));
         const QVector<CryptoTransaction> transactions{
             CryptoTransaction(
@@ -1026,7 +1027,7 @@ void FinanceRepositoryTest::storesCryptoWalletAndPriceSnapshots()
                 QStringLiteral("TUoHaVjx7n5xz8LwPRDckgFrDWhMhuSuJM"),
                 11'518'000,
                 balanceFetchedAt.addDays(-2))};
-        QVERIFY2(repository.replaceCryptoTransactions(
+        QVERIFY2(CryptoRepository(repository.database()).replaceCryptoTransactions(
                      wallet.id(), transactions, priceFetchedAt),
                  qPrintable(repository.lastError()));
     }
@@ -1034,7 +1035,7 @@ void FinanceRepositoryTest::storesCryptoWalletAndPriceSnapshots()
     {
         FinanceRepository repository(databasePath);
         QVERIFY2(repository.isOpen(), qPrintable(repository.lastError()));
-        const QVector<CryptoWallet> wallets = repository.loadCryptoWallets();
+        const QVector<CryptoWallet> wallets = CryptoRepository(repository.database()).loadCryptoWallets();
         QCOMPARE(wallets.size(), 1);
         QCOMPARE(wallets.constFirst().id(), QStringLiteral("tron-wallet"));
         QCOMPARE(wallets.constFirst().balanceAtomic(), qint64(12'345'678));
@@ -1042,31 +1043,31 @@ void FinanceRepositoryTest::storesCryptoWalletAndPriceSnapshots()
         QCOMPARE(wallets.constFirst().historyFetchedAtUtc(), priceFetchedAt);
 
         const QVector<CryptoTransaction> transactions =
-            repository.loadCryptoTransactions();
+            CryptoRepository(repository.database()).loadCryptoTransactions();
         QCOMPARE(transactions.size(), 2);
         QCOMPARE(
             transactions.constFirst().transactionId(),
             QStringLiteral("transaction-in"));
         QCOMPARE(transactions.constFirst().amountAtomic(), qint64(120'650'000));
 
-        const FinanceRepository::CryptoPriceSnapshot price =
-            repository.loadCryptoPrice(QStringLiteral("USDT"));
+        const CryptoRepository::CryptoPriceSnapshot price =
+            CryptoRepository(repository.database()).loadCryptoPrice(QStringLiteral("USDT"));
         QCOMPARE(price.priceUsdMicros, qint64(999'731));
         QCOMPARE(price.fetchedAtUtc, priceFetchedAt);
         QCOMPARE(
-            repository.loadCryptoPrice(QStringLiteral("BTC")).priceUsdMicros,
+            CryptoRepository(repository.database()).loadCryptoPrice(QStringLiteral("BTC")).priceUsdMicros,
             qint64(112'345'000'000));
-        QCOMPARE(repository.loadCryptoRefreshAttemptUtc(), priceFetchedAt);
+        QCOMPARE(CryptoRepository(repository.database()).loadCryptoRefreshAttemptUtc(), priceFetchedAt);
 
-        QVERIFY2(repository.deleteCryptoWallet(QStringLiteral("tron-wallet")),
+        QVERIFY2(CryptoRepository(repository.database()).deleteCryptoWallet(QStringLiteral("tron-wallet")),
                  qPrintable(repository.lastError()));
-        QVERIFY(repository.loadCryptoWallets().isEmpty());
-        QVERIFY(repository.loadCryptoTransactions().isEmpty());
+        QVERIFY(CryptoRepository(repository.database()).loadCryptoWallets().isEmpty());
+        QVERIFY(CryptoRepository(repository.database()).loadCryptoTransactions().isEmpty());
 
         const CryptoWallet replacement(
             QStringLiteral("tron-wallet-replacement"),
             QStringLiteral("TR7NHqjeKQxGTCi8q8ZY4pL8otSzgjLj6t"));
-        QVERIFY2(repository.insertCryptoWallet(replacement),
+        QVERIFY2(CryptoRepository(repository.database()).insertCryptoWallet(replacement),
                  qPrintable(repository.lastError()));
     }
 }
@@ -1115,7 +1116,7 @@ void FinanceRepositoryTest::migratesLegacyCryptoSchema()
 
     FinanceRepository repository(databasePath);
     QVERIFY2(repository.isOpen(), qPrintable(repository.lastError()));
-    const QVector<CryptoWallet> wallets = repository.loadCryptoWallets();
+    const QVector<CryptoWallet> wallets = CryptoRepository(repository.database()).loadCryptoWallets();
     QCOMPARE(wallets.size(), 1);
     QCOMPARE(wallets.constFirst().symbol(), QStringLiteral("USDT"));
     QCOMPARE(wallets.constFirst().network(), QStringLiteral("TRON"));
@@ -1134,11 +1135,11 @@ void FinanceRepositoryTest::migratesLegacyCryptoSchema()
         QStringLiteral("ETHEREUM"),
         QStringLiteral("ETH"),
         8);
-    QVERIFY2(repository.insertCryptoWallet(bitcoin),
+    QVERIFY2(CryptoRepository(repository.database()).insertCryptoWallet(bitcoin),
              qPrintable(repository.lastError()));
-    QVERIFY2(repository.insertCryptoWallet(ethereum),
+    QVERIFY2(CryptoRepository(repository.database()).insertCryptoWallet(ethereum),
              qPrintable(repository.lastError()));
-    QCOMPARE(repository.loadCryptoWallets().size(), 3);
+    QCOMPARE(CryptoRepository(repository.database()).loadCryptoWallets().size(), 3);
     QVERIFY2(repository.saveCryptoPrice(
                  QStringLiteral("ETH"), 4'567'000'000, QDateTime::currentDateTimeUtc()),
              qPrintable(repository.lastError()));
