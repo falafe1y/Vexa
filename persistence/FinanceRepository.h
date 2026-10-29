@@ -100,7 +100,6 @@ public:
     Database& database();
     bool clearAllUserData();
     QVector<Transaction> loadTransactions();
-    QVector<Project> loadProjects();
     QVector<RecurringTransaction> loadRecurringTransactions();
     QVector<DepositSettings> loadDepositSettings();
     QVector<Category> loadCategories();
@@ -115,9 +114,6 @@ public:
     QSet<QString> loadArchivedCategoryIds();
     Summary loadSummary();
     bool insertTransaction(const Transaction& transaction);
-    bool insertProject(const Project& project);
-    bool updateProject(const Project& project);
-    bool archiveProject(const QString& id);
     bool insertTransfer(
         const Transaction& outgoing,
         const Transaction& incoming

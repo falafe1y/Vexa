@@ -7,6 +7,7 @@
 #include "../core/db/BankImportRepository.h"
 #include "../core/db/CryptoRepository.h"
 #include "../core/db/PlanningRepository.h"
+#include "../core/db/ProjectRepository.h"
 #include "../core/model/accounts/BalanceCalculator.h"
 #include "../services/BankCsvImporter.h"
 #include "../core/model/analytics/CapitalHistoryCalculator.h"
@@ -817,6 +818,7 @@ private:
     BankImportRepository bankImport_;
     CryptoRepository crypto_;
     PlanningRepository planning_;
+    ProjectRepository projectRepository_;
     CbrCurrencyRateProvider rateProvider_;
     CurrencyConverter currencyConverter_;
     BalanceCalculator balanceCalculator_;

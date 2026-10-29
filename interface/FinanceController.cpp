@@ -451,6 +451,7 @@ FinanceController::FinanceController(QObject* parent, const QString& databasePat
     , bankImport_(repository_.database())
     , crypto_(repository_.database())
     , planning_(repository_.database())
+    , projectRepository_(repository_.database())
     , currencyConverter_(rateProvider_)
     , balanceCalculator_(currencyConverter_)
 {
@@ -767,7 +768,7 @@ FinanceController::FinanceController(QObject* parent, const QString& databasePat
     rateProvider_.setAutomaticUpdatesEnabled(automaticCurrencyRates_);
     selectedAsset_ = assetTypeFromString(settings_.loadSelectedAsset());
     transactions_ = repository_.loadTransactions();
-    projects_ = repository_.loadProjects();
+    projects_ = projectRepository_.loadProjects();
     recurringTransactions_ = repository_.loadRecurringTransactions();
     categories_ = repository_.loadCategories();
     accounts_ = repository_.loadAccounts();
@@ -1329,7 +1330,7 @@ QVariantMap FinanceController::restoreDatabase(const QUrl& fileUrl)
     dateFilterTo_ = {};
     lastCapitalSnapshotDate_ = {};
     transactions_ = repository_.loadTransactions();
-    projects_ = repository_.loadProjects();
+    projects_ = projectRepository_.loadProjects();
     recurringTransactions_ = repository_.loadRecurringTransactions();
     categories_ = repository_.loadCategories();
     archivedCategoryIds_ = repository_.loadArchivedCategoryIds();
@@ -4122,8 +4123,8 @@ bool FinanceController::addProject(const QString& name)
     const Project project(
         QUuid::createUuid().toString(QUuid::WithoutBraces),
         normalizedName);
-    if (!repository_.insertProject(project)) {
-        qWarning() << "Failed to save project:" << repository_.lastError();
+    if (!projectRepository_.insertProject(project)) {
+        qWarning() << "Failed to save project:" << projectRepository_.lastError();
         return false;
     }
 
@@ -4160,8 +4161,8 @@ bool FinanceController::renameProject(
     }
 
     const Project updated(id, normalizedName);
-    if (!repository_.updateProject(updated)) {
-        qWarning() << "Failed to rename project:" << repository_.lastError();
+    if (!projectRepository_.updateProject(updated)) {
+        qWarning() << "Failed to rename project:" << projectRepository_.lastError();
         return false;
     }
     projects_[projectIndex] = updated;
@@ -4178,10 +4179,10 @@ bool FinanceController::deleteProject(const QString& id)
             break;
         }
     }
-    if (projectIndex < 0 || !repository_.archiveProject(id)) {
+    if (projectIndex < 0 || !projectRepository_.archiveProject(id)) {
         if (projectIndex >= 0) {
             qWarning() << "Failed to archive project:"
-                       << repository_.lastError();
+                       << projectRepository_.lastError();
         }
         return false;
     }

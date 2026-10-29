@@ -1,4 +1,5 @@
 #include "../persistence/FinanceRepository.h"
+#include "../core/db/ProjectRepository.h"
 #include "../core/db/PlanningRepository.h"
 #include "../core/db/CryptoRepository.h"
 #include "../core/db/BankImportRepository.h"
@@ -610,11 +611,11 @@ void FinanceRepositoryTest::migratesLegacyProjectTable()
 
     FinanceRepository repository(databasePath);
     QVERIFY2(repository.isOpen(), qPrintable(repository.lastError()));
-    const QVector<Project> projects = repository.loadProjects();
+    const QVector<Project> projects = ProjectRepository(repository.database()).loadProjects();
     QCOMPARE(projects.size(), 1);
     QCOMPARE(projects.constFirst().id(), QStringLiteral("legacy"));
-    QVERIFY(repository.archiveProject(QStringLiteral("legacy")));
-    QVERIFY(repository.loadProjects().isEmpty());
+    QVERIFY(ProjectRepository(repository.database()).archiveProject(QStringLiteral("legacy")));
+    QVERIFY(ProjectRepository(repository.database()).loadProjects().isEmpty());
 }
 
 void FinanceRepositoryTest::storesUpdatesAndArchivesBudgets()
@@ -741,7 +742,7 @@ void FinanceRepositoryTest::migratesProjectAssignmentForExistingDatabase()
     const Project project(
         QStringLiteral("migrated-project"),
         QStringLiteral("Migrated project"));
-    QVERIFY(repository.insertProject(project));
+    QVERIFY(ProjectRepository(repository.database()).insertProject(project));
     const Transaction assigned(
         transactions.constFirst().id(),
         transactions.constFirst().accountId(),
@@ -791,8 +792,8 @@ void FinanceRepositoryTest::storesProjectsAndTransactionAssignments()
         QVERIFY(repository.insertAccount(account));
         QVERIFY(repository.insertCategory(incomeCategory));
         QVERIFY(repository.insertCategory(expenseCategory));
-        QVERIFY(repository.insertProject(firstProject));
-        QVERIFY(repository.insertProject(secondProject));
+        QVERIFY(ProjectRepository(repository.database()).insertProject(firstProject));
+        QVERIFY(ProjectRepository(repository.database()).insertProject(secondProject));
         QVERIFY(repository.insertTransaction(Transaction(
             QStringLiteral("project-income-operation"),
             account.id(),
@@ -812,7 +813,7 @@ void FinanceRepositoryTest::storesProjectsAndTransactionAssignments()
             QStringLiteral("ChatGPT"),
             firstProject.id())));
 
-        const QVector<Project> projects = repository.loadProjects();
+        const QVector<Project> projects = ProjectRepository(repository.database()).loadProjects();
         QCOMPARE(projects.size(), 2);
         const QVector<Transaction> transactions =
             repository.loadTransactions();
@@ -820,10 +821,10 @@ void FinanceRepositoryTest::storesProjectsAndTransactionAssignments()
         QCOMPARE(transactions.at(0).projectId(), firstProject.id());
         QCOMPARE(transactions.at(1).projectId(), firstProject.id());
 
-        QVERIFY(repository.updateProject(Project(
+        QVERIFY(ProjectRepository(repository.database()).updateProject(Project(
             firstProject.id(), QStringLiteral("Vexa"))));
-        QVERIFY(repository.archiveProject(secondProject.id()));
-        const QVector<Project> activeProjects = repository.loadProjects();
+        QVERIFY(ProjectRepository(repository.database()).archiveProject(secondProject.id()));
+        const QVector<Project> activeProjects = ProjectRepository(repository.database()).loadProjects();
         QCOMPARE(activeProjects.size(), 1);
         QCOMPARE(activeProjects.constFirst().id(), firstProject.id());
         QCOMPARE(activeProjects.constFirst().name(), QStringLiteral("Vexa"));
@@ -832,7 +833,7 @@ void FinanceRepositoryTest::storesProjectsAndTransactionAssignments()
     {
         FinanceRepository repository(databasePath);
         QVERIFY2(repository.isOpen(), qPrintable(repository.lastError()));
-        QCOMPARE(repository.loadProjects().size(), 1);
+        QCOMPARE(ProjectRepository(repository.database()).loadProjects().size(), 1);
         const QVector<Transaction> transactions =
             repository.loadTransactions();
         QCOMPARE(transactions.size(), 2);

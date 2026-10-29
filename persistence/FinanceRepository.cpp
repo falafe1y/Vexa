@@ -636,26 +636,6 @@ QVector<Transaction> FinanceRepository::loadTransactions()
     return result;
 }
 
-QVector<Project> FinanceRepository::loadProjects()
-{
-    QVector<Project> result;
-    QSqlQuery query(database_);
-    if (!query.exec(QStringLiteral(
-            "SELECT id, name FROM projects "
-            "WHERE is_archived = 0 "
-            "ORDER BY created_at, name COLLATE NOCASE"))) {
-        setLastError(query.lastError().text());
-        return result;
-    }
-
-    while (query.next()) {
-        result.append(Project(
-            query.value(0).toString(),
-            query.value(1).toString()));
-    }
-    return result;
-}
-
 QVector<RecurringTransaction> FinanceRepository::loadRecurringTransactions()
 {
     QVector<RecurringTransaction> result;
@@ -1509,59 +1489,6 @@ bool FinanceRepository::insertCategory(const Category& category)
 
     if (!query.exec()) {
         setLastError(query.lastError().text());
-        return false;
-    }
-    return true;
-}
-
-bool FinanceRepository::insertProject(const Project& project)
-{
-    QSqlQuery query(database_);
-    query.prepare(QStringLiteral(
-        "INSERT INTO projects(id, name, is_archived, created_at, updated_at) "
-        "VALUES (?, ?, 0, ?, ?)"));
-    const qint64 now = QDateTime::currentDateTimeUtc().toMSecsSinceEpoch();
-    query.addBindValue(project.id());
-    query.addBindValue(project.name().trimmed());
-    query.addBindValue(now);
-    query.addBindValue(now);
-    if (!query.exec()) {
-        setLastError(query.lastError().text());
-        return false;
-    }
-    return true;
-}
-
-bool FinanceRepository::updateProject(const Project& project)
-{
-    QSqlQuery query(database_);
-    query.prepare(QStringLiteral(
-        "UPDATE projects SET name = ?, updated_at = ? "
-        "WHERE id = ? AND is_archived = 0"));
-    query.addBindValue(project.name().trimmed());
-    query.addBindValue(QDateTime::currentDateTimeUtc().toMSecsSinceEpoch());
-    query.addBindValue(project.id());
-    if (!query.exec() || query.numRowsAffected() != 1) {
-        setLastError(query.lastError().isValid()
-                         ? query.lastError().text()
-                         : QStringLiteral("Project was not found"));
-        return false;
-    }
-    return true;
-}
-
-bool FinanceRepository::archiveProject(const QString& id)
-{
-    QSqlQuery query(database_);
-    query.prepare(QStringLiteral(
-        "UPDATE projects SET is_archived = 1, updated_at = ? "
-        "WHERE id = ? AND is_archived = 0"));
-    query.addBindValue(QDateTime::currentDateTimeUtc().toMSecsSinceEpoch());
-    query.addBindValue(id);
-    if (!query.exec() || query.numRowsAffected() != 1) {
-        setLastError(query.lastError().isValid()
-                         ? query.lastError().text()
-                         : QStringLiteral("Project was not found"));
         return false;
     }
     return true;

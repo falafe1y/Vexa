@@ -80,7 +80,7 @@ core/
   - [x] 2.3.3 `BankImportRepository` — профили CSV, правила категорий и получателей, связи импорта (8 методов). Перед этим типы правил `BankCategoryRule` и `BankRecipientRule` вынесены в `core/model/transactions/` (часть 2.4), и `persistence/FinanceRepository.h` больше не подключает `services/`. Запись правил вместе с операциями при импорте (`insertTransactions`) пока у `FinanceRepository`, уйдёт в 2.3.12
   - [x] 2.3.4 `CryptoRepository` — кошельки, биржи, сделки, снимки, чтение цен, себестоимость, состояние обновлений в `settings` (23 метода). `saveCryptoPrice` пока у `FinanceRepository`: в одной транзакции пишет цену и историю цен (`savePriceHistory`), переедет вместе с историей в 2.3.10
   - [x] 2.3.5 `PlanningRepository` — бюджеты и финансовые цели (папка модели `planning/`, 9 методов). `currencyFromCode` перенесён в `core/model/money/Currency`: им пользуются оба репозитория. Траектория и снимки капитала — в 2.3.10 (решено 30.10.2026)
-  - [ ] 2.3.6 `ProjectRepository`
+  - [x] 2.3.6 `ProjectRepository` — проекты: список, добавление, изменение, архив (4 метода)
   - [ ] 2.3.7 `CategoryRepository`
   - [ ] 2.3.8 `RecurringTransactionRepository`
   - [ ] 2.3.9 `InvestmentRepository` — инструменты, позиции, котировки, операции
