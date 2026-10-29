@@ -2,7 +2,7 @@
 
 Решение — ADR-031 (слои) и ADR-032 (имена) в `docs/ADR.md`. Здесь — целевая схема и план по шагам с отметками.
 
-Дата последнего обновления: 26.10.2026.
+Дата последнего обновления: 29.10.2026.
 
 ## Целевая схема
 
@@ -72,7 +72,7 @@ core/
 
 ## Этап 2. `core/db`, `core/api`, `core/system`
 
-- [ ] 2.1 Класс `Database` в `core/db/`: подключение, ключ, `lastError`, `transaction(fn)`. `FinanceRepository` пользуется им внутри, его API не меняется.
+- [x] 2.1 Класс `Database` в `core/db/` (библиотека `core_db`, входит в обёртку `core`): путь по умолчанию, папка данных, SQLCipher с ключом, `PRAGMA foreign_keys`, закрытие соединения, `lastError`, `transaction(fn)`. `FinanceRepository` держит `Database`, поле `database_` — ссылка на его соединение; API `FinanceRepository` не изменился. Тест `DatabaseTest`.
 - [ ] 2.2 Миграции в `core/db/migrations/`.
 - [ ] 2.3 Репозитории по одному, каждый — отдельный коммит, вызовы переключаются с `FinanceRepository` на новый репозиторий:
   - [ ] 2.3.1 `NotesRepository`

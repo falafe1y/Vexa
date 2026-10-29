@@ -392,6 +392,7 @@ add_executable(FinanceRepositoryTest
 target_link_libraries(FinanceRepositoryTest
     PRIVATE
         core_model
+        core_db
         Qt6::Core
         Qt6::Sql
         Qt6::Test
@@ -420,7 +421,7 @@ add_test(NAME BackupRestoreControllerTest COMMAND BackupRestoreControllerTest)
 
 add_executable(InvestmentAccountingRepositoryTest tests/InvestmentAccountingRepositoryTest.cpp
     persistence/FinanceRepository.cpp persistence/FinanceRepositoryHistory.cpp)
-target_link_libraries(InvestmentAccountingRepositoryTest PRIVATE core_model Qt6::Core Qt6::Sql Qt6::Test)
+target_link_libraries(InvestmentAccountingRepositoryTest PRIVATE core_model core_db Qt6::Core Qt6::Sql Qt6::Test)
 add_test(NAME InvestmentAccountingRepositoryTest COMMAND InvestmentAccountingRepositoryTest)
 
 add_executable(InvestmentValuationTest tests/InvestmentValuationTest.cpp)
@@ -451,6 +452,7 @@ add_executable(InvestmentRepositoryTest
 target_link_libraries(InvestmentRepositoryTest
     PRIVATE
         core_model
+        core_db
         Qt6::Core
         Qt6::Sql
         Qt6::Test
@@ -615,7 +617,7 @@ add_executable(BybitProviderTest
     services/BybitProvider.cpp
     persistence/FinanceRepository.cpp persistence/FinanceRepositoryHistory.cpp
 )
-target_link_libraries(BybitProviderTest PRIVATE core_model Qt6::Core Qt6::Test Qt6::Network Qt6::Sql)
+target_link_libraries(BybitProviderTest PRIVATE core_model core_db Qt6::Core Qt6::Test Qt6::Network Qt6::Sql)
 add_test(NAME BybitProviderTest COMMAND BybitProviderTest)
 
 add_executable(BankCategoryMatcherTest
@@ -667,20 +669,24 @@ endforeach()
 if(NOT ANDROID)
     add_executable(DatabaseEncryptionTest tests/DatabaseEncryptionTest.cpp
         persistence/FinanceRepository.cpp persistence/FinanceRepositoryHistory.cpp)
-    target_link_libraries(DatabaseEncryptionTest PRIVATE core_model vexa_storage Qt6::Test)
+    target_link_libraries(DatabaseEncryptionTest PRIVATE core_model core_db vexa_storage Qt6::Test)
     add_test(NAME DatabaseEncryptionTest COMMAND DatabaseEncryptionTest)
 endif()
+
+add_executable(DatabaseTest tests/DatabaseTest.cpp)
+target_link_libraries(DatabaseTest PRIVATE core_db Qt6::Test)
+add_test(NAME DatabaseTest COMMAND DatabaseTest)
 
 target_compile_definitions(vexa PRIVATE VEXA_APP_VERSION="${PROJECT_VERSION}")
 
 add_executable(PortableBackupTest tests/PortableBackupTest.cpp
     persistence/FinanceRepository.cpp persistence/FinanceRepositoryHistory.cpp)
-target_link_libraries(PortableBackupTest PRIVATE core_model vexa_storage Qt6::Test)
+target_link_libraries(PortableBackupTest PRIVATE core_model core_db vexa_storage Qt6::Test)
 add_test(NAME PortableBackupTest COMMAND PortableBackupTest)
 
 add_executable(AnalyticsHistoryRepositoryTest tests/AnalyticsHistoryRepositoryTest.cpp
     persistence/FinanceRepository.cpp persistence/FinanceRepositoryHistory.cpp)
-target_link_libraries(AnalyticsHistoryRepositoryTest PRIVATE core_model vexa_storage Qt6::Test Qt6::Sql)
+target_link_libraries(AnalyticsHistoryRepositoryTest PRIVATE core_model core_db vexa_storage Qt6::Test Qt6::Sql)
 add_test(NAME AnalyticsHistoryRepositoryTest COMMAND AnalyticsHistoryRepositoryTest)
 
 add_executable(AnalyticsHistoryControllerTest tests/AnalyticsHistoryControllerTest.cpp ${investment_controller_test_sources} services/BankRecipients.qrc)
@@ -737,7 +743,7 @@ target_link_libraries(InvestmentBenchmarkTest PRIVATE Qt6::Core Qt6::Test)
 add_test(NAME InvestmentBenchmarkTest COMMAND InvestmentBenchmarkTest)
 
 add_executable(InvestmentBenchmarkRepositoryTest tests/InvestmentBenchmarkRepositoryTest.cpp persistence/FinanceRepository.cpp persistence/FinanceRepositoryHistory.cpp services/InvestmentBenchmark.cpp)
-target_link_libraries(InvestmentBenchmarkRepositoryTest PRIVATE core_model vexa_storage Qt6::Test Qt6::Sql)
+target_link_libraries(InvestmentBenchmarkRepositoryTest PRIVATE core_model core_db vexa_storage Qt6::Test Qt6::Sql)
 add_test(NAME InvestmentBenchmarkRepositoryTest COMMAND InvestmentBenchmarkRepositoryTest)
 add_executable(InvestmentBenchmarkControllerTest tests/InvestmentBenchmarkControllerTest.cpp ${investment_controller_test_sources} services/BankRecipients.qrc)
 target_link_libraries(InvestmentBenchmarkControllerTest PRIVATE core vexa_storage Qt6::Core Qt6::Gui Qt6::Sql Qt6::Network Qt6::Concurrent Qt6::Test ZLIB::ZLIB)

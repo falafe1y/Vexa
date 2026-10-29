@@ -15,7 +15,6 @@
 #include <QSqlError>
 #include <QSqlQuery>
 #include <QSaveFile>
-#include <QStandardPaths>
 #include <QStringList>
 #include <QTimeZone>
 #include <QUuid>
@@ -250,38 +249,17 @@ bool deleteOperationRows(
 
 FinanceRepository::FinanceRepository(const QString& databasePath, const QByteArray& databaseKey,
                                      std::shared_ptr<DatabaseKeyStore> keyStore)
-    : access_{databasePath, databaseKey}
-    , keyStore_(keyStore ? std::move(keyStore) : nativeDatabaseKeyStore())
-    , connectionName_(QUuid::createUuid().toString(QUuid::WithoutBraces))
-    , database_(addCipherDatabase(connectionName_, databaseKey))
+    : keyStore_(keyStore ? std::move(keyStore) : nativeDatabaseKeyStore())
+    , db_(databasePath, databaseKey)
+    , database_(db_.connection())
 {
-    const QString resolvedDatabasePath = databasePath.isEmpty()
-        ? QStandardPaths::writableLocation(QStandardPaths::AppDataLocation)
-            + QStringLiteral("/vexa.sqlite3")
-        : databasePath;
-    const QString directory = QFileInfo(resolvedDatabasePath).absolutePath();
-
-    if (!QDir().mkpath(directory)) {
-        setLastError(QStringLiteral("Cannot create application data directory"));
-        return;
-    }
-
-    access_.path = resolvedDatabasePath;
-    database_.setDatabaseName(resolvedDatabasePath);
-    if (!database_.open()) {
-        setLastError(database_.lastError().text());
-        return;
-    }
-
-    QSqlQuery pragma(database_);
-    if (!pragma.exec(QStringLiteral("PRAGMA foreign_keys = ON"))) {
-        setLastError(pragma.lastError().text());
-        database_.close();
+    if (!db_.isOpen()) {
+        setLastError(db_.lastError());
         return;
     }
 
     if (!initializeSchema() || !migrateLegacySchema() || !migrateInvestmentSchema() || !migrateBankImportSchema() || !migrateLedgerSchema() || !migrateTaxKind() || !migrateCurrencySchema() || !migrateCreditDebtFlag() || !migrateAnalyticsHistorySchema() || !seedDefaults()) {
-        database_.close();
+        db_.close();
     }
 }
 
@@ -340,12 +318,7 @@ bool FinanceRepository::migrateBackup(const DatabaseAccess& access, const QStrin
     return true;
 }
 
-FinanceRepository::~FinanceRepository()
-{
-    database_.close();
-    database_ = QSqlDatabase();
-    QSqlDatabase::removeDatabase(connectionName_);
-}
+FinanceRepository::~FinanceRepository() = default;
 
 bool FinanceRepository::isOpen() const { return database_.isOpen(); }
 QString FinanceRepository::lastError() const { return lastError_; }
@@ -410,7 +383,7 @@ bool FinanceRepository::backupDatabase(const QString& destinationPath)
     }
 
     QString error;
-    if (!DatabaseEncryption::snapshot(access_, path, error)) {
+    if (!DatabaseEncryption::snapshot(db_.access(), path, error)) {
         setLastError(error);
         return false;
     }

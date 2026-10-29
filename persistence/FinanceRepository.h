@@ -1,4 +1,5 @@
 #pragma once
+#include "../core/db/Database.h"
 #include "storage/DatabaseEncryption.h"
 
 #include "../core/model/transactions/Transaction.h"
@@ -308,9 +309,8 @@ private:
     bool seedDefaults();
     void setLastError(const QString& error);
 
-    DatabaseAccess access_;
     std::shared_ptr<DatabaseKeyStore> keyStore_;
-    QString connectionName_;
-    QSqlDatabase database_;
+    Database db_;
+    QSqlDatabase& database_; // the connection of db_
     QString lastError_;
 };
