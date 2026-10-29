@@ -1,4 +1,5 @@
 #include "../interface/FinanceController.h"
+#include "../core/db/SettingsRepository.h"
 #include "../services/InvestmentBenchmark.h"
 #include <QTemporaryDir>
 #include <QStandardPaths>
@@ -12,7 +13,7 @@ private slots:
     void initTestCase(){QStandardPaths::setTestModeEnabled(true);}
     void historyDownloadDoesNotRequirePortfolioObservations(){
         QTemporaryDir dir;const auto path=dir.filePath("data.db");const auto today=QDate::currentDate();
-        {FinanceRepository r(path);QVERIFY(r.saveAutomaticCurrencyRates(false));}
+        {FinanceRepository r(path);QVERIFY(SettingsRepository(r.database()).saveAutomaticCurrencyRates(false));}
         FinanceController c(nullptr,path);QVERIFY(!c.benchmarkComparison().value("canRefresh").toBool());
         c.selectBenchmarkIndex("index:IMOEX");auto comparison=c.benchmarkComparison();
         QVERIFY(comparison.value("canRefresh").toBool());QVERIFY(!comparison.value("available").toBool());
@@ -33,7 +34,7 @@ private slots:
     void cachedComparisonAndScopeChanges(){
         QTemporaryDir dir;const auto path=dir.filePath("data.db");const auto today=QDate::currentDate();const auto from=today.addDays(-3),to=today.addDays(-1);
         {
-            FinanceRepository r(path);QVERIFY(r.saveAutomaticCurrencyRates(false));QVERIFY(r.insertAccount({"broker","Брокер",AssetType::Investment,AccountType::Brokerage,Currency::RUB,10000}));
+            FinanceRepository r(path);QVERIFY(SettingsRepository(r.database()).saveAutomaticCurrencyRates(false));QVERIFY(r.insertAccount({"broker","Брокер",AssetType::Investment,AccountType::Brokerage,Currency::RUB,10000}));
             for(const auto& name:QSqlDatabase::connectionNames()){auto db=QSqlDatabase::database(name);if(db.databaseName()==path){QSqlQuery q(db);q.prepare("UPDATE accounts SET created_at=? WHERE id='broker'");q.addBindValue(QDateTime(from.addDays(-1),QTime(0,0)).toMSecsSinceEpoch());QVERIFY(q.exec());}}
             QVariantList prices;const qint64 amounts[]{10000,11000,12100};
             for(int i=0;i<3;++i){DailyValuationBatch b;b.date=from.addDays(i);b.observedAtUtc=QDateTime(b.date,QTime(12,0)).toUTC();

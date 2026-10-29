@@ -447,6 +447,7 @@ FinanceController::FinanceController(QObject* parent, const QString& databasePat
     : QObject(parent)
     , repository_(databasePath, databaseKey)
     , notes_(repository_.database())
+    , settings_(repository_.database())
     , currencyConverter_(rateProvider_)
     , balanceCalculator_(currencyConverter_)
 {
@@ -744,24 +745,24 @@ FinanceController::FinanceController(QObject* parent, const QString& databasePat
         return;
     }
 
-    appCurrency_ = currencyFromString(repository_.loadAppCurrency());
+    appCurrency_ = currencyFromString(settings_.loadAppCurrency());
     const Currency storedAnalyticsCurrency = currencyFromString(
-        repository_.loadAnalyticsCurrency());
+        settings_.loadAnalyticsCurrency());
     analyticsCurrency_ = storedAnalyticsCurrency == Currency::EUR || storedAnalyticsCurrency == Currency::CNY
         ? storedAnalyticsCurrency : Currency::USD;
-    manualRubToRubRate_ = repository_.loadManualRubToRubRate();
-    manualUsdToRubRate_ = repository_.loadManualUsdToRubRate();
-    manualEurToRubRate_ = repository_.loadManualEurToRubRate();
-    manualCnyToRubRate_ = repository_.loadManualCnyToRubRate();
+    manualRubToRubRate_ = settings_.loadManualRubToRubRate();
+    manualUsdToRubRate_ = settings_.loadManualUsdToRubRate();
+    manualEurToRubRate_ = settings_.loadManualEurToRubRate();
+    manualCnyToRubRate_ = settings_.loadManualCnyToRubRate();
     if (!rateProvider_.setManualRates(
             manualRubToRubRate_,
             manualUsdToRubRate_,
             manualEurToRubRate_, manualCnyToRubRate_)) {
         qWarning() << "Failed to apply stored manual currency rates";
     }
-    automaticCurrencyRates_ = repository_.loadAutomaticCurrencyRates();
+    automaticCurrencyRates_ = settings_.loadAutomaticCurrencyRates();
     rateProvider_.setAutomaticUpdatesEnabled(automaticCurrencyRates_);
-    selectedAsset_ = assetTypeFromString(repository_.loadSelectedAsset());
+    selectedAsset_ = assetTypeFromString(settings_.loadSelectedAsset());
     transactions_ = repository_.loadTransactions();
     projects_ = repository_.loadProjects();
     recurringTransactions_ = repository_.loadRecurringTransactions();
@@ -1038,9 +1039,9 @@ void FinanceController::setAppCurrency(const QString& currency)
     appCurrency_ = newCurrency;
 
     if (repository_.isOpen() &&
-        !repository_.saveAppCurrency(currencyCode(newCurrency))) {
+        !settings_.saveAppCurrency(currencyCode(newCurrency))) {
         qWarning() << "Failed to save application currency:"
-                   << repository_.lastError();
+                   << settings_.lastError();
     }
 
     emit appCurrencyChanged();
@@ -1062,9 +1063,9 @@ void FinanceController::setAutomaticCurrencyRates(const bool enabled)
         return;
     }
     if (repository_.isOpen() &&
-        !repository_.saveAutomaticCurrencyRates(enabled)) {
+        !settings_.saveAutomaticCurrencyRates(enabled)) {
         qWarning() << "Failed to save automatic currency-rate setting:"
-                   << repository_.lastError();
+                   << settings_.lastError();
         return;
     }
 
@@ -1130,10 +1131,10 @@ bool FinanceController::saveManualCurrencyRates(
         return false;
     }
     if (repository_.isOpen() &&
-        !repository_.saveManualCurrencyRates(
+        !settings_.saveManualCurrencyRates(
             rublesPerRub, rublesPerUsd, rublesPerEur, rublesPerCny)) {
         qWarning() << "Failed to save manual currency rates:"
-                   << repository_.lastError();
+                   << settings_.lastError();
         rateProvider_.setManualRates(
             manualRubToRubRate_,
             manualUsdToRubRate_,
@@ -1297,24 +1298,24 @@ QVariantMap FinanceController::restoreDatabase(const QUrl& fileUrl)
     loadNotes(false);
     {
         const QSignalBlocker blockRates(&rateProvider_);
-        appCurrency_ = currencyFromString(repository_.loadAppCurrency());
+        appCurrency_ = currencyFromString(settings_.loadAppCurrency());
         const Currency storedAnalyticsCurrency = currencyFromString(
-            repository_.loadAnalyticsCurrency());
+            settings_.loadAnalyticsCurrency());
         analyticsCurrency_ = storedAnalyticsCurrency == Currency::EUR || storedAnalyticsCurrency == Currency::CNY
             ? storedAnalyticsCurrency : Currency::USD;
-        manualRubToRubRate_ = repository_.loadManualRubToRubRate();
-        manualUsdToRubRate_ = repository_.loadManualUsdToRubRate();
-        manualEurToRubRate_ = repository_.loadManualEurToRubRate();
-        manualCnyToRubRate_ = repository_.loadManualCnyToRubRate();
+        manualRubToRubRate_ = settings_.loadManualRubToRubRate();
+        manualUsdToRubRate_ = settings_.loadManualUsdToRubRate();
+        manualEurToRubRate_ = settings_.loadManualEurToRubRate();
+        manualCnyToRubRate_ = settings_.loadManualCnyToRubRate();
         if (!rateProvider_.setManualRates(
                 manualRubToRubRate_,
                 manualUsdToRubRate_,
                 manualEurToRubRate_, manualCnyToRubRate_)) {
             qWarning() << "Failed to apply stored manual currency rates";
         }
-        automaticCurrencyRates_ = repository_.loadAutomaticCurrencyRates();
+        automaticCurrencyRates_ = settings_.loadAutomaticCurrencyRates();
         rateProvider_.setAutomaticUpdatesEnabled(automaticCurrencyRates_);
-        selectedAsset_ = assetTypeFromString(repository_.loadSelectedAsset());
+        selectedAsset_ = assetTypeFromString(settings_.loadSelectedAsset());
     }
     selectedAccountId_.clear();
     selectedProjectId_.clear();
@@ -3536,9 +3537,9 @@ void FinanceController::setSelectedAsset(const QString& asset)
         emit selectedCryptoWalletIdChanged();
         emit cryptoTransactionsChanged();
     }
-    if (!repository_.saveSelectedAsset(assetTypeToString(newAsset))) {
+    if (!settings_.saveSelectedAsset(assetTypeToString(newAsset))) {
         qWarning() << "Failed to save selected asset:"
-                   << repository_.lastError();
+                   << settings_.lastError();
     }
 
     emit selectedAssetChanged();
@@ -3672,9 +3673,9 @@ void FinanceController::setAnalyticsCurrency(const QString& currency)
         return;
     }
     if (repository_.isOpen() &&
-        !repository_.saveAnalyticsCurrency(currencyCode(normalized))) {
+        !settings_.saveAnalyticsCurrency(currencyCode(normalized))) {
         qWarning() << "Failed to save analytics currency:"
-                   << repository_.lastError();
+                   << settings_.lastError();
         return;
     }
     analyticsCurrency_ = normalized;

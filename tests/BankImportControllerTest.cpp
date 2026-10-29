@@ -1,4 +1,5 @@
 #include "storage/CipherDriver.h"
+#include "../core/db/SettingsRepository.h"
 #include "../interface/FinanceController.h"
 #include <QFile>
 #include <QTemporaryDir>
@@ -25,7 +26,7 @@ private slots:
 namespace {
 bool seed(const QString& path, qint64 openingMinor = 0) {
     FinanceRepository r(path);
-    return r.isOpen() && r.saveAutomaticCurrencyRates(false) &&
+    return r.isOpen() && SettingsRepository(r.database()).saveAutomaticCurrencyRates(false) &&
         r.insertAccount({"bank","Банк",AssetType::Fiat,AccountType::DebitCard,Currency::RUB,openingMinor});
 }
 QVariantMap profile() {
@@ -293,7 +294,7 @@ void BankImportControllerTest::cnyAccountImportAndSettingsSurviveRestart() {
     QString accountId;
     {
         FinanceRepository repository(path);
-        QVERIFY(repository.saveAutomaticCurrencyRates(false));
+        QVERIFY(SettingsRepository(repository.database()).saveAutomaticCurrencyRates(false));
     }
     {
         FinanceController controller(nullptr,path);

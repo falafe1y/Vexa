@@ -1,4 +1,5 @@
 #include "../persistence/FinanceRepository.h"
+#include "../core/db/SettingsRepository.h"
 #include "../core/db/NotesRepository.h"
 
 #include <QSqlError>
@@ -141,7 +142,7 @@ void FinanceRepositoryTest::cnyMigrationPreservesData()
     QVERIFY(migrated.insertAccount({"cny-broker","Брокер",AssetType::Investment,AccountType::Brokerage,Currency::CNY}));
     QVERIFY(migrated.saveInvestmentBundle({"cny-instrument","TEST-CNY","","Инструмент",InvestmentInstrumentType::Stock,Currency::CNY},
         {"cny-position","cny-broker","cny-instrument",1'000'000,10'000'000},std::nullopt,false));
-    QVERIFY(migrated.saveManualCurrencyRates(1,100,120,13.25));
+    QVERIFY(SettingsRepository(migrated.database()).saveManualCurrencyRates(1,100,120,13.25));
     QCOMPARE(migrated.loadFinancialGoals().first().currency,Currency::CNY);
     QCOMPARE(migrated.loadBudgets().first().currency(),Currency::CNY);
     QCOMPARE(migrated.loadRecurringTransactions().first().currency(),Currency::CNY);
@@ -163,7 +164,7 @@ void FinanceRepositoryTest::cnyMigrationPreservesData()
     QVERIFY(migrated.backupDatabase(backup));
     FinanceRepository restored(directory.filePath("restored.sqlite3"));
     QVERIFY2(restored.restoreDatabase(backup),qPrintable(restored.lastError()));
-    QCOMPARE(restored.loadManualCnyToRubRate(),13.25);
+    QCOMPARE(SettingsRepository(restored.database()).loadManualCnyToRubRate(),13.25);
     QCOMPARE(restored.loadSummary().balance[static_cast<int>(Currency::CNY)],qint64(9500));
     QCOMPARE(restored.loadFinancialGoals().first().currency,Currency::CNY);
     QVERIFY(restored.restoreDatabase(backup));
@@ -205,8 +206,8 @@ void FinanceRepositoryTest::replacesExistingDataAndIsIdempotent()
     QVERIFY(current.insertTransaction(currentOnly));
     QVERIFY(old.insertTransaction(oldShared));
     QVERIFY(old.insertTransaction(missing));
-    QVERIFY(current.saveAppCurrency(QStringLiteral("EUR")));
-    QVERIFY(old.saveAppCurrency(QStringLiteral("USD")));
+    QVERIFY(SettingsRepository(current.database()).saveAppCurrency(QStringLiteral("EUR")));
+    QVERIFY(SettingsRepository(old.database()).saveAppCurrency(QStringLiteral("USD")));
     const QString copy = directory.filePath(QStringLiteral("backup.sqlite3"));
     QVERIFY(old.backupDatabase(copy));
     QFile file(copy);
@@ -219,11 +220,11 @@ void FinanceRepositoryTest::replacesExistingDataAndIsIdempotent()
     QVERIFY(added > 2);
     QVERIFY(QFileInfo::exists(previousPath));
     FinanceRepository previousState(previousPath);
-    QCOMPARE(previousState.loadAppCurrency(), QStringLiteral("EUR"));
+    QCOMPARE(SettingsRepository(previousState.database()).loadAppCurrency(), QStringLiteral("EUR"));
     QCOMPARE(previousState.loadTransactions().size(), 2);
     QCOMPARE(current.loadAccounts().size(), 2);
     QCOMPARE(current.loadTransactions().size(), 2);
-    QCOMPARE(current.loadAppCurrency(), QStringLiteral("USD"));
+    QCOMPARE(SettingsRepository(current.database()).loadAppCurrency(), QStringLiteral("USD"));
     for (const Account& account : current.loadAccounts()) {
         if (account.id() == existing.id()) QCOMPARE(account.name(), previous.name());
     }
@@ -283,7 +284,7 @@ void FinanceRepositoryTest::restoreRejectsInvalidFilesAndRollsBackSchemaConflict
     QString notes; QVERIFY(NotesRepository(current.database()).load(notes));
     QCOMPARE(notes, QStringLiteral("Не потерять"));
     QVERIFY(previousPath.isEmpty());
-    QCOMPARE(current.loadAppCurrency(), QStringLiteral("RUB"));
+    QCOMPARE(SettingsRepository(current.database()).loadAppCurrency(), QStringLiteral("RUB"));
     // The connection/transaction is usable after the failed replacement.
     QVERIFY(current.insertAccount(Account(QStringLiteral("after"), QStringLiteral("После"),
         AssetType::Fiat, AccountType::Cash, Currency::RUB)));
@@ -478,7 +479,7 @@ void FinanceRepositoryTest::clearsAllUserDataAndResetsSettings()
     QVERIFY(repository.loadCapitalSnapshots().isEmpty());
     QVERIFY(repository.loadBankCsvProfiles().isEmpty());
     QVERIFY(repository.loadCategories().isEmpty());
-    QCOMPARE(repository.loadAppCurrency(), QStringLiteral("RUB"));
+    QCOMPARE(SettingsRepository(repository.database()).loadAppCurrency(), QStringLiteral("RUB"));
     FinanceRepository reopened(directory.filePath(QStringLiteral("clear.sqlite3")));
     QVERIFY2(reopened.isOpen(), qPrintable(reopened.lastError()));
     QVERIFY(reopened.loadAccounts().isEmpty());
@@ -1152,20 +1153,20 @@ void FinanceRepositoryTest::storesCurrencyRateSettings()
     {
         FinanceRepository repository(databasePath);
         QVERIFY2(repository.isOpen(), qPrintable(repository.lastError()));
-        QVERIFY(repository.loadAutomaticCurrencyRates());
-        QCOMPARE(repository.loadAnalyticsCurrency(), QStringLiteral("USD"));
-        QVERIFY(repository.saveAutomaticCurrencyRates(false));
-        QVERIFY(repository.saveManualCurrencyRates(1.02, 86.54, 100.12));
-        QVERIFY(repository.saveAnalyticsCurrency(QStringLiteral("EUR")));
+        QVERIFY(SettingsRepository(repository.database()).loadAutomaticCurrencyRates());
+        QCOMPARE(SettingsRepository(repository.database()).loadAnalyticsCurrency(), QStringLiteral("USD"));
+        QVERIFY(SettingsRepository(repository.database()).saveAutomaticCurrencyRates(false));
+        QVERIFY(SettingsRepository(repository.database()).saveManualCurrencyRates(1.02, 86.54, 100.12));
+        QVERIFY(SettingsRepository(repository.database()).saveAnalyticsCurrency(QStringLiteral("EUR")));
     }
 
     FinanceRepository reopened(databasePath);
     QVERIFY2(reopened.isOpen(), qPrintable(reopened.lastError()));
-    QVERIFY(!reopened.loadAutomaticCurrencyRates());
-    QCOMPARE(reopened.loadManualRubToRubRate(), 1.02);
-    QCOMPARE(reopened.loadManualUsdToRubRate(), 86.54);
-    QCOMPARE(reopened.loadManualEurToRubRate(), 100.12);
-    QCOMPARE(reopened.loadAnalyticsCurrency(), QStringLiteral("EUR"));
+    QVERIFY(!SettingsRepository(reopened.database()).loadAutomaticCurrencyRates());
+    QCOMPARE(SettingsRepository(reopened.database()).loadManualRubToRubRate(), 1.02);
+    QCOMPARE(SettingsRepository(reopened.database()).loadManualUsdToRubRate(), 86.54);
+    QCOMPARE(SettingsRepository(reopened.database()).loadManualEurToRubRate(), 100.12);
+    QCOMPARE(SettingsRepository(reopened.database()).loadAnalyticsCurrency(), QStringLiteral("EUR"));
 }
 
 void FinanceRepositoryTest::storesCreditCardTerms()

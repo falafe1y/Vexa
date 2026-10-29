@@ -1,4 +1,5 @@
 #include "../interface/FinanceController.h"
+#include "../core/db/SettingsRepository.h"
 #include <QTemporaryDir>
 #include <QStandardPaths>
 #include <QtTest>
@@ -28,8 +29,8 @@ QVariantMap selection(bool allSources, const QStringList& sourceIds)
 void prepareRates(const QString& path)
 {
     FinanceRepository r(path);
-    QVERIFY(r.saveAutomaticCurrencyRates(false));
-    QVERIFY(r.saveManualCurrencyRates(1, 100, 120));
+    QVERIFY(SettingsRepository(r.database()).saveAutomaticCurrencyRates(false));
+    QVERIFY(SettingsRepository(r.database()).saveManualCurrencyRates(1, 100, 120));
 }
 } // namespace
 

@@ -76,7 +76,7 @@ core/
 - [x] 2.2 Схема базы — класс `DatabaseSchema` в `core/db/`: создание таблиц новой базы (`initializeSchema`), 8 миграций старой базы до текущей схемы (`migrate*`, вместе — `prepare()`) и начальные данные (`seedDefaults`), около 1 260 строк, тела без изменений. В `FinanceRepository` остались `migrateBackup` (проверка схемы копии, уйдёт в 2.7) и `migrateAnalyticsHistorySchema`: она достраивает историю позиций через `appendPositionState` репозитория, переедет вместе с ним в 2.3.9/2.3.10. Неиспользуемый `migrations/20261006_bank_category_rules.sql` пока не тронут — ждёт решения.
 - [ ] 2.3 Репозитории по одному, каждый — отдельный коммит, вызовы переключаются с `FinanceRepository` на новый репозиторий:
   - [x] 2.3.1 `NotesRepository` — `load`/`save` заметок; `FinanceController` держит его рядом с `FinanceRepository` и получает соединение через временный `FinanceRepository::database()`
-  - [ ] 2.3.2 `SettingsRepository`
+  - [x] 2.3.2 `SettingsRepository` — валюта приложения и аналитики, выбранный раздел, автоматические и ручные курсы (13 методов). Настройки крипты, бенчмарка и доходности в таблице `settings` пока у `FinanceRepository`, уйдут в свои репозитории
   - [ ] 2.3.3 `BankImportRepository` — профили CSV, правила категорий и получателей, связи импорта
   - [ ] 2.3.4 `CryptoRepository` — кошельки, биржи, цены, себестоимость
   - [ ] 2.3.5 Бюджеты, цели, траектория, снимки капитала

@@ -3,6 +3,7 @@
 #include "../core/model/transactions/Transaction.h"
 #include "../persistence/FinanceRepository.h"
 #include "../core/db/NotesRepository.h"
+#include "../core/db/SettingsRepository.h"
 #include "../core/model/accounts/BalanceCalculator.h"
 #include "../services/BankCsvImporter.h"
 #include "../core/model/analytics/CapitalHistoryCalculator.h"
@@ -809,6 +810,7 @@ private:
     int bankCsvInspectionRequestId_ = 0;
     FinanceRepository repository_;
     NotesRepository notes_;
+    SettingsRepository settings_;
     CbrCurrencyRateProvider rateProvider_;
     CurrencyConverter currencyConverter_;
     BalanceCalculator balanceCalculator_;

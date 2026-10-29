@@ -1,4 +1,5 @@
 #include "../interface/FinanceController.h"
+#include "../core/db/SettingsRepository.h"
 #include <QTemporaryDir>
 #include <QStandardPaths>
 #include <QtTest>
@@ -14,8 +15,8 @@ private slots:
         const auto path = dir.filePath("data.db");
         {
             FinanceRepository r(path);
-            QVERIFY(r.saveAutomaticCurrencyRates(false));
-            QVERIFY(r.saveManualCurrencyRates(1, 100, 120));
+            QVERIFY(SettingsRepository(r.database()).saveAutomaticCurrencyRates(false));
+            QVERIFY(SettingsRepository(r.database()).saveManualCurrencyRates(1, 100, 120));
             QVERIFY(r.insertAccount({"broker", "Брокер", AssetType::Investment, AccountType::Brokerage, Currency::RUB, 1000000}));
             QVERIFY(r.insertAccount({"deposit", "Вклад", AssetType::Investment, AccountType::Deposit, Currency::RUB, 200000}));
         }

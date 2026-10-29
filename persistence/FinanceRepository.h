@@ -263,24 +263,6 @@ public:
     bool hasInvestmentOperations(const QString& positionId) const;
     bool updateCategoryName(const QString& id, const QString& name);
     bool archiveCategory(const QString& id);
-    QString loadAppCurrency() const;
-    bool saveAppCurrency(const QString& currency);
-    QString loadAnalyticsCurrency() const;
-    bool saveAnalyticsCurrency(const QString& currency);
-    QString loadSelectedAsset() const;
-    bool saveSelectedAsset(const QString& asset);
-    bool loadAutomaticCurrencyRates() const;
-    double loadManualRubToRubRate() const;
-    double loadManualUsdToRubRate() const;
-    double loadManualEurToRubRate() const;
-    double loadManualCnyToRubRate() const;
-    bool saveAutomaticCurrencyRates(bool enabled);
-    bool saveManualCurrencyRates(
-        double rublesPerRub,
-        double rublesPerUsd,
-        double rublesPerEur,
-        double rublesPerCny = kDefaultCnyToRubRate
-        );
     QVector<BankCsvProfileRecord> loadBankCsvProfiles();
     bool saveBankCsvProfile(
         const QString& id,

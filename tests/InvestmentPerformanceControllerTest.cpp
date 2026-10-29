@@ -1,4 +1,5 @@
 #include "../interface/FinanceController.h"
+#include "../core/db/SettingsRepository.h"
 #include <QTemporaryDir>
 #include <QStandardPaths>
 #include <QSignalSpy>
@@ -10,7 +11,7 @@ private slots:
     void initTestCase(){QStandardPaths::setTestModeEnabled(true);}
     void manualAveragePriceFeedsSnapshotAndOpenProfit(){
         QTemporaryDir dir;const auto path=dir.filePath("data.db");
-        {FinanceRepository r(path);QVERIFY(r.saveAutomaticCurrencyRates(false));
+        {FinanceRepository r(path);QVERIFY(SettingsRepository(r.database()).saveAutomaticCurrencyRates(false));
          QVERIFY(r.insertAccount({"broker","Брокер",AssetType::Investment,AccountType::Brokerage,Currency::RUB,10000}));}
         FinanceController c(nullptr,path);
         c.setSelectedAsset("investment");
@@ -34,7 +35,7 @@ private slots:
     void accountsFilterAndInflationSetting(){
         QTemporaryDir dir;const auto path=dir.filePath("data.db");
         {
-            FinanceRepository r(path);QVERIFY(r.saveAutomaticCurrencyRates(false));
+            FinanceRepository r(path);QVERIFY(SettingsRepository(r.database()).saveAutomaticCurrencyRates(false));
             QVERIFY(r.insertAccount({"broker","Брокер",AssetType::Investment,AccountType::Brokerage,Currency::RUB,10000}));
             QVERIFY(r.insertAccount({"deposit","Вклад",AssetType::Investment,AccountType::Deposit,Currency::RUB,20000}));
             QVERIFY(r.insertAccount({"fiat","Фиат",AssetType::Fiat,AccountType::Cash,Currency::RUB,30000}));
@@ -60,7 +61,7 @@ private slots:
     void depositSettingsPersistAndComparisonFollowsSelectedScope(){
         QTemporaryDir dir;const auto path=dir.filePath("data.db");const auto today=QDate::currentDate();
         {
-            FinanceRepository r(path);QVERIFY(r.saveAutomaticCurrencyRates(false));
+            FinanceRepository r(path);QVERIFY(SettingsRepository(r.database()).saveAutomaticCurrencyRates(false));
             QVERIFY(r.insertAccount({"a","Первый",AssetType::Investment,AccountType::Brokerage,Currency::RUB,10000}));
             QVERIFY(r.insertAccount({"b","Второй",AssetType::Investment,AccountType::Brokerage,Currency::RUB,20000}));
             for(int offset:{2,1}){
@@ -95,7 +96,7 @@ private slots:
     void restoreAndClearRefreshReport(){
         QTemporaryDir dir;const auto path=dir.filePath("data.db"),saved=dir.filePath("saved.db");
         {
-            FinanceRepository r(path);QVERIFY(r.saveAutomaticCurrencyRates(false));
+            FinanceRepository r(path);QVERIFY(SettingsRepository(r.database()).saveAutomaticCurrencyRates(false));
             QVERIFY(r.insertAccount({"broker","Брокер",AssetType::Investment,AccountType::Brokerage,Currency::RUB,12345}));
         }
         FinanceController c(nullptr,path);QVERIFY(c.setPerformanceInflation("4.5"));QVERIFY(c.setPerformanceDeposit("16","daily"));
@@ -111,7 +112,7 @@ private slots:
         QTemporaryDir dir;const auto path=dir.filePath("data.db");
         const auto now=QDateTime::currentDateTimeUtc();
         {
-            FinanceRepository r(path);QVERIFY(r.saveAutomaticCurrencyRates(false));
+            FinanceRepository r(path);QVERIFY(SettingsRepository(r.database()).saveAutomaticCurrencyRates(false));
             QVERIFY(r.insertAccount({"broker","Брокер",AssetType::Investment,AccountType::Brokerage,Currency::RUB,10000}));
             QVERIFY(r.insertAccount({"deposit","Вклад",AssetType::Investment,AccountType::Deposit,Currency::RUB,20000}));
             QVERIFY(r.insertTransaction({"interest","deposit","deposit_interest",Money(100,Currency::RUB),TransactionType::Income,now}));
@@ -134,7 +135,7 @@ private slots:
     }
     void groupsKeepBrokersAndDepositsApart(){
         QTemporaryDir dir;const auto path=dir.filePath("data.db");
-        {FinanceRepository r(path);QVERIFY(r.saveAutomaticCurrencyRates(false));
+        {FinanceRepository r(path);QVERIFY(SettingsRepository(r.database()).saveAutomaticCurrencyRates(false));
          QVERIFY(r.insertAccount({"broker","Брокер",AssetType::Investment,AccountType::Brokerage,Currency::RUB,10000}));
          QVERIFY(r.insertAccount({"deposit","Вклад",AssetType::Investment,AccountType::Deposit,Currency::RUB,20000}));
          QVERIFY(r.insertAccount({"fiat","Фиат",AssetType::Fiat,AccountType::Cash,Currency::RUB,30000}));}
@@ -153,7 +154,7 @@ private slots:
     }
     void depositCommissionLowersDepositValue(){
         QTemporaryDir dir;const auto path=dir.filePath("data.db");
-        {FinanceRepository r(path);QVERIFY(r.saveAutomaticCurrencyRates(false));
+        {FinanceRepository r(path);QVERIFY(SettingsRepository(r.database()).saveAutomaticCurrencyRates(false));
          QVERIFY(r.insertAccount({"deposit","Вклад",AssetType::Investment,AccountType::Deposit,Currency::RUB,20000}));}
         {FinanceController c(nullptr,path);c.setSelectedAsset("investment");
          QVERIFY(c.addExpense(100,QStringLiteral("Комиссия банка"),QStringLiteral("bank_fee"),QStringLiteral("RUB"),QStringLiteral("deposit"),QDateTime::currentDateTimeUtc()));}

@@ -1,4 +1,5 @@
 #include "../interface/FinanceController.h"
+#include "../core/db/SettingsRepository.h"
 #include <QTemporaryDir>
 #include <QStandardPaths>
 #include <QtTest>
@@ -32,7 +33,7 @@ static qint64 balance(FinanceController& c) {
     return -1;
 }
 static bool seed(FinanceRepository& r) {
-    return r.isOpen() && r.saveAutomaticCurrencyRates(false) && r.saveManualCurrencyRates(1,100,120) &&
+    return r.isOpen() && SettingsRepository(r.database()).saveAutomaticCurrencyRates(false) && SettingsRepository(r.database()).saveManualCurrencyRates(1,100,120) &&
         r.insertAccount({"broker","Брокер",AssetType::Investment,AccountType::Brokerage,Currency::RUB,10'000'000});
 }
 void InvestmentControllerTest::clearingKeepsCapitalAndSurvivesRestart() {
@@ -330,7 +331,7 @@ void InvestmentControllerTest::buyCommissionIsSeparateRowOnExistingPosition() {
 }
 void InvestmentControllerTest::purchaseNeedsFreeMoneyUntilFunded() {
     QTemporaryDir dir;const auto path=dir.filePath("data.db");const auto at=QDateTime::currentDateTimeUtc().addSecs(-5);
-    {FinanceRepository r(path);QVERIFY(r.saveAutomaticCurrencyRates(false) && r.saveManualCurrencyRates(1,100,120));
+    {FinanceRepository r(path);QVERIFY(SettingsRepository(r.database()).saveAutomaticCurrencyRates(false) && SettingsRepository(r.database()).saveManualCurrencyRates(1,100,120));
      // A brokerage account with no money, and a fiat account with 1 500 RUB to fund it
      QVERIFY(r.insertAccount({"broker","Брокер",AssetType::Investment,AccountType::Brokerage,Currency::RUB,0}));
      QVERIFY(r.insertAccount({"cash","Сбер",AssetType::Fiat,AccountType::DebitCard,Currency::RUB,150'000}));}

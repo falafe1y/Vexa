@@ -1,4 +1,5 @@
 #include "storage/CipherDriver.h"
+#include "../core/db/SettingsRepository.h"
 #include "../core/db/NotesRepository.h"
 #include "../interface/FinanceController.h"
 #include <QFile>
@@ -19,7 +20,7 @@ private slots:
 };
 static bool seed(const QString& path) {
     FinanceRepository r(path);
-    return r.isOpen() && r.clearAllUserData() && r.saveAutomaticCurrencyRates(false);
+    return r.isOpen() && r.clearAllUserData() && SettingsRepository(r.database()).saveAutomaticCurrencyRates(false);
 }
 static bool writeLegacy(const QString& path, const QString& text) {
     QFile f(path);
@@ -28,7 +29,7 @@ static bool writeLegacy(const QString& path, const QString& text) {
 void BackupRestoreControllerTest::migratesLegacyNotesOnce() {
     QTemporaryDir dir; const auto path=dir.filePath("data.db");
     // A new database has no document yet: this is the migration marker.
-    { FinanceRepository r(path); QVERIFY(r.saveAutomaticCurrencyRates(false)); }
+    { FinanceRepository r(path); QVERIFY(SettingsRepository(r.database()).saveAutomaticCurrencyRates(false)); }
     const auto legacy=dir.filePath("notes.txt");
     const QString text=QStringLiteral("Заметки\nПривет 👋 'цитата'");
     QVERIFY(writeLegacy(legacy,text));
@@ -50,8 +51,8 @@ void BackupRestoreControllerTest::backupFlushesPendingNotes() {
 void BackupRestoreControllerTest::replacementRefreshesSettingsAndNotes() {
     QTemporaryDir dir; const auto path=dir.filePath("data.db"), source=dir.filePath("source.db"), backup=dir.filePath("copy.db");
     QVERIFY(seed(path)); QVERIFY(seed(source));
-    { FinanceRepository r(source); QVERIFY(NotesRepository(r.database()).save("Из копии")); QVERIFY(r.saveAppCurrency("EUR"));
-      QVERIFY(r.saveAnalyticsCurrency("CNY")); QVERIFY(r.saveManualCurrencyRates(1,95,105,14));
+    { FinanceRepository r(source); QVERIFY(NotesRepository(r.database()).save("Из копии")); QVERIFY(SettingsRepository(r.database()).saveAppCurrency("EUR"));
+      QVERIFY(SettingsRepository(r.database()).saveAnalyticsCurrency("CNY")); QVERIFY(SettingsRepository(r.database()).saveManualCurrencyRates(1,95,105,14));
       QVERIFY(r.insertAccount({"restored","Из копии",AssetType::Fiat,AccountType::Cash,Currency::RUB})); QVERIFY(r.backupDatabase(backup)); }
     FinanceController c(nullptr,path); c.setNotesText("Несохранённый текущий текст");
     const auto result=c.restoreDatabase(QUrl::fromLocalFile(backup));

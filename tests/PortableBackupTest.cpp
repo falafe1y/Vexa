@@ -1,4 +1,5 @@
 #include <QtTest>
+#include "../core/db/SettingsRepository.h"
 #include "../core/db/NotesRepository.h"
 #include <QTemporaryDir>
 #include <QFile>
@@ -25,7 +26,7 @@ bool write(const QString& path, const QByteArray& data) { QFile file(path); retu
 bool seed(const QString& path) {
     FinanceRepository repository(path);
     return repository.isOpen() && repository.clearAllUserData() && NotesRepository(repository.database()).save(Notes)
-        && repository.saveAppCurrency("CNY")
+        && SettingsRepository(repository.database()).saveAppCurrency("CNY")
         && repository.insertAccount({"account", "Счёт", AssetType::Fiat, AccountType::Cash, Currency::RUB, 9007199254740993LL});
 }
 QString notes(const DatabaseAccess& access) {
@@ -78,7 +79,7 @@ private slots:
         QCOMPARE(notes(restored.access), Notes);
         {
             FinanceRepository repository(targetPath, targetKeys.key);
-            QCOMPARE(repository.loadAppCurrency(), "CNY");
+            QCOMPARE(SettingsRepository(repository.database()).loadAppCurrency(), "CNY");
             QCOMPARE(repository.loadAccounts().first().initialBalanceMinor(), 9007199254740993LL);
         }
         QVERIFY(QFile::exists(restored.recoveryPath));

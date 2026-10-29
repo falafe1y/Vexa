@@ -6,5 +6,7 @@ add_library(core_db STATIC
     DatabaseSchema.h
     NotesRepository.cpp
     NotesRepository.h
+    SettingsRepository.cpp
+    SettingsRepository.h
 )
 target_link_libraries(core_db PUBLIC core_model Qt6::Sql vexa_storage)

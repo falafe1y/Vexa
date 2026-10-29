@@ -1,4 +1,5 @@
 #include "../interface/FinanceController.h"
+#include "../core/db/SettingsRepository.h"
 #include <QTemporaryDir>
 #include <QStandardPaths>
 #include <QtTest>
@@ -9,7 +10,7 @@ private slots:
     void initTestCase(){QStandardPaths::setTestModeEnabled(true);}
     void capturesAllAssetsEvenWithUnknownCrypto(){
         QTemporaryDir dir;const auto path=dir.filePath("data.db");
-        {FinanceRepository r(path);QVERIFY(r.saveAutomaticCurrencyRates(false));QVERIFY(r.saveManualCurrencyRates(1,100,120,14));
+        {FinanceRepository r(path);QVERIFY(SettingsRepository(r.database()).saveAutomaticCurrencyRates(false));QVERIFY(SettingsRepository(r.database()).saveManualCurrencyRates(1,100,120,14));
          QVERIFY(r.insertAccount({"fiat","Доллары",AssetType::Fiat,AccountType::DebitCard,Currency::USD,12345}));
          QVERIFY(r.insertAccount({"broker","Брокер",AssetType::Investment,AccountType::Brokerage,Currency::RUB,100000}));
          InvestmentPositionSettings settings;settings.manualValuation=true;settings.manualValueMinor=30000;settings.valuedAtUtc=QDateTime::currentDateTimeUtc();
@@ -32,7 +33,7 @@ private slots:
     }
     void manualCostCanBeClearedWithoutChangingQuantity(){
         QTemporaryDir dir;const auto path=dir.filePath("data.db");
-        {FinanceRepository r(path);QVERIFY(r.saveAutomaticCurrencyRates(false));QVERIFY(r.saveManualCurrencyRates(1,100,120,14));
+        {FinanceRepository r(path);QVERIFY(SettingsRepository(r.database()).saveAutomaticCurrencyRates(false));QVERIFY(SettingsRepository(r.database()).saveManualCurrencyRates(1,100,120,14));
          QVERIFY(r.insertAccount({"broker","Брокер",AssetType::Investment,AccountType::Brokerage,Currency::RUB,100000}));}
         FinanceController c(nullptr,path);c.setSelectedAsset("investment");
         auto result=c.saveInvestmentPosition({{"accountId","broker"},{"searchIndex",-2},{"instrumentType",0},{"name","Акция"},{"symbol","TEST"},
@@ -51,7 +52,7 @@ private slots:
     }
     void negativeFutureClearingPriceIsPreserved(){
         QTemporaryDir dir;const auto path=dir.filePath("data.db"),at=QDateTime::currentDateTimeUtc().addSecs(-5).toString(Qt::ISODateWithMs);
-        {FinanceRepository r(path);QVERIFY(r.saveAutomaticCurrencyRates(false));QVERIFY(r.saveManualCurrencyRates(1,100,120,14));
+        {FinanceRepository r(path);QVERIFY(SettingsRepository(r.database()).saveAutomaticCurrencyRates(false));QVERIFY(SettingsRepository(r.database()).saveManualCurrencyRates(1,100,120,14));
          QVERIFY(r.insertAccount({"broker","Брокер",AssetType::Investment,AccountType::Brokerage,Currency::RUB,200000}));
          InvestmentTerms t;t.pricing="future";t.currencyCode="RUB";t.priceStepMicros=1'000'000;t.stepValueMicros=10'000'000;
          InvestmentPositionSettings settings;settings.referencePriceMicros=100'000'000;settings.referenceAtUtc=QDateTime::currentDateTimeUtc().addSecs(-3600);
@@ -64,7 +65,7 @@ private slots:
     }
     void chargesAreSavedOnceAndEmptyMeansUnknown(){
         QTemporaryDir dir;const auto path=dir.filePath("data.db");
-        {FinanceRepository r(path);QVERIFY(r.saveAutomaticCurrencyRates(false));QVERIFY(r.saveManualCurrencyRates(1,100,120,14));
+        {FinanceRepository r(path);QVERIFY(SettingsRepository(r.database()).saveAutomaticCurrencyRates(false));QVERIFY(SettingsRepository(r.database()).saveManualCurrencyRates(1,100,120,14));
          QVERIFY(r.insertAccount({"broker","Брокер",AssetType::Investment,AccountType::Brokerage,Currency::RUB,100000}));}
         {FinanceController c(nullptr,path);c.setSelectedAsset("investment");
          auto result=c.saveInvestmentPosition({{"accountId","broker"},{"searchIndex",-2},{"instrumentType",0},{"name","Акция"},{"symbol","TEST"},
