@@ -127,8 +127,8 @@ public:
     bool restoreDatabase(const QString& sourcePath, qint64* restoredRecords = nullptr,
                          QString* previousBackupPath = nullptr);
     QString databasePath() const;
-    bool loadNotes(QString& text, bool* exists = nullptr);
-    bool saveNotes(const QString& text);
+    // The connection, for the repositories split out of this class; temporary until they own it
+    Database& database();
     bool clearAllUserData();
     QVector<Transaction> loadTransactions();
     QVector<Project> loadProjects();

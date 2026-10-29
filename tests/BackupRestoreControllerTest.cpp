@@ -1,4 +1,5 @@
 #include "storage/CipherDriver.h"
+#include "../core/db/NotesRepository.h"
 #include "../interface/FinanceController.h"
 #include <QFile>
 #include <QSqlQuery>
@@ -44,12 +45,12 @@ void BackupRestoreControllerTest::backupFlushesPendingNotes() {
     const auto backup=dir.filePath("copy.db");
     const auto result=c.backupDatabase(QUrl::fromLocalFile(backup));
     QVERIFY2(result.value("ok").toBool(),qPrintable(result.value("error").toString()));
-    FinanceRepository copy(backup); QString saved; QVERIFY(copy.loadNotes(saved)); QCOMPARE(saved,text);
+    FinanceRepository copy(backup); QString saved; QVERIFY(NotesRepository(copy.database()).load(saved)); QCOMPARE(saved,text);
 }
 void BackupRestoreControllerTest::replacementRefreshesSettingsAndNotes() {
     QTemporaryDir dir; const auto path=dir.filePath("data.db"), source=dir.filePath("source.db"), backup=dir.filePath("copy.db");
     QVERIFY(seed(path)); QVERIFY(seed(source));
-    { FinanceRepository r(source); QVERIFY(r.saveNotes("Из копии")); QVERIFY(r.saveAppCurrency("EUR"));
+    { FinanceRepository r(source); QVERIFY(NotesRepository(r.database()).save("Из копии")); QVERIFY(r.saveAppCurrency("EUR"));
       QVERIFY(r.saveAnalyticsCurrency("CNY")); QVERIFY(r.saveManualCurrencyRates(1,95,105,14));
       QVERIFY(r.insertAccount({"restored","Из копии",AssetType::Fiat,AccountType::Cash,Currency::RUB})); QVERIFY(r.backupDatabase(backup)); }
     FinanceController c(nullptr,path); c.setNotesText("Несохранённый текущий текст");
@@ -58,16 +59,16 @@ void BackupRestoreControllerTest::replacementRefreshesSettingsAndNotes() {
     QCOMPARE(c.notesText(),QStringLiteral("Из копии")); QCOMPARE(c.appCurrency(),QStringLiteral("EUR"));
     QCOMPARE(c.analyticsCurrency(),QStringLiteral("CNY")); QCOMPARE(c.manualUsdToRubRate(),95.0);
     const auto previous=result.value("previousBackupPath").toString(); QVERIFY(QFile::exists(previous));
-    { FinanceRepository r(previous); QString saved; QVERIFY(r.loadNotes(saved)); QCOMPARE(saved,QStringLiteral("Несохранённый текущий текст")); }
+    { FinanceRepository r(previous); QString saved; QVERIFY(NotesRepository(r.database()).load(saved)); QCOMPARE(saved,QStringLiteral("Несохранённый текущий текст")); }
     QTest::qWait(850);
-    { FinanceRepository r(path); QString saved; QVERIFY(r.loadNotes(saved)); QCOMPARE(saved,QStringLiteral("Из копии")); }
+    { FinanceRepository r(path); QString saved; QVERIFY(NotesRepository(r.database()).load(saved)); QCOMPARE(saved,QStringLiteral("Из копии")); }
 }
 void BackupRestoreControllerTest::failedRestorePreservesNotes() {
     QTemporaryDir dir; const auto path=dir.filePath("data.db"); QVERIFY(seed(path));
     FinanceController c(nullptr,path); c.setNotesText("Текущий текст");
     QVERIFY(!c.restoreDatabase(QUrl::fromLocalFile(dir.filePath("missing.db"))).value("ok").toBool());
     QCOMPARE(c.notesText(),QStringLiteral("Текущий текст"));
-    FinanceRepository r(path); QString text; QVERIFY(r.loadNotes(text)); QCOMPARE(text,c.notesText());
+    FinanceRepository r(path); QString text; QVERIFY(NotesRepository(r.database()).load(text)); QCOMPARE(text,c.notesText());
 }
 void BackupRestoreControllerTest::oldBackupClearsNotesWithoutReimport() {
     QTemporaryDir dir; const auto path=dir.filePath("data.db"), source=dir.filePath("source.db"), backup=dir.filePath("copy.db");

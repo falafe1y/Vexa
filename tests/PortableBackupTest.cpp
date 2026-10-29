@@ -1,4 +1,5 @@
 #include <QtTest>
+#include "../core/db/NotesRepository.h"
 #include <QTemporaryDir>
 #include <QFile>
 #include <QSqlQuery>
@@ -23,13 +24,13 @@ QByteArray bytes(const QString& path) { QFile file(path); if (!file.open(QIODevi
 bool write(const QString& path, const QByteArray& data) { QFile file(path); return file.open(QIODevice::WriteOnly) && file.write(data) == data.size(); }
 bool seed(const QString& path) {
     FinanceRepository repository(path);
-    return repository.isOpen() && repository.clearAllUserData() && repository.saveNotes(Notes)
+    return repository.isOpen() && repository.clearAllUserData() && NotesRepository(repository.database()).save(Notes)
         && repository.saveAppCurrency("CNY")
         && repository.insertAccount({"account", "Счёт", AssetType::Fiat, AccountType::Cash, Currency::RUB, 9007199254740993LL});
 }
 QString notes(const DatabaseAccess& access) {
     FinanceRepository repository(access.path, access.key); QString value;
-    if (repository.isOpen()) repository.loadNotes(value); return value;
+    if (repository.isOpen()) NotesRepository(repository.database()).load(value); return value;
 }
 bool sql(const DatabaseAccess& access, const QString& statement) {
     const auto name = QUuid::createUuid().toString(); bool ok = false;

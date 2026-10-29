@@ -446,6 +446,7 @@ QString investmentTypeName(const InvestmentInstrumentType type)
 FinanceController::FinanceController(QObject* parent, const QString& databasePath, const QByteArray& databaseKey)
     : QObject(parent)
     , repository_(databasePath, databaseKey)
+    , notes_(repository_.database())
     , currencyConverter_(rateProvider_)
     , balanceCalculator_(currencyConverter_)
 {
@@ -917,9 +918,9 @@ void FinanceController::loadNotes(const bool migrateLegacyFile)
         + QStringLiteral("/notes.txt");
     bool exists = false;
     QString text;
-    if (!repository_.loadNotes(text, &exists)) {
+    if (!notes_.load(text, &exists)) {
         notesAvailable_ = false;
-        notesError_ = QStringLiteral("Не удалось загрузить заметки: %1").arg(repository_.lastError());
+        notesError_ = QStringLiteral("Не удалось загрузить заметки: %1").arg(notes_.lastError());
         emit notesChanged();
         return;
     }
@@ -940,9 +941,9 @@ void FinanceController::loadNotes(const bool migrateLegacyFile)
         }
         file.close();
         text = QString::fromUtf8(contents);
-        if (!repository_.saveNotes(text)) {
+        if (!notes_.save(text)) {
             notesAvailable_ = false;
-            notesError_ = QStringLiteral("Не удалось перенести заметки в базу: %1").arg(repository_.lastError());
+            notesError_ = QStringLiteral("Не удалось перенести заметки в базу: %1").arg(notes_.lastError());
             emit notesChanged();
             return;
         }
@@ -950,9 +951,9 @@ void FinanceController::loadNotes(const bool migrateLegacyFile)
         if (!QFile::remove(legacyNotesFilePath_))
             notesError_ = QStringLiteral("Заметки перенесены в базу, но старый notes.txt не удалось удалить");
     }
-    if (!exists && !repository_.saveNotes(text)) {
+    if (!exists && !notes_.save(text)) {
         notesAvailable_ = false;
-        notesError_ = QStringLiteral("Не удалось создать заметки: %1").arg(repository_.lastError());
+        notesError_ = QStringLiteral("Не удалось создать заметки: %1").arg(notes_.lastError());
         emit notesChanged();
         return;
     }
@@ -978,8 +979,8 @@ bool FinanceController::saveNotes()
     if (!notesDirty_) {
         return notesAvailable_;
     }
-    if (!repository_.saveNotes(notesText_)) {
-        notesError_ = QStringLiteral("Не удалось сохранить заметки: %1").arg(repository_.lastError());
+    if (!notes_.save(notesText_)) {
+        notesError_ = QStringLiteral("Не удалось сохранить заметки: %1").arg(notes_.lastError());
         emit notesChanged();
         return false;
     }

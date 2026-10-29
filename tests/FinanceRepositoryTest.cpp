@@ -1,4 +1,5 @@
 #include "../persistence/FinanceRepository.h"
+#include "../core/db/NotesRepository.h"
 
 #include <QSqlError>
 #include <QSqlQuery>
@@ -250,7 +251,7 @@ void FinanceRepositoryTest::restoreRejectsInvalidFilesAndRollsBackSchemaConflict
     QVERIFY(source.insertAccount(Account(QStringLiteral("new"), QStringLiteral("Новый"),
         AssetType::Fiat, AccountType::Cash, Currency::RUB)));
     QVERIFY(current.insertAccount(Account(QStringLiteral("survivor"), QStringLiteral("Сохранить"), AssetType::Fiat, AccountType::Cash, Currency::RUB)));
-    QVERIFY(current.saveNotes(QStringLiteral("Не потерять")));
+    QVERIFY(NotesRepository(current.database()).save(QStringLiteral("Не потерять")));
     qint64 added = 9;
     QString previousPath;
     QVERIFY(!current.restoreDatabase(directory.filePath(QStringLiteral("absent.sqlite3")), &added, &previousPath));
@@ -279,7 +280,7 @@ void FinanceRepositoryTest::restoreRejectsInvalidFilesAndRollsBackSchemaConflict
     QCOMPARE(added, 0);
     QCOMPARE(current.loadAccounts().size(), 1);
     QCOMPARE(current.loadAccounts().first().id(), QStringLiteral("survivor"));
-    QString notes; QVERIFY(current.loadNotes(notes));
+    QString notes; QVERIFY(NotesRepository(current.database()).load(notes));
     QCOMPARE(notes, QStringLiteral("Не потерять"));
     QVERIFY(previousPath.isEmpty());
     QCOMPARE(current.loadAppCurrency(), QStringLiteral("RUB"));
@@ -432,7 +433,7 @@ void FinanceRepositoryTest::restoresOlderCopyWithOptionalColumnsMissing()
     QCOMPARE(current.loadAccounts().size(), 1);
     QCOMPARE(current.loadAccounts().first().id(), QStringLiteral("old"));
     QString notes; bool exists = false;
-    QVERIFY(current.loadNotes(notes, &exists));
+    QVERIFY(NotesRepository(current.database()).load(notes, &exists));
     QVERIFY(exists); QVERIFY(notes.isEmpty());
 }
 

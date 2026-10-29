@@ -2,6 +2,7 @@
 
 #include "../core/model/transactions/Transaction.h"
 #include "../persistence/FinanceRepository.h"
+#include "../core/db/NotesRepository.h"
 #include "../core/model/accounts/BalanceCalculator.h"
 #include "../services/BankCsvImporter.h"
 #include "../core/model/analytics/CapitalHistoryCalculator.h"
@@ -807,6 +808,7 @@ private:
         const QString& filePath, int headerRow) const;
     int bankCsvInspectionRequestId_ = 0;
     FinanceRepository repository_;
+    NotesRepository notes_;
     CbrCurrencyRateProvider rateProvider_;
     CurrencyConverter currencyConverter_;
     BalanceCalculator balanceCalculator_;

@@ -75,7 +75,7 @@ core/
 - [x] 2.1 Класс `Database` в `core/db/` (библиотека `core_db`, входит в обёртку `core`): путь по умолчанию, папка данных, SQLCipher с ключом, `PRAGMA foreign_keys`, закрытие соединения, `lastError`, `transaction(fn)`. `FinanceRepository` держит `Database`, поле `database_` — ссылка на его соединение; API `FinanceRepository` не изменился. Тест `DatabaseTest`.
 - [x] 2.2 Схема базы — класс `DatabaseSchema` в `core/db/`: создание таблиц новой базы (`initializeSchema`), 8 миграций старой базы до текущей схемы (`migrate*`, вместе — `prepare()`) и начальные данные (`seedDefaults`), около 1 260 строк, тела без изменений. В `FinanceRepository` остались `migrateBackup` (проверка схемы копии, уйдёт в 2.7) и `migrateAnalyticsHistorySchema`: она достраивает историю позиций через `appendPositionState` репозитория, переедет вместе с ним в 2.3.9/2.3.10. Неиспользуемый `migrations/20261006_bank_category_rules.sql` пока не тронут — ждёт решения.
 - [ ] 2.3 Репозитории по одному, каждый — отдельный коммит, вызовы переключаются с `FinanceRepository` на новый репозиторий:
-  - [ ] 2.3.1 `NotesRepository`
+  - [x] 2.3.1 `NotesRepository` — `load`/`save` заметок; `FinanceController` держит его рядом с `FinanceRepository` и получает соединение через временный `FinanceRepository::database()`
   - [ ] 2.3.2 `SettingsRepository`
   - [ ] 2.3.3 `BankImportRepository` — профили CSV, правила категорий и получателей, связи импорта
   - [ ] 2.3.4 `CryptoRepository` — кошельки, биржи, цены, себестоимость
