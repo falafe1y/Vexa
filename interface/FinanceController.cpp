@@ -450,6 +450,7 @@ FinanceController::FinanceController(QObject* parent, const QString& databasePat
     , settings_(repository_.database())
     , bankImport_(repository_.database())
     , crypto_(repository_.database())
+    , planning_(repository_.database())
     , currencyConverter_(rateProvider_)
     , balanceCalculator_(currencyConverter_)
 {
@@ -772,8 +773,8 @@ FinanceController::FinanceController(QObject* parent, const QString& databasePat
     accounts_ = repository_.loadAccounts();
     depositSettings_ = repository_.loadDepositSettings();
     loadDepositRateSteps();
-    budgets_ = repository_.loadBudgets();
-    financialGoals_ = repository_.loadFinancialGoals();
+    budgets_ = planning_.loadBudgets();
+    financialGoals_ = planning_.loadFinancialGoals();
     trajectorySettings_ = repository_.loadFinancialTrajectorySettings();
     cryptoWallets_ = crypto_.loadCryptoWallets();
     for (const auto& wallet : cryptoWallets_) cryptoWalletNames_[wallet.id()] = crypto_.cryptoWalletName(wallet.id());
@@ -1335,8 +1336,8 @@ QVariantMap FinanceController::restoreDatabase(const QUrl& fileUrl)
     accounts_ = repository_.loadAccounts();
     depositSettings_ = repository_.loadDepositSettings();
     loadDepositRateSteps();
-    budgets_ = repository_.loadBudgets();
-    financialGoals_ = repository_.loadFinancialGoals();
+    budgets_ = planning_.loadBudgets();
+    financialGoals_ = planning_.loadFinancialGoals();
     trajectorySettings_ = repository_.loadFinancialTrajectorySettings();
     cryptoWallets_ = crypto_.loadCryptoWallets();
     for (const auto& wallet : cryptoWallets_) cryptoWalletNames_[wallet.id()] = crypto_.cryptoWalletName(wallet.id());
@@ -4305,10 +4306,10 @@ QVariantMap FinanceController::saveBudget(const QVariantMap& values)
         budgetId, name, currencyFromString(currencyText), limitMinor,
         allAccounts, allCategories, accountIds, categoryLimits, startsOn);
     const bool saved = editingIndex >= 0
-        ? repository_.updateBudget(budget, selectedBudgetMonth_)
-        : repository_.insertBudget(budget, selectedBudgetMonth_);
+        ? planning_.updateBudget(budget, selectedBudgetMonth_)
+        : planning_.insertBudget(budget, selectedBudgetMonth_);
     if (!saved) {
-        qWarning() << "Failed to save budget:" << repository_.lastError();
+        qWarning() << "Failed to save budget:" << planning_.lastError();
         result[QStringLiteral("error")] = QStringLiteral("Не удалось сохранить бюджет");
         return result;
     }
@@ -4336,10 +4337,10 @@ bool FinanceController::deleteBudget(const QString& id)
             break;
         }
     }
-    if (budgetIndex < 0 || !repository_.archiveBudget(id)) {
+    if (budgetIndex < 0 || !planning_.archiveBudget(id)) {
         if (budgetIndex >= 0) {
             qWarning() << "Failed to archive budget:"
-                       << repository_.lastError();
+                       << planning_.lastError();
         }
         return false;
     }
@@ -6501,15 +6502,15 @@ void FinanceController::refreshBudgetMonthLimits()
         return;
     }
     for (const Budget& budget : budgets_) {
-        if (!repository_.ensureBudgetMonth(
+        if (!planning_.ensureBudgetMonth(
                 budget.id(), selectedBudgetMonth_,
                 budget.defaultLimitMinor())) {
             qWarning() << "Failed to materialize budget month:"
-                       << repository_.lastError();
+                       << planning_.lastError();
         }
         budgetMonthLimits_.insert(
             budget.id(),
-            repository_.loadBudgetLimit(
+            planning_.loadBudgetLimit(
                 budget.id(), selectedBudgetMonth_,
                 budget.defaultLimitMinor()));
     }
@@ -6754,16 +6755,16 @@ QVariantMap FinanceController::saveFinancialGoal(const QVariantMap& values)
         if (goal.sourceIds.isEmpty()) return error(QStringLiteral("Выберите хотя бы один счёт или кошелёк"));
     }
     if (!editing) goal.id = QUuid::createUuid().toString(QUuid::WithoutBraces);
-    if (!repository_.saveFinancialGoal(goal, editing)) return error(QStringLiteral("Не удалось сохранить цель"));
-    financialGoals_ = repository_.loadFinancialGoals();
+    if (!planning_.saveFinancialGoal(goal, editing)) return error(QStringLiteral("Не удалось сохранить цель"));
+    financialGoals_ = planning_.loadFinancialGoals();
     emit financialGoalsChanged();
     return {{QStringLiteral("ok"), true}};
 }
 
 bool FinanceController::deleteFinancialGoal(const QString& id)
 {
-    if (!repository_.deleteFinancialGoal(id)) return false;
-    financialGoals_ = repository_.loadFinancialGoals();
+    if (!planning_.deleteFinancialGoal(id)) return false;
+    financialGoals_ = planning_.loadFinancialGoals();
     emit financialGoalsChanged();
     return true;
 }

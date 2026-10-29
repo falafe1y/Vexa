@@ -10,6 +10,8 @@ add_library(core_db STATIC
     DatabaseSchema.h
     NotesRepository.cpp
     NotesRepository.h
+    PlanningRepository.cpp
+    PlanningRepository.h
     SettingsRepository.cpp
     SettingsRepository.h
 )

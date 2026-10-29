@@ -79,12 +79,12 @@ core/
   - [x] 2.3.2 `SettingsRepository` — валюта приложения и аналитики, выбранный раздел, автоматические и ручные курсы (13 методов). Настройки крипты, бенчмарка и доходности в таблице `settings` пока у `FinanceRepository`, уйдут в свои репозитории
   - [x] 2.3.3 `BankImportRepository` — профили CSV, правила категорий и получателей, связи импорта (8 методов). Перед этим типы правил `BankCategoryRule` и `BankRecipientRule` вынесены в `core/model/transactions/` (часть 2.4), и `persistence/FinanceRepository.h` больше не подключает `services/`. Запись правил вместе с операциями при импорте (`insertTransactions`) пока у `FinanceRepository`, уйдёт в 2.3.12
   - [x] 2.3.4 `CryptoRepository` — кошельки, биржи, сделки, снимки, чтение цен, себестоимость, состояние обновлений в `settings` (23 метода). `saveCryptoPrice` пока у `FinanceRepository`: в одной транзакции пишет цену и историю цен (`savePriceHistory`), переедет вместе с историей в 2.3.10
-  - [ ] 2.3.5 Бюджеты, цели, траектория, снимки капитала
+  - [x] 2.3.5 `PlanningRepository` — бюджеты и финансовые цели (папка модели `planning/`, 9 методов). `currencyFromCode` перенесён в `core/model/money/Currency`: им пользуются оба репозитория. Траектория и снимки капитала — в 2.3.10 (решено 30.10.2026)
   - [ ] 2.3.6 `ProjectRepository`
   - [ ] 2.3.7 `CategoryRepository`
   - [ ] 2.3.8 `RecurringTransactionRepository`
   - [ ] 2.3.9 `InvestmentRepository` — инструменты, позиции, котировки, операции
-  - [ ] 2.3.10 `MarketHistoryRepository` — дневные оценки, история цен и курсов, бенчмарк
+  - [ ] 2.3.10 `AnalyticsRepository` — дневные оценки, история цен и курсов, бенчмарк, настройки траектории, снимки капитала (папка модели `analytics/`; бывший `MarketHistoryRepository`, переименован 30.10.2026)
   - [ ] 2.3.11 `AccountRepository` — счета, настройки вкладов, ставки
   - [ ] 2.3.12 `TransactionRepository` — операции, переводы, сводка
 - [ ] 2.4 Распутать банковский импорт: структуры (сделано в 2.3.3) и логика правил (`BankCategoryRule`, `BankRecipientRule`, сопоставление) — в `core/model`, загрузка словаря и чтение файлов — в `core/system`.

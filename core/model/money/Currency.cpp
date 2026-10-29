@@ -16,6 +16,18 @@ QString currencyCode(const Currency currency)
     return {};
 }
 
+Currency currencyFromCode(const QString& code)
+{
+    if (code == QStringLiteral("USD")) {
+        return Currency::USD;
+    }
+    if (code == QStringLiteral("EUR")) {
+        return Currency::EUR;
+    }
+    if (code == QStringLiteral("CNY")) return Currency::CNY;
+    return Currency::RUB;
+}
+
 QString currencySymbol(const Currency currency)
 {
     switch (currency) {

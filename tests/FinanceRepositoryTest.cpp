@@ -1,4 +1,5 @@
 #include "../persistence/FinanceRepository.h"
+#include "../core/db/PlanningRepository.h"
 #include "../core/db/CryptoRepository.h"
 #include "../core/db/BankImportRepository.h"
 #include "../core/db/SettingsRepository.h"
@@ -136,8 +137,8 @@ void FinanceRepositoryTest::cnyMigrationPreservesData()
         TransactionType::Expense,date,"Расход в юанях")));
     QCOMPARE(migrated.loadSummary().balance[static_cast<int>(Currency::CNY)],qint64(9500));
     FinancialGoal goal;goal.id="cny-goal";goal.name="Цель";goal.currency=Currency::CNY;goal.targetMinor=100000;
-    QVERIFY(migrated.saveFinancialGoal(goal,false));
-    QVERIFY(migrated.insertBudget({"cny-budget","Бюджет",Currency::CNY,10000,true,true,{},{},QDate(2026,10,1)},QDate(2026,10,1)));
+    QVERIFY(PlanningRepository(migrated.database()).saveFinancialGoal(goal,false));
+    QVERIFY(PlanningRepository(migrated.database()).insertBudget({"cny-budget","Бюджет",Currency::CNY,10000,true,true,{},{},QDate(2026,10,1)},QDate(2026,10,1)));
     QVERIFY(migrated.insertRecurringTransaction({"cny-recurring","Повторение","cny","groceries",TransactionType::Expense,
         100,Currency::CNY,RecurrenceType::MonthlyDay,1,1,1,QDate(2026,11,1),QDate(2026,10,1)}));
     QVERIFY(migrated.saveCapitalSnapshot({QDate(2026,10,1),Currency::CNY,9500}));
@@ -145,8 +146,8 @@ void FinanceRepositoryTest::cnyMigrationPreservesData()
     QVERIFY(migrated.saveInvestmentBundle({"cny-instrument","TEST-CNY","","Инструмент",InvestmentInstrumentType::Stock,Currency::CNY},
         {"cny-position","cny-broker","cny-instrument",1'000'000,10'000'000},std::nullopt,false));
     QVERIFY(SettingsRepository(migrated.database()).saveManualCurrencyRates(1,100,120,13.25));
-    QCOMPARE(migrated.loadFinancialGoals().first().currency,Currency::CNY);
-    QCOMPARE(migrated.loadBudgets().first().currency(),Currency::CNY);
+    QCOMPARE(PlanningRepository(migrated.database()).loadFinancialGoals().first().currency,Currency::CNY);
+    QCOMPARE(PlanningRepository(migrated.database()).loadBudgets().first().currency(),Currency::CNY);
     QCOMPARE(migrated.loadRecurringTransactions().first().currency(),Currency::CNY);
     QCOMPARE(migrated.loadCapitalSnapshots().first().currency,Currency::CNY);
     QCOMPARE(migrated.loadInvestmentInstruments().first().currency(),Currency::CNY);
@@ -168,7 +169,7 @@ void FinanceRepositoryTest::cnyMigrationPreservesData()
     QVERIFY2(restored.restoreDatabase(backup),qPrintable(restored.lastError()));
     QCOMPARE(SettingsRepository(restored.database()).loadManualCnyToRubRate(),13.25);
     QCOMPARE(restored.loadSummary().balance[static_cast<int>(Currency::CNY)],qint64(9500));
-    QCOMPARE(restored.loadFinancialGoals().first().currency,Currency::CNY);
+    QCOMPARE(PlanningRepository(restored.database()).loadFinancialGoals().first().currency,Currency::CNY);
     QVERIFY(restored.restoreDatabase(backup));
     QCOMPARE(restored.loadTransactions().size(),2);
     FinanceRepository reopened(path);
@@ -470,14 +471,14 @@ void FinanceRepositoryTest::clearsAllUserDataAndResetsSettings()
     const FinancialGoal goal{
         QStringLiteral("goal"), QStringLiteral("Цель"), Currency::RUB,
         100'000, {}, true, {}};
-    QVERIFY(repository.saveFinancialGoal(goal, false));
+    QVERIFY(PlanningRepository(repository.database()).saveFinancialGoal(goal, false));
     QVERIFY(BankImportRepository(repository.database()).saveBankCsvProfile(
         QStringLiteral("profile"), QStringLiteral("Импорт"), QStringLiteral("{}")));
 
     QVERIFY2(repository.clearAllUserData(), qPrintable(repository.lastError()));
     QVERIFY(repository.loadAccounts().isEmpty());
     QVERIFY(repository.loadTransactions().isEmpty());
-    QVERIFY(repository.loadFinancialGoals().isEmpty());
+    QVERIFY(PlanningRepository(repository.database()).loadFinancialGoals().isEmpty());
     QVERIFY(repository.loadCapitalSnapshots().isEmpty());
     QVERIFY(BankImportRepository(repository.database()).loadBankCsvProfiles().isEmpty());
     QVERIFY(repository.loadCategories().isEmpty());
@@ -551,14 +552,14 @@ void FinanceRepositoryTest::financialGoalsCrudPersistsWithoutContributions()
     {
         FinanceRepository repository(path);
         QVERIFY2(repository.isOpen(), qPrintable(repository.lastError()));
-        QVERIFY(repository.saveFinancialGoal(goal, false));
-        QCOMPARE(repository.loadFinancialGoals().size(), 1);
-        QVERIFY(!repository.saveFinancialGoal(goal, false)); // duplicate ID
+        QVERIFY(PlanningRepository(repository.database()).saveFinancialGoal(goal, false));
+        QCOMPARE(PlanningRepository(repository.database()).loadFinancialGoals().size(), 1);
+        QVERIFY(!PlanningRepository(repository.database()).saveFinancialGoal(goal, false)); // duplicate ID
         QVERIFY(repository.loadTransactions().isEmpty());
     }
     {
         FinanceRepository repository(path);
-        const auto loaded = repository.loadFinancialGoals();
+        const auto loaded = PlanningRepository(repository.database()).loadFinancialGoals();
         QCOMPARE(loaded.size(), 1);
         QCOMPARE(loaded.first().targetMinor, goal.targetMinor);
         QVERIFY(!loaded.first().deadline.isValid());
@@ -566,20 +567,20 @@ void FinanceRepositoryTest::financialGoalsCrudPersistsWithoutContributions()
         goal.deadline = QDate(2027, 5, 20); goal.targetMinor = 30'000'000;
         goal.allSources = false;
         goal.sourceIds = {QStringLiteral("account:household-rub")};
-        QVERIFY(repository.saveFinancialGoal(goal, true));
+        QVERIFY(PlanningRepository(repository.database()).saveFinancialGoal(goal, true));
     }
     {
         FinanceRepository repository(path);
-        const auto loaded = repository.loadFinancialGoals().first();
+        const auto loaded = PlanningRepository(repository.database()).loadFinancialGoals().first();
         QCOMPARE(loaded.name, goal.name);
         QCOMPARE(loaded.currency, Currency::EUR);
         QCOMPARE(loaded.deadline, goal.deadline);
         QCOMPARE(loaded.sourceIds, goal.sourceIds);
         QVERIFY(!loaded.allSources);
-        QVERIFY(repository.deleteFinancialGoal(goal.id));
-        QVERIFY(repository.loadFinancialGoals().isEmpty());
-        QVERIFY(!repository.deleteFinancialGoal(goal.id));
-        QVERIFY(!repository.saveFinancialGoal(goal, true));
+        QVERIFY(PlanningRepository(repository.database()).deleteFinancialGoal(goal.id));
+        QVERIFY(PlanningRepository(repository.database()).loadFinancialGoals().isEmpty());
+        QVERIFY(!PlanningRepository(repository.database()).deleteFinancialGoal(goal.id));
+        QVERIFY(!PlanningRepository(repository.database()).saveFinancialGoal(goal, true));
         QVERIFY(repository.loadTransactions().isEmpty());
         QVERIFY(!repository.loadAccounts().isEmpty());
     }
@@ -643,40 +644,40 @@ void FinanceRepositoryTest::storesUpdatesAndArchivesBudgets()
         Currency::RUB, 100'000'00, false, false,
         {firstAccount.id()}, {{groceries.id(), 25'000'00}},
         QDate(2026, 9, 1));
-    QVERIFY2(repository.insertBudget(created, QDate(2026, 9, 1)),
+    QVERIFY2(PlanningRepository(repository.database()).insertBudget(created, QDate(2026, 9, 1)),
              qPrintable(repository.lastError()));
 
-    QVector<Budget> budgets = repository.loadBudgets();
+    QVector<Budget> budgets = PlanningRepository(repository.database()).loadBudgets();
     QCOMPARE(budgets.size(), 1);
     QCOMPARE(budgets.constFirst().name(), QStringLiteral("Household"));
     QCOMPARE(budgets.constFirst().accountIds(), QStringList{firstAccount.id()});
     QCOMPARE(budgets.constFirst().categoryLimits().size(), 1);
-    QCOMPARE(repository.loadBudgetLimit(
+    QCOMPARE(PlanningRepository(repository.database()).loadBudgetLimit(
         created.id(), QDate(2026, 9, 1), 0), qint64(100'000'00));
 
-    QVERIFY(repository.ensureBudgetMonth(
+    QVERIFY(PlanningRepository(repository.database()).ensureBudgetMonth(
         created.id(), QDate(2026, 10, 1), created.defaultLimitMinor()));
-    QCOMPARE(repository.loadBudgetLimit(
+    QCOMPARE(PlanningRepository(repository.database()).loadBudgetLimit(
         created.id(), QDate(2026, 10, 1), 0), qint64(100'000'00));
 
     const Budget updated(
         created.id(), QStringLiteral("Family"), Currency::USD,
         1'500'00, true, true, {}, {{groceries.id(), 500'00}},
         created.startsOn());
-    QVERIFY2(repository.updateBudget(updated, QDate(2026, 10, 1)),
+    QVERIFY2(PlanningRepository(repository.database()).updateBudget(updated, QDate(2026, 10, 1)),
              qPrintable(repository.lastError()));
-    budgets = repository.loadBudgets();
+    budgets = PlanningRepository(repository.database()).loadBudgets();
     QCOMPARE(budgets.constFirst().name(), QStringLiteral("Family"));
     QVERIFY(budgets.constFirst().allAccounts());
     QVERIFY(budgets.constFirst().allCategories());
     QVERIFY(budgets.constFirst().accountIds().isEmpty());
-    QCOMPARE(repository.loadBudgetLimit(
+    QCOMPARE(PlanningRepository(repository.database()).loadBudgetLimit(
         created.id(), QDate(2026, 9, 1), 0), qint64(100'000'00));
-    QCOMPARE(repository.loadBudgetLimit(
+    QCOMPARE(PlanningRepository(repository.database()).loadBudgetLimit(
         created.id(), QDate(2026, 10, 1), 0), qint64(1'500'00));
 
-    QVERIFY(repository.archiveBudget(created.id()));
-    QVERIFY(repository.loadBudgets().isEmpty());
+    QVERIFY(PlanningRepository(repository.database()).archiveBudget(created.id()));
+    QVERIFY(PlanningRepository(repository.database()).loadBudgets().isEmpty());
 }
 
 void FinanceRepositoryTest::migratesProjectAssignmentForExistingDatabase()

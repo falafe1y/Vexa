@@ -55,9 +55,6 @@ public:
         Transaction transaction;
     };
 
-    QVector<FinancialGoal> loadFinancialGoals();
-    bool saveFinancialGoal(const FinancialGoal& goal, bool editing);
-    bool deleteFinancialGoal(const QString& id);
 
     bool saveDailyValuations(const DailyValuationBatch& batch);
     QVariantList loadDailyValuations(AssetDailyValuation::Kind kind, const QDate& from = {}, const QDate& to = {});
@@ -84,20 +81,6 @@ public:
     bool saveFinancialTrajectorySettings(
         const FinancialTrajectorySettings& settings);
 
-    QVector<Budget> loadBudgets();
-    qint64 loadBudgetLimit(
-        const QString& budgetId,
-        const QDate& month,
-        qint64 fallback
-        );
-    bool insertBudget(const Budget& budget, const QDate& month);
-    bool updateBudget(const Budget& budget, const QDate& month);
-    bool archiveBudget(const QString& id);
-    bool ensureBudgetMonth(
-        const QString& budgetId,
-        const QDate& month,
-        qint64 limitMinor
-        );
 
     explicit FinanceRepository(const QString& databasePath = {}, const QByteArray& databaseKey = {},
                                std::shared_ptr<DatabaseKeyStore> keyStore = {});
