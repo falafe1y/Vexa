@@ -298,15 +298,6 @@ private:
                           const QDateTime& quotedAt, const QString& currency,
                           const QString& source, const QString& termsJson = QStringLiteral("{}"));
 
-    bool initializeSchema();
-    bool migrateLegacySchema();
-    bool migrateInvestmentSchema();
-    bool migrateLedgerSchema();
-    bool migrateTaxKind();
-    bool migrateBankImportSchema();
-    bool migrateCurrencySchema();
-    bool migrateCreditDebtFlag();
-    bool seedDefaults();
     void setLastError(const QString& error);
 
     std::shared_ptr<DatabaseKeyStore> keyStore_;

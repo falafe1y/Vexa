@@ -13,7 +13,7 @@ services/        — сценарии, транзакции БД, данные �
    ↓
 core/
   model/         — сущности, деньги, валюты, расчёты, правила      (только Qt Core)
-  db/            — подключение, migrations/, репозитории            (Qt Sql)
+  db/            — подключение, схема и миграции, репозитории       (Qt Sql)
   api/           — ЦБ, MOEX, Bybit, Tron                            (Qt Network)
   system/        — файлы, content://, CSV/XLSX/PDF, хранилище ключей, события ОС
 ```
@@ -73,7 +73,7 @@ core/
 ## Этап 2. `core/db`, `core/api`, `core/system`
 
 - [x] 2.1 Класс `Database` в `core/db/` (библиотека `core_db`, входит в обёртку `core`): путь по умолчанию, папка данных, SQLCipher с ключом, `PRAGMA foreign_keys`, закрытие соединения, `lastError`, `transaction(fn)`. `FinanceRepository` держит `Database`, поле `database_` — ссылка на его соединение; API `FinanceRepository` не изменился. Тест `DatabaseTest`.
-- [ ] 2.2 Миграции в `core/db/migrations/`.
+- [x] 2.2 Схема базы — класс `DatabaseSchema` в `core/db/`: создание таблиц новой базы (`initializeSchema`), 8 миграций старой базы до текущей схемы (`migrate*`, вместе — `prepare()`) и начальные данные (`seedDefaults`), около 1 260 строк, тела без изменений. В `FinanceRepository` остались `migrateBackup` (проверка схемы копии, уйдёт в 2.7) и `migrateAnalyticsHistorySchema`: она достраивает историю позиций через `appendPositionState` репозитория, переедет вместе с ним в 2.3.9/2.3.10. Неиспользуемый `migrations/20261006_bank_category_rules.sql` пока не тронут — ждёт решения.
 - [ ] 2.3 Репозитории по одному, каждый — отдельный коммит, вызовы переключаются с `FinanceRepository` на новый репозиторий:
   - [ ] 2.3.1 `NotesRepository`
   - [ ] 2.3.2 `SettingsRepository`

@@ -26,7 +26,7 @@
 - Остатки и количества не хранятся, считаются суммой строк.
 - Стоимость «всего» — деньги плюс позиции по котировке или ручной оценке. Вычисляется, не хранится.
 
-**Код.** `persistence/FinanceRepository.cpp`: `migrateLedgerSchema`, `migrateTaxKind`.
+**Код.** `core/db/DatabaseSchema.cpp`: `migrateLedgerSchema`, `migrateTaxKind`.
 
 ---
 
@@ -307,7 +307,7 @@
 
 ## ADR-022. Учёт долга по кредитной карте
 
-**Статус:** Открыто (20.10.2026): часть про шифрование и пароль на Android заменена ADR-025. Принято пользователем (16.10.2026). Реализовано: `core/model/accounts/Account.h` (флаг и `countedBalanceMinor`), `persistence/FinanceRepository.cpp` (колонка `counts_debt`, шаг `migrateCreditDebtFlag`), `FinanceController::assetBalanceMinor` и `calculateCapitalHistory`, диалог счёта в `ui/computer/Desktop.qml`. Тесты: `CreditDebtFlagControllerTest`. Исправлено 18.10.2026: цели, текущий капитал и история траектории раньше вычитали долг карты без галочки (`goalAssetValues`, `financialTrajectory`).
+**Статус:** Открыто (20.10.2026): часть про шифрование и пароль на Android заменена ADR-025. Принято пользователем (16.10.2026). Реализовано: `core/model/accounts/Account.h` (флаг и `countedBalanceMinor`), `core/db/DatabaseSchema.cpp` (колонка `counts_debt`, шаг `migrateCreditDebtFlag`), `FinanceController::assetBalanceMinor` и `calculateCapitalHistory`, диалог счёта в `ui/computer/Desktop.qml`. Тесты: `CreditDebtFlagControllerTest`. Исправлено 18.10.2026: цели, текущий капитал и история траектории раньше вычитали долг карты без галочки (`goalAssetValues`, `financialTrajectory`).
 
 **Решение.**
 - У каждой кредитной карты есть галочка «Учитывать долг?». По умолчанию она включена: долг вычитается из суммы фиата и из истории капитала, как и раньше.
@@ -431,7 +431,7 @@
 ---
 
 ## ADR-031. Архитектура: UI → service → core, правила в core/model
-**Статус:** Принято (23.10.2026). В работе: этап 1 плана (шаги 1.1–1.7) и шаг 2.1 сделаны (библиотека `core_model` в `core/model/`, зависит только от Qt Core; обёртка `core` подключает весь слой). План и отметки шагов — `docs/architecture.md`.
+**Статус:** Принято (23.10.2026). В работе: этап 1 плана (шаги 1.1–1.7) и шаги 2.1–2.2 сделаны (библиотека `core_model` в `core/model/`, зависит только от Qt Core; обёртка `core` подключает весь слой). План и отметки шагов — `docs/architecture.md`.
 
 **Решение.** Код делится на три слоя. Зависимости идут только сверху вниз:
 - **UI** — только отрисовка и ввод: QML и тонкая прослойка под конкретный экран (модели списков, форматирование «1 234,50 ₽»).
