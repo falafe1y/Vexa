@@ -1,4 +1,5 @@
 #include "../interface/FinanceController.h"
+#include "../core/db/AccountRepository.h"
 #include "../core/db/AnalyticsRepository.h"
 #include "../core/db/InvestmentRepository.h"
 #include "../core/db/CryptoRepository.h"
@@ -14,8 +15,8 @@ private slots:
     void capturesAllAssetsEvenWithUnknownCrypto(){
         QTemporaryDir dir;const auto path=dir.filePath("data.db");
         {FinanceRepository r(path);QVERIFY(SettingsRepository(r.database()).saveAutomaticCurrencyRates(false));QVERIFY(SettingsRepository(r.database()).saveManualCurrencyRates(1,100,120,14));
-         QVERIFY(r.insertAccount({"fiat","Доллары",AssetType::Fiat,AccountType::DebitCard,Currency::USD,12345}));
-         QVERIFY(r.insertAccount({"broker","Брокер",AssetType::Investment,AccountType::Brokerage,Currency::RUB,100000}));
+         QVERIFY(AccountRepository(r.database()).insertAccount({"fiat","Доллары",AssetType::Fiat,AccountType::DebitCard,Currency::USD,12345}));
+         QVERIFY(AccountRepository(r.database()).insertAccount({"broker","Брокер",AssetType::Investment,AccountType::Brokerage,Currency::RUB,100000}));
          InvestmentPositionSettings settings;settings.manualValuation=true;settings.manualValueMinor=30000;settings.valuedAtUtc=QDateTime::currentDateTimeUtc();
          QVERIFY(InvestmentRepository(r.database()).saveInvestmentBundle({"stock","TEST","","Акция",InvestmentInstrumentType::Stock,Currency::RUB},
             {"position","broker","stock",3'000'000,100'000'000,{},{},settings},{},false,{},30100));
@@ -37,7 +38,7 @@ private slots:
     void manualCostCanBeClearedWithoutChangingQuantity(){
         QTemporaryDir dir;const auto path=dir.filePath("data.db");
         {FinanceRepository r(path);QVERIFY(SettingsRepository(r.database()).saveAutomaticCurrencyRates(false));QVERIFY(SettingsRepository(r.database()).saveManualCurrencyRates(1,100,120,14));
-         QVERIFY(r.insertAccount({"broker","Брокер",AssetType::Investment,AccountType::Brokerage,Currency::RUB,100000}));}
+         QVERIFY(AccountRepository(r.database()).insertAccount({"broker","Брокер",AssetType::Investment,AccountType::Brokerage,Currency::RUB,100000}));}
         FinanceController c(nullptr,path);c.setSelectedAsset("investment");
         auto result=c.saveInvestmentPosition({{"accountId","broker"},{"searchIndex",-2},{"instrumentType",0},{"name","Акция"},{"symbol","TEST"},
             {"quantity","1"},{"manualValuation",true},{"manualValue","110"},{"costBasis","100"}});
@@ -56,7 +57,7 @@ private slots:
     void negativeFutureClearingPriceIsPreserved(){
         QTemporaryDir dir;const auto path=dir.filePath("data.db"),at=QDateTime::currentDateTimeUtc().addSecs(-5).toString(Qt::ISODateWithMs);
         {FinanceRepository r(path);QVERIFY(SettingsRepository(r.database()).saveAutomaticCurrencyRates(false));QVERIFY(SettingsRepository(r.database()).saveManualCurrencyRates(1,100,120,14));
-         QVERIFY(r.insertAccount({"broker","Брокер",AssetType::Investment,AccountType::Brokerage,Currency::RUB,200000}));
+         QVERIFY(AccountRepository(r.database()).insertAccount({"broker","Брокер",AssetType::Investment,AccountType::Brokerage,Currency::RUB,200000}));
          InvestmentTerms t;t.pricing="future";t.currencyCode="RUB";t.priceStepMicros=1'000'000;t.stepValueMicros=10'000'000;
          InvestmentPositionSettings settings;settings.referencePriceMicros=100'000'000;settings.referenceAtUtc=QDateTime::currentDateTimeUtc().addSecs(-3600);
          QVERIFY(InvestmentRepository(r.database()).saveInvestmentBundle({"future","FUT","","Фьючерс",InvestmentInstrumentType::Future,Currency::RUB,"","",t},
@@ -69,7 +70,7 @@ private slots:
     void chargesAreSavedOnceAndEmptyMeansUnknown(){
         QTemporaryDir dir;const auto path=dir.filePath("data.db");
         {FinanceRepository r(path);QVERIFY(SettingsRepository(r.database()).saveAutomaticCurrencyRates(false));QVERIFY(SettingsRepository(r.database()).saveManualCurrencyRates(1,100,120,14));
-         QVERIFY(r.insertAccount({"broker","Брокер",AssetType::Investment,AccountType::Brokerage,Currency::RUB,100000}));}
+         QVERIFY(AccountRepository(r.database()).insertAccount({"broker","Брокер",AssetType::Investment,AccountType::Brokerage,Currency::RUB,100000}));}
         {FinanceController c(nullptr,path);c.setSelectedAsset("investment");
          auto result=c.saveInvestmentPosition({{"accountId","broker"},{"searchIndex",-2},{"instrumentType",0},{"name","Акция"},{"symbol","TEST"},
             {"quantity","3"},{"averagePrice","100"},{"manualValuation",true},{"manualValue","300"},

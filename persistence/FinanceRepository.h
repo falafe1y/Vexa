@@ -76,12 +76,8 @@ public:
     Database& database();
     bool clearAllUserData();
     QVector<Transaction> loadTransactions();
-    QVector<DepositSettings> loadDepositSettings();
-    QVector<Account> loadAccounts();
     // Purchase price of the coins without trades, by "exchangeId|coin"
     // Rate history of deposits by account id: a list of {"from": "yyyy-MM-dd", "bps": int}, sorted by day
-    QVariantMap loadDepositRateSteps() const;
-    bool saveDepositRateSteps(const QString& accountId, const QVariantList& steps);
     Summary loadSummary();
     bool insertTransaction(const Transaction& transaction);
     bool insertTransfer(
@@ -110,16 +106,6 @@ public:
         const QVector<RecurringOccurrence>& occurrences,
         const QDate& generatedThrough,
         int* insertedCount = nullptr
-        );
-    bool insertAccount(const Account& account);
-    bool insertDepositAccount(
-        const Account& account,
-        const DepositSettings& settings
-        );
-    bool updateAccount(const Account& account);
-    bool updateAccountAndDeposit(
-        const Account& account,
-        const std::optional<DepositSettings>& settings
         );
     bool deleteAccount(const QString& id);
     bool materializeDepositInterest(

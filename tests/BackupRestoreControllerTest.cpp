@@ -1,4 +1,5 @@
 #include "storage/CipherDriver.h"
+#include "../core/db/AccountRepository.h"
 #include "../core/db/SettingsRepository.h"
 #include "../core/db/NotesRepository.h"
 #include "../interface/FinanceController.h"
@@ -53,7 +54,7 @@ void BackupRestoreControllerTest::replacementRefreshesSettingsAndNotes() {
     QVERIFY(seed(path)); QVERIFY(seed(source));
     { FinanceRepository r(source); QVERIFY(NotesRepository(r.database()).save("Из копии")); QVERIFY(SettingsRepository(r.database()).saveAppCurrency("EUR"));
       QVERIFY(SettingsRepository(r.database()).saveAnalyticsCurrency("CNY")); QVERIFY(SettingsRepository(r.database()).saveManualCurrencyRates(1,95,105,14));
-      QVERIFY(r.insertAccount({"restored","Из копии",AssetType::Fiat,AccountType::Cash,Currency::RUB})); QVERIFY(r.backupDatabase(backup)); }
+      QVERIFY(AccountRepository(r.database()).insertAccount({"restored","Из копии",AssetType::Fiat,AccountType::Cash,Currency::RUB})); QVERIFY(r.backupDatabase(backup)); }
     FinanceController c(nullptr,path); c.setNotesText("Несохранённый текущий текст");
     const auto result=c.restoreDatabase(QUrl::fromLocalFile(backup));
     QVERIFY2(result.value("ok").toBool(),qPrintable(result.value("error").toString()));

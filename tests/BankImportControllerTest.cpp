@@ -1,4 +1,5 @@
 #include "storage/CipherDriver.h"
+#include "../core/db/AccountRepository.h"
 #include "../core/db/BankImportRepository.h"
 #include "../core/db/SettingsRepository.h"
 #include "../interface/FinanceController.h"
@@ -28,7 +29,7 @@ namespace {
 bool seed(const QString& path, qint64 openingMinor = 0) {
     FinanceRepository r(path);
     return r.isOpen() && SettingsRepository(r.database()).saveAutomaticCurrencyRates(false) &&
-        r.insertAccount({"bank","Банк",AssetType::Fiat,AccountType::DebitCard,Currency::RUB,openingMinor});
+        AccountRepository(r.database()).insertAccount({"bank","Банк",AssetType::Fiat,AccountType::DebitCard,Currency::RUB,openingMinor});
 }
 QVariantMap profile() {
     return {{"id","bank-profile"},{"name","Банк"},{"accountId","bank"},{"incomeCategoryId","salary"},
@@ -147,8 +148,8 @@ QVariantMap transferChoice(const QVariantMap& row, QString source="bank", QStrin
 QVariantMap rowFrom(const QVariantMap& preview) { return preview.value("operationRows").toList().front().toMap(); }
 bool seedSecond(const QString& path) {
     FinanceRepository r(path);
-    return r.insertAccount({"second","Второй банк",AssetType::Fiat,AccountType::DebitCard,Currency::RUB})
-        && r.insertAccount({"usd","Доллары",AssetType::Fiat,AccountType::Cash,Currency::USD});
+    return AccountRepository(r.database()).insertAccount({"second","Второй банк",AssetType::Fiat,AccountType::DebitCard,Currency::RUB})
+        && AccountRepository(r.database()).insertAccount({"usd","Доллары",AssetType::Fiat,AccountType::Cash,Currency::USD});
 }
 }
 void BankImportControllerTest::transfersPersistAndStatementsJoinWithoutDuplicates() {

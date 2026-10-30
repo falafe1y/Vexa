@@ -1,4 +1,5 @@
 #include "../interface/FinanceController.h"
+#include "../core/db/AccountRepository.h"
 #include "../core/db/SettingsRepository.h"
 #include <QTemporaryDir>
 #include <QStandardPaths>
@@ -17,8 +18,8 @@ private slots:
             FinanceRepository r(path);
             QVERIFY(SettingsRepository(r.database()).saveAutomaticCurrencyRates(false));
             QVERIFY(SettingsRepository(r.database()).saveManualCurrencyRates(1, 100, 120));
-            QVERIFY(r.insertAccount({"broker", "Брокер", AssetType::Investment, AccountType::Brokerage, Currency::RUB, 1000000}));
-            QVERIFY(r.insertAccount({"deposit", "Вклад", AssetType::Investment, AccountType::Deposit, Currency::RUB, 200000}));
+            QVERIFY(AccountRepository(r.database()).insertAccount({"broker", "Брокер", AssetType::Investment, AccountType::Brokerage, Currency::RUB, 1000000}));
+            QVERIFY(AccountRepository(r.database()).insertAccount({"deposit", "Вклад", AssetType::Investment, AccountType::Deposit, Currency::RUB, 200000}));
         }
         FinanceController c(nullptr, path);
         c.setSelectedAsset("investment");

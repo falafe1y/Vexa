@@ -1,4 +1,5 @@
 #include "storage/CipherDriver.h"
+#include "../core/db/AccountRepository.h"
 #include "../core/db/InvestmentRepository.h"
 #include "../persistence/FinanceRepository.h"
 
@@ -42,7 +43,7 @@ void InvestmentRepositoryTest::updatesPositionInstrument()
         QStringLiteral("ydex"), QStringLiteral("YDEX"),
         QStringLiteral("RU000A107T19"), QStringLiteral("Яндекс"),
         InvestmentInstrumentType::Stock, Currency::RUB);
-    QVERIFY(repository.insertAccount(brokerage));
+    QVERIFY(AccountRepository(repository.database()).insertAccount(brokerage));
     QVERIFY(InvestmentRepository(repository.database()).insertInvestmentInstrument(sber));
     QVERIFY(InvestmentRepository(repository.database()).insertInvestmentInstrument(yandex));
 
@@ -81,7 +82,7 @@ void InvestmentRepositoryTest::storesUpdatesAndArchivesInvestmentModel()
         const Account brokerage(
             QStringLiteral("brokerage"), QStringLiteral("Broker"),
             AssetType::Investment, AccountType::Brokerage, Currency::USD);
-        QVERIFY2(repository.insertAccount(brokerage),
+        QVERIFY2(AccountRepository(repository.database()).insertAccount(brokerage),
                  qPrintable(repository.lastError()));
 
         const InvestmentInstrument instrument(
@@ -185,8 +186,8 @@ void InvestmentRepositoryTest::rejectsInvalidInvestmentRelationsAndValues()
     const Account brokerage(
         QStringLiteral("brokerage"), QStringLiteral("Brokerage"),
         AssetType::Investment, AccountType::Brokerage, Currency::USD);
-    QVERIFY(repository.insertAccount(fiat));
-    QVERIFY(repository.insertAccount(brokerage));
+    QVERIFY(AccountRepository(repository.database()).insertAccount(fiat));
+    QVERIFY(AccountRepository(repository.database()).insertAccount(brokerage));
 
     const InvestmentInstrument apple(
         QStringLiteral("aapl"), QStringLiteral("AAPL"),
@@ -240,7 +241,7 @@ void InvestmentRepositoryTest::archivesPositionsWithInvestmentAccount()
         QStringLiteral("sber"), QStringLiteral("SBER"),
         QStringLiteral("RU0009029540"), QStringLiteral("Сбербанк"),
         InvestmentInstrumentType::Stock, Currency::RUB);
-    QVERIFY(repository.insertAccount(brokerage));
+    QVERIFY(AccountRepository(repository.database()).insertAccount(brokerage));
     QVERIFY(InvestmentRepository(repository.database()).insertInvestmentInstrument(instrument));
     QVERIFY(InvestmentRepository(repository.database()).insertInvestmentPosition(InvestmentPosition(
         QStringLiteral("sber-position"), brokerage.id(), instrument.id(),
@@ -331,7 +332,7 @@ void InvestmentRepositoryTest::migratesLegacyInvestmentAccountTypes()
 
     FinanceRepository repository(databasePath);
     QVERIFY2(repository.isOpen(), qPrintable(repository.lastError()));
-    const QVector<Account> existingAccounts = repository.loadAccounts();
+    const QVector<Account> existingAccounts = AccountRepository(repository.database()).loadAccounts();
     QVERIFY(std::any_of(
         existingAccounts.cbegin(), existingAccounts.cend(),
         [](const Account& account) {
@@ -342,12 +343,12 @@ void InvestmentRepositoryTest::migratesLegacyInvestmentAccountTypes()
     const Account brokerage(
         QStringLiteral("brokerage"), QStringLiteral("Брокер"),
         AssetType::Investment, AccountType::Brokerage, Currency::RUB);
-    QVERIFY2(repository.insertAccount(brokerage),
+    QVERIFY2(AccountRepository(repository.database()).insertAccount(brokerage),
              qPrintable(repository.lastError()));
     const Account deposit(
         QStringLiteral("deposit"), QStringLiteral("Вклад"),
         AssetType::Investment, AccountType::Deposit, Currency::RUB);
-    QVERIFY2(repository.insertAccount(deposit),
+    QVERIFY2(AccountRepository(repository.database()).insertAccount(deposit),
              qPrintable(repository.lastError()));
 }
 

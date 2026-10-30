@@ -1,4 +1,5 @@
 #include "../interface/FinanceController.h"
+#include "../core/db/AccountRepository.h"
 #include "../core/db/InvestmentRepository.h"
 #include "../core/db/SettingsRepository.h"
 #include <QTemporaryDir>
@@ -35,7 +36,7 @@ static qint64 balance(FinanceController& c) {
 }
 static bool seed(FinanceRepository& r) {
     return r.isOpen() && SettingsRepository(r.database()).saveAutomaticCurrencyRates(false) && SettingsRepository(r.database()).saveManualCurrencyRates(1,100,120) &&
-        r.insertAccount({"broker","Брокер",AssetType::Investment,AccountType::Brokerage,Currency::RUB,10'000'000});
+        AccountRepository(r.database()).insertAccount({"broker","Брокер",AssetType::Investment,AccountType::Brokerage,Currency::RUB,10'000'000});
 }
 void InvestmentControllerTest::clearingKeepsCapitalAndSurvivesRestart() {
     QTemporaryDir dir;const auto path=dir.filePath("data.db");const auto at=QDateTime::currentDateTimeUtc().addSecs(-5);
@@ -119,8 +120,8 @@ static void seedBondPosition(FinanceRepository& r,const QDateTime& at,qint64 blo
 void InvestmentControllerTest::transferToDepositAndBackKeepsBothHalves() {
     QTemporaryDir dir;const auto path=dir.filePath("data.db");const auto now=QDateTime::currentDateTimeUtc().addSecs(-5);
     {FinanceRepository r(path);QVERIFY(seed(r));
-     QVERIFY(r.insertAccount({"cash","Сбер",AssetType::Fiat,AccountType::DebitCard,Currency::RUB,500'000}));
-     QVERIFY(r.insertAccount({"deposit","Вклад",AssetType::Investment,AccountType::Deposit,Currency::RUB,0}));}
+     QVERIFY(AccountRepository(r.database()).insertAccount({"cash","Сбер",AssetType::Fiat,AccountType::DebitCard,Currency::RUB,500'000}));
+     QVERIFY(AccountRepository(r.database()).insertAccount({"deposit","Вклад",AssetType::Investment,AccountType::Deposit,Currency::RUB,0}));}
     FinanceController c(nullptr,path);
     QVERIFY(c.addTransfer(300'000,QString(),"cash","deposit",now));
     QCOMPARE(accountBalance(c,"cash"),qint64(200'000));QCOMPARE(accountBalance(c,"deposit"),qint64(300'000));
@@ -164,7 +165,7 @@ void InvestmentControllerTest::tradesAreTransferHalvesNotIncome() {
 void InvestmentControllerTest::proceedsOfSaleTransferToFiat() {
     QTemporaryDir dir;const auto path=dir.filePath("data.db");const auto at=QDateTime::currentDateTimeUtc().addSecs(-5);
     {FinanceRepository r(path);QVERIFY(seed(r));seedBondPosition(r,at);
-     QVERIFY(r.insertAccount({"cash","Сбер",AssetType::Fiat,AccountType::DebitCard,Currency::RUB,0}));}
+     QVERIFY(AccountRepository(r.database()).insertAccount({"cash","Сбер",AssetType::Fiat,AccountType::DebitCard,Currency::RUB,0}));}
     FinanceController c(nullptr,path);const qint64 base=balance(c);
     auto result=c.recordInvestmentOperation({{"positionId","position"},{"kind","sell"},{"date",at.toString(Qt::ISODate)},{"cashAmount","4750"},{"quantity","5"}});
     QVERIFY2(result.value("ok").toBool(),qPrintable(result.value("error").toString()));
@@ -183,7 +184,7 @@ static QVariantMap brokerage(FinanceController& c,const QString& id) {
 void InvestmentControllerTest::brokerTransfersCannotTouchBlockedMargin() {
     QTemporaryDir dir;const auto path=dir.filePath("data.db");const auto at=QDateTime::currentDateTimeUtc().addSecs(-5);
     {FinanceRepository r(path);QVERIFY(seed(r));seedBondPosition(r,at,200'000);
-     QVERIFY(r.insertAccount({"cash","Сбер",AssetType::Fiat,AccountType::DebitCard,Currency::RUB,0}));}
+     QVERIFY(AccountRepository(r.database()).insertAccount({"cash","Сбер",AssetType::Fiat,AccountType::DebitCard,Currency::RUB,0}));}
     FinanceController c(nullptr,path);
     // 100 000 RUB of cash, 2 000 RUB of it blocked by the bond position: only 98 000 RUB may leave the account
     const qint64 free=brokerage(c,"broker").value("freeNowMinor").toLongLong();
@@ -257,7 +258,7 @@ void InvestmentControllerTest::couponAndFeeAreIncomeAndExpenseOfTheBrokerAccount
 void InvestmentControllerTest::negativeFiatBalanceIsShownAsIs() {
     QTemporaryDir dir;const auto path=dir.filePath("data.db");
     {FinanceRepository r(path);QVERIFY(seed(r));
-     QVERIFY(r.insertAccount({"cash","Сбер",AssetType::Fiat,AccountType::DebitCard,Currency::RUB,0}));}
+     QVERIFY(AccountRepository(r.database()).insertAccount({"cash","Сбер",AssetType::Fiat,AccountType::DebitCard,Currency::RUB,0}));}
     FinanceController c(nullptr,path);
     // No warnings and no refusals on ordinary accounts: the balance simply goes below zero
     QVERIFY(c.addExpense(500'000,QStringLiteral("Покупка"),QStringLiteral("other_expense"),QStringLiteral("RUB"),
@@ -286,7 +287,7 @@ void InvestmentControllerTest::saleWritesCommissionAndTaxAsExpenses() {
 void InvestmentControllerTest::brokerChargeIsExpenseWithoutPosition() {
     QTemporaryDir dir;const auto path=dir.filePath("data.db");const auto at=QDateTime::currentDateTimeUtc().addSecs(-5);
     {FinanceRepository r(path);QVERIFY(seed(r));
-     QVERIFY(r.insertAccount({"cash","Сбер",AssetType::Fiat,AccountType::DebitCard,Currency::RUB,50'000}));}
+     QVERIFY(AccountRepository(r.database()).insertAccount({"cash","Сбер",AssetType::Fiat,AccountType::DebitCard,Currency::RUB,50'000}));}
     FinanceController c(nullptr,path);const qint64 base=balance(c);const qint64 expense=c.expenseMinorUnits();
     // A tax withheld by the broker is an expense of the account, recorded without any position
     auto result=c.recordBrokerCharge({{"accountId","broker"},{"kind","tax"},{"amount","250"},{"date",at.toString(Qt::ISODate)}});
@@ -305,7 +306,7 @@ void InvestmentControllerTest::brokerChargeIsExpenseWithoutPosition() {
 void InvestmentControllerTest::transferCannotExceedSourceBalance() {
     QTemporaryDir dir;const auto path=dir.filePath("data.db");const auto at=QDateTime::currentDateTimeUtc().addSecs(-5);
     {FinanceRepository r(path);QVERIFY(seed(r));
-     QVERIFY(r.insertAccount({"cash","Сбер",AssetType::Fiat,AccountType::DebitCard,Currency::RUB,50'000}));}
+     QVERIFY(AccountRepository(r.database()).insertAccount({"cash","Сбер",AssetType::Fiat,AccountType::DebitCard,Currency::RUB,50'000}));}
     FinanceController c(nullptr,path);
     // Money is not created by transfers: more than the balance is refused, and an empty account pays nothing
     QVERIFY(!c.addTransfer(50'001,QString(),"cash","broker",at));
@@ -334,8 +335,8 @@ void InvestmentControllerTest::purchaseNeedsFreeMoneyUntilFunded() {
     QTemporaryDir dir;const auto path=dir.filePath("data.db");const auto at=QDateTime::currentDateTimeUtc().addSecs(-5);
     {FinanceRepository r(path);QVERIFY(SettingsRepository(r.database()).saveAutomaticCurrencyRates(false) && SettingsRepository(r.database()).saveManualCurrencyRates(1,100,120));
      // A brokerage account with no money, and a fiat account with 1 500 RUB to fund it
-     QVERIFY(r.insertAccount({"broker","Брокер",AssetType::Investment,AccountType::Brokerage,Currency::RUB,0}));
-     QVERIFY(r.insertAccount({"cash","Сбер",AssetType::Fiat,AccountType::DebitCard,Currency::RUB,150'000}));}
+     QVERIFY(AccountRepository(r.database()).insertAccount({"broker","Брокер",AssetType::Investment,AccountType::Brokerage,Currency::RUB,0}));
+     QVERIFY(AccountRepository(r.database()).insertAccount({"cash","Сбер",AssetType::Fiat,AccountType::DebitCard,Currency::RUB,150'000}));}
     FinanceController c(nullptr,path);c.setSelectedAsset("investment");
     const auto buy=[&](const QString& cash,const QString& fee) {
         return c.saveInvestmentPosition({{"accountId","broker"},{"searchIndex",-2},{"instrumentType",0},

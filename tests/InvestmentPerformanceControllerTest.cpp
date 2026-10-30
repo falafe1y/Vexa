@@ -1,4 +1,5 @@
 #include "../interface/FinanceController.h"
+#include "../core/db/AccountRepository.h"
 #include "../core/db/AnalyticsRepository.h"
 #include "../core/db/InvestmentRepository.h"
 #include "../core/db/SettingsRepository.h"
@@ -14,7 +15,7 @@ private slots:
     void manualAveragePriceFeedsSnapshotAndOpenProfit(){
         QTemporaryDir dir;const auto path=dir.filePath("data.db");
         {FinanceRepository r(path);QVERIFY(SettingsRepository(r.database()).saveAutomaticCurrencyRates(false));
-         QVERIFY(r.insertAccount({"broker","Брокер",AssetType::Investment,AccountType::Brokerage,Currency::RUB,10000}));}
+         QVERIFY(AccountRepository(r.database()).insertAccount({"broker","Брокер",AssetType::Investment,AccountType::Brokerage,Currency::RUB,10000}));}
         FinanceController c(nullptr,path);
         c.setSelectedAsset("investment");
         QVariantMap input{{"accountId","broker"},{"searchIndex",-2},{"instrumentType",0},
@@ -38,9 +39,9 @@ private slots:
         QTemporaryDir dir;const auto path=dir.filePath("data.db");
         {
             FinanceRepository r(path);QVERIFY(SettingsRepository(r.database()).saveAutomaticCurrencyRates(false));
-            QVERIFY(r.insertAccount({"broker","Брокер",AssetType::Investment,AccountType::Brokerage,Currency::RUB,10000}));
-            QVERIFY(r.insertAccount({"deposit","Вклад",AssetType::Investment,AccountType::Deposit,Currency::RUB,20000}));
-            QVERIFY(r.insertAccount({"fiat","Фиат",AssetType::Fiat,AccountType::Cash,Currency::RUB,30000}));
+            QVERIFY(AccountRepository(r.database()).insertAccount({"broker","Брокер",AssetType::Investment,AccountType::Brokerage,Currency::RUB,10000}));
+            QVERIFY(AccountRepository(r.database()).insertAccount({"deposit","Вклад",AssetType::Investment,AccountType::Deposit,Currency::RUB,20000}));
+            QVERIFY(AccountRepository(r.database()).insertAccount({"fiat","Фиат",AssetType::Fiat,AccountType::Cash,Currency::RUB,30000}));
         }
         {
             FinanceController c(nullptr,path);QCOMPARE(c.performanceAccounts().size(),2);QCOMPARE(c.investmentPerformance().value("accountCount").toInt(),2);
@@ -64,8 +65,8 @@ private slots:
         QTemporaryDir dir;const auto path=dir.filePath("data.db");const auto today=QDate::currentDate();
         {
             FinanceRepository r(path);QVERIFY(SettingsRepository(r.database()).saveAutomaticCurrencyRates(false));
-            QVERIFY(r.insertAccount({"a","Первый",AssetType::Investment,AccountType::Brokerage,Currency::RUB,10000}));
-            QVERIFY(r.insertAccount({"b","Второй",AssetType::Investment,AccountType::Brokerage,Currency::RUB,20000}));
+            QVERIFY(AccountRepository(r.database()).insertAccount({"a","Первый",AssetType::Investment,AccountType::Brokerage,Currency::RUB,10000}));
+            QVERIFY(AccountRepository(r.database()).insertAccount({"b","Второй",AssetType::Investment,AccountType::Brokerage,Currency::RUB,20000}));
             for(int offset:{2,1}){
                 DailyValuationBatch batch;batch.date=today.addDays(-offset);batch.observedAtUtc=QDateTime(batch.date,QTime(12,0)).toUTC();
                 for(const auto& id:{QStringLiteral("a"),QStringLiteral("b")}){
@@ -99,7 +100,7 @@ private slots:
         QTemporaryDir dir;const auto path=dir.filePath("data.db"),saved=dir.filePath("saved.db");
         {
             FinanceRepository r(path);QVERIFY(SettingsRepository(r.database()).saveAutomaticCurrencyRates(false));
-            QVERIFY(r.insertAccount({"broker","Брокер",AssetType::Investment,AccountType::Brokerage,Currency::RUB,12345}));
+            QVERIFY(AccountRepository(r.database()).insertAccount({"broker","Брокер",AssetType::Investment,AccountType::Brokerage,Currency::RUB,12345}));
         }
         FinanceController c(nullptr,path);QVERIFY(c.setPerformanceInflation("4.5"));QVERIFY(c.setPerformanceDeposit("16","daily"));
         QVERIFY(c.backupDatabase(QUrl::fromLocalFile(saved)).value("ok").toBool());
@@ -115,8 +116,8 @@ private slots:
         const auto now=QDateTime::currentDateTimeUtc();
         {
             FinanceRepository r(path);QVERIFY(SettingsRepository(r.database()).saveAutomaticCurrencyRates(false));
-            QVERIFY(r.insertAccount({"broker","Брокер",AssetType::Investment,AccountType::Brokerage,Currency::RUB,10000}));
-            QVERIFY(r.insertAccount({"deposit","Вклад",AssetType::Investment,AccountType::Deposit,Currency::RUB,20000}));
+            QVERIFY(AccountRepository(r.database()).insertAccount({"broker","Брокер",AssetType::Investment,AccountType::Brokerage,Currency::RUB,10000}));
+            QVERIFY(AccountRepository(r.database()).insertAccount({"deposit","Вклад",AssetType::Investment,AccountType::Deposit,Currency::RUB,20000}));
             QVERIFY(r.insertTransaction({"interest","deposit","deposit_interest",Money(100,Currency::RUB),TransactionType::Income,now}));
         }
         FinanceController c(nullptr,path);
@@ -138,9 +139,9 @@ private slots:
     void groupsKeepBrokersAndDepositsApart(){
         QTemporaryDir dir;const auto path=dir.filePath("data.db");
         {FinanceRepository r(path);QVERIFY(SettingsRepository(r.database()).saveAutomaticCurrencyRates(false));
-         QVERIFY(r.insertAccount({"broker","Брокер",AssetType::Investment,AccountType::Brokerage,Currency::RUB,10000}));
-         QVERIFY(r.insertAccount({"deposit","Вклад",AssetType::Investment,AccountType::Deposit,Currency::RUB,20000}));
-         QVERIFY(r.insertAccount({"fiat","Фиат",AssetType::Fiat,AccountType::Cash,Currency::RUB,30000}));}
+         QVERIFY(AccountRepository(r.database()).insertAccount({"broker","Брокер",AssetType::Investment,AccountType::Brokerage,Currency::RUB,10000}));
+         QVERIFY(AccountRepository(r.database()).insertAccount({"deposit","Вклад",AssetType::Investment,AccountType::Deposit,Currency::RUB,20000}));
+         QVERIFY(AccountRepository(r.database()).insertAccount({"fiat","Фиат",AssetType::Fiat,AccountType::Cash,Currency::RUB,30000}));}
         FinanceController c(nullptr,path);
         QCOMPARE(c.investmentPerformance().value("accountCount").toInt(),2);
         // Brokerage accounts and deposits are two portfolios; the fiat account is in neither
@@ -157,7 +158,7 @@ private slots:
     void depositCommissionLowersDepositValue(){
         QTemporaryDir dir;const auto path=dir.filePath("data.db");
         {FinanceRepository r(path);QVERIFY(SettingsRepository(r.database()).saveAutomaticCurrencyRates(false));
-         QVERIFY(r.insertAccount({"deposit","Вклад",AssetType::Investment,AccountType::Deposit,Currency::RUB,20000}));}
+         QVERIFY(AccountRepository(r.database()).insertAccount({"deposit","Вклад",AssetType::Investment,AccountType::Deposit,Currency::RUB,20000}));}
         {FinanceController c(nullptr,path);c.setSelectedAsset("investment");
          QVERIFY(c.addExpense(100,QStringLiteral("Комиссия банка"),QStringLiteral("bank_fee"),QStringLiteral("RUB"),QStringLiteral("deposit"),QDateTime::currentDateTimeUtc()));}
         FinanceController c(nullptr,path);

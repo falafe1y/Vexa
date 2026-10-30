@@ -12,6 +12,7 @@
 #include "../core/db/RecurringTransactionRepository.h"
 #include "../core/db/InvestmentRepository.h"
 #include "../core/db/AnalyticsRepository.h"
+#include "../core/db/AccountRepository.h"
 #include "../core/model/accounts/BalanceCalculator.h"
 #include "../services/BankCsvImporter.h"
 #include "../core/model/analytics/CapitalHistoryCalculator.h"
@@ -827,6 +828,7 @@ private:
     RecurringTransactionRepository recurringRepository_;
     InvestmentRepository investmentRepository_;
     AnalyticsRepository analyticsRepository_;
+    AccountRepository accountRepository_;
     CbrCurrencyRateProvider rateProvider_;
     CurrencyConverter currencyConverter_;
     BalanceCalculator balanceCalculator_;

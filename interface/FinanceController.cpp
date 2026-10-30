@@ -456,6 +456,7 @@ FinanceController::FinanceController(QObject* parent, const QString& databasePat
     , recurringRepository_(repository_.database())
     , investmentRepository_(repository_.database())
     , analyticsRepository_(repository_.database())
+    , accountRepository_(repository_.database())
     , currencyConverter_(rateProvider_)
     , balanceCalculator_(currencyConverter_)
 {
@@ -775,8 +776,8 @@ FinanceController::FinanceController(QObject* parent, const QString& databasePat
     projects_ = projectRepository_.loadProjects();
     recurringTransactions_ = recurringRepository_.loadRecurringTransactions();
     categories_ = categoryRepository_.loadCategories();
-    accounts_ = repository_.loadAccounts();
-    depositSettings_ = repository_.loadDepositSettings();
+    accounts_ = accountRepository_.loadAccounts();
+    depositSettings_ = accountRepository_.loadDepositSettings();
     loadDepositRateSteps();
     budgets_ = planning_.loadBudgets();
     financialGoals_ = planning_.loadFinancialGoals();
@@ -1338,8 +1339,8 @@ QVariantMap FinanceController::restoreDatabase(const QUrl& fileUrl)
     recurringTransactions_ = recurringRepository_.loadRecurringTransactions();
     categories_ = categoryRepository_.loadCategories();
     archivedCategoryIds_ = categoryRepository_.loadArchivedCategoryIds();
-    accounts_ = repository_.loadAccounts();
-    depositSettings_ = repository_.loadDepositSettings();
+    accounts_ = accountRepository_.loadAccounts();
+    depositSettings_ = accountRepository_.loadDepositSettings();
     loadDepositRateSteps();
     budgets_ = planning_.loadBudgets();
     financialGoals_ = planning_.loadFinancialGoals();
@@ -3861,10 +3862,10 @@ bool FinanceController::addAccount(
     }
 
     const bool saved = deposit
-        ? repository_.insertDepositAccount(account, *deposit)
-        : repository_.insertAccount(account);
+        ? accountRepository_.insertDepositAccount(account, *deposit)
+        : accountRepository_.insertAccount(account);
     if (!saved) {
-        qWarning() << "Failed to save account:" << repository_.lastError();
+        qWarning() << "Failed to save account:" << accountRepository_.lastError();
         return false;
     }
 
@@ -4015,8 +4016,8 @@ bool FinanceController::updateAccount(
     const DepositSettings* previousDeposit = depositSettingsForAccount(id);
     const int previousRate = previousDeposit ? previousDeposit->annualRateBasisPoints() : -1;
     if (!repository_.isOpen() ||
-        !repository_.updateAccountAndDeposit(updated, deposit)) {
-        qWarning() << "Failed to update account:" << repository_.lastError();
+        !accountRepository_.updateAccountAndDeposit(updated, deposit)) {
+        qWarning() << "Failed to update account:" << accountRepository_.lastError();
         return false;
     }
     if (deposit && previousRate >= 0 && previousRate != deposit->annualRateBasisPoints()) {
@@ -4040,10 +4041,10 @@ bool FinanceController::updateAccount(
             stored.append(QVariantMap{{QStringLiteral("from"), step.from.toString(Qt::ISODate)},
                                       {QStringLiteral("bps"), step.annualRateBasisPoints}});
         }
-        if (repository_.saveDepositRateSteps(id, stored)) {
+        if (accountRepository_.saveDepositRateSteps(id, stored)) {
             depositRateSteps_.insert(id, steps);
         } else {
-            qWarning() << "Failed to save deposit rate steps:" << repository_.lastError();
+            qWarning() << "Failed to save deposit rate steps:" << accountRepository_.lastError();
         }
     }
 
@@ -5896,7 +5897,7 @@ void FinanceController::materializeRecurringTransactions()
 void FinanceController::loadDepositRateSteps()
 {
     depositRateSteps_.clear();
-    const QVariantMap stored = repository_.loadDepositRateSteps();
+    const QVariantMap stored = accountRepository_.loadDepositRateSteps();
     for (auto iterator = stored.cbegin(); iterator != stored.cend(); ++iterator) {
         QVector<DepositRateStep> steps;
         for (const QVariant& value : iterator.value().toList()) {
@@ -6029,7 +6030,7 @@ int FinanceController::materializeDepositInterest()
         totalInserted += inserted;
     }
 
-    depositSettings_ = repository_.loadDepositSettings();
+    depositSettings_ = accountRepository_.loadDepositSettings();
     loadDepositRateSteps();
     return totalInserted;
 }
