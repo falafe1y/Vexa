@@ -1,4 +1,5 @@
 #include "storage/CipherDriver.h"
+#include "../core/db/InvestmentRepository.h"
 #include "../persistence/FinanceRepository.h"
 
 #include <QTemporaryDir>
@@ -42,20 +43,20 @@ void InvestmentRepositoryTest::updatesPositionInstrument()
         QStringLiteral("RU000A107T19"), QStringLiteral("Яндекс"),
         InvestmentInstrumentType::Stock, Currency::RUB);
     QVERIFY(repository.insertAccount(brokerage));
-    QVERIFY(repository.insertInvestmentInstrument(sber));
-    QVERIFY(repository.insertInvestmentInstrument(yandex));
+    QVERIFY(InvestmentRepository(repository.database()).insertInvestmentInstrument(sber));
+    QVERIFY(InvestmentRepository(repository.database()).insertInvestmentInstrument(yandex));
 
     const InvestmentPosition position(
         QStringLiteral("position"), brokerage.id(), sber.id(),
         5'000'000, 300'000'000);
-    QVERIFY(repository.insertInvestmentPosition(position));
-    QVERIFY2(repository.updateInvestmentPosition(InvestmentPosition(
+    QVERIFY(InvestmentRepository(repository.database()).insertInvestmentPosition(position));
+    QVERIFY2(InvestmentRepository(repository.database()).updateInvestmentPosition(InvestmentPosition(
                  position.id(), brokerage.id(), yandex.id(),
                  7'500'000, 4'200'000'000)),
              qPrintable(repository.lastError()));
 
     const QVector<InvestmentPosition> positions =
-        repository.loadInvestmentPositions();
+        InvestmentRepository(repository.database()).loadInvestmentPositions();
     QCOMPARE(positions.size(), 1);
     QCOMPARE(positions.constFirst().instrumentId(), yandex.id());
     QCOMPARE(positions.constFirst().quantityMicros(), qint64(7'500'000));
@@ -88,15 +89,15 @@ void InvestmentRepositoryTest::storesUpdatesAndArchivesInvestmentModel()
             QStringLiteral(" us0378331005 "), QStringLiteral(" Apple Inc. "),
             InvestmentInstrumentType::Stock, Currency::USD,
             QStringLiteral(" moex "), QStringLiteral(" tqbr "));
-        QVERIFY2(repository.insertInvestmentInstrument(instrument),
+        QVERIFY2(InvestmentRepository(repository.database()).insertInvestmentInstrument(instrument),
                  qPrintable(repository.lastError()));
 
         const InvestmentPosition position(
             QStringLiteral("aapl-position"), brokerage.id(),
             QStringLiteral("aapl"), 1'250'000, 180'500'000);
-        QVERIFY2(repository.insertInvestmentPosition(position),
+        QVERIFY2(InvestmentRepository(repository.database()).insertInvestmentPosition(position),
                  qPrintable(repository.lastError()));
-        QVERIFY2(repository.saveInvestmentQuote(InvestmentQuote(
+        QVERIFY2(InvestmentRepository(repository.database()).saveInvestmentQuote(InvestmentQuote(
                      QStringLiteral("aapl"), 201'125'000, firstQuoteAt)),
                  qPrintable(repository.lastError()));
 
@@ -105,19 +106,19 @@ void InvestmentRepositoryTest::storesUpdatesAndArchivesInvestmentModel()
             QStringLiteral("US0378331005"), QStringLiteral("Apple"),
             InvestmentInstrumentType::Stock, Currency::USD,
             QStringLiteral("MOEX"), QStringLiteral("TQTF"));
-        QVERIFY2(repository.updateInvestmentInstrument(updatedInstrument),
+        QVERIFY2(InvestmentRepository(repository.database()).updateInvestmentInstrument(updatedInstrument),
                  qPrintable(repository.lastError()));
         const InvestmentPosition updatedPosition(
             position.id(), brokerage.id(), QStringLiteral("aapl"),
             2'500'001, 190'750'125);
-        QVERIFY2(repository.updateInvestmentPosition(updatedPosition),
+        QVERIFY2(InvestmentRepository(repository.database()).updateInvestmentPosition(updatedPosition),
                  qPrintable(repository.lastError()));
-        QVERIFY2(repository.saveInvestmentQuote(InvestmentQuote(
+        QVERIFY2(InvestmentRepository(repository.database()).saveInvestmentQuote(InvestmentQuote(
                      QStringLiteral("aapl"), 205'000'001, updatedQuoteAt)),
                  qPrintable(repository.lastError()));
-        QVERIFY(!repository.saveInvestmentQuote(InvestmentQuote(
+        QVERIFY(!InvestmentRepository(repository.database()).saveInvestmentQuote(InvestmentQuote(
             QStringLiteral("aapl"), 1, firstQuoteAt)));
-        QVERIFY(!repository.updateInvestmentInstrument(InvestmentInstrument(
+        QVERIFY(!InvestmentRepository(repository.database()).updateInvestmentInstrument(InvestmentInstrument(
             QStringLiteral("aapl"), QStringLiteral("AAPL"),
             QStringLiteral("US0378331005"), QStringLiteral("Apple"),
             InvestmentInstrumentType::Stock, Currency::EUR)));
@@ -128,7 +129,7 @@ void InvestmentRepositoryTest::storesUpdatesAndArchivesInvestmentModel()
         QVERIFY2(repository.isOpen(), qPrintable(repository.lastError()));
 
         const QVector<InvestmentInstrument> instruments =
-            repository.loadInvestmentInstruments();
+            InvestmentRepository(repository.database()).loadInvestmentInstruments();
         QCOMPARE(instruments.size(), 1);
         QCOMPARE(instruments.constFirst().id(), QStringLiteral("aapl"));
         QCOMPARE(instruments.constFirst().symbol(), QStringLiteral("AAPL"));
@@ -141,7 +142,7 @@ void InvestmentRepositoryTest::storesUpdatesAndArchivesInvestmentModel()
         QCOMPARE(instruments.constFirst().primaryBoardId(), QStringLiteral("TQTF"));
 
         const QVector<InvestmentPosition> positions =
-            repository.loadInvestmentPositions();
+            InvestmentRepository(repository.database()).loadInvestmentPositions();
         QCOMPARE(positions.size(), 1);
         QCOMPARE(positions.constFirst().id(), QStringLiteral("aapl-position"));
         QCOMPARE(positions.constFirst().accountId(), QStringLiteral("brokerage"));
@@ -152,21 +153,21 @@ void InvestmentRepositoryTest::storesUpdatesAndArchivesInvestmentModel()
         QVERIFY(positions.constFirst().createdAtUtc().isValid());
         QVERIFY(positions.constFirst().updatedAtUtc().isValid());
 
-        const QVector<InvestmentQuote> quotes = repository.loadInvestmentQuotes();
+        const QVector<InvestmentQuote> quotes = InvestmentRepository(repository.database()).loadInvestmentQuotes();
         QCOMPARE(quotes.size(), 1);
         QCOMPARE(quotes.constFirst().instrumentId(), QStringLiteral("aapl"));
         QCOMPARE(quotes.constFirst().priceMicros(), qint64(205'000'001));
         QCOMPARE(quotes.constFirst().quotedAtUtc(), updatedQuoteAt);
 
-        QVERIFY(!repository.archiveInvestmentInstrument(QStringLiteral("aapl")));
-        QVERIFY2(repository.deleteInvestmentPosition(
+        QVERIFY(!InvestmentRepository(repository.database()).archiveInvestmentInstrument(QStringLiteral("aapl")));
+        QVERIFY2(InvestmentRepository(repository.database()).deleteInvestmentPosition(
                      QStringLiteral("aapl-position")),
                  qPrintable(repository.lastError()));
-        QVERIFY2(repository.archiveInvestmentInstrument(QStringLiteral("aapl")),
+        QVERIFY2(InvestmentRepository(repository.database()).archiveInvestmentInstrument(QStringLiteral("aapl")),
                  qPrintable(repository.lastError()));
-        QVERIFY(repository.loadInvestmentPositions().isEmpty());
-        QVERIFY(repository.loadInvestmentInstruments().isEmpty());
-        QVERIFY(repository.loadInvestmentQuotes().isEmpty());
+        QVERIFY(InvestmentRepository(repository.database()).loadInvestmentPositions().isEmpty());
+        QVERIFY(InvestmentRepository(repository.database()).loadInvestmentInstruments().isEmpty());
+        QVERIFY(InvestmentRepository(repository.database()).loadInvestmentQuotes().isEmpty());
     }
 }
 
@@ -191,36 +192,36 @@ void InvestmentRepositoryTest::rejectsInvalidInvestmentRelationsAndValues()
         QStringLiteral("aapl"), QStringLiteral("AAPL"),
         QStringLiteral("US0378331005"), QStringLiteral("Apple"),
         InvestmentInstrumentType::Stock, Currency::USD);
-    QVERIFY(repository.insertInvestmentInstrument(apple));
-    QVERIFY(!repository.insertInvestmentInstrument(InvestmentInstrument(
+    QVERIFY(InvestmentRepository(repository.database()).insertInvestmentInstrument(apple));
+    QVERIFY(!InvestmentRepository(repository.database()).insertInvestmentInstrument(InvestmentInstrument(
         QStringLiteral("duplicate-isin"), QStringLiteral("APC"),
         QStringLiteral("US0378331005"), QStringLiteral("Apple Xetra"),
         InvestmentInstrumentType::Stock, Currency::EUR)));
-    QVERIFY(!repository.insertInvestmentInstrument(InvestmentInstrument(
+    QVERIFY(!InvestmentRepository(repository.database()).insertInvestmentInstrument(InvestmentInstrument(
         QStringLiteral("blank"), QString(), QString(), QStringLiteral("Blank"),
         InvestmentInstrumentType::Other, Currency::USD)));
 
-    QVERIFY(!repository.insertInvestmentPosition(InvestmentPosition(
+    QVERIFY(!InvestmentRepository(repository.database()).insertInvestmentPosition(InvestmentPosition(
         QStringLiteral("fiat-position"), fiat.id(), apple.id(),
         1'000'000, 100'000'000)));
-    QVERIFY(!repository.insertInvestmentPosition(InvestmentPosition(
+    QVERIFY(!InvestmentRepository(repository.database()).insertInvestmentPosition(InvestmentPosition(
         QStringLiteral("missing-instrument"), brokerage.id(),
         QStringLiteral("missing"), 1'000'000, 100'000'000)));
-    QVERIFY(!repository.insertInvestmentPosition(InvestmentPosition(
+    QVERIFY(!InvestmentRepository(repository.database()).insertInvestmentPosition(InvestmentPosition(
         QStringLiteral("zero-position"), brokerage.id(), apple.id(),
         0, 100'000'000)));
 
     const InvestmentPosition valid(
         QStringLiteral("valid-position"), brokerage.id(), apple.id(),
         1'000'000, 100'000'000);
-    QVERIFY(repository.insertInvestmentPosition(valid));
-    QVERIFY(!repository.insertInvestmentPosition(InvestmentPosition(
+    QVERIFY(InvestmentRepository(repository.database()).insertInvestmentPosition(valid));
+    QVERIFY(!InvestmentRepository(repository.database()).insertInvestmentPosition(InvestmentPosition(
         QStringLiteral("duplicate-position"), brokerage.id(), apple.id(),
         2'000'000, 110'000'000)));
-    QVERIFY(!repository.saveInvestmentQuote(InvestmentQuote(
+    QVERIFY(!InvestmentRepository(repository.database()).saveInvestmentQuote(InvestmentQuote(
         QStringLiteral("missing"), 100'000'000,
         QDateTime::currentDateTimeUtc())));
-    QVERIFY(!repository.saveInvestmentQuote(InvestmentQuote(
+    QVERIFY(!InvestmentRepository(repository.database()).saveInvestmentQuote(InvestmentQuote(
         apple.id(), 0, QDateTime::currentDateTimeUtc())));
 }
 
@@ -240,15 +241,15 @@ void InvestmentRepositoryTest::archivesPositionsWithInvestmentAccount()
         QStringLiteral("RU0009029540"), QStringLiteral("Сбербанк"),
         InvestmentInstrumentType::Stock, Currency::RUB);
     QVERIFY(repository.insertAccount(brokerage));
-    QVERIFY(repository.insertInvestmentInstrument(instrument));
-    QVERIFY(repository.insertInvestmentPosition(InvestmentPosition(
+    QVERIFY(InvestmentRepository(repository.database()).insertInvestmentInstrument(instrument));
+    QVERIFY(InvestmentRepository(repository.database()).insertInvestmentPosition(InvestmentPosition(
         QStringLiteral("sber-position"), brokerage.id(), instrument.id(),
         10'000'000, 310'250'000)));
 
     QVERIFY2(repository.deleteAccount(brokerage.id()),
              qPrintable(repository.lastError()));
-    QVERIFY(repository.loadInvestmentPositions().isEmpty());
-    QVERIFY2(repository.archiveInvestmentInstrument(instrument.id()),
+    QVERIFY(InvestmentRepository(repository.database()).loadInvestmentPositions().isEmpty());
+    QVERIFY2(InvestmentRepository(repository.database()).archiveInvestmentInstrument(instrument.id()),
              qPrintable(repository.lastError()));
 }
 
@@ -280,7 +281,7 @@ void InvestmentRepositoryTest::migratesMoexRoutingColumns()
     FinanceRepository repository(databasePath);
     QVERIFY2(repository.isOpen(), qPrintable(repository.lastError()));
     QVector<InvestmentInstrument> instruments =
-        repository.loadInvestmentInstruments();
+        InvestmentRepository(repository.database()).loadInvestmentInstruments();
     QCOMPARE(instruments.size(), 1);
     QCOMPARE(instruments.constFirst().marketCode(), QString());
     QCOMPARE(instruments.constFirst().primaryBoardId(), QString());
@@ -290,9 +291,9 @@ void InvestmentRepositoryTest::migratesMoexRoutingColumns()
         QStringLiteral("RU0009029540"), QStringLiteral("Сбербанк"),
         InvestmentInstrumentType::Stock, Currency::RUB,
         QStringLiteral("MOEX"), QStringLiteral("TQBR"));
-    QVERIFY2(repository.updateInvestmentInstrument(migrated),
+    QVERIFY2(InvestmentRepository(repository.database()).updateInvestmentInstrument(migrated),
              qPrintable(repository.lastError()));
-    instruments = repository.loadInvestmentInstruments();
+    instruments = InvestmentRepository(repository.database()).loadInvestmentInstruments();
     QCOMPARE(instruments.constFirst().marketCode(), QStringLiteral("MOEX"));
     QCOMPARE(instruments.constFirst().primaryBoardId(), QStringLiteral("TQBR"));
 }

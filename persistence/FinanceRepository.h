@@ -58,13 +58,11 @@ public:
 
     bool saveDailyValuations(const DailyValuationBatch& batch);
     QVariantList loadDailyValuations(AssetDailyValuation::Kind kind, const QDate& from = {}, const QDate& to = {});
-    QVariantList loadPositionHistory(const QString& positionId);
     QVariantList loadPriceHistory(AssetDailyValuation::Kind kind, const QString& assetId);
     QVariantList loadFxHistory(const QString& currency);
     bool saveHistoricalFxRates(const QVector<HistoricalFxRate>& rates);
     QVariantList loadPerformanceAccounts();
     QVariantMap loadAccountCreationDates();
-    QVariantList loadAllPositionHistory();
     QString loadPerformanceInflation() const;
     bool savePerformanceInflation(const QString& value);
     QVariantMap loadPerformanceDeposit() const;
@@ -74,7 +72,6 @@ public:
     QVariantList loadBenchmarkPrices(const QString& key);
     bool benchmarkHistoryCovered(const QString& key,const QDate& from,const QDate& to);
     bool saveBenchmarkHistory(const QVariantMap& descriptor,const QVariantList& prices,const QDate& from,const QDate& to);
-    QVariant investmentCostBasis(const QString& positionId) const;
     QVector<CapitalSnapshot> loadCapitalSnapshots();
     bool saveCapitalSnapshot(const CapitalSnapshot& snapshot);
     FinancialTrajectorySettings loadFinancialTrajectorySettings() const;
@@ -102,9 +99,6 @@ public:
     QVector<Transaction> loadTransactions();
     QVector<DepositSettings> loadDepositSettings();
     QVector<Account> loadAccounts();
-    QVector<InvestmentInstrument> loadInvestmentInstruments();
-    QVector<InvestmentPosition> loadInvestmentPositions();
-    QVector<InvestmentQuote> loadInvestmentQuotes();
     // Purchase price of the coins without trades, by "exchangeId|coin"
     // Rate history of deposits by account id: a list of {"from": "yyyy-MM-dd", "bps": int}, sorted by day
     QVariantMap loadDepositRateSteps() const;
@@ -155,39 +149,9 @@ public:
         const QDate& generatedThrough,
         int* insertedCount = nullptr
         );
-    bool saveCryptoPrice(
-        const QString& symbol,
-        qint64 priceUsdMicros,
-        const QDateTime& fetchedAtUtc
-        );
-    bool insertInvestmentInstrument(const InvestmentInstrument& instrument);
-    bool updateInvestmentInstrument(const InvestmentInstrument& instrument);
-    bool archiveInvestmentInstrument(const QString& id);
-    bool insertInvestmentPosition(const InvestmentPosition& position);
-    bool updateInvestmentPosition(const InvestmentPosition& position);
-    bool deleteInvestmentPosition(const QString& id);
-    bool archiveInvestmentPosition(const QString& id);
-    bool saveInvestmentQuote(const InvestmentQuote& quote);
-    QVector<InvestmentOperation> loadInvestmentOperations();
-    bool saveInvestmentBundle(const InvestmentInstrument& instrument,
-        const InvestmentPosition& position, const std::optional<InvestmentQuote>& quote,
-        bool editing, const std::optional<InvestmentOperation>& operation = {},
-        const std::optional<qint64>& openingCostMinor = {}, bool clearCostBasis = false,
-        const QVector<InvestmentOperation>& charges = {});
-    bool bookInvestmentOperation(const InvestmentOperation& operation,
-        const InvestmentPosition& expected, const InvestmentPosition& updated, bool close,
-        const std::optional<InvestmentQuote>& quote = {}, const QVector<InvestmentOperation>& charges = {});
-    bool insertAccountCharge(const InvestmentOperation& operation);
-    bool hasInvestmentOperations(const QString& positionId) const;
 
 private:
     bool migrateAnalyticsHistorySchema();
-    bool appendPositionState(const QString& id, const QString& event);
-    bool completePositionEvent(const InvestmentOperation& operation, const QVariant& previousBasis,
-                               qint64 beforeQuantity, qint64 afterQuantity);
-    bool savePriceHistory(const QString& kind, const QString& assetId, qint64 priceMicros,
-                          const QDateTime& quotedAt, const QString& currency,
-                          const QString& source, const QString& termsJson = QStringLiteral("{}"));
 
     void setLastError(const QString& error);
 

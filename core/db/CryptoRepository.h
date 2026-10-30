@@ -53,6 +53,11 @@ public:
     bool saveCryptoCostBasis(const QString& exchangeId, const QString& coin, const QVariantMap& basis);
     qint64 loadCryptoHistoryFromMs(const QString& exchangeId) const;
     bool saveCryptoHistoryFromMs(const QString& exchangeId, qint64 fromMs);
+    bool saveCryptoPrice(
+        const QString& symbol,
+        qint64 priceUsdMicros,
+        const QDateTime& fetchedAtUtc
+        );
     QString lastError() const;
 
 private:

@@ -1,4 +1,5 @@
 #include "../interface/FinanceController.h"
+#include "../core/db/InvestmentRepository.h"
 #include "../core/db/SettingsRepository.h"
 #include <QTemporaryDir>
 #include <QStandardPaths>
@@ -24,9 +25,9 @@ private slots:
         QVERIFY(!report.value("unrealizedMinor").isNull());
         for(const auto& v:report.value("dataQuality").toMap().value("items").toList())
             QVERIFY(v.toMap().value("code")!="cost_unknown");
-        FinanceRepository r(path);QVERIFY(r.loadInvestmentOperations().isEmpty());
-        const auto id=r.loadInvestmentPositions().first().id();
-        QCOMPARE(r.investmentCostBasis(id).toLongLong(),qint64(30000));
+        FinanceRepository r(path);QVERIFY(InvestmentRepository(r.database()).loadInvestmentOperations().isEmpty());
+        const auto id=InvestmentRepository(r.database()).loadInvestmentPositions().first().id();
+        QCOMPARE(InvestmentRepository(r.database()).investmentCostBasis(id).toLongLong(),qint64(30000));
         const auto rows=r.loadDailyValuations(AssetDailyValuation::Investment);
         bool found=false;for(const auto& v:rows){const auto row=v.toMap();if(row.value("source_id")=="position:"+id){
             found=true;QCOMPARE(row.value("cost_basis_minor").toLongLong(),qint64(30000));}}

@@ -32,7 +32,7 @@ void FinanceController::rebuildInvestmentPerformance()
         input.instruments.append(QVariantMap{{"id",instrument.id()},{"symbol",instrument.symbol()},
                                             {"name",instrument.name()},{"type",int(instrument.type())}});
     input.valuations=repository_.loadDailyValuations(AssetDailyValuation::Investment, input.from.isValid()?input.from.addDays(-1):QDate(),input.to);
-    input.positionHistory=repository_.loadAllPositionHistory();
+    input.positionHistory=investmentRepository_.loadAllPositionHistory();
     QSet<QString> instruments,currencies;currencies.insert(input.currency);
     for(const auto& a:input.accounts)currencies.insert(a.currency);
     for(const auto& value:input.positionHistory){const auto h=value.toMap();instruments.insert(h.value("instrument_id").toString());}
@@ -94,7 +94,7 @@ void FinanceController::rebuildAverageReturn()
         }
         if (!bought) {
             // A holding that existed before Vexa: its cost is what was put in when it was added
-            const QVariant basis = repository_.investmentCostBasis(position.id());
+            const QVariant basis = investmentRepository_.investmentCostBasis(position.id());
             if (basis.isNull()) {
                 add(id, investments, title, 0, AnnualReturn{std::nullopt, QStringLiteral("стоимость приобретения неизвестна"), 0});
                 continue;

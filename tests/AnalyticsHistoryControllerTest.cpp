@@ -1,4 +1,5 @@
 #include "../interface/FinanceController.h"
+#include "../core/db/InvestmentRepository.h"
 #include "../core/db/CryptoRepository.h"
 #include "../core/db/SettingsRepository.h"
 #include <QTemporaryDir>
@@ -15,7 +16,7 @@ private slots:
          QVERIFY(r.insertAccount({"fiat","Доллары",AssetType::Fiat,AccountType::DebitCard,Currency::USD,12345}));
          QVERIFY(r.insertAccount({"broker","Брокер",AssetType::Investment,AccountType::Brokerage,Currency::RUB,100000}));
          InvestmentPositionSettings settings;settings.manualValuation=true;settings.manualValueMinor=30000;settings.valuedAtUtc=QDateTime::currentDateTimeUtc();
-         QVERIFY(r.saveInvestmentBundle({"stock","TEST","","Акция",InvestmentInstrumentType::Stock,Currency::RUB},
+         QVERIFY(InvestmentRepository(r.database()).saveInvestmentBundle({"stock","TEST","","Акция",InvestmentInstrumentType::Stock,Currency::RUB},
             {"position","broker","stock",3'000'000,100'000'000,{},{},settings},{},false,{},30100));
          QVERIFY(CryptoRepository(r.database()).insertCryptoWallet({"wallet","address","BITCOIN","BTC",8}));}
         {FinanceController c(nullptr,path);c.setAppCurrency("EUR");}
@@ -57,12 +58,12 @@ private slots:
          QVERIFY(r.insertAccount({"broker","Брокер",AssetType::Investment,AccountType::Brokerage,Currency::RUB,200000}));
          InvestmentTerms t;t.pricing="future";t.currencyCode="RUB";t.priceStepMicros=1'000'000;t.stepValueMicros=10'000'000;
          InvestmentPositionSettings settings;settings.referencePriceMicros=100'000'000;settings.referenceAtUtc=QDateTime::currentDateTimeUtc().addSecs(-3600);
-         QVERIFY(r.saveInvestmentBundle({"future","FUT","","Фьючерс",InvestmentInstrumentType::Future,Currency::RUB,"","",t},
+         QVERIFY(InvestmentRepository(r.database()).saveInvestmentBundle({"future","FUT","","Фьючерс",InvestmentInstrumentType::Future,Currency::RUB,"","",t},
             {"p","broker","future",1'000'000,100'000'000,{},{},settings},InvestmentQuote("future",-10'000'000,QDateTime::fromString(at,Qt::ISODate),t),false));}
         {FinanceController c(nullptr,path);c.setSelectedAsset("investment");
          auto result=c.recordInvestmentOperation({{"positionId","p"},{"kind","margin"},{"date",at},{"cashAmount","-1100"},{"price","-10"}});
          QVERIFY2(result.value("ok").toBool(),qPrintable(result.value("error").toString()));}
-        FinanceRepository r(path);QCOMPARE(r.loadInvestmentOperations().at(0).tradePriceMicros.value_or(0),qint64(-10'000'000));
+        FinanceRepository r(path);QCOMPARE(InvestmentRepository(r.database()).loadInvestmentOperations().at(0).tradePriceMicros.value_or(0),qint64(-10'000'000));
     }
     void chargesAreSavedOnceAndEmptyMeansUnknown(){
         QTemporaryDir dir;const auto path=dir.filePath("data.db");
@@ -77,9 +78,9 @@ private slots:
          result=c.recordInvestmentOperation({{"positionId",p.value("id")},{"kind","sell"},{"date",QDateTime::currentDateTimeUtc().toString(Qt::ISODateWithMs)},
             {"quantity","1"},{"cashAmount","110"},{"price","110"},{"remainingValue","220"},{"fee","1"},{"tax",""}});
          QVERIFY2(result.value("ok").toBool(),qPrintable(result.value("error").toString()));}
-        FinanceRepository r(path);const auto ops=r.loadInvestmentOperations();QCOMPARE(ops.size(),4);
+        FinanceRepository r(path);const auto ops=InvestmentRepository(r.database()).loadInvestmentOperations();QCOMPARE(ops.size(),4);
         for(const auto& op:ops){if(op.kind=="buy")QCOMPARE(op.cashDeltaMinor,qint64(-30'000));if(op.kind=="sell")QVERIFY(!op.feeMinor);if(op.kind=="fee")QCOMPARE(op.cashDeltaMinor,qint64(-100));}
-        const auto history=r.loadPositionHistory(r.loadInvestmentPositions().at(0).id());
+        const auto history=InvestmentRepository(r.database()).loadPositionHistory(InvestmentRepository(r.database()).loadInvestmentPositions().at(0).id());
         QCOMPARE(history.last().toMap().value("realized_net_minor").toLongLong(),qint64(867));
         for(const auto& value:r.loadDailyValuations(AssetDailyValuation::Investment))if(value.toMap().value("source_id").toString()=="cash:broker")
             QCOMPARE(value.toMap().value("value_minor").toLongLong(),qint64(80800));

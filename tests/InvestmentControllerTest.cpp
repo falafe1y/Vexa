@@ -1,4 +1,5 @@
 #include "../interface/FinanceController.h"
+#include "../core/db/InvestmentRepository.h"
 #include "../core/db/SettingsRepository.h"
 #include <QTemporaryDir>
 #include <QStandardPaths>
@@ -40,7 +41,7 @@ void InvestmentControllerTest::clearingKeepsCapitalAndSurvivesRestart() {
     QTemporaryDir dir;const auto path=dir.filePath("data.db");const auto at=QDateTime::currentDateTimeUtc().addSecs(-5);
     {FinanceRepository r(path);QVERIFY(seed(r));InvestmentTerms t;t.engine="futures";t.market="forts";t.pricing="future";t.currencyCode="RUB";t.priceStepMicros=1'000'000;t.stepValueMicros=10'000'000;
      InvestmentPositionSettings s;s.referencePriceMicros=100'000'000;s.referenceAtUtc=at.addSecs(-3600);s.blockedMarginMinor=2'000'000;
-     QVERIFY(r.saveInvestmentBundle({"future","SiZ6","","Фьючерс",InvestmentInstrumentType::Future,Currency::RUB,"MOEX","RFUD",t},
+     QVERIFY(InvestmentRepository(r.database()).saveInvestmentBundle({"future","SiZ6","","Фьючерс",InvestmentInstrumentType::Future,Currency::RUB,"MOEX","RFUD",t},
        {"position","broker","future",2'000'000,100'000'000,{},{},s},InvestmentQuote("future",110'000'000,at,t),false));}
     {FinanceController c(nullptr,path);QCOMPARE(balance(c),qint64(10'020'000));
      const auto result=c.recordInvestmentOperation({{"positionId","position"},{"kind","margin"},{"date",at.toString(Qt::ISODate)}, {"cashAmount","200"},{"price","110"}});
@@ -52,7 +53,7 @@ void InvestmentControllerTest::clearingKeepsCapitalAndSurvivesRestart() {
 void InvestmentControllerTest::bondCouponAndTradesPreserveCapital() {
     QTemporaryDir dir;const auto path=dir.filePath("data.db");const auto at=QDateTime::currentDateTimeUtc().addSecs(-5);
     {FinanceRepository r(path);QVERIFY(seed(r));InvestmentTerms t;t.engine="stock";t.market="bonds";t.pricing="bond";t.currencyCode="RUB";t.faceValueMicros=1'000'000'000;t.accruedInterestMicros=20'000'000;
-     QVERIFY(r.saveInvestmentBundle({"bond","BOND","","Облигация",InvestmentInstrumentType::Bond,Currency::RUB,"MOEX","TQCB",t},
+     QVERIFY(InvestmentRepository(r.database()).saveInvestmentBundle({"bond","BOND","","Облигация",InvestmentInstrumentType::Bond,Currency::RUB,"MOEX","TQCB",t},
        {"position","broker","bond",10'000'000,95'000'000},InvestmentQuote("bond",95'000'000,at,t),false));}
     FinanceController c(nullptr,path);QCOMPARE(balance(c),qint64(10'970'000));
     auto result=c.recordInvestmentOperation({{"positionId","position"},{"kind","coupon"},{"date",at.toString(Qt::ISODate)}, {"cashAmount","200"},{"accruedAfter","0"}});
@@ -67,7 +68,7 @@ void InvestmentControllerTest::shortOptionIsAnObligation() {
     {FinanceRepository r(path);QVERIFY(seed(r));InvestmentTerms t;t.engine="futures";t.market="options";t.pricing="premium_option";t.currencyCode="RUB";t.multiplierMicros=100'000'000;
      InvestmentPositionSettings s;s.direction=-1;
      InvestmentOperation opening{"opening","broker","position","option","buy",100'000,1'000'000,at,"Продажа опциона"};
-     QVERIFY(r.saveInvestmentBundle({"option","OPT","","Опцион",InvestmentInstrumentType::Option,Currency::RUB,"MOEX","ROPD",t},
+     QVERIFY(InvestmentRepository(r.database()).saveInvestmentBundle({"option","OPT","","Опцион",InvestmentInstrumentType::Option,Currency::RUB,"MOEX","ROPD",t},
        {"position","broker","option",1'000'000,10'000'000,{},{},s},InvestmentQuote("option",10'000'000,at,t),false,opening));}
     FinanceController c(nullptr,path);QCOMPARE(balance(c),qint64(10'000'000));
     const auto result=c.recordInvestmentOperation({{"positionId","position"},{"kind","sell"},{"date",at.toString(Qt::ISODate)}, {"cashAmount","-1000"},{"quantity","1"}});
@@ -76,9 +77,9 @@ void InvestmentControllerTest::shortOptionIsAnObligation() {
 void InvestmentControllerTest::foreignCurrencyAndMissingRateAreExplicit() {
     QTemporaryDir dir;const auto path=dir.filePath("data.db");
     {FinanceRepository r(path);QVERIFY(seed(r));InvestmentTerms t;t.engine="stock";t.market="shares";t.currencyCode="USD";
-     QVERIFY(r.saveInvestmentBundle({"foreign","USDSTOCK","","Акция",InvestmentInstrumentType::Stock,Currency::USD,"MOEX","TQTF",t},
+     QVERIFY(InvestmentRepository(r.database()).saveInvestmentBundle({"foreign","USDSTOCK","","Акция",InvestmentInstrumentType::Stock,Currency::USD,"MOEX","TQTF",t},
        {"foreign-position","broker","foreign",10'000'000,1'000'000},InvestmentQuote("foreign",1'000'000,QDateTime::currentDateTimeUtc(),t),false));
-     t.currencyCode="XYZ";QVERIFY(r.saveInvestmentBundle({"unknown","UNKNOWN","","Акция",InvestmentInstrumentType::Stock,Currency::RUB,"MOEX","TQTF",t},
+     t.currencyCode="XYZ";QVERIFY(InvestmentRepository(r.database()).saveInvestmentBundle({"unknown","UNKNOWN","","Акция",InvestmentInstrumentType::Stock,Currency::RUB,"MOEX","TQTF",t},
        {"unknown-position","broker","unknown",1'000'000,1'000'000},InvestmentQuote("unknown",1'000'000,QDateTime::currentDateTimeUtc(),t),false));}
     FinanceController c(nullptr,path);QCOMPARE(balance(c),qint64(10'100'000));QVERIFY(c.investmentValuationIncomplete());
     const auto result=c.saveInvestmentPosition({{"id","unknown-position"},{"accountId","broker"},{"searchIndex",-1},{"quantity","1"},
@@ -112,7 +113,7 @@ static void seedBondPosition(FinanceRepository& r,const QDateTime& at,qint64 blo
     // No accrued interest: trades at the clean price then move the cash and the holding by the same amount
     InvestmentTerms t;t.engine="stock";t.market="bonds";t.pricing="bond";t.currencyCode="RUB";t.faceValueMicros=1'000'000'000;t.accruedInterestMicros=0;
     InvestmentPositionSettings settings;settings.blockedMarginMinor=blockedMargin;
-    QVERIFY(r.saveInvestmentBundle({"bond","BOND","","Облигация",InvestmentInstrumentType::Bond,Currency::RUB,"MOEX","TQCB",t},
+    QVERIFY(InvestmentRepository(r.database()).saveInvestmentBundle({"bond","BOND","","Облигация",InvestmentInstrumentType::Bond,Currency::RUB,"MOEX","TQCB",t},
         InvestmentPosition("position","broker","bond",10'000'000,95'000'000,at,at,settings),InvestmentQuote("bond",95'000'000,at,t),false));
 }
 void InvestmentControllerTest::transferToDepositAndBackKeepsBothHalves() {

@@ -454,6 +454,7 @@ FinanceController::FinanceController(QObject* parent, const QString& databasePat
     , projectRepository_(repository_.database())
     , categoryRepository_(repository_.database())
     , recurringRepository_(repository_.database())
+    , investmentRepository_(repository_.database())
     , currencyConverter_(rateProvider_)
     , balanceCalculator_(currencyConverter_)
 {
@@ -636,10 +637,10 @@ FinanceController::FinanceController(QObject* parent, const QString& databasePat
             )
         {
             if (cryptoWallets_.isEmpty()) return;
-            if (!repository_.saveCryptoPrice(
+            if (!crypto_.saveCryptoPrice(
                     symbol, priceUsdMicros, fetchedAtUtc)) {
                 qWarning() << "Failed to save crypto price:"
-                           << repository_.lastError();
+                           << crypto_.lastError();
                 return;
             }
             cryptoPricesUsdMicros_[symbol] = priceUsdMicros;
@@ -707,9 +708,9 @@ FinanceController::FinanceController(QObject* parent, const QString& databasePat
             const auto& instrumentId=quoted.id();
             for(auto& found:investmentSearchResults_)if(found.id()==instrumentId){found=quoted;break;}
             for(const auto& instrument:investmentInstruments_)if(instrument.id()==instrumentId){
-                if(!repository_.saveInvestmentQuote(InvestmentQuote(instrumentId,quoted.priceMicros(),quoted.quotedAtUtc(),quoted.terms())))
-                    qWarning()<<"Failed to save investment quote:"<<repository_.lastError();
-                else {investmentQuotes_=repository_.loadInvestmentQuotes();emit investmentPositionsChanged();emit accountsChanged();emit balanceChanged();}
+                if(!investmentRepository_.saveInvestmentQuote(InvestmentQuote(instrumentId,quoted.priceMicros(),quoted.quotedAtUtc(),quoted.terms())))
+                    qWarning()<<"Failed to save investment quote:"<<investmentRepository_.lastError();
+                else {investmentQuotes_=investmentRepository_.loadInvestmentQuotes();emit investmentPositionsChanged();emit accountsChanged();emit balanceChanged();}
                 break;
             }
             if(requestedSearchQuoteId_==instrumentId){requestedSearchQuoteId_.clear();investmentQuoteBusy_=false;investmentLastError_.clear();
@@ -784,10 +785,10 @@ FinanceController::FinanceController(QObject* parent, const QString& databasePat
     cryptoExchanges_ = crypto_.loadCryptoExchanges();
     QTimer::singleShot(0, this, [this] { refreshCryptoExchanges(false); });
     cryptoTransactions_ = crypto_.loadCryptoTransactions();
-    investmentInstruments_ = repository_.loadInvestmentInstruments();
-    investmentPositions_ = repository_.loadInvestmentPositions();
-    investmentQuotes_ = repository_.loadInvestmentQuotes();
-    investmentOperations_ = repository_.loadInvestmentOperations();
+    investmentInstruments_ = investmentRepository_.loadInvestmentInstruments();
+    investmentPositions_ = investmentRepository_.loadInvestmentPositions();
+    investmentQuotes_ = investmentRepository_.loadInvestmentQuotes();
+    investmentOperations_ = investmentRepository_.loadInvestmentOperations();
     if (!projects_.isEmpty()) {
         selectedProjectId_ = projects_.constFirst().id();
     }
@@ -1346,10 +1347,10 @@ QVariantMap FinanceController::restoreDatabase(const QUrl& fileUrl)
     for (const auto& wallet : cryptoWallets_) cryptoWalletNames_[wallet.id()] = crypto_.cryptoWalletName(wallet.id());
     cryptoExchanges_ = crypto_.loadCryptoExchanges();
     cryptoTransactions_ = crypto_.loadCryptoTransactions();
-    investmentInstruments_ = repository_.loadInvestmentInstruments();
-    investmentPositions_ = repository_.loadInvestmentPositions();
-    investmentQuotes_ = repository_.loadInvestmentQuotes();
-    investmentOperations_ = repository_.loadInvestmentOperations();
+    investmentInstruments_ = investmentRepository_.loadInvestmentInstruments();
+    investmentPositions_ = investmentRepository_.loadInvestmentPositions();
+    investmentQuotes_ = investmentRepository_.loadInvestmentQuotes();
+    investmentOperations_ = investmentRepository_.loadInvestmentOperations();
     for (const QString& symbol : {QStringLiteral("USDT"), QStringLiteral("BTC"), QStringLiteral("ETH")}) {
         const auto price = crypto_.loadCryptoPrice(symbol);
         if (price.priceUsdMicros > 0) cryptoPricesUsdMicros_[symbol] = price.priceUsdMicros;
@@ -3460,7 +3461,7 @@ QVariantList FinanceController::investmentPositions() const
         item["type"]=static_cast<int>(i->type());item["typeName"]=investmentTypeName(i->type());
         item["currency"]=currencyCode(a->currency());item["quantityText"]=formatMicros(position.quantityMicros());
         item["averagePriceText"]=formatMicros(position.averagePriceMicros());
-        const auto basis=repository_.investmentCostBasis(position.id());
+        const auto basis=investmentRepository_.investmentCostBasis(position.id());
         item["costBasisKnown"]=!basis.isNull();item["costBasisMinor"]=basis;
         item["costBasisText"]=basis.isNull()?QString():QString::number(basis.toLongLong()/100)+"."+QString::number(basis.toLongLong()%100).rightJustified(2,'0');
         item["averageValueMinor"]=scaledInvestmentValueMinor(position.quantityMicros(),position.averagePriceMicros());
@@ -4094,7 +4095,7 @@ bool FinanceController::deleteAccount(const QString& id)
         depositSettings_.end());
     transactions_ = repository_.loadTransactions();
     recurringTransactions_ = recurringRepository_.loadRecurringTransactions();
-    investmentPositions_ = repository_.loadInvestmentPositions();
+    investmentPositions_ = investmentRepository_.loadInvestmentPositions();
     summary_ = repository_.loadSummary();
 
     if (selectedAccountId_ == id) {
@@ -4824,12 +4825,12 @@ QVariantMap FinanceController::updateInvestmentPosition(const QString& id, const
 
 bool FinanceController::deleteInvestmentPosition(const QString& id)
 {
-    if (!repository_.deleteInvestmentPosition(id)) {
+    if (!investmentRepository_.deleteInvestmentPosition(id)) {
         qWarning() << "Failed to delete investment position:"
-                   << repository_.lastError();
+                   << investmentRepository_.lastError();
         return false;
     }
-    investmentPositions_ = repository_.loadInvestmentPositions();
+    investmentPositions_ = investmentRepository_.loadInvestmentPositions();
     emit investmentPositionsChanged();
     emit accountsChanged();
     emit balanceChanged();
@@ -5457,7 +5458,7 @@ bool FinanceController::deleteHistoryRows(const QVariantList& rows)
         return false;
     }
     transactions_ = repository_.loadTransactions();
-    investmentPositions_ = repository_.loadInvestmentPositions();
+    investmentPositions_ = investmentRepository_.loadInvestmentPositions();
     cryptoTransactions_ = crypto_.loadCryptoTransactions();
     cryptoExchanges_ = crypto_.loadCryptoExchanges();
     summary_ = repository_.loadSummary();
@@ -5661,8 +5662,8 @@ bool FinanceController::investmentValuationIncomplete() const
 
 void FinanceController::reloadInvestments()
 {
-    investmentInstruments_=repository_.loadInvestmentInstruments();investmentPositions_=repository_.loadInvestmentPositions();
-    investmentQuotes_=repository_.loadInvestmentQuotes();investmentOperations_=repository_.loadInvestmentOperations();
+    investmentInstruments_=investmentRepository_.loadInvestmentInstruments();investmentPositions_=investmentRepository_.loadInvestmentPositions();
+    investmentQuotes_=investmentRepository_.loadInvestmentQuotes();investmentOperations_=investmentRepository_.loadInvestmentOperations();
     // Investment operations are journal rows too: income, expense and balance totals follow them.
     summary_=repository_.loadSummary();
     emit investmentPositionsChanged();emit accountsChanged();emit transactionsChanged();emit balanceChanged();
@@ -7115,7 +7116,7 @@ QVariantMap FinanceController::saveInvestmentPosition(const QVariantMap& v)
     const auto existing=std::find_if(investmentInstruments_.cbegin(),investmentInstruments_.cend(),[&](const auto& i){return i.id()==instrumentId;});
     if(existing!=investmentInstruments_.cend())valuationCurrency=existing->currency();
     if(terms.currencyCode.isEmpty())terms.currencyCode=currencyCode(valuationCurrency);
-    if(editing && repository_.hasInvestmentOperations(id) && (current->accountId()!=accountId || current->instrumentId()!=instrumentId))
+    if(editing && investmentRepository_.hasInvestmentOperations(id) && (current->accountId()!=accountId || current->instrumentId()!=instrumentId))
         return fail(QStringLiteral("У позиции есть операции: счёт и инструмент менять нельзя"));
     for(const auto& p:investmentPositions_)if(p.id()!=id && p.accountId()==accountId && p.instrumentId()==instrumentId)
         return fail(QStringLiteral("Этот инструмент уже добавлен на выбранный счёт"));
@@ -7201,9 +7202,9 @@ QVariantMap FinanceController::saveInvestmentPosition(const QVariantMap& v)
         openingCost=cost;
     }
     const InvestmentInstrument instrument(instrumentId,symbol,isin,name,type,valuationCurrency,market,board,terms);
-    if(!repository_.saveInvestmentBundle(instrument,position,quote,editing,operation,openingCost,
+    if(!investmentRepository_.saveInvestmentBundle(instrument,position,quote,editing,operation,openingCost,
         editing && v.contains("costBasis") && v.value("costBasis").toString().trimmed().isEmpty()
-        && !repository_.investmentCostBasis(id).isNull(),charges))return fail(QStringLiteral("Не удалось сохранить позицию: %1").arg(repository_.lastError()));
+        && !investmentRepository_.investmentCostBasis(id).isNull(),charges))return fail(QStringLiteral("Не удалось сохранить позицию: %1").arg(investmentRepository_.lastError()));
     reloadInvestments();return {{"ok",true}};
 }
 
@@ -7326,7 +7327,7 @@ QVariantMap FinanceController::recordInvestmentOperation(const QVariantMap& v)
         qint64 price=0;if(!parseSignedInvestmentNumber(tradePrice,price) || (price<0 && i->type()!=InvestmentInstrumentType::Future))return fail(QStringLiteral("Некорректная цена операции"));
         op.tradePriceMicros=price;op.tradeCurrency=terms.currencyCode;
     }
-    if(!repository_.bookInvestmentOperation(op,*p,updated,close,adjustedQuote,charges))return fail(QStringLiteral("Не удалось сохранить операцию: %1").arg(repository_.lastError()));
+    if(!investmentRepository_.bookInvestmentOperation(op,*p,updated,close,adjustedQuote,charges))return fail(QStringLiteral("Не удалось сохранить операцию: %1").arg(investmentRepository_.lastError()));
     reloadInvestments();if(kind=="coupon" || kind=="amortization")refreshInvestmentQuotes();return {{"ok",true}};
 }
 
@@ -7345,7 +7346,7 @@ QVariantMap FinanceController::recordBrokerCharge(const QVariantMap& v)
     const auto description=v.value("description").toString().trimmed();
     const InvestmentOperation op{QUuid::createUuid().toString(QUuid::WithoutBraces),accountId,QString(),QString(),kind,-amount,0,date,
         description.isEmpty()?investmentOperationName(kind):description};
-    if(!repository_.insertAccountCharge(op))return fail(QStringLiteral("Не удалось сохранить операцию: %1").arg(repository_.lastError()));
+    if(!investmentRepository_.insertAccountCharge(op))return fail(QStringLiteral("Не удалось сохранить операцию: %1").arg(investmentRepository_.lastError()));
     reloadInvestments();return {{"ok",true}};
 }
 
@@ -7411,7 +7412,7 @@ bool FinanceController::captureDailyAssetValuations()
         if(account==accounts_.cend())continue;
         AssetDailyValuation row;row.kind=AssetDailyValuation::Investment;row.sourceId="position:"+position.id();row.accountId=position.accountId();
         row.instrumentId=position.instrumentId();row.currency=currencyCode(account->currency());row.quantityAtomic=position.quantityMicros();
-        const auto basis=repository_.investmentCostBasis(position.id());if(!basis.isNull())row.costBasisMinor=basis.toLongLong();else issue(row,"cost_unknown");
+        const auto basis=investmentRepository_.investmentCostBasis(position.id());if(!basis.isNull())row.costBasisMinor=basis.toLongLong();else issue(row,"cost_unknown");
         const auto value=investmentPositionValue(position);if(value.available)row.valueMinor=value.valueMinor;else issue(row,"missing_valuation");
         const auto quote=std::find_if(investmentQuotes_.cbegin(),investmentQuotes_.cend(),[&](const auto& q){return q.instrumentId()==position.instrumentId();});
         const auto instrument=std::find_if(investmentInstruments_.cbegin(),investmentInstruments_.cend(),[&](const auto& i){return i.id()==position.instrumentId();});

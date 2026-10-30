@@ -1,4 +1,5 @@
 #include "../persistence/FinanceRepository.h"
+#include "../core/db/InvestmentRepository.h"
 #include "../core/db/RecurringTransactionRepository.h"
 #include "../core/db/CategoryRepository.h"
 #include "../core/db/ProjectRepository.h"
@@ -146,14 +147,14 @@ void FinanceRepositoryTest::cnyMigrationPreservesData()
         100,Currency::CNY,RecurrenceType::MonthlyDay,1,1,1,QDate(2026,11,1),QDate(2026,10,1)}));
     QVERIFY(migrated.saveCapitalSnapshot({QDate(2026,10,1),Currency::CNY,9500}));
     QVERIFY(migrated.insertAccount({"cny-broker","Брокер",AssetType::Investment,AccountType::Brokerage,Currency::CNY}));
-    QVERIFY(migrated.saveInvestmentBundle({"cny-instrument","TEST-CNY","","Инструмент",InvestmentInstrumentType::Stock,Currency::CNY},
+    QVERIFY(InvestmentRepository(migrated.database()).saveInvestmentBundle({"cny-instrument","TEST-CNY","","Инструмент",InvestmentInstrumentType::Stock,Currency::CNY},
         {"cny-position","cny-broker","cny-instrument",1'000'000,10'000'000},std::nullopt,false));
     QVERIFY(SettingsRepository(migrated.database()).saveManualCurrencyRates(1,100,120,13.25));
     QCOMPARE(PlanningRepository(migrated.database()).loadFinancialGoals().first().currency,Currency::CNY);
     QCOMPARE(PlanningRepository(migrated.database()).loadBudgets().first().currency(),Currency::CNY);
     QCOMPARE(RecurringTransactionRepository(migrated.database()).loadRecurringTransactions().first().currency(),Currency::CNY);
     QCOMPARE(migrated.loadCapitalSnapshots().first().currency,Currency::CNY);
-    QCOMPARE(migrated.loadInvestmentInstruments().first().currency(),Currency::CNY);
+    QCOMPARE(InvestmentRepository(migrated.database()).loadInvestmentInstruments().first().currency(),Currency::CNY);
     {
         auto db=addCipherDatabase(connection);
         db.setDatabaseName(path); QVERIFY(db.open());
@@ -1008,10 +1009,10 @@ void FinanceRepositoryTest::storesCryptoWalletAndPriceSnapshots()
         QVERIFY2(CryptoRepository(repository.database()).updateCryptoWalletBalance(
                      wallet.id(), 12'345'678, balanceFetchedAt),
                  qPrintable(repository.lastError()));
-        QVERIFY2(repository.saveCryptoPrice(
+        QVERIFY2(CryptoRepository(repository.database()).saveCryptoPrice(
                      QStringLiteral("USDT"), 999'731, priceFetchedAt),
                  qPrintable(repository.lastError()));
-        QVERIFY2(repository.saveCryptoPrice(
+        QVERIFY2(CryptoRepository(repository.database()).saveCryptoPrice(
                      QStringLiteral("BTC"), 112'345'000'000, priceFetchedAt),
                  qPrintable(repository.lastError()));
         QVERIFY2(CryptoRepository(repository.database()).saveCryptoRefreshAttemptUtc(priceFetchedAt),
@@ -1144,7 +1145,7 @@ void FinanceRepositoryTest::migratesLegacyCryptoSchema()
     QVERIFY2(CryptoRepository(repository.database()).insertCryptoWallet(ethereum),
              qPrintable(repository.lastError()));
     QCOMPARE(CryptoRepository(repository.database()).loadCryptoWallets().size(), 3);
-    QVERIFY2(repository.saveCryptoPrice(
+    QVERIFY2(CryptoRepository(repository.database()).saveCryptoPrice(
                  QStringLiteral("ETH"), 4'567'000'000, QDateTime::currentDateTimeUtc()),
              qPrintable(repository.lastError()));
 }

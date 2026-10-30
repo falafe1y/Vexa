@@ -5,6 +5,9 @@
 #include <QJsonDocument>
 #include <QJsonObject>
 #include <QMap>
+#include "HistorySavepoint.h"
+#include "PriceHistory.h"
+
 #include <QSqlError>
 #include <QSqlQuery>
 #include <QTimeZone>
@@ -497,4 +500,40 @@ bool CryptoRepository::saveCryptoHistoryFromMs(const QString& exchangeId, qint64
         return false;
     }
     return true;
+}
+
+bool CryptoRepository::saveCryptoPrice(
+    const QString& symbol,
+    const qint64 priceUsdMicros,
+    const QDateTime& fetchedAtUtc
+    )
+{
+    HistorySavepoint atomic(database_);
+    if (!atomic.active()) { setLastError(database_.lastError().text()); return false; }
+
+    const QString normalizedSymbol = symbol.trimmed().toUpper();
+    if ((normalizedSymbol != QStringLiteral("USDT") &&
+         normalizedSymbol != QStringLiteral("BTC") &&
+         normalizedSymbol != QStringLiteral("ETH")) ||
+        priceUsdMicros <= 0 || !fetchedAtUtc.isValid()) {
+        setLastError(QStringLiteral("Invalid crypto price snapshot"));
+        return false;
+    }
+
+    QSqlQuery query(database_);
+    query.prepare(QStringLiteral(
+        "INSERT INTO crypto_prices(symbol, price_usd_micros, fetched_at) "
+        "VALUES(?, ?, ?) "
+        "ON CONFLICT(symbol) DO UPDATE SET "
+        "price_usd_micros = excluded.price_usd_micros, "
+        "fetched_at = excluded.fetched_at WHERE excluded.fetched_at >= crypto_prices.fetched_at"));
+    query.addBindValue(normalizedSymbol);
+    query.addBindValue(priceUsdMicros);
+    query.addBindValue(fetchedAtUtc.toUTC().toMSecsSinceEpoch());
+    if (!query.exec()) {
+        setLastError(query.lastError().text());
+        return false;
+    }
+    if (!savePriceHistory(database_, lastError_, "crypto", normalizedSymbol, priceUsdMicros, fetchedAtUtc, "USD", "crypto_provider")) return false;
+    return atomic.commit();
 }
