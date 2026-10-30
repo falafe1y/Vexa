@@ -10,7 +10,7 @@ struct BankImportReviewResult {
 };
 class BankImportReview final {
 public:
-    static BankImportReviewResult resolve(const QVariantList& rows, const QVariantMap& choices,
+    static BankImportReviewResult resolve(const BankRecipientDictionary& dictionary, const QVariantList& rows, const QVariantMap& choices,
         const QVector<Category>& categories, const QSet<QString>& archived,
         const QVector<BankCategoryRule>& categoryRules, const QVector<BankRecipientRule>& recipientRules);
 };

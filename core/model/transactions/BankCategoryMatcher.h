@@ -1,9 +1,9 @@
 #pragma once
 
-#include "BankCsvImporter.h"
+#include "BankCsvOperation.h"
 #include "BankRecipientMatcher.h"
-#include "../core/model/transactions/BankCategoryRule.h"
-#include "../core/model/transactions/Category.h"
+#include "BankCategoryRule.h"
+#include "Category.h"
 #include <QSet>
 
 struct BankCategorySuggestion
@@ -18,9 +18,10 @@ class BankCategoryMatcher final
 {
 public:
     static QString normalize(const QString& text);
-    static QString merchant(const QString& description);
+    static QString merchant(const BankRecipientDictionary& dictionary, const QString& description);
     static bool isSpecialOperation(const QString& description);
     static BankCategorySuggestion suggest(
+        const BankRecipientDictionary& dictionary,
         const BankCsvOperation& operation,
         const QVector<Category>& categories,
         const QSet<QString>& archived,

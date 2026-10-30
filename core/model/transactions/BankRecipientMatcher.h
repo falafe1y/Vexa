@@ -1,8 +1,9 @@
 #pragma once
-#include "BankCsvImporter.h"
-#include "../core/model/transactions/BankRecipientRule.h"
-#include "../core/model/transactions/Category.h"
-#include "../core/model/transactions/TransactionRecipient.h"
+#include "BankCsvOperation.h"
+#include "BankRecipientDictionary.h"
+#include "BankRecipientRule.h"
+#include "Category.h"
+#include "TransactionRecipient.h"
 
 struct BankRecipientMatch {
     TransactionRecipient recipient;
@@ -19,11 +20,10 @@ struct BankRecipientMatch {
 class BankRecipientMatcher final {
 public:
     static QString normalize(const QString& text);
-    static BankRecipientMatch identify(const BankCsvOperation& operation,
+    static BankRecipientMatch identify(const BankRecipientDictionary& dictionary, const BankCsvOperation& operation,
                                       const QVector<BankRecipientRule>& rules = {});
     static bool ruleMatches(const BankCsvOperation& operation, const BankRecipientMatch& base,
                             const BankRecipientRule& rule);
     static QString bankRecipientName(const BankCsvOperation& operation);
-    static QString keyForName(const QString& name);
-    static int dictionarySize();
+    static QString keyForName(const BankRecipientDictionary& dictionary, const QString& name);
 };

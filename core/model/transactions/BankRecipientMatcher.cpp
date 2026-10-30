@@ -1,6 +1,5 @@
 #include "BankRecipientMatcher.h"
 
-#include <QFile>
 #include <QJsonArray>
 #include <QJsonDocument>
 #include <QJsonObject>
@@ -9,49 +8,12 @@
 #include <algorithm>
 
 namespace {
-struct Entry {
-    QString id, name, parent;
-    QStringList aliases, categories;
-    QVector<QRegularExpression> expressions;
-    bool contextual = false;
-};
 
 bool tokenMatch(const QString& text, const QString& pattern)
 {
     return !pattern.isEmpty() && (" " + text + " ").contains(" " + pattern + " ");
 }
 
-const QVector<Entry>& catalog()
-{
-    static const QVector<Entry> data = [] {
-        QVector<Entry> result;
-        QFile file(QStringLiteral(":/bank-import/recipients.json"));
-        if (!file.open(QIODevice::ReadOnly)) return result;
-        const auto json = QJsonDocument::fromJson(file.readAll()).object();
-        for (const auto& value : json.value("recipients").toArray()) {
-            const auto object = value.toObject();
-            Entry entry;
-            entry.id = object.value("id").toString();
-            entry.name = object.value("name").toString();
-            entry.parent = object.value("parent").toString();
-            entry.contextual = object.value("contextual").toBool();
-            for (const auto& alias : object.value("aliases").toArray())
-                entry.aliases.append(BankRecipientMatcher::normalize(alias.toString()));
-            entry.aliases.append(BankRecipientMatcher::normalize(entry.name));
-            entry.aliases.removeDuplicates();
-            for (const auto& category : object.value("categories").toArray())
-                entry.categories.append(category.toString());
-            for (const auto& alias : entry.aliases) {
-                const auto expression = QStringLiteral("(?:^|[^\\p{L}\\p{N}])%1(?:[0-9]{2,})?(?=$|[^\\p{L}\\p{N}])")
-                    .arg(QRegularExpression::escape(alias));
-                entry.expressions.append(QRegularExpression(expression, QRegularExpression::UseUnicodePropertiesOption));
-            }
-            if (!entry.id.isEmpty() && !entry.name.isEmpty()) result.append(entry);
-        }
-        return result;
-    }();
-    return data;
-}
 
 QString bankName(const BankCsvOperation& operation)
 {
@@ -76,7 +38,7 @@ QString bankName(const BankCsvOperation& operation)
     return name;
 }
 
-BankRecipientMatch baseMatch(const BankCsvOperation& operation)
+BankRecipientMatch baseMatch(const BankRecipientDictionary& dictionary, const BankCsvOperation& operation)
 {
     const auto explicitName = bankName(operation);
     auto text = BankRecipientMatcher::normalize(explicitName.isEmpty() ? operation.description : explicitName);
@@ -87,8 +49,8 @@ BankRecipientMatch baseMatch(const BankCsvOperation& operation)
     const auto context = BankRecipientMatcher::normalize(operation.description);
     const bool paymentContext = tokenMatch(context, "pos") || tokenMatch(context, "оплата")
         || tokenMatch(context, "покупка") || tokenMatch(context, "payment");
-    QVector<const Entry*> hits;
-    for (const auto& entry : catalog()) {
+    QVector<const BankRecipientDictionary::Entry*> hits;
+    for (const auto& entry : dictionary.entries()) {
         for (const auto& expression : entry.expressions) {
             if (expression.match(text).hasMatch()) {
                 hits.append(&entry);
@@ -104,10 +66,10 @@ BankRecipientMatch baseMatch(const BankCsvOperation& operation)
             auto ancestor = item->parent;
             for (int depth = 0; !ancestor.isEmpty() && depth < 16; ++depth) {
                 if (ancestor == id) { parent = true; break; }
-                const auto found = std::find_if(catalog().cbegin(), catalog().cend(), [&](const auto& entry) {
+                const auto found = std::find_if(dictionary.entries().cbegin(), dictionary.entries().cend(), [&](const auto& entry) {
                     return entry.id == ancestor;
                 });
-                ancestor = found == catalog().cend() ? QString() : found->parent;
+                ancestor = found == dictionary.entries().cend() ? QString() : found->parent;
             }
             if (parent) break;
         }
@@ -142,7 +104,7 @@ BankRecipientMatch baseMatch(const BankCsvOperation& operation)
             }
         }
     } else if (!explicitName.isEmpty()) {
-        result.recipient = {explicitName, BankRecipientMatcher::keyForName(explicitName), "bank"};
+        result.recipient = {explicitName, BankRecipientMatcher::keyForName(dictionary, explicitName), "bank"};
         result.status = "known";
         result.reason = QStringLiteral("Получатель из выписки");
         result.ruleField = "bank_recipient";
@@ -173,16 +135,14 @@ QString BankRecipientMatcher::bankRecipientName(const BankCsvOperation& operatio
     return bankName(operation);
 }
 
-QString BankRecipientMatcher::keyForName(const QString& name)
+QString BankRecipientMatcher::keyForName(const BankRecipientDictionary& dictionary, const QString& name)
 {
     const auto key = normalize(name);
     if (key.isEmpty()) return {};
-    for (const auto& entry : catalog())
+    for (const auto& entry : dictionary.entries())
         if (normalize(entry.name) == key) return "dict:" + entry.id;
     return "name:" + key;
 }
-
-int BankRecipientMatcher::dictionarySize() { return catalog().size(); }
 
 bool BankRecipientMatcher::ruleMatches(const BankCsvOperation& operation,
     const BankRecipientMatch& base, const BankRecipientRule& rule)
@@ -201,10 +161,10 @@ bool BankRecipientMatcher::ruleMatches(const BankCsvOperation& operation,
     return rule.matchMode == "contains" && rule.field != "recipient_id" && tokenMatch(text, pattern);
 }
 
-BankRecipientMatch BankRecipientMatcher::identify(const BankCsvOperation& operation,
+BankRecipientMatch BankRecipientMatcher::identify(const BankRecipientDictionary& dictionary, const BankCsvOperation& operation,
     const QVector<BankRecipientRule>& rules)
 {
-    auto result = baseMatch(operation);
+    auto result = baseMatch(dictionary, operation);
     result.baseRecipientName = result.status == "known" ? result.recipient.name : QString();
     QString chosen, pattern, field, mode;
     int best = -1;
@@ -230,14 +190,14 @@ BankRecipientMatch BankRecipientMatcher::identify(const BankCsvOperation& operat
         result.categoryNames.clear();
         result.reason = QStringLiteral("Конфликт правил получателя — проверьте имя");
     } else if (best >= 0) {
-        result.recipient = {chosen, keyForName(chosen), "rule"};
+        result.recipient = {chosen, keyForName(dictionary, chosen), "rule"};
         result.status = "known";
         result.reason = QStringLiteral("Ваше правило получателя");
         result.rulePattern = pattern;
         result.ruleField = field;
         result.ruleMode = mode;
         result.categoryNames.clear();
-        for (const auto& entry : catalog()) {
+        for (const auto& entry : dictionary.entries()) {
             if ("dict:" + entry.id == result.recipient.key) {
                 result.categoryNames = entry.categories;
                 break;

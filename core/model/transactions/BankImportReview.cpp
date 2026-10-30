@@ -37,7 +37,7 @@ bool validCategory(const QString& id, CategoryType type,
 }
 }
 
-BankImportReviewResult BankImportReview::resolve(const QVariantList& input,
+BankImportReviewResult BankImportReview::resolve(const BankRecipientDictionary& dictionary, const QVariantList& input,
     const QVariantMap& choices, const QVector<Category>& categories,
     const QSet<QString>& archived, const QVector<BankCategoryRule>& storedCategories,
     const QVector<BankRecipientRule>& storedRecipients)
@@ -68,7 +68,7 @@ BankImportReviewResult BankImportReview::resolve(const QVariantList& input,
             return result;
         }
         if (!choice.value("rememberRecipient").toBool()) continue;
-        const auto base = BankRecipientMatcher::identify(operation);
+        const auto base = BankRecipientMatcher::identify(dictionary, operation);
         BankRecipientRule rule{
             BankRecipientMatcher::normalize(choice.value("recipientPattern").toString()),
             choice.value("recipientField", "description").toString(),
@@ -102,18 +102,18 @@ BankImportReviewResult BankImportReview::resolve(const QVariantList& input,
         const auto row = value.toMap();
         const auto choice = choices.value(row.value("rowKey").toString()).toMap();
         const auto operation = operationFor(row);
-        auto recipient = BankRecipientMatcher::identify(operation, recipientRules);
+        auto recipient = BankRecipientMatcher::identify(dictionary, operation, recipientRules);
         if (choice.contains("recipientName") && choice.value("recipientConfirmed").toBool()) {
             const auto name = choice.value("recipientName").toString().trimmed();
             if (name != recipient.recipient.name || recipient.status != "known") {
-                recipient.recipient = {name, BankRecipientMatcher::keyForName(name),
+                recipient.recipient = {name, BankRecipientMatcher::keyForName(dictionary, name),
                     name.isEmpty() ? QString() : QStringLiteral("manual")};
                 recipient.status = name.isEmpty() ? "unknown" : "known";
                 recipient.reason = name.isEmpty() ? QStringLiteral("Импорт без имени получателя") : QStringLiteral("Ваше исправление");
                 auto named = operation;
                 named.description.clear();
                 named.rawRecipient = name;
-                recipient.categoryNames = BankRecipientMatcher::identify(named).categoryNames;
+                recipient.categoryNames = BankRecipientMatcher::identify(dictionary, named).categoryNames;
             }
         }
         recipients.append(recipient);
@@ -130,7 +130,7 @@ BankImportReviewResult BankImportReview::resolve(const QVariantList& input,
             result.error = QStringLiteral("Проверьте правило категории");
             return result;
         }
-        const auto check = BankCategoryMatcher::suggest(operation, categories, archived, {rule}, {}, &recipient);
+        const auto check = BankCategoryMatcher::suggest(dictionary, operation, categories, archived, {rule}, {}, &recipient);
         if (check.categoryId != rule.categoryId || !check.reason.startsWith(QStringLiteral("Ваше правило"))) {
             result.error = QStringLiteral("Правило категории не соответствует операции");
             return result;
@@ -153,7 +153,7 @@ BankImportReviewResult BankImportReview::resolve(const QVariantList& input,
         const auto choice = choices.value(row.value("rowKey").toString()).toMap();
         const auto operation = operationFor(row);
         const auto& recipient = recipients[n];
-        const auto suggestion = BankCategoryMatcher::suggest(operation, categories, archived,
+        const auto suggestion = BankCategoryMatcher::suggest(dictionary, operation, categories, archived,
             categoryRules, row.value("fallbackCategoryId").toString(), &recipient);
         QString categoryId = suggestion.categoryId;
         if (choice.contains("categoryId")) categoryId = choice.value("categoryId").toString();

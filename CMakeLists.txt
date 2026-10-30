@@ -182,12 +182,6 @@ qt_add_qml_module(vexa
         SOURCES services/ContentUriIo.h
         SOURCES services/BankCsvImporter.h
         SOURCES services/BankCsvImporter.cpp
-        SOURCES services/BankRecipientMatcher.h
-        SOURCES services/BankRecipientMatcher.cpp
-        SOURCES services/BankImportReview.h
-        SOURCES services/BankImportReview.cpp
-        SOURCES services/BankCategoryMatcher.h
-        SOURCES services/BankCategoryMatcher.cpp
         SOURCES services/PdfStatementReader.h
         SOURCES services/PdfStatementReader.cpp
         SOURCES services/XlsxReader.h
@@ -621,16 +615,13 @@ add_test(NAME BybitProviderTest COMMAND BybitProviderTest)
 
 add_executable(BankCategoryMatcherTest
     tests/BankCategoryMatcherTest.cpp
-    services/BankCategoryMatcher.cpp
-    services/BankRecipientMatcher.cpp
     services/BankRecipients.qrc
 )
-target_link_libraries(BankCategoryMatcherTest PRIVATE Qt6::Core Qt6::Test)
+target_link_libraries(BankCategoryMatcherTest PRIVATE core_model Qt6::Core Qt6::Test)
 add_test(NAME BankCategoryMatcherTest COMMAND BankCategoryMatcherTest)
 
-add_executable(BankImportReviewTest tests/BankImportReviewTest.cpp
-    services/BankImportReview.cpp services/BankCategoryMatcher.cpp services/BankRecipientMatcher.cpp services/BankRecipients.qrc)
-target_link_libraries(BankImportReviewTest PRIVATE Qt6::Core Qt6::Test)
+add_executable(BankImportReviewTest tests/BankImportReviewTest.cpp services/BankRecipients.qrc)
+target_link_libraries(BankImportReviewTest PRIVATE core_model Qt6::Core Qt6::Test)
 add_test(NAME BankImportReviewTest COMMAND BankImportReviewTest)
 
 add_executable(BankImportControllerTest tests/BankImportControllerTest.cpp ${investment_controller_test_sources} services/BankRecipients.qrc)

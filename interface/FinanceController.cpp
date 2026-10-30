@@ -8,8 +8,8 @@
 #include <QRandomGenerator>
 
 #include "../services/BankCsvImporter.h"
-#include "../services/BankCategoryMatcher.h"
-#include "../services/BankImportReview.h"
+#include "../core/model/transactions/BankCategoryMatcher.h"
+#include "../core/model/transactions/BankImportReview.h"
 #include "../core/model/analytics/CapitalHistoryCalculator.h"
 #include "../core/model/transactions/DateSliceCalculator.h"
 #include "../core/model/accounts/DepositInterestCalculator.h"
@@ -461,6 +461,10 @@ FinanceController::FinanceController(QObject* parent, const QString& databasePat
     , currencyConverter_(rateProvider_)
     , balanceCalculator_(currencyConverter_)
 {
+    // The built-in list of known recipients for bank statement import
+    QFile recipients(QStringLiteral(":/bank-import/recipients.json"));
+    if (recipients.open(QIODevice::ReadOnly))
+        bankRecipients_ = BankRecipientDictionary::fromJson(recipients.readAll());
     notesSaveTimer_.setSingleShot(true);
     notesSaveTimer_.setInterval(700);
     connect(&notesSaveTimer_, &QTimer::timeout, this,
@@ -2440,7 +2444,7 @@ QVariantMap FinanceController::resolveBankImportRows(const QVariantList& rows,
     if (!error.isEmpty()) return {{"ok", false}, {"error", error}};
     const auto recipients = bankImport_.loadBankRecipientRules(&error);
     if (!error.isEmpty()) return {{"ok", false}, {"error", error}};
-    auto review = BankImportReview::resolve(rows, choices, categories_,
+    auto review = BankImportReview::resolve(bankRecipients_, rows, choices, categories_,
         archivedCategoryIds_, categories, recipients);
     if (review.error.isEmpty()) {
         for (auto& value : review.rows) {
@@ -2670,7 +2674,7 @@ QVariantMap FinanceController::importBankCsv(
         rows.append(bankOperationRow(operation, transactionId, accountCurrency,
             operation.signedMinor > 0 ? profile->incomeCategoryId : profile->expenseCategoryId, account->id()));
     }
-    const auto review = BankImportReview::resolve(rows, choices, categories_, archivedCategoryIds_, rules, recipientRules);
+    const auto review = BankImportReview::resolve(bankRecipients_, rows, choices, categories_, archivedCategoryIds_, rules, recipientRules);
     if (!review.error.isEmpty()) { result["error"] = review.error; return result; }
     QVector<Transaction> imported;
     QMap<QString, QString> newLinks;

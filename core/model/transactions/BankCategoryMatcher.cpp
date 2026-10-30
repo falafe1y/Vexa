@@ -15,10 +15,10 @@ QString BankCategoryMatcher::normalize(const QString& text)
     return BankRecipientMatcher::normalize(text);
 }
 
-QString BankCategoryMatcher::merchant(const QString& description)
+QString BankCategoryMatcher::merchant(const BankRecipientDictionary& dictionary, const QString& description)
 {
     BankCsvOperation operation;operation.description=description;operation.signedMinor=-1;
-    const auto result=BankRecipientMatcher::identify(operation);
+    const auto result=BankRecipientMatcher::identify(dictionary, operation);
     return result.status=="known" ? result.recipient.name : QString();
 }
 
@@ -34,12 +34,12 @@ bool BankCategoryMatcher::isSpecialOperation(const QString& description)
 }
 
 BankCategorySuggestion BankCategoryMatcher::suggest(
-    const BankCsvOperation& operation, const QVector<Category>& categories,
+    const BankRecipientDictionary& dictionary, const BankCsvOperation& operation, const QVector<Category>& categories,
     const QSet<QString>& archived, const QVector<BankCategoryRule>& rules,
     const QString& fallbackCategoryId, const BankRecipientMatch* recipient)
 {
     BankCategorySuggestion result;
-    const auto resolved=recipient ? *recipient : BankRecipientMatcher::identify(operation);
+    const auto resolved=recipient ? *recipient : BankRecipientMatcher::identify(dictionary, operation);
     result.merchant = resolved.recipient.name;
     const auto type = operation.signedMinor > 0 ? CategoryType::Income : CategoryType::Expense;
     const auto valid = [&](const QString& id) {

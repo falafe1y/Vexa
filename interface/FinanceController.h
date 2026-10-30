@@ -16,6 +16,7 @@
 #include "../core/db/TransactionRepository.h"
 #include "../core/model/accounts/BalanceCalculator.h"
 #include "../services/BankCsvImporter.h"
+#include "../core/model/transactions/BankRecipientDictionary.h"
 #include "../core/model/analytics/CapitalHistoryCalculator.h"
 #include "../core/model/investments/InvestmentValuation.h"
 #include "../services/InvestmentBenchmarkProvider.h"
@@ -863,6 +864,7 @@ private:
     QVector<InvestmentMarketInstrument> investmentSearchResults_;
     CapitalHistorySeries capitalHistorySeries_;
     QVector<BankCsvProfile> bankCsvProfiles_;
+    BankRecipientDictionary bankRecipients_;
     QVector<RecurringTransaction> recurringTransactions_;
     QVector<DepositSettings> depositSettings_;
     // Rate history of each deposit by account id (see DepositRateStep)

@@ -1,6 +1,7 @@
 #pragma once
 
 #include "CsvCodec.h"
+#include "../core/model/transactions/BankCsvOperation.h"
 
 #include <QDateTime>
 #include <QJsonObject>
@@ -35,22 +36,6 @@ struct BankCsvProfile
 
     QJsonObject toJson() const;
     static BankCsvProfile fromJson(const QJsonObject& object);
-};
-
-struct BankCsvOperation
-{
-    QDateTime occurredAt;
-    qint64 signedMinor = 0;
-    QString description;
-    QString rawRecipient;
-    QString recipientId;
-    QString externalId;
-    QString categoryName;
-    QString currencyCode;
-    QString fingerprint;
-    QString legacyFingerprint;
-    QString reviewFingerprint;
-    int sourceRow = 0;
 };
 
 struct BankCsvParseResult
