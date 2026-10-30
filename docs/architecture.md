@@ -81,7 +81,7 @@ core/
   - [x] 2.3.4 `CryptoRepository` — кошельки, биржи, сделки, снимки, чтение цен, себестоимость, состояние обновлений в `settings` (23 метода). `saveCryptoPrice` пока у `FinanceRepository`: в одной транзакции пишет цену и историю цен (`savePriceHistory`), переедет вместе с историей в 2.3.10
   - [x] 2.3.5 `PlanningRepository` — бюджеты и финансовые цели (папка модели `planning/`, 9 методов). `currencyFromCode` перенесён в `core/model/money/Currency`: им пользуются оба репозитория. Траектория и снимки капитала — в 2.3.10 (решено 30.10.2026)
   - [x] 2.3.6 `ProjectRepository` — проекты: список, добавление, изменение, архив (4 метода)
-  - [ ] 2.3.7 `CategoryRepository`
+  - [x] 2.3.7 `CategoryRepository` — категории: список, архивные, добавление, переименование, архив (5 методов). `archiveCategory` одной транзакцией отвязывает и регулярные операции (`recurring_transactions`); на этапе 3 эту связку возьмёт сервис
   - [ ] 2.3.8 `RecurringTransactionRepository`
   - [ ] 2.3.9 `InvestmentRepository` — инструменты, позиции, котировки, операции
   - [ ] 2.3.10 `AnalyticsRepository` — дневные оценки, история цен и курсов, бенчмарк, настройки траектории, снимки капитала (папка модели `analytics/`; бывший `MarketHistoryRepository`, переименован 30.10.2026)

@@ -102,7 +102,6 @@ public:
     QVector<Transaction> loadTransactions();
     QVector<RecurringTransaction> loadRecurringTransactions();
     QVector<DepositSettings> loadDepositSettings();
-    QVector<Category> loadCategories();
     QVector<Account> loadAccounts();
     QVector<InvestmentInstrument> loadInvestmentInstruments();
     QVector<InvestmentPosition> loadInvestmentPositions();
@@ -111,7 +110,6 @@ public:
     // Rate history of deposits by account id: a list of {"from": "yyyy-MM-dd", "bps": int}, sorted by day
     QVariantMap loadDepositRateSteps() const;
     bool saveDepositRateSteps(const QString& accountId, const QVariantList& steps);
-    QSet<QString> loadArchivedCategoryIds();
     Summary loadSummary();
     bool insertTransaction(const Transaction& transaction);
     bool insertTransfer(
@@ -148,7 +146,6 @@ public:
         const QDate& generatedThrough,
         int* insertedCount = nullptr
         );
-    bool insertCategory(const Category& category);
     bool insertAccount(const Account& account);
     bool insertDepositAccount(
         const Account& account,
@@ -190,8 +187,6 @@ public:
         const std::optional<InvestmentQuote>& quote = {}, const QVector<InvestmentOperation>& charges = {});
     bool insertAccountCharge(const InvestmentOperation& operation);
     bool hasInvestmentOperations(const QString& positionId) const;
-    bool updateCategoryName(const QString& id, const QString& name);
-    bool archiveCategory(const QString& id);
 
 private:
     bool migrateAnalyticsHistorySchema();

@@ -2,6 +2,8 @@
 add_library(core_db STATIC
     BankImportRepository.cpp
     BankImportRepository.h
+    CategoryRepository.cpp
+    CategoryRepository.h
     CryptoRepository.cpp
     CryptoRepository.h
     Database.cpp

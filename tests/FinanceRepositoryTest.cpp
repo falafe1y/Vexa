@@ -1,4 +1,5 @@
 #include "../persistence/FinanceRepository.h"
+#include "../core/db/CategoryRepository.h"
 #include "../core/db/ProjectRepository.h"
 #include "../core/db/PlanningRepository.h"
 #include "../core/db/CryptoRepository.h"
@@ -195,8 +196,8 @@ void FinanceRepositoryTest::replacesExistingDataAndIsIdempotent()
     QVERIFY(current.insertAccount(existing));
     QVERIFY(old.insertAccount(previous));
     QVERIFY(old.insertAccount(restored));
-    QVERIFY(current.insertCategory(category));
-    QVERIFY(old.insertCategory(category));
+    QVERIFY(CategoryRepository(current.database()).insertCategory(category));
+    QVERIFY(CategoryRepository(old.database()).insertCategory(category));
     const QDateTime date(QDate(2026, 10, 1), QTime(12, 0), QTimeZone::UTC);
     const Transaction shared(QStringLiteral("shared-tx"), existing.id(), category.id(),
                              Money(100, Currency::RUB), TransactionType::Expense, date, QStringLiteral("Текущая операция"));
@@ -305,7 +306,7 @@ void FinanceRepositoryTest::restoresCompositeKeysAndRelatedRows()
     const Account second(QStringLiteral("b"), QStringLiteral("Второй"), AssetType::Fiat, AccountType::Cash, Currency::RUB);
     const Category category(QStringLiteral("food"), QStringLiteral("Еда"), CategoryType::Expense);
     QVERIFY(source.insertAccount(first)); QVERIFY(source.insertAccount(second));
-    QVERIFY(source.insertCategory(category));
+    QVERIFY(CategoryRepository(source.database()).insertCategory(category));
     const QDateTime date(QDate(2026, 10, 1), QTime(12, 0), QTimeZone::UTC);
     QVERIFY(source.insertTransfer(
         Transaction(QStringLiteral("transfer-out"), first.id(), QStringLiteral("transfer-out"), Money(100, Currency::RUB), TransactionType::Expense, date, QStringLiteral("Перевод")),
@@ -482,12 +483,12 @@ void FinanceRepositoryTest::clearsAllUserDataAndResetsSettings()
     QVERIFY(PlanningRepository(repository.database()).loadFinancialGoals().isEmpty());
     QVERIFY(repository.loadCapitalSnapshots().isEmpty());
     QVERIFY(BankImportRepository(repository.database()).loadBankCsvProfiles().isEmpty());
-    QVERIFY(repository.loadCategories().isEmpty());
+    QVERIFY(CategoryRepository(repository.database()).loadCategories().isEmpty());
     QCOMPARE(SettingsRepository(repository.database()).loadAppCurrency(), QStringLiteral("RUB"));
     FinanceRepository reopened(directory.filePath(QStringLiteral("clear.sqlite3")));
     QVERIFY2(reopened.isOpen(), qPrintable(reopened.lastError()));
     QVERIFY(reopened.loadAccounts().isEmpty());
-    QVERIFY(reopened.loadCategories().isEmpty());
+    QVERIFY(CategoryRepository(reopened.database()).loadCategories().isEmpty());
 
     const Account source(
         QStringLiteral("source"), QStringLiteral("Source"),
@@ -638,7 +639,7 @@ void FinanceRepositoryTest::storesUpdatesAndArchivesBudgets()
         CategoryType::Expense);
     QVERIFY(repository.insertAccount(firstAccount));
     QVERIFY(repository.insertAccount(secondAccount));
-    QVERIFY(repository.insertCategory(groceries));
+    QVERIFY(CategoryRepository(repository.database()).insertCategory(groceries));
 
     const Budget created(
         QStringLiteral("household-budget"), QStringLiteral("Household"),
@@ -790,8 +791,8 @@ void FinanceRepositoryTest::storesProjectsAndTransactionAssignments()
             QStringLiteral("Proxy"));
 
         QVERIFY(repository.insertAccount(account));
-        QVERIFY(repository.insertCategory(incomeCategory));
-        QVERIFY(repository.insertCategory(expenseCategory));
+        QVERIFY(CategoryRepository(repository.database()).insertCategory(incomeCategory));
+        QVERIFY(CategoryRepository(repository.database()).insertCategory(expenseCategory));
         QVERIFY(ProjectRepository(repository.database()).insertProject(firstProject));
         QVERIFY(ProjectRepository(repository.database()).insertProject(secondProject));
         QVERIFY(repository.insertTransaction(Transaction(
@@ -862,7 +863,7 @@ void FinanceRepositoryTest::storesAndMaterializesRecurringTransactions()
         QStringLiteral("Rent"),
         CategoryType::Expense);
     QVERIFY(repository.insertAccount(account));
-    QVERIFY(repository.insertCategory(category));
+    QVERIFY(CategoryRepository(repository.database()).insertCategory(category));
 
     const RecurringTransaction schedule(
         QStringLiteral("rent-schedule"),
@@ -1398,7 +1399,7 @@ void FinanceRepositoryTest::preservesSelectedAccountAfterReopen()
 
         QVERIFY2(repository.insertAccount(account),
                  qPrintable(repository.lastError()));
-        QVERIFY2(repository.insertCategory(category),
+        QVERIFY2(CategoryRepository(repository.database()).insertCategory(category),
                  qPrintable(repository.lastError()));
         QVERIFY2(repository.insertTransaction(transaction),
                  qPrintable(repository.lastError()));
@@ -1465,8 +1466,8 @@ void FinanceRepositoryTest::updatesAndDeletesTransaction()
 
     QVERIFY(repository.insertAccount(rubAccount));
     QVERIFY(repository.insertAccount(usdAccount));
-    QVERIFY(repository.insertCategory(expenseCategory));
-    QVERIFY(repository.insertCategory(incomeCategory));
+    QVERIFY(CategoryRepository(repository.database()).insertCategory(expenseCategory));
+    QVERIFY(CategoryRepository(repository.database()).insertCategory(incomeCategory));
     QVERIFY(repository.insertTransaction(Transaction(
         QStringLiteral("editable-transaction"),
         rubAccount.id(),
@@ -1579,7 +1580,7 @@ void FinanceRepositoryTest::replacesIncomeWithTransferAtomically()
         CategoryType::Income);
     QVERIFY(repository.insertAccount(source));
     QVERIFY(repository.insertAccount(target));
-    QVERIFY(repository.insertCategory(incomeCategory));
+    QVERIFY(CategoryRepository(repository.database()).insertCategory(incomeCategory));
 
     const QDateTime occurredAt = QDateTime::currentDateTimeUtc();
     const Transaction income(
@@ -1723,7 +1724,7 @@ void FinanceRepositoryTest::replacesTransferWithTransactionAtomically()
         CategoryType::Expense);
     QVERIFY(repository.insertAccount(source));
     QVERIFY(repository.insertAccount(target));
-    QVERIFY(repository.insertCategory(expenseCategory));
+    QVERIFY(CategoryRepository(repository.database()).insertCategory(expenseCategory));
 
     const QDateTime occurredAt = QDateTime::currentDateTimeUtc();
     const Transaction outgoing(
@@ -1788,7 +1789,7 @@ void FinanceRepositoryTest::updatesAccountAndProtectsTransactionCurrency()
     const Category category(
         QStringLiteral("account-update-expense"), QStringLiteral("Expense"),
         CategoryType::Expense);
-    QVERIFY(repository.insertCategory(category));
+    QVERIFY(CategoryRepository(repository.database()).insertCategory(category));
     QVERIFY(repository.insertTransaction(Transaction(
         QStringLiteral("account-update-transaction"), updated.id(), category.id(),
         Money(1'000, Currency::USD), TransactionType::Expense,
@@ -1829,7 +1830,7 @@ void FinanceRepositoryTest::deletesAccountWithRelatedOperations()
             CategoryType::Expense);
         QVERIFY(repository.insertAccount(source));
         QVERIFY(repository.insertAccount(target));
-        QVERIFY(repository.insertCategory(category));
+        QVERIFY(CategoryRepository(repository.database()).insertCategory(category));
 
         const QDateTime occurredAt = QDateTime::currentDateTimeUtc();
         QVERIFY(repository.insertTransaction(Transaction(
@@ -1972,7 +1973,7 @@ void FinanceRepositoryTest::deletesSelectedHistoryAtomically()
     QVERIFY(repository.isOpen());
     QVERIFY(repository.insertAccount(Account("a", "A", AssetType::Fiat, AccountType::DebitCard, Currency::RUB)));
     QVERIFY(repository.insertAccount(Account("b", "B", AssetType::Fiat, AccountType::DebitCard, Currency::RUB)));
-    QVERIFY(repository.insertCategory(Category("selection-expense", "Expense", CategoryType::Expense)));
+    QVERIFY(CategoryRepository(repository.database()).insertCategory(Category("selection-expense", "Expense", CategoryType::Expense)));
     const auto now = QDateTime::currentDateTimeUtc();
     for (int i = 0; i < 3; ++i)
         QVERIFY(repository.insertTransaction(Transaction(QString::number(i), "a", "selection-expense", Money(100, Currency::RUB), TransactionType::Expense, now, "Test")));
@@ -2033,7 +2034,7 @@ void FinanceRepositoryTest::bankCategoryRulesPersistAndRollbackWithImport()
         QVERIFY(reopened.backupDatabase(backupPath));
         FinanceRepository backup(backupPath);
         QCOMPARE(BankImportRepository(backup.database()).loadBankCategoryRules().size(), 1);
-        QVERIFY(reopened.archiveCategory(QStringLiteral("groceries")));
+        QVERIFY(CategoryRepository(reopened.database()).archiveCategory(QStringLiteral("groceries")));
         QVERIFY(BankImportRepository(reopened.database()).loadBankCategoryRules().isEmpty());
         QVERIFY(reopened.clearAllUserData());
         QVERIFY(BankImportRepository(reopened.database()).loadBankCategoryRules().isEmpty());

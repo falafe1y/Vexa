@@ -452,6 +452,7 @@ FinanceController::FinanceController(QObject* parent, const QString& databasePat
     , crypto_(repository_.database())
     , planning_(repository_.database())
     , projectRepository_(repository_.database())
+    , categoryRepository_(repository_.database())
     , currencyConverter_(rateProvider_)
     , balanceCalculator_(currencyConverter_)
 {
@@ -770,7 +771,7 @@ FinanceController::FinanceController(QObject* parent, const QString& databasePat
     transactions_ = repository_.loadTransactions();
     projects_ = projectRepository_.loadProjects();
     recurringTransactions_ = repository_.loadRecurringTransactions();
-    categories_ = repository_.loadCategories();
+    categories_ = categoryRepository_.loadCategories();
     accounts_ = repository_.loadAccounts();
     depositSettings_ = repository_.loadDepositSettings();
     loadDepositRateSteps();
@@ -820,7 +821,7 @@ FinanceController::FinanceController(QObject* parent, const QString& databasePat
     lastCryptoPriceAttemptUtc_ = crypto_.loadCryptoPriceAttemptUtc();
     loadManualCryptoState(crypto_.loadCryptoManualState());
     cryptoCostBasis_ = crypto_.loadCryptoCostBasis();
-    archivedCategoryIds_ = repository_.loadArchivedCategoryIds();
+    archivedCategoryIds_ = categoryRepository_.loadArchivedCategoryIds();
     summary_ = repository_.loadSummary();
     for (const BankImportRepository::BankCsvProfileRecord& record :
          bankImport_.loadBankCsvProfiles()) {
@@ -1332,8 +1333,8 @@ QVariantMap FinanceController::restoreDatabase(const QUrl& fileUrl)
     transactions_ = repository_.loadTransactions();
     projects_ = projectRepository_.loadProjects();
     recurringTransactions_ = repository_.loadRecurringTransactions();
-    categories_ = repository_.loadCategories();
-    archivedCategoryIds_ = repository_.loadArchivedCategoryIds();
+    categories_ = categoryRepository_.loadCategories();
+    archivedCategoryIds_ = categoryRepository_.loadArchivedCategoryIds();
     accounts_ = repository_.loadAccounts();
     depositSettings_ = repository_.loadDepositSettings();
     loadDepositRateSteps();
@@ -1440,7 +1441,7 @@ QVariantMap FinanceController::clearAllData()
     transactions_.clear();
     projects_.clear();
     recurringTransactions_.clear();
-    categories_ = repository_.loadCategories();
+    categories_ = categoryRepository_.loadCategories();
     accounts_.clear();
     depositSettings_.clear();
     budgets_.clear();
@@ -1467,7 +1468,7 @@ QVariantMap FinanceController::clearAllData()
     refreshingInvestmentIds_.clear();
     investmentLastError_.clear();
     bankCsvProfiles_.clear();
-    archivedCategoryIds_ = repository_.loadArchivedCategoryIds();
+    archivedCategoryIds_ = categoryRepository_.loadArchivedCategoryIds();
     cryptoPricesUsdMicros_.clear();
     cryptoPricesFetchedAtUtc_.clear();
     cryptoPricesUsdMicros_.insert(QStringLiteral("USDT"), 1'000'000);
@@ -4903,8 +4904,8 @@ bool FinanceController::addCategory(
         normalizedName,
         categoryType);
 
-    if (!repository_.isOpen() || !repository_.insertCategory(category)) {
-        qWarning() << "Failed to save category:" << repository_.lastError();
+    if (!repository_.isOpen() || !categoryRepository_.insertCategory(category)) {
+        qWarning() << "Failed to save category:" << categoryRepository_.lastError();
         return false;
     }
 
@@ -4953,8 +4954,8 @@ bool FinanceController::renameCategory(
         }
     }
 
-    if (!repository_.updateCategoryName(id, normalizedName)) {
-        qWarning() << "Failed to rename category:" << repository_.lastError();
+    if (!categoryRepository_.updateCategoryName(id, normalizedName)) {
+        qWarning() << "Failed to rename category:" << categoryRepository_.lastError();
         return false;
     }
 
@@ -4978,8 +4979,8 @@ bool FinanceController::deleteCategory(const QString& id)
             break;
         }
     }
-    if (!found || !repository_.archiveCategory(id)) {
-        qWarning() << "Failed to archive category:" << repository_.lastError();
+    if (!found || !categoryRepository_.archiveCategory(id)) {
+        qWarning() << "Failed to archive category:" << categoryRepository_.lastError();
         return false;
     }
 
@@ -5879,8 +5880,8 @@ void FinanceController::materializeRecurringTransactions()
     if (totalInserted <= 0) {
         return;
     }
-    categories_ = repository_.loadCategories();
-    archivedCategoryIds_ = repository_.loadArchivedCategoryIds();
+    categories_ = categoryRepository_.loadCategories();
+    archivedCategoryIds_ = categoryRepository_.loadArchivedCategoryIds();
     emit categoriesChanged();
     transactions_ = repository_.loadTransactions();
     summary_ = repository_.loadSummary();
