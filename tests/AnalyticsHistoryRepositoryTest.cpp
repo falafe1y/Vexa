@@ -1,4 +1,5 @@
 #include "../persistence/FinanceRepository.h"
+#include "../core/db/AnalyticsRepository.h"
 #include "../core/db/CryptoRepository.h"
 #include "../core/db/InvestmentRepository.h"
 #include "storage/CipherDriver.h"
@@ -95,7 +96,7 @@ private slots:
         QTemporaryDir dir;const auto path=dir.filePath("data.db");
         {FinanceRepository r(path);QVERIFY(r.insertAccount(broker()));QVERIFY(InvestmentRepository(r.database()).saveInvestmentBundle(stock(),position(),{},false));
          auto b=batch();b.assets.last().sourceId="position:position";b.assets.last().costBasisMinor.reset();b.assets.last().issues="cost_unknown";
-         QVERIFY(r.saveDailyValuations(b));}
+         QVERIFY(AnalyticsRepository(r.database()).saveDailyValuations(b));}
         QVERIFY(raw(path,{"UPDATE investment_position_history SET cost_basis_minor=NULL,issues='cost_unknown'"}));
         {FinanceRepository r(path);QVERIFY2(r.isOpen(),qPrintable(r.lastError()));
          QCOMPARE(InvestmentRepository(r.database()).investmentCostBasis("position").toLongLong(),qint64(30000));
@@ -103,25 +104,25 @@ private slots:
          QVERIFY(history.first().toMap().value("cost_basis_minor").isNull());
          QCOMPARE(history.last().toMap().value("event").toString(),QString("correction"));
          QVERIFY(InvestmentRepository(r.database()).loadInvestmentOperations().isEmpty());
-         QVERIFY(r.loadDailyValuations(AssetDailyValuation::Investment).first().toMap().value("cost_basis_minor").isNull());}
+         QVERIFY(AnalyticsRepository(r.database()).loadDailyValuations(AssetDailyValuation::Investment).first().toMap().value("cost_basis_minor").isNull());}
         FinanceRepository r(path);QCOMPARE(InvestmentRepository(r.database()).loadPositionHistory("position").size(),2);
     }
     void dailySnapshotsAreSeparateNativeAndAtomic(){
         QTemporaryDir dir;FinanceRepository r(dir.filePath("data.db"));QVERIFY(r.isOpen());auto b=batch();
-        QVERIFY2(r.saveDailyValuations(b),qPrintable(r.lastError()));
-        QCOMPARE(r.loadDailyValuations(AssetDailyValuation::Fiat).at(0).toMap().value("currency").toString(),QString("USD"));
-        QVERIFY(r.loadDailyValuations(AssetDailyValuation::Crypto).at(0).toMap().value("value_minor").isNull());
-        QCOMPARE(r.loadDailyValuations(AssetDailyValuation::Investment).at(0).toMap().value("value_minor").toLongLong(),9'007'199'254'741'009LL);
+        QVERIFY2(AnalyticsRepository(r.database()).saveDailyValuations(b),qPrintable(r.lastError()));
+        QCOMPARE(AnalyticsRepository(r.database()).loadDailyValuations(AssetDailyValuation::Fiat).at(0).toMap().value("currency").toString(),QString("USD"));
+        QVERIFY(AnalyticsRepository(r.database()).loadDailyValuations(AssetDailyValuation::Crypto).at(0).toMap().value("value_minor").isNull());
+        QCOMPARE(AnalyticsRepository(r.database()).loadDailyValuations(AssetDailyValuation::Investment).at(0).toMap().value("value_minor").toLongLong(),9'007'199'254'741'009LL);
         auto bad=b;bad.assets[0].valueMinor=0;bad.assets.append(bad.assets[0]);
-        QVERIFY(!r.saveDailyValuations(bad));
-        QCOMPARE(r.loadDailyValuations(AssetDailyValuation::Fiat).at(0).toMap().value("value_minor").toLongLong(),qint64(12345));
-        b.assets[0].valueMinor=500;QVERIFY(r.saveDailyValuations(b));QCOMPARE(r.loadDailyValuations(AssetDailyValuation::Fiat).size(),1);
+        QVERIFY(!AnalyticsRepository(r.database()).saveDailyValuations(bad));
+        QCOMPARE(AnalyticsRepository(r.database()).loadDailyValuations(AssetDailyValuation::Fiat).at(0).toMap().value("value_minor").toLongLong(),qint64(12345));
+        b.assets[0].valueMinor=500;QVERIFY(AnalyticsRepository(r.database()).saveDailyValuations(b));QCOMPARE(AnalyticsRepository(r.database()).loadDailyValuations(AssetDailyValuation::Fiat).size(),1);
         auto older=b;older.observedAtUtc=older.observedAtUtc.addMSecs(-1);older.assets[0].valueMinor=1;
-        QVERIFY(r.saveDailyValuations(older));QCOMPARE(r.loadDailyValuations(AssetDailyValuation::Fiat).at(0).toMap().value("value_minor").toLongLong(),qint64(500));
-        auto yesterday=batch(b.observedAtUtc.addDays(-1));QVERIFY(r.saveDailyValuations(yesterday));
-        QCOMPARE(r.loadDailyValuations(AssetDailyValuation::Fiat).size(),2);
-        QCOMPARE(r.loadFxHistory("USD").size(),2);
-        QCOMPARE(r.loadDailyValuations(AssetDailyValuation::Fiat,b.date,b.date).size(),1);
+        QVERIFY(AnalyticsRepository(r.database()).saveDailyValuations(older));QCOMPARE(AnalyticsRepository(r.database()).loadDailyValuations(AssetDailyValuation::Fiat).at(0).toMap().value("value_minor").toLongLong(),qint64(500));
+        auto yesterday=batch(b.observedAtUtc.addDays(-1));QVERIFY(AnalyticsRepository(r.database()).saveDailyValuations(yesterday));
+        QCOMPARE(AnalyticsRepository(r.database()).loadDailyValuations(AssetDailyValuation::Fiat).size(),2);
+        QCOMPARE(AnalyticsRepository(r.database()).loadFxHistory("USD").size(),2);
+        QCOMPARE(AnalyticsRepository(r.database()).loadDailyValuations(AssetDailyValuation::Fiat,b.date,b.date).size(),1);
     }
     void partialSalesAllocateAllCostAndNeverDoubleCharge(){
         QTemporaryDir dir;FinanceRepository r(dir.filePath("data.db"));QVERIFY(r.insertAccount(broker()));
@@ -217,9 +218,9 @@ private slots:
     void backdatedLedgerChangesMarkAffectedSnapshots(){
         QTemporaryDir dir;const auto path=dir.filePath("data.db");FinanceRepository r(path);
         QVERIFY(r.insertAccount({"fiat","Счёт",AssetType::Fiat,AccountType::DebitCard,Currency::USD,12345}));
-        QVERIFY(r.saveDailyValuations(batch(QDateTime::currentDateTimeUtc().addDays(-1))));
+        QVERIFY(AnalyticsRepository(r.database()).saveDailyValuations(batch(QDateTime::currentDateTimeUtc().addDays(-1))));
         QVERIFY(raw(path,{"INSERT INTO transactions(id,account_id,category_id,type,amount_minor,occurred_at,created_at,kind) SELECT 'backdated','fiat',id,0,100,1,1,'income' FROM categories WHERE type=0 LIMIT 1"}));
-        const auto row=r.loadDailyValuations(AssetDailyValuation::Fiat).at(0).toMap();
+        const auto row=AnalyticsRepository(r.database()).loadDailyValuations(AssetDailyValuation::Fiat).at(0).toMap();
         QVERIFY(row.value("issues").toString().contains("history_changed"));QCOMPARE(row.value("value_minor").toLongLong(),qint64(12345));
     }
     void batchDeletionAndAccountArchivePreserveClosedHistory(){
@@ -237,11 +238,11 @@ private slots:
         QTemporaryDir dir;const auto copy=dir.filePath("copy.sqlite3");
         {FinanceRepository r(dir.filePath("source.db"));QVERIFY(r.insertAccount(broker()));
          auto op=operation("buy","buy",-10001,3'000'000);op.feeMinor=1;
-         QVERIFY(InvestmentRepository(r.database()).saveInvestmentBundle(stock(),position(),{},false,op));QVERIFY(r.saveDailyValuations(batch()));QVERIFY(r.backupDatabase(copy));}
+         QVERIFY(InvestmentRepository(r.database()).saveInvestmentBundle(stock(),position(),{},false,op));QVERIFY(AnalyticsRepository(r.database()).saveDailyValuations(batch()));QVERIFY(r.backupDatabase(copy));}
         FinanceRepository target(dir.filePath("target.db"));QVERIFY2(target.restoreDatabase(copy),qPrintable(target.lastError()));
         QCOMPARE(InvestmentRepository(target.database()).loadPositionHistory("position").size(),1);QCOMPARE(InvestmentRepository(target.database()).investmentCostBasis("position").toLongLong(),qint64(10001));
-        QCOMPARE(target.loadDailyValuations(AssetDailyValuation::Crypto).size(),1);QVERIFY(target.restoreDatabase(copy));
-        QVERIFY(target.clearAllUserData());QVERIFY(InvestmentRepository(target.database()).loadPositionHistory("position").isEmpty());QVERIFY(target.loadDailyValuations(AssetDailyValuation::Fiat).isEmpty());
+        QCOMPARE(AnalyticsRepository(target.database()).loadDailyValuations(AssetDailyValuation::Crypto).size(),1);QVERIFY(target.restoreDatabase(copy));
+        QVERIFY(target.clearAllUserData());QVERIFY(InvestmentRepository(target.database()).loadPositionHistory("position").isEmpty());QVERIFY(AnalyticsRepository(target.database()).loadDailyValuations(AssetDailyValuation::Fiat).isEmpty());
     }
 };
 QTEST_GUILESS_MAIN(AnalyticsHistoryRepositoryTest)

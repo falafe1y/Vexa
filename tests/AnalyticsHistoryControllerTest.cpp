@@ -1,4 +1,5 @@
 #include "../interface/FinanceController.h"
+#include "../core/db/AnalyticsRepository.h"
 #include "../core/db/InvestmentRepository.h"
 #include "../core/db/CryptoRepository.h"
 #include "../core/db/SettingsRepository.h"
@@ -20,15 +21,15 @@ private slots:
             {"position","broker","stock",3'000'000,100'000'000,{},{},settings},{},false,{},30100));
          QVERIFY(CryptoRepository(r.database()).insertCryptoWallet({"wallet","address","BITCOIN","BTC",8}));}
         {FinanceController c(nullptr,path);c.setAppCurrency("EUR");}
-        FinanceRepository r(path);const auto fiat=r.loadDailyValuations(AssetDailyValuation::Fiat);
+        FinanceRepository r(path);const auto fiat=AnalyticsRepository(r.database()).loadDailyValuations(AssetDailyValuation::Fiat);
         bool found=false;for(const auto& row:fiat)if(row.toMap().value("source_id").toString()=="cash:fiat"){
             found=true;QCOMPARE(row.toMap().value("currency").toString(),QString("USD"));
             QCOMPARE(row.toMap().value("value_minor").toLongLong(),qint64(12345));
         }
         QVERIFY(found);
-        const auto crypto=r.loadDailyValuations(AssetDailyValuation::Crypto);QCOMPARE(crypto.size(),1);
+        const auto crypto=AnalyticsRepository(r.database()).loadDailyValuations(AssetDailyValuation::Crypto);QCOMPARE(crypto.size(),1);
         QVERIFY(crypto.at(0).toMap().value("value_minor").isNull());
-        const auto investments=r.loadDailyValuations(AssetDailyValuation::Investment);QCOMPARE(investments.size(),2);
+        const auto investments=AnalyticsRepository(r.database()).loadDailyValuations(AssetDailyValuation::Investment);QCOMPARE(investments.size(),2);
         for(const auto& row:investments)if(row.toMap().value("source_id").toString()=="position:position"){
             QCOMPARE(row.toMap().value("value_minor").toLongLong(),qint64(30000));QCOMPARE(row.toMap().value("cost_basis_minor").toLongLong(),qint64(30100));
         }
@@ -82,7 +83,7 @@ private slots:
         for(const auto& op:ops){if(op.kind=="buy")QCOMPARE(op.cashDeltaMinor,qint64(-30'000));if(op.kind=="sell")QVERIFY(!op.feeMinor);if(op.kind=="fee")QCOMPARE(op.cashDeltaMinor,qint64(-100));}
         const auto history=InvestmentRepository(r.database()).loadPositionHistory(InvestmentRepository(r.database()).loadInvestmentPositions().at(0).id());
         QCOMPARE(history.last().toMap().value("realized_net_minor").toLongLong(),qint64(867));
-        for(const auto& value:r.loadDailyValuations(AssetDailyValuation::Investment))if(value.toMap().value("source_id").toString()=="cash:broker")
+        for(const auto& value:AnalyticsRepository(r.database()).loadDailyValuations(AssetDailyValuation::Investment))if(value.toMap().value("source_id").toString()=="cash:broker")
             QCOMPARE(value.toMap().value("value_minor").toLongLong(),qint64(80800));
     }
 };

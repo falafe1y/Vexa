@@ -455,6 +455,7 @@ FinanceController::FinanceController(QObject* parent, const QString& databasePat
     , categoryRepository_(repository_.database())
     , recurringRepository_(repository_.database())
     , investmentRepository_(repository_.database())
+    , analyticsRepository_(repository_.database())
     , currencyConverter_(rateProvider_)
     , balanceCalculator_(currencyConverter_)
 {
@@ -528,7 +529,7 @@ FinanceController::FinanceController(QObject* parent, const QString& databasePat
 
     connect(&rateProvider_, &CbrCurrencyRateProvider::historyReady, this,
             [this]() {
-        if (repository_.saveHistoricalFxRates(rateProvider_.takeHistory())) {
+        if (analyticsRepository_.saveHistoricalFxRates(rateProvider_.takeHistory())) {
             rebuildAverageReturn();
             emit performanceChanged();
         }
@@ -779,7 +780,7 @@ FinanceController::FinanceController(QObject* parent, const QString& databasePat
     loadDepositRateSteps();
     budgets_ = planning_.loadBudgets();
     financialGoals_ = planning_.loadFinancialGoals();
-    trajectorySettings_ = repository_.loadFinancialTrajectorySettings();
+    trajectorySettings_ = analyticsRepository_.loadFinancialTrajectorySettings();
     cryptoWallets_ = crypto_.loadCryptoWallets();
     for (const auto& wallet : cryptoWallets_) cryptoWalletNames_[wallet.id()] = crypto_.cryptoWalletName(wallet.id());
     cryptoExchanges_ = crypto_.loadCryptoExchanges();
@@ -1342,7 +1343,7 @@ QVariantMap FinanceController::restoreDatabase(const QUrl& fileUrl)
     loadDepositRateSteps();
     budgets_ = planning_.loadBudgets();
     financialGoals_ = planning_.loadFinancialGoals();
-    trajectorySettings_ = repository_.loadFinancialTrajectorySettings();
+    trajectorySettings_ = analyticsRepository_.loadFinancialTrajectorySettings();
     cryptoWallets_ = crypto_.loadCryptoWallets();
     for (const auto& wallet : cryptoWallets_) cryptoWalletNames_[wallet.id()] = crypto_.cryptoWalletName(wallet.id());
     cryptoExchanges_ = crypto_.loadCryptoExchanges();
@@ -1448,7 +1449,7 @@ QVariantMap FinanceController::clearAllData()
     depositSettings_.clear();
     budgets_.clear();
     financialGoals_.clear();
-    trajectorySettings_ = repository_.loadFinancialTrajectorySettings();
+    trajectorySettings_ = analyticsRepository_.loadFinancialTrajectorySettings();
     for (const auto& value : cryptoExchanges_) {
         const auto id = value.toMap().value("id").toString();
         if (refreshingCryptoWalletIds_.contains(id)) { bybitProvider_.cancel(id); finishCryptoWalletRequest(id); finishCryptoRequest(); }
@@ -4023,7 +4024,7 @@ bool FinanceController::updateAccount(
         QVector<DepositRateStep> steps = depositRateSteps_.value(id);
         if (steps.isEmpty()) {
             // The rate the deposit had since its opening stays as the first step
-            const QVariant opened = repository_.loadAccountCreationDates().value(id);
+            const QVariant opened = analyticsRepository_.loadAccountCreationDates().value(id);
             const QDate openedOn = opened.isNull()
                 ? today
                 : QDateTime::fromMSecsSinceEpoch(opened.toLongLong()).date();
@@ -5917,7 +5918,7 @@ int FinanceController::materializeDepositInterest()
 {
     const QDate today = QDate::currentDate();
     int totalInserted = 0;
-    const QVariantMap creationDates = repository_.loadAccountCreationDates();
+    const QVariantMap creationDates = analyticsRepository_.loadAccountCreationDates();
 
     for (const DepositSettings& settings :
          std::as_const(depositSettings_)) {
@@ -6850,7 +6851,7 @@ QVariantMap FinanceController::financialTrajectory()
     // count its debt contributes only a positive balance (ADR-022).
     QHash<QString, qint64> historyByDate;
     const auto addDailyRows = [&](const AssetDailyValuation::Kind kind) {
-        for (const QVariant& value : repository_.loadDailyValuations(kind)) {
+        for (const QVariant& value : analyticsRepository_.loadDailyValuations(kind)) {
             const QVariantMap row = value.toMap();
             const QString accountId = row.value(QStringLiteral("account_id")).toString();
             const QString sourceId = kind == AssetDailyValuation::Crypto
@@ -6871,7 +6872,7 @@ QVariantMap FinanceController::financialTrajectory()
     addDailyRows(AssetDailyValuation::Investment);
     addDailyRows(AssetDailyValuation::Crypto);
     QVariantList historyRows;
-    for (const auto& snapshot : repository_.loadCapitalSnapshots()) {
+    for (const auto& snapshot : analyticsRepository_.loadCapitalSnapshots()) {
         const QString date = snapshot.date.toString(Qt::ISODate);
         historyRows.append(QVariantMap{
             {QStringLiteral("date"), date},
@@ -6946,7 +6947,7 @@ QVariantMap FinanceController::saveFinancialTrajectorySettings(const QVariantMap
             }
         }
     }
-    if (!repository_.saveFinancialTrajectorySettings(next)) {
+    if (!analyticsRepository_.saveFinancialTrajectorySettings(next)) {
         return {{QStringLiteral("ok"), false},
                 {QStringLiteral("error"), QStringLiteral("Не удалось сохранить параметры прогноза")}};
     }
@@ -7484,6 +7485,6 @@ bool FinanceController::captureDailyAssetValuations()
         }
         if(complete){batch.totalMinor=bounded(total);batch.totalCurrency=currencyCode(appCurrency_);}
     }
-    if(repository_.saveDailyValuations(batch))return true;
-    qWarning()<<"Failed to save daily asset valuations:"<<repository_.lastError();return false;
+    if(analyticsRepository_.saveDailyValuations(batch))return true;
+    qWarning()<<"Failed to save daily asset valuations:"<<analyticsRepository_.lastError();return false;
 }

@@ -481,6 +481,7 @@ bool CryptoRepository::saveCryptoCostBasis(
     return true;
 }
 
+// The first day of the exchange history that was read completely; 0 while the exchange was never read that far back
 qint64 CryptoRepository::loadCryptoHistoryFromMs(const QString& exchangeId) const
 {
     QSqlQuery q(database_);

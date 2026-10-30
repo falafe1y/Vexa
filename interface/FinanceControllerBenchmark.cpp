@@ -16,7 +16,7 @@ void FinanceController::initializeBenchmark(){
     connect(&benchmarkHistoryProvider_,&InvestmentBenchmarkProvider::failed,this,[this](const QString& error){benchmarkBusy_=false;benchmarkError_=error;emit benchmarkChanged();});
     connect(&benchmarkHistoryProvider_,&InvestmentBenchmarkProvider::succeeded,this,[this](const QVariantMap& descriptor,const QVariantList& prices,const QDate& from,const QDate& to){
         benchmarkBusy_=false;if(descriptor.value("key")!=benchmarkSelection_.value("key"))return;
-        if(!repository_.saveBenchmarkHistory(descriptor,prices,from,to)){benchmarkError_=repository_.lastError();emit benchmarkChanged();return;}
+        if(!analyticsRepository_.saveBenchmarkHistory(descriptor,prices,from,to)){benchmarkError_=analyticsRepository_.lastError();emit benchmarkChanged();return;}
         benchmarkSelection_=descriptor;benchmarkError_.clear();rebuildBenchmarkComparison();
     });
     rebuildBenchmarkComparison();
@@ -32,7 +32,7 @@ QVariantList FinanceController::benchmarkPortfolioDates() const {
 }
 void FinanceController::rebuildBenchmarkComparison(){
     if(!valuationHistoryReady_ || !repository_.isOpen())return;
-    auto descriptor=repository_.loadBenchmarkSelection();
+    auto descriptor=analyticsRepository_.loadBenchmarkSelection();
     if(descriptor.value("kind")=="index"){
         QVariantMap valid;for(const auto& v:benchmarkIndices())if(v.toMap().value("key")==descriptor.value("key"))valid=v.toMap();descriptor=valid;
     }else if(!descriptor.isEmpty() && (descriptor.value("kind")!="fund" || !QRegularExpression("^[A-Z0-9_.-]{1,32}$").match(descriptor.value("symbol").toString()).hasMatch()
@@ -50,9 +50,9 @@ void FinanceController::rebuildBenchmarkComparison(){
             const auto key=descriptor.value("key").toString();
             if(!benchmarkBusy_ && request!=benchmarkRequest_)benchmarkError_.clear();
             if(benchmarkBusy_ && request!=benchmarkRequest_){benchmarkHistoryProvider_.cancel();benchmarkBusy_=false;benchmarkRequest_.clear();}
-            if(repository_.benchmarkHistoryCovered(key,from,to)){
-                QVariantList rates;for(const auto& code:{"RUB","USD","EUR","CNY"})rates.append(repository_.loadFxHistory(code));
-                benchmarkComparison_=compareInvestmentBenchmark(portfolio,repository_.loadBenchmarkPrices(key),rates,currencyCode(appCurrency_));
+            if(analyticsRepository_.benchmarkHistoryCovered(key,from,to)){
+                QVariantList rates;for(const auto& code:{"RUB","USD","EUR","CNY"})rates.append(analyticsRepository_.loadFxHistory(code));
+                benchmarkComparison_=compareInvestmentBenchmark(portfolio,analyticsRepository_.loadBenchmarkPrices(key),rates,currencyCode(appCurrency_));
                 if(!benchmarkBusy_)benchmarkRequest_=request;
             }else{
                 benchmarkComparison_["reason"]=QStringLiteral("Для этого периода ещё не загружена полная история ориентира.");
@@ -63,14 +63,14 @@ void FinanceController::rebuildBenchmarkComparison(){
     benchmarkComparison_["canRefresh"]=!descriptor.isEmpty() && validPeriod;
     benchmarkComparison_["historyFrom"]=historyPeriod.first.toString(Qt::ISODate);
     benchmarkComparison_["historyTo"]=historyPeriod.second.toString(Qt::ISODate);
-    benchmarkComparison_["historyLoaded"]=!descriptor.isEmpty() && validPeriod && repository_.benchmarkHistoryCovered(descriptor.value("key").toString(),historyPeriod.first,historyPeriod.second);
+    benchmarkComparison_["historyLoaded"]=!descriptor.isEmpty() && validPeriod && analyticsRepository_.benchmarkHistoryCovered(descriptor.value("key").toString(),historyPeriod.first,historyPeriod.second);
     benchmarkComparison_["historyFallback"]=dateFilterActive() && dateFilterFrom_>qMin(dateFilterTo_,QDate::currentDate().addDays(-1));
     if(!validPeriod && !descriptor.isEmpty())benchmarkComparison_["reason"]=QStringLiteral("Для загрузки истории выберите период, в котором есть завершённые дни. Текущий день не включён.");
     emit benchmarkChanged();
 }
 void FinanceController::selectBenchmarkIndex(const QString& key){
     QVariantMap chosen;if(!key.isEmpty()){for(const auto& v:benchmarkIndices())if(v.toMap().value("key").toString()==key)chosen=v.toMap();if(chosen.isEmpty())return;}
-    if(!repository_.saveBenchmarkSelection(chosen)){benchmarkError_=repository_.lastError();emit benchmarkChanged();return;}
+    if(!analyticsRepository_.saveBenchmarkSelection(chosen)){benchmarkError_=analyticsRepository_.lastError();emit benchmarkChanged();return;}
     benchmarkHistoryProvider_.cancel();benchmarkBusy_=false;benchmarkRequest_.clear();benchmarkError_.clear();rebuildBenchmarkComparison();
 }
 void FinanceController::searchBenchmarkFunds(const QString& query){
@@ -81,7 +81,7 @@ void FinanceController::searchBenchmarkFunds(const QString& query){
 void FinanceController::selectBenchmarkFund(int index){
     if(index<0 || index>=benchmarkSearchResults_.size())return;const auto& f=benchmarkSearchResults_[index];
     const QVariantMap descriptor{{"key","fund:"+f.symbol()},{"kind","fund"},{"symbol",f.symbol()},{"name",f.name()},{"type",int(f.type())},{"totalReturn",false}};
-    if(!repository_.saveBenchmarkSelection(descriptor)){benchmarkError_=repository_.lastError();emit benchmarkChanged();return;}
+    if(!analyticsRepository_.saveBenchmarkSelection(descriptor)){benchmarkError_=analyticsRepository_.lastError();emit benchmarkChanged();return;}
     benchmarkHistoryProvider_.cancel();benchmarkBusy_=false;benchmarkRequest_.clear();benchmarkError_.clear();rebuildBenchmarkComparison();
 }
 QPair<QDate,QDate> FinanceController::benchmarkHistoryPeriod() const {

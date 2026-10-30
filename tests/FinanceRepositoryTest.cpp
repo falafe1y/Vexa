@@ -1,4 +1,5 @@
 #include "../persistence/FinanceRepository.h"
+#include "../core/db/AnalyticsRepository.h"
 #include "../core/db/InvestmentRepository.h"
 #include "../core/db/RecurringTransactionRepository.h"
 #include "../core/db/CategoryRepository.h"
@@ -145,7 +146,7 @@ void FinanceRepositoryTest::cnyMigrationPreservesData()
     QVERIFY(PlanningRepository(migrated.database()).insertBudget({"cny-budget","Бюджет",Currency::CNY,10000,true,true,{},{},QDate(2026,10,1)},QDate(2026,10,1)));
     QVERIFY(RecurringTransactionRepository(migrated.database()).insertRecurringTransaction({"cny-recurring","Повторение","cny","groceries",TransactionType::Expense,
         100,Currency::CNY,RecurrenceType::MonthlyDay,1,1,1,QDate(2026,11,1),QDate(2026,10,1)}));
-    QVERIFY(migrated.saveCapitalSnapshot({QDate(2026,10,1),Currency::CNY,9500}));
+    QVERIFY(AnalyticsRepository(migrated.database()).saveCapitalSnapshot({QDate(2026,10,1),Currency::CNY,9500}));
     QVERIFY(migrated.insertAccount({"cny-broker","Брокер",AssetType::Investment,AccountType::Brokerage,Currency::CNY}));
     QVERIFY(InvestmentRepository(migrated.database()).saveInvestmentBundle({"cny-instrument","TEST-CNY","","Инструмент",InvestmentInstrumentType::Stock,Currency::CNY},
         {"cny-position","cny-broker","cny-instrument",1'000'000,10'000'000},std::nullopt,false));
@@ -153,7 +154,7 @@ void FinanceRepositoryTest::cnyMigrationPreservesData()
     QCOMPARE(PlanningRepository(migrated.database()).loadFinancialGoals().first().currency,Currency::CNY);
     QCOMPARE(PlanningRepository(migrated.database()).loadBudgets().first().currency(),Currency::CNY);
     QCOMPARE(RecurringTransactionRepository(migrated.database()).loadRecurringTransactions().first().currency(),Currency::CNY);
-    QCOMPARE(migrated.loadCapitalSnapshots().first().currency,Currency::CNY);
+    QCOMPARE(AnalyticsRepository(migrated.database()).loadCapitalSnapshots().first().currency,Currency::CNY);
     QCOMPARE(InvestmentRepository(migrated.database()).loadInvestmentInstruments().first().currency(),Currency::CNY);
     {
         auto db=addCipherDatabase(connection);
@@ -471,7 +472,7 @@ void FinanceRepositoryTest::clearsAllUserDataAndResetsSettings()
     FinanceRepository repository(directory.filePath(QStringLiteral("clear.sqlite3")));
     QVERIFY2(repository.isOpen(), qPrintable(repository.lastError()));
     QVERIFY(!repository.loadAccounts().isEmpty());
-    QVERIFY(repository.saveCapitalSnapshot({QDate(2026, 9, 21), Currency::USD, 100'000}));
+    QVERIFY(AnalyticsRepository(repository.database()).saveCapitalSnapshot({QDate(2026, 9, 21), Currency::USD, 100'000}));
     const FinancialGoal goal{
         QStringLiteral("goal"), QStringLiteral("Цель"), Currency::RUB,
         100'000, {}, true, {}};
@@ -483,7 +484,7 @@ void FinanceRepositoryTest::clearsAllUserDataAndResetsSettings()
     QVERIFY(repository.loadAccounts().isEmpty());
     QVERIFY(repository.loadTransactions().isEmpty());
     QVERIFY(PlanningRepository(repository.database()).loadFinancialGoals().isEmpty());
-    QVERIFY(repository.loadCapitalSnapshots().isEmpty());
+    QVERIFY(AnalyticsRepository(repository.database()).loadCapitalSnapshots().isEmpty());
     QVERIFY(BankImportRepository(repository.database()).loadBankCsvProfiles().isEmpty());
     QVERIFY(CategoryRepository(repository.database()).loadCategories().isEmpty());
     QCOMPARE(SettingsRepository(repository.database()).loadAppCurrency(), QStringLiteral("RUB"));
@@ -522,21 +523,21 @@ void FinanceRepositoryTest::storesCapitalSnapshotsAndTrajectorySettings()
     {
         FinanceRepository repository(path);
         QVERIFY2(repository.isOpen(), qPrintable(repository.lastError()));
-        QVERIFY(repository.saveCapitalSnapshot({QDate(2026, 9, 21), Currency::USD, 100'000}));
-        QVERIFY(repository.saveCapitalSnapshot({QDate(2026, 9, 22), Currency::RUB, 9'000'000}));
-        QVERIFY(repository.saveCapitalSnapshot({QDate(2026, 9, 22), Currency::RUB, 9'500'000}));
+        QVERIFY(AnalyticsRepository(repository.database()).saveCapitalSnapshot({QDate(2026, 9, 21), Currency::USD, 100'000}));
+        QVERIFY(AnalyticsRepository(repository.database()).saveCapitalSnapshot({QDate(2026, 9, 22), Currency::RUB, 9'000'000}));
+        QVERIFY(AnalyticsRepository(repository.database()).saveCapitalSnapshot({QDate(2026, 9, 22), Currency::RUB, 9'500'000}));
         FinancialTrajectorySettings settings;
         settings.analysisMonths = 12; settings.horizonMonths = 60;
         settings.annualReturnPercent = 7.5; settings.purchaseMinor = 150'000;
         settings.purchaseMonth = 6;
-        QVERIFY(repository.saveFinancialTrajectorySettings(settings));
+        QVERIFY(AnalyticsRepository(repository.database()).saveFinancialTrajectorySettings(settings));
     }
     {
         FinanceRepository repository(path);
-        const auto snapshots = repository.loadCapitalSnapshots();
+        const auto snapshots = AnalyticsRepository(repository.database()).loadCapitalSnapshots();
         QCOMPARE(snapshots.size(), 2);
         QCOMPARE(snapshots.last().totalMinor, 9'500'000);
-        const auto settings = repository.loadFinancialTrajectorySettings();
+        const auto settings = AnalyticsRepository(repository.database()).loadFinancialTrajectorySettings();
         QCOMPARE(settings.analysisMonths, 12);
         QCOMPARE(settings.horizonMonths, 60);
         QCOMPARE(settings.annualReturnPercent, 7.5);

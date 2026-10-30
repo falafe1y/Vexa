@@ -16,7 +16,7 @@ void FinanceController::rebuildInvestmentPerformance()
     // of one group is not a flow; money moved to another group, or out of the accounts, is one.
     const bool brokerageGroup=performanceAccountId_==QStringLiteral("group:brokerage");
     const bool depositGroup=performanceAccountId_==QStringLiteral("group:deposit");
-    for(const auto& value:repository_.loadPerformanceAccounts()){
+    for(const auto& value:analyticsRepository_.loadPerformanceAccounts()){
         const auto row=value.toMap();
         performanceAccounts_.append(QVariantMap{{"id",row.value("id")},{"name",row.value("name")}});
         const int type=row.value("account_type").toInt();
@@ -31,18 +31,18 @@ void FinanceController::rebuildInvestmentPerformance()
     for(const auto& instrument:investmentInstruments_)
         input.instruments.append(QVariantMap{{"id",instrument.id()},{"symbol",instrument.symbol()},
                                             {"name",instrument.name()},{"type",int(instrument.type())}});
-    input.valuations=repository_.loadDailyValuations(AssetDailyValuation::Investment, input.from.isValid()?input.from.addDays(-1):QDate(),input.to);
+    input.valuations=analyticsRepository_.loadDailyValuations(AssetDailyValuation::Investment, input.from.isValid()?input.from.addDays(-1):QDate(),input.to);
     input.positionHistory=investmentRepository_.loadAllPositionHistory();
     QSet<QString> instruments,currencies;currencies.insert(input.currency);
     for(const auto& a:input.accounts)currencies.insert(a.currency);
     for(const auto& value:input.positionHistory){const auto h=value.toMap();instruments.insert(h.value("instrument_id").toString());}
-    for(const auto& id:instruments)input.prices.append(repository_.loadPriceHistory(AssetDailyValuation::Investment,id));
+    for(const auto& id:instruments)input.prices.append(analyticsRepository_.loadPriceHistory(AssetDailyValuation::Investment,id));
     for(const auto& value:input.prices)currencies.insert(value.toMap().value("currency").toString());
-    for(const auto& currency:currencies)input.rates.append(repository_.loadFxHistory(currency));
-    performanceInflation_=repository_.loadPerformanceInflation();
+    for(const auto& currency:currencies)input.rates.append(analyticsRepository_.loadFxHistory(currency));
+    performanceInflation_=analyticsRepository_.loadPerformanceInflation();
     bool valid=false;const auto inflation=performanceInflation_.toDouble(&valid);
     if(valid && std::isfinite(inflation) && inflation>-100)input.annualInflationPercent=inflation;
-    performanceDeposit_=repository_.loadPerformanceDeposit();
+    performanceDeposit_=analyticsRepository_.loadPerformanceDeposit();
     QString depositRate=performanceDeposit_.value("rate").toString();
     static const QRegularExpression depositPattern(QStringLiteral("^[0-9]+\\.[0-9]{4}$"));
     const auto mode=performanceDeposit_.value("capitalization",QStringLiteral("monthly")).toString();
@@ -186,7 +186,7 @@ bool FinanceController::setPerformanceInflation(const QString& percent)
         if(!pattern.match(text).hasMatch() || !valid || !std::isfinite(n) || n<=-100 || n>1000)return false;
         text=QString::number(n,'f',4);
     }
-    if(!repository_.savePerformanceInflation(text))return false;
+    if(!analyticsRepository_.savePerformanceInflation(text))return false;
     rebuildInvestmentPerformance();return true;
 }
 
@@ -200,6 +200,6 @@ bool FinanceController::setPerformanceDeposit(const QString& percent,const QStri
         if(!pattern.match(text).hasMatch() || !ok || !std::isfinite(n) || n<0 || n>1000)return false;
         text=QString::number(n,'f',4);
     }
-    if(!repository_.savePerformanceDeposit({{"rate",text},{"capitalization",capitalization}}))return false;
+    if(!analyticsRepository_.savePerformanceDeposit({{"rate",text},{"capitalization",capitalization}}))return false;
     rebuildInvestmentPerformance();return true;
 }

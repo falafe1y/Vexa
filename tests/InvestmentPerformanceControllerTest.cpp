@@ -1,4 +1,5 @@
 #include "../interface/FinanceController.h"
+#include "../core/db/AnalyticsRepository.h"
 #include "../core/db/InvestmentRepository.h"
 #include "../core/db/SettingsRepository.h"
 #include <QTemporaryDir>
@@ -28,7 +29,7 @@ private slots:
         FinanceRepository r(path);QVERIFY(InvestmentRepository(r.database()).loadInvestmentOperations().isEmpty());
         const auto id=InvestmentRepository(r.database()).loadInvestmentPositions().first().id();
         QCOMPARE(InvestmentRepository(r.database()).investmentCostBasis(id).toLongLong(),qint64(30000));
-        const auto rows=r.loadDailyValuations(AssetDailyValuation::Investment);
+        const auto rows=AnalyticsRepository(r.database()).loadDailyValuations(AssetDailyValuation::Investment);
         bool found=false;for(const auto& v:rows){const auto row=v.toMap();if(row.value("source_id")=="position:"+id){
             found=true;QCOMPARE(row.value("cost_basis_minor").toLongLong(),qint64(30000));}}
         QVERIFY(found);
@@ -57,7 +58,7 @@ private slots:
         {
             FinanceController c(nullptr,path);QCOMPARE(c.performanceInflation(),QString("6.2500"));QVERIFY(c.setPerformanceInflation(""));QVERIFY(c.performanceInflation().isEmpty());
         }
-        FinanceRepository r(path);QVERIFY(r.loadPerformanceInflation().isEmpty());
+        FinanceRepository r(path);QVERIFY(AnalyticsRepository(r.database()).loadPerformanceInflation().isEmpty());
     }
     void depositSettingsPersistAndComparisonFollowsSelectedScope(){
         QTemporaryDir dir;const auto path=dir.filePath("data.db");const auto today=QDate::currentDate();
@@ -71,7 +72,7 @@ private slots:
                     AssetDailyValuation row;row.kind=AssetDailyValuation::Investment;row.sourceId="cash:"+id;row.accountId=id;row.currency="RUB";
                     row.valueMinor=id=="a"?(offset==2?10000:11000):20000;row.valuedAtUtc=batch.observedAtUtc;row.source="ledger";batch.assets.append(row);
                 }
-                QVERIFY(r.saveDailyValuations(batch));
+                QVERIFY(AnalyticsRepository(r.database()).saveDailyValuations(batch));
             }
         }
         {

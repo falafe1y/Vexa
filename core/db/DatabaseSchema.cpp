@@ -1,5 +1,10 @@
 #include "DatabaseSchema.h"
 #include "../model/accounts/Account.h"
+#include "HistorySavepoint.h"
+#include "InvestmentRepository.h"
+#include "PositionHistory.h"
+#include "SnapshotTables.h"
+#include "SqlRow.h"
 
 #include <QDateTime>
 #include <QList>
@@ -12,8 +17,9 @@
 
 #include <array>
 
-DatabaseSchema::DatabaseSchema(QSqlDatabase& database, QString& lastError)
-    : database_(database)
+DatabaseSchema::DatabaseSchema(Database& database, QString& lastError)
+    : db_(database)
+    , database_(database.connection())
     , lastError_(lastError)
 {
 }
@@ -22,7 +28,7 @@ bool DatabaseSchema::prepare()
 {
     return initializeSchema() && migrateLegacySchema() && migrateInvestmentSchema()
         && migrateBankImportSchema() && migrateLedgerSchema() && migrateTaxKind()
-        && migrateCurrencySchema() && migrateCreditDebtFlag();
+        && migrateCurrencySchema() && migrateCreditDebtFlag() && migrateAnalyticsHistorySchema();
 }
 
 void DatabaseSchema::setLastError(const QString& error) { lastError_ = error; }
@@ -1293,4 +1299,93 @@ bool DatabaseSchema::migrateBankImportSchema()
         return false;
     }
     return true;
+}
+
+bool DatabaseSchema::migrateAnalyticsHistorySchema() {
+    InvestmentRepository investments(db_);
+    HistorySavepoint atomic(database_);
+    if(!atomic.active()){setLastError(database_.lastError().text());return false;}
+    QSqlQuery q(database_);
+    const auto exec=[&](const QString& sql){if(q.exec(sql))return true;setLastError(q.lastError().text());return false;};
+    const auto ensure=[&](const QString& column,const QString& definition){
+        if(!exec("PRAGMA table_info(transactions)"))return false;
+        while(q.next())if(q.value(1).toString()==column){q.finish();return true;}
+        q.finish();return exec("ALTER TABLE transactions ADD COLUMN "+column+" "+definition);
+    };
+    if(!ensure("fee_minor","INTEGER CHECK(fee_minor>=0)")
+       || !ensure("tax_minor","INTEGER CHECK(tax_minor>=0)")
+       || !ensure("trade_currency","TEXT"))return false;
+    const QString definition=
+        "(snapshot_date TEXT NOT NULL CHECK(length(snapshot_date)=10),source_id TEXT NOT NULL,"
+        "account_id TEXT NOT NULL,instrument_id TEXT NOT NULL DEFAULT '',currency TEXT NOT NULL,"
+        "value_minor INTEGER,quantity_atomic INTEGER,quantity_decimals INTEGER NOT NULL CHECK(quantity_decimals BETWEEN 0 AND 18),"
+        "price_micros INTEGER,cost_basis_minor INTEGER CHECK(cost_basis_minor>=0),valued_at INTEGER,"
+        "observed_at INTEGER NOT NULL,source TEXT NOT NULL,issues TEXT NOT NULL DEFAULT '',details_json TEXT NOT NULL DEFAULT '{}',"
+        "PRIMARY KEY(snapshot_date,source_id))";
+    for(auto kind:{AssetDailyValuation::Fiat,AssetDailyValuation::Crypto,AssetDailyValuation::Investment}) {
+        const auto table=snapshotTable(kind);
+        if(!exec("CREATE TABLE IF NOT EXISTS "+table+definition)
+           || !exec("CREATE INDEX IF NOT EXISTS idx_"+table+"_account_date ON "+table+"(account_id,snapshot_date)"))return false;
+    }
+    const QStringList statements{
+        "CREATE TABLE IF NOT EXISTS daily_valuation_runs(snapshot_date TEXT PRIMARY KEY,observed_at INTEGER NOT NULL)",
+        "CREATE TABLE IF NOT EXISTS crypto_price_history(asset_id TEXT NOT NULL,quoted_at INTEGER NOT NULL,"
+        "source TEXT NOT NULL,price_micros INTEGER NOT NULL,currency TEXT NOT NULL,observed_at INTEGER NOT NULL,terms_json TEXT NOT NULL DEFAULT '{}',"
+        "PRIMARY KEY(asset_id,quoted_at,source))",
+        "CREATE TABLE IF NOT EXISTS investment_price_history(asset_id TEXT NOT NULL,quoted_at INTEGER NOT NULL,"
+        "source TEXT NOT NULL,price_micros INTEGER NOT NULL,currency TEXT NOT NULL,observed_at INTEGER NOT NULL,terms_json TEXT NOT NULL DEFAULT '{}',"
+        "PRIMARY KEY(asset_id,quoted_at,source))",
+        "CREATE TABLE IF NOT EXISTS fx_rate_history(currency TEXT NOT NULL,rate_date TEXT NOT NULL,source TEXT NOT NULL,"
+        "rub_per_unit_micros INTEGER NOT NULL CHECK(rub_per_unit_micros>0),observed_at INTEGER NOT NULL,"
+        "PRIMARY KEY(currency,rate_date,source))",
+        "CREATE TABLE IF NOT EXISTS investment_position_history(sequence INTEGER PRIMARY KEY,position_id TEXT NOT NULL,"
+        "account_id TEXT NOT NULL,instrument_id TEXT NOT NULL,currency TEXT NOT NULL,event TEXT NOT NULL,"
+        "operation_id TEXT,occurred_at INTEGER NOT NULL,recorded_at INTEGER NOT NULL,quantity_micros INTEGER NOT NULL,"
+        "before_quantity_micros INTEGER,cost_basis_minor INTEGER CHECK(cost_basis_minor>=0),before_cost_minor INTEGER,"
+        "released_cost_minor INTEGER,realized_net_minor INTEGER,state_json TEXT NOT NULL,issues TEXT NOT NULL DEFAULT '')",
+        "CREATE INDEX IF NOT EXISTS idx_position_history_position ON investment_position_history(position_id,sequence)",
+        "CREATE UNIQUE INDEX IF NOT EXISTS idx_position_history_operation ON investment_position_history(operation_id) WHERE operation_id IS NOT NULL"
+    };
+    for(const auto& sql:statements)if(!exec(sql))return false;
+    for(const auto& action:{QStringLiteral("INSERT"),QStringLiteral("UPDATE"),QStringLiteral("DELETE")}) {
+        QString predicate;
+        if(action!="DELETE")predicate="(account_id=NEW.account_id AND snapshot_date>=date(NEW.occurred_at/1000,'unixepoch','localtime'))";
+        if(action!="INSERT")predicate+=(predicate.isEmpty()?QString():QStringLiteral(" OR "))+"(account_id=OLD.account_id AND snapshot_date>=date(OLD.occurred_at/1000,'unixepoch','localtime'))";
+        QString body;
+        for(auto kind:{AssetDailyValuation::Fiat,AssetDailyValuation::Crypto,AssetDailyValuation::Investment}) {
+            const auto table=snapshotTable(kind);
+            body+="UPDATE "+table+" SET issues=CASE WHEN instr(issues,'history_changed')>0 THEN issues ELSE issues||';history_changed' END WHERE "+predicate+";";
+        }
+        if(!exec("CREATE TRIGGER IF NOT EXISTS history_transactions_"+action.toLower()+" AFTER "+action+" ON transactions BEGIN "+body+" END"))return false;
+    }
+    QString body;
+    for(auto kind:{AssetDailyValuation::Fiat,AssetDailyValuation::Crypto,AssetDailyValuation::Investment})
+        body+="UPDATE "+snapshotTable(kind)+" SET issues=CASE WHEN instr(issues,'history_changed')>0 THEN issues ELSE issues||';history_changed' END WHERE account_id=NEW.id;";
+    if(!exec("CREATE TRIGGER IF NOT EXISTS history_account_basis AFTER UPDATE OF initial_balance_minor,currency ON accounts "
+             "WHEN OLD.initial_balance_minor<>NEW.initial_balance_minor OR OLD.currency<>NEW.currency BEGIN "+body+" END"))return false;
+    // Baselines record the observed state, without creating past purchase operations.
+    QStringList positions;
+    if(!exec("SELECT id FROM investment_positions WHERE NOT EXISTS (SELECT 1 FROM investment_position_history h WHERE h.position_id=investment_positions.id)"))return false;
+    while(q.next())positions.append(q.value(0).toString());q.finish();
+    for(const auto& id:positions)if(!investments.appendPositionState(id,"baseline")){setLastError(investments.lastError());return false;}
+    // Repair the initial states recorded before average prices were used for
+    // acquisition cost. Append a correction; do not rewrite historical sales,
+    // explicit cost corrections or previously captured daily valuations.
+    positions.clear();
+    if(!exec(positionStateQuery+" WHERE p.is_archived=0 AND EXISTS (SELECT 1 FROM investment_position_history h "
+        "WHERE h.position_id=p.id AND h.sequence=(SELECT max(sequence) FROM investment_position_history WHERE position_id=p.id) "
+        "AND h.event IN ('opening','baseline') AND h.cost_basis_minor IS NULL) "
+        "AND NOT EXISTS (SELECT 1 FROM transactions o WHERE o.position_id=p.id)"))return false;
+    while(q.next())if(!averageAcquisitionCost(rowMap(q)).isNull())positions.append(q.value("id").toString());q.finish();
+    for(const auto& id:positions)if(!investments.appendPositionState(id,"correction")){setLastError(investments.lastError());return false;}
+    const qint64 now=QDateTime::currentMSecsSinceEpoch();
+    q.prepare("INSERT OR IGNORE INTO crypto_price_history(asset_id,quoted_at,source,price_micros,currency,observed_at) "
+              "SELECT symbol,fetched_at,'legacy',price_usd_micros,'USD',? FROM crypto_prices c WHERE NOT EXISTS (SELECT 1 FROM crypto_price_history h WHERE h.asset_id=c.symbol)");q.addBindValue(now);
+    if(!q.exec()){setLastError(q.lastError().text());return false;}
+    q.prepare("INSERT OR IGNORE INTO investment_price_history(asset_id,quoted_at,source,price_micros,currency,observed_at,terms_json) "
+              "SELECT q.instrument_id,q.quoted_at,'legacy',q.price_micros,i.currency,?,q.terms_json FROM investment_quotes q JOIN investment_instruments i ON i.id=q.instrument_id WHERE NOT EXISTS (SELECT 1 FROM investment_price_history h WHERE h.asset_id=q.instrument_id)");q.addBindValue(now);
+    if(!q.exec()){setLastError(q.lastError().text());return false;}
+    if(!exec("CREATE TABLE IF NOT EXISTS benchmark_daily_prices(benchmark_key TEXT NOT NULL,price_date TEXT NOT NULL,price_micros INTEGER CHECK(price_micros>0),currency TEXT NOT NULL,issues TEXT NOT NULL,observed_at INTEGER NOT NULL,PRIMARY KEY(benchmark_key,price_date))")
+        || !exec("CREATE TABLE IF NOT EXISTS benchmark_history_ranges(benchmark_key TEXT NOT NULL,from_date TEXT NOT NULL,to_date TEXT NOT NULL,observed_at INTEGER NOT NULL,PRIMARY KEY(benchmark_key,from_date,to_date))"))return false;
+    return atomic.commit();
 }
