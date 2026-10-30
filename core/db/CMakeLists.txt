@@ -16,6 +16,8 @@ add_library(core_db STATIC
     PlanningRepository.h
     ProjectRepository.cpp
     ProjectRepository.h
+    RecurringTransactionRepository.cpp
+    RecurringTransactionRepository.h
     SettingsRepository.cpp
     SettingsRepository.h
 )

@@ -453,6 +453,7 @@ FinanceController::FinanceController(QObject* parent, const QString& databasePat
     , planning_(repository_.database())
     , projectRepository_(repository_.database())
     , categoryRepository_(repository_.database())
+    , recurringRepository_(repository_.database())
     , currencyConverter_(rateProvider_)
     , balanceCalculator_(currencyConverter_)
 {
@@ -770,7 +771,7 @@ FinanceController::FinanceController(QObject* parent, const QString& databasePat
     selectedAsset_ = assetTypeFromString(settings_.loadSelectedAsset());
     transactions_ = repository_.loadTransactions();
     projects_ = projectRepository_.loadProjects();
-    recurringTransactions_ = repository_.loadRecurringTransactions();
+    recurringTransactions_ = recurringRepository_.loadRecurringTransactions();
     categories_ = categoryRepository_.loadCategories();
     accounts_ = repository_.loadAccounts();
     depositSettings_ = repository_.loadDepositSettings();
@@ -1332,7 +1333,7 @@ QVariantMap FinanceController::restoreDatabase(const QUrl& fileUrl)
     lastCapitalSnapshotDate_ = {};
     transactions_ = repository_.loadTransactions();
     projects_ = projectRepository_.loadProjects();
-    recurringTransactions_ = repository_.loadRecurringTransactions();
+    recurringTransactions_ = recurringRepository_.loadRecurringTransactions();
     categories_ = categoryRepository_.loadCategories();
     archivedCategoryIds_ = categoryRepository_.loadArchivedCategoryIds();
     accounts_ = repository_.loadAccounts();
@@ -2361,14 +2362,14 @@ QVariantMap FinanceController::saveScheduledTransaction(
         generatedThrough);
 
     const bool saved = editing
-        ? repository_.updateRecurringTransaction(recurring)
-        : repository_.insertRecurringTransaction(recurring);
+        ? recurringRepository_.updateRecurringTransaction(recurring)
+        : recurringRepository_.insertRecurringTransaction(recurring);
     if (!saved) {
-        result[QStringLiteral("error")] = repository_.lastError();
+        result[QStringLiteral("error")] = recurringRepository_.lastError();
         return result;
     }
 
-    recurringTransactions_ = repository_.loadRecurringTransactions();
+    recurringTransactions_ = recurringRepository_.loadRecurringTransactions();
     emit scheduledTransactionsChanged();
     scheduleRecurringMaterialization();
     result[QStringLiteral("ok")] = true;
@@ -2384,10 +2385,10 @@ bool FinanceController::deleteScheduledTransaction(const QString& id)
         {
             return recurring.id() == id;
         });
-    if (!exists || !repository_.deleteRecurringTransaction(id)) {
+    if (!exists || !recurringRepository_.deleteRecurringTransaction(id)) {
         return false;
     }
-    recurringTransactions_ = repository_.loadRecurringTransactions();
+    recurringTransactions_ = recurringRepository_.loadRecurringTransactions();
     emit scheduledTransactionsChanged();
     return true;
 }
@@ -4092,7 +4093,7 @@ bool FinanceController::deleteAccount(const QString& id)
             }),
         depositSettings_.end());
     transactions_ = repository_.loadTransactions();
-    recurringTransactions_ = repository_.loadRecurringTransactions();
+    recurringTransactions_ = recurringRepository_.loadRecurringTransactions();
     investmentPositions_ = repository_.loadInvestmentPositions();
     summary_ = repository_.loadSummary();
 
@@ -4985,7 +4986,7 @@ bool FinanceController::deleteCategory(const QString& id)
     }
 
     archivedCategoryIds_.insert(id);
-    recurringTransactions_ = repository_.loadRecurringTransactions();
+    recurringTransactions_ = recurringRepository_.loadRecurringTransactions();
     emit categoriesChanged();
     emit transactionsChanged();
     emit scheduledTransactionsChanged();
@@ -5868,7 +5869,7 @@ void FinanceController::materializeRecurringTransactions()
 
     totalInserted += materializeDepositInterest();
 
-    recurringTransactions_ = repository_.loadRecurringTransactions();
+    recurringTransactions_ = recurringRepository_.loadRecurringTransactions();
     emit scheduledTransactionsChanged();
     const QDateTime now = QDateTime::currentDateTime();
     const QDateTime nextCheck(

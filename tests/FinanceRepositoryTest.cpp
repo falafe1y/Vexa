@@ -1,4 +1,5 @@
 #include "../persistence/FinanceRepository.h"
+#include "../core/db/RecurringTransactionRepository.h"
 #include "../core/db/CategoryRepository.h"
 #include "../core/db/ProjectRepository.h"
 #include "../core/db/PlanningRepository.h"
@@ -141,7 +142,7 @@ void FinanceRepositoryTest::cnyMigrationPreservesData()
     FinancialGoal goal;goal.id="cny-goal";goal.name="Цель";goal.currency=Currency::CNY;goal.targetMinor=100000;
     QVERIFY(PlanningRepository(migrated.database()).saveFinancialGoal(goal,false));
     QVERIFY(PlanningRepository(migrated.database()).insertBudget({"cny-budget","Бюджет",Currency::CNY,10000,true,true,{},{},QDate(2026,10,1)},QDate(2026,10,1)));
-    QVERIFY(migrated.insertRecurringTransaction({"cny-recurring","Повторение","cny","groceries",TransactionType::Expense,
+    QVERIFY(RecurringTransactionRepository(migrated.database()).insertRecurringTransaction({"cny-recurring","Повторение","cny","groceries",TransactionType::Expense,
         100,Currency::CNY,RecurrenceType::MonthlyDay,1,1,1,QDate(2026,11,1),QDate(2026,10,1)}));
     QVERIFY(migrated.saveCapitalSnapshot({QDate(2026,10,1),Currency::CNY,9500}));
     QVERIFY(migrated.insertAccount({"cny-broker","Брокер",AssetType::Investment,AccountType::Brokerage,Currency::CNY}));
@@ -150,7 +151,7 @@ void FinanceRepositoryTest::cnyMigrationPreservesData()
     QVERIFY(SettingsRepository(migrated.database()).saveManualCurrencyRates(1,100,120,13.25));
     QCOMPARE(PlanningRepository(migrated.database()).loadFinancialGoals().first().currency,Currency::CNY);
     QCOMPARE(PlanningRepository(migrated.database()).loadBudgets().first().currency(),Currency::CNY);
-    QCOMPARE(migrated.loadRecurringTransactions().first().currency(),Currency::CNY);
+    QCOMPARE(RecurringTransactionRepository(migrated.database()).loadRecurringTransactions().first().currency(),Currency::CNY);
     QCOMPARE(migrated.loadCapitalSnapshots().first().currency,Currency::CNY);
     QCOMPARE(migrated.loadInvestmentInstruments().first().currency(),Currency::CNY);
     {
@@ -879,7 +880,7 @@ void FinanceRepositoryTest::storesAndMaterializesRecurringTransactions()
         1,
         QDate(2026, 9, 1),
         QDate(2026, 8, 31));
-    QVERIFY2(repository.insertRecurringTransaction(schedule),
+    QVERIFY2(RecurringTransactionRepository(repository.database()).insertRecurringTransaction(schedule),
              qPrintable(repository.lastError()));
 
     const auto makeOccurrence = [&account, &category](
@@ -915,7 +916,7 @@ void FinanceRepositoryTest::storesAndMaterializesRecurringTransactions()
     QCOMPARE(repository.loadTransactions().size(), 2);
 
     QVector<RecurringTransaction> restored =
-        repository.loadRecurringTransactions();
+        RecurringTransactionRepository(repository.database()).loadRecurringTransactions();
     QCOMPARE(restored.size(), 1);
     QCOMPARE(restored.constFirst().currency(), Currency::USD);
     QCOMPARE(restored.constFirst().generatedThrough(), QDate(2026, 9, 10));
@@ -934,9 +935,9 @@ void FinanceRepositoryTest::storesAndMaterializesRecurringTransactions()
         1,
         QDate(2026, 9, 1),
         restored.constFirst().generatedThrough());
-    QVERIFY2(repository.updateRecurringTransaction(updated),
+    QVERIFY2(RecurringTransactionRepository(repository.database()).updateRecurringTransaction(updated),
              qPrintable(repository.lastError()));
-    restored = repository.loadRecurringTransactions();
+    restored = RecurringTransactionRepository(repository.database()).loadRecurringTransactions();
     QCOMPARE(restored.constFirst().name(), QStringLiteral("Updated rent"));
     QCOMPARE(restored.constFirst().amountMinor(), qint64(75'000));
     QCOMPARE(restored.constFirst().currency(), Currency::EUR);
@@ -944,8 +945,8 @@ void FinanceRepositoryTest::storesAndMaterializesRecurringTransactions()
             RecurrenceType::MonthlyDay);
     QCOMPARE(restored.constFirst().generatedThrough(), QDate(2026, 9, 10));
 
-    QVERIFY(repository.deleteRecurringTransaction(schedule.id()));
-    QVERIFY(repository.loadRecurringTransactions().isEmpty());
+    QVERIFY(RecurringTransactionRepository(repository.database()).deleteRecurringTransaction(schedule.id()));
+    QVERIFY(RecurringTransactionRepository(repository.database()).loadRecurringTransactions().isEmpty());
     QCOMPARE(repository.loadTransactions().size(), 2);
 }
 

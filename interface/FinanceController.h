@@ -9,6 +9,7 @@
 #include "../core/db/PlanningRepository.h"
 #include "../core/db/ProjectRepository.h"
 #include "../core/db/CategoryRepository.h"
+#include "../core/db/RecurringTransactionRepository.h"
 #include "../core/model/accounts/BalanceCalculator.h"
 #include "../services/BankCsvImporter.h"
 #include "../core/model/analytics/CapitalHistoryCalculator.h"
@@ -821,6 +822,7 @@ private:
     PlanningRepository planning_;
     ProjectRepository projectRepository_;
     CategoryRepository categoryRepository_;
+    RecurringTransactionRepository recurringRepository_;
     CbrCurrencyRateProvider rateProvider_;
     CurrencyConverter currencyConverter_;
     BalanceCalculator balanceCalculator_;

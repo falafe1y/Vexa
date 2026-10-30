@@ -100,7 +100,6 @@ public:
     Database& database();
     bool clearAllUserData();
     QVector<Transaction> loadTransactions();
-    QVector<RecurringTransaction> loadRecurringTransactions();
     QVector<DepositSettings> loadDepositSettings();
     QVector<Account> loadAccounts();
     QVector<InvestmentInstrument> loadInvestmentInstruments();
@@ -133,13 +132,6 @@ public:
         );
     bool deleteTransaction(const QString& id);
     bool deleteHistoryRows(const QVariantList& rows);
-    bool insertRecurringTransaction(
-        const RecurringTransaction& recurring
-        );
-    bool updateRecurringTransaction(
-        const RecurringTransaction& recurring
-        );
-    bool deleteRecurringTransaction(const QString& id);
     bool materializeRecurringOccurrences(
         const QString& recurringId,
         const QVector<RecurringOccurrence>& occurrences,
