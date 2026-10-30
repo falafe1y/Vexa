@@ -1,5 +1,8 @@
 #include "AccountRepository.h"
 
+#include "InvestmentRepository.h"
+#include "OperationRows.h"
+
 #include <QDate>
 #include <QDateTime>
 #include <QJsonArray>
@@ -56,7 +59,8 @@ bool upsertDepositSettings(
 }
 
 AccountRepository::AccountRepository(Database& database)
-    : database_(database.connection())
+    : db_(database)
+    , database_(database.connection())
 {
 }
 
@@ -283,6 +287,109 @@ bool AccountRepository::saveDepositRateSteps(const QString& accountId, const QVa
     }
     if (!query.exec()) {
         setLastError(query.lastError().text());
+        return false;
+    }
+    return true;
+}
+
+bool AccountRepository::deleteAccount(const QString& id)
+{
+    if (!database_.transaction()) {
+        setLastError(database_.lastError().text());
+        return false;
+    }
+
+    QSqlQuery recurring(database_);
+    recurring.prepare(QStringLiteral(
+        "DELETE FROM recurring_transactions WHERE account_id = ?"));
+    recurring.addBindValue(id);
+    if (!recurring.exec()) {
+        setLastError(recurring.lastError().text());
+        database_.rollback();
+        return false;
+    }
+
+    QSqlQuery deposit(database_);
+    deposit.prepare(QStringLiteral(
+        "DELETE FROM deposit_settings WHERE account_id = ?"));
+    deposit.addBindValue(id);
+    if (!deposit.exec()) {
+        setLastError(deposit.lastError().text());
+        database_.rollback();
+        return false;
+    }
+
+    QSqlQuery lookup(database_);
+    lookup.prepare(QStringLiteral(
+        "SELECT id FROM transactions WHERE account_id = ?"));
+    lookup.addBindValue(id);
+    if (!lookup.exec()) {
+        setLastError(lookup.lastError().text());
+        database_.rollback();
+        return false;
+    }
+
+    QStringList transactionIds;
+    while (lookup.next()) {
+        transactionIds.append(lookup.value(0).toString());
+    }
+    lookup.finish();
+
+    QString error;
+    QSqlQuery existence(database_);
+    existence.prepare(QStringLiteral(
+        "SELECT 1 FROM transactions WHERE id = ?"));
+    for (const QString& transactionId : transactionIds) {
+        existence.bindValue(0, transactionId);
+        if (!existence.exec()) {
+            setLastError(existence.lastError().text());
+            database_.rollback();
+            return false;
+        }
+        const bool stillExists = existence.next();
+        existence.finish();
+        if (!stillExists) {
+            continue;
+        }
+        if (!deleteOperationRows(database_, transactionId, error)) {
+            setLastError(error);
+            database_.rollback();
+            return false;
+        }
+    }
+
+    QStringList positionIds;
+    QSqlQuery positionLookup(database_);positionLookup.prepare("SELECT id FROM investment_positions WHERE account_id=? AND is_archived=0");positionLookup.addBindValue(id);
+    if(!positionLookup.exec()){setLastError(positionLookup.lastError().text());database_.rollback();return false;}
+    while(positionLookup.next())positionIds.append(positionLookup.value(0).toString());positionLookup.finish();
+
+    QSqlQuery positions(database_);
+    positions.prepare(QStringLiteral(
+        "UPDATE investment_positions "
+        "SET is_archived = 1, updated_at = ? "
+        "WHERE account_id = ? AND is_archived = 0"));
+    positions.addBindValue(QDateTime::currentDateTimeUtc().toMSecsSinceEpoch());
+    positions.addBindValue(id);
+    if (!positions.exec()) {
+        setLastError(positions.lastError().text());
+        database_.rollback();
+        return false;
+    }
+
+    InvestmentRepository investments(db_);
+    for(const auto& positionId:positionIds)if(!investments.appendPositionState(positionId,"archive")){setLastError(investments.lastError());database_.rollback();return false;}
+
+    QSqlQuery account(database_);
+    account.prepare(QStringLiteral(
+        "UPDATE accounts SET is_archived = 1 "
+        "WHERE id = ? AND is_archived = 0"));
+    account.addBindValue(id);
+    if (!account.exec() || account.numRowsAffected() != 1 ||
+        !database_.commit()) {
+        setLastError(account.lastError().isValid()
+                         ? account.lastError().text()
+                         : database_.lastError().text());
+        database_.rollback();
         return false;
     }
     return true;

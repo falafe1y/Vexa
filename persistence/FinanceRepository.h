@@ -36,25 +36,6 @@ class FinanceRepository
 {
 public:
     static bool migrateBackup(const DatabaseAccess& access, const QString& workspace, QString& error);
-    struct Summary
-    {
-        std::array<qint64, kCurrencyCount> balance{};
-        std::array<qint64, kCurrencyCount> income{};
-        std::array<qint64, kCurrencyCount> expense{};
-    };
-
-    struct RecurringOccurrence
-    {
-        QDate date;
-        Transaction transaction;
-    };
-
-    struct DepositInterestOccurrence
-    {
-        QDate date;
-        Transaction transaction;
-    };
-
 
 
 
@@ -75,45 +56,8 @@ public:
     // The connection, for the repositories split out of this class; temporary until they own it
     Database& database();
     bool clearAllUserData();
-    QVector<Transaction> loadTransactions();
     // Purchase price of the coins without trades, by "exchangeId|coin"
     // Rate history of deposits by account id: a list of {"from": "yyyy-MM-dd", "bps": int}, sorted by day
-    Summary loadSummary();
-    bool insertTransaction(const Transaction& transaction);
-    bool insertTransfer(
-        const Transaction& outgoing,
-        const Transaction& incoming
-        );
-    bool insertTransactions(const QVector<Transaction>& transactions,
-                            const QVector<BankCategoryRule>& rules = {},
-                            const QVector<BankRecipientRule>& recipientRules = {},
-                            const QMap<QString, QString>& bankLinks = {},
-                            const QSet<QString>& replacedBankTransactions = {});
-    bool updateTransaction(const Transaction& transaction);
-    bool replaceTransaction(
-        const QString& currentId,
-        const Transaction& replacement
-        );
-    bool replaceTransactionWithTransfer(
-        const QString& currentId,
-        const Transaction& outgoing,
-        const Transaction& incoming
-        );
-    bool deleteTransaction(const QString& id);
-    bool deleteHistoryRows(const QVariantList& rows);
-    bool materializeRecurringOccurrences(
-        const QString& recurringId,
-        const QVector<RecurringOccurrence>& occurrences,
-        const QDate& generatedThrough,
-        int* insertedCount = nullptr
-        );
-    bool deleteAccount(const QString& id);
-    bool materializeDepositInterest(
-        const DepositSettings& settings,
-        const QVector<DepositInterestOccurrence>& occurrences,
-        const QDate& generatedThrough,
-        int* insertedCount = nullptr
-        );
 
 private:
 

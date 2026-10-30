@@ -1,4 +1,5 @@
 #include "../interface/FinanceController.h"
+#include "../core/db/TransactionRepository.h"
 #include "../core/db/AccountRepository.h"
 #include "../core/db/AnalyticsRepository.h"
 #include "../core/db/InvestmentRepository.h"
@@ -118,7 +119,7 @@ private slots:
             FinanceRepository r(path);QVERIFY(SettingsRepository(r.database()).saveAutomaticCurrencyRates(false));
             QVERIFY(AccountRepository(r.database()).insertAccount({"broker","Брокер",AssetType::Investment,AccountType::Brokerage,Currency::RUB,10000}));
             QVERIFY(AccountRepository(r.database()).insertAccount({"deposit","Вклад",AssetType::Investment,AccountType::Deposit,Currency::RUB,20000}));
-            QVERIFY(r.insertTransaction({"interest","deposit","deposit_interest",Money(100,Currency::RUB),TransactionType::Income,now}));
+            QVERIFY(TransactionRepository(r.database()).insertTransaction({"interest","deposit","deposit_interest",Money(100,Currency::RUB),TransactionType::Income,now}));
         }
         FinanceController c(nullptr,path);
         QCOMPARE(c.investmentPerformance().value("allocation").toMap().value("capitalMinor").toLongLong(),qint64(30100));

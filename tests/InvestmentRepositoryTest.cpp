@@ -247,7 +247,7 @@ void InvestmentRepositoryTest::archivesPositionsWithInvestmentAccount()
         QStringLiteral("sber-position"), brokerage.id(), instrument.id(),
         10'000'000, 310'250'000)));
 
-    QVERIFY2(repository.deleteAccount(brokerage.id()),
+    QVERIFY2(AccountRepository(repository.database()).deleteAccount(brokerage.id()),
              qPrintable(repository.lastError()));
     QVERIFY(InvestmentRepository(repository.database()).loadInvestmentPositions().isEmpty());
     QVERIFY2(InvestmentRepository(repository.database()).archiveInvestmentInstrument(instrument.id()),

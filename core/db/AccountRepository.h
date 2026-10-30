@@ -28,11 +28,13 @@ public:
         );
     QVariantMap loadDepositRateSteps() const;
     bool saveDepositRateSteps(const QString& accountId, const QVariantList& steps);
+    bool deleteAccount(const QString& id);
     QString lastError() const;
 
 private:
     void setLastError(const QString& error);
 
+    Database& db_;
     QSqlDatabase& database_;
     QString lastError_;
 };

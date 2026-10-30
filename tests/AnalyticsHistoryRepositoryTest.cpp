@@ -1,4 +1,5 @@
 #include "../persistence/FinanceRepository.h"
+#include "../core/db/TransactionRepository.h"
 #include "../core/db/AccountRepository.h"
 #include "../core/db/AnalyticsRepository.h"
 #include "../core/db/CryptoRepository.h"
@@ -227,10 +228,10 @@ private slots:
     void batchDeletionAndAccountArchivePreserveClosedHistory(){
         QTemporaryDir dir;FinanceRepository r(dir.filePath("data.db"));QVERIFY(AccountRepository(r.database()).insertAccount(broker()));
         QVERIFY(InvestmentRepository(r.database()).saveInvestmentBundle(stock(),position(),{},false,{},10000));
-        QVERIFY(r.deleteHistoryRows({QVariantMap{{"type","investment_position"},{"id","position"}}}));
+        QVERIFY(TransactionRepository(r.database()).deleteHistoryRows({QVariantMap{{"type","investment_position"},{"id","position"}}}));
         auto history=InvestmentRepository(r.database()).loadPositionHistory("position");QCOMPARE(history.last().toMap().value("quantity_micros").toLongLong(),qint64(0));
         QVERIFY(InvestmentRepository(r.database()).saveInvestmentBundle(stock(),{"second","broker","stock",3'000'000,100'000'000},{},false,{},10000));
-        QVERIFY(r.deleteAccount("broker"));history=InvestmentRepository(r.database()).loadPositionHistory("second");
+        QVERIFY(AccountRepository(r.database()).deleteAccount("broker"));history=InvestmentRepository(r.database()).loadPositionHistory("second");
         QCOMPARE(history.last().toMap().value("event").toString(),QString("archive"));
         QCOMPARE(history.last().toMap().value("quantity_micros").toLongLong(),qint64(0));
         QCOMPARE(history.last().toMap().value("cost_basis_minor").toLongLong(),qint64(0));

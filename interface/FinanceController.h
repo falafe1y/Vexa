@@ -13,6 +13,7 @@
 #include "../core/db/InvestmentRepository.h"
 #include "../core/db/AnalyticsRepository.h"
 #include "../core/db/AccountRepository.h"
+#include "../core/db/TransactionRepository.h"
 #include "../core/model/accounts/BalanceCalculator.h"
 #include "../services/BankCsvImporter.h"
 #include "../core/model/analytics/CapitalHistoryCalculator.h"
@@ -800,7 +801,7 @@ private:
     void finishInvestmentQuoteRequest(const QString& instrumentId);
     void setInvestmentLastError(const QString& error);
     QVector<Transaction> dateFilteredTransactions() const;
-    FinanceRepository::Summary dateFilteredSummary() const;
+    TransactionRepository::Summary dateFilteredSummary() const;
     QString accountDisplayName(const Account& account) const;
     QString categoryDisplayName(const Category& category) const;
     QString transactionDisplayDescription(const Transaction& transaction) const;
@@ -829,6 +830,7 @@ private:
     InvestmentRepository investmentRepository_;
     AnalyticsRepository analyticsRepository_;
     AccountRepository accountRepository_;
+    TransactionRepository transactionRepository_;
     CbrCurrencyRateProvider rateProvider_;
     CurrencyConverter currencyConverter_;
     BalanceCalculator balanceCalculator_;
@@ -899,7 +901,7 @@ private:
     FinancialTrajectorySettings trajectorySettings_;
     QDate lastCapitalSnapshotDate_;
     QSet<QString> archivedCategoryIds_;
-    FinanceRepository::Summary summary_;
+    TransactionRepository::Summary summary_;
     bool recurringMaterializationScheduled_ = false;
 
     Currency appCurrency_ = Currency::RUB;

@@ -457,6 +457,7 @@ FinanceController::FinanceController(QObject* parent, const QString& databasePat
     , investmentRepository_(repository_.database())
     , analyticsRepository_(repository_.database())
     , accountRepository_(repository_.database())
+    , transactionRepository_(repository_.database())
     , currencyConverter_(rateProvider_)
     , balanceCalculator_(currencyConverter_)
 {
@@ -772,7 +773,7 @@ FinanceController::FinanceController(QObject* parent, const QString& databasePat
     automaticCurrencyRates_ = settings_.loadAutomaticCurrencyRates();
     rateProvider_.setAutomaticUpdatesEnabled(automaticCurrencyRates_);
     selectedAsset_ = assetTypeFromString(settings_.loadSelectedAsset());
-    transactions_ = repository_.loadTransactions();
+    transactions_ = transactionRepository_.loadTransactions();
     projects_ = projectRepository_.loadProjects();
     recurringTransactions_ = recurringRepository_.loadRecurringTransactions();
     categories_ = categoryRepository_.loadCategories();
@@ -826,7 +827,7 @@ FinanceController::FinanceController(QObject* parent, const QString& databasePat
     loadManualCryptoState(crypto_.loadCryptoManualState());
     cryptoCostBasis_ = crypto_.loadCryptoCostBasis();
     archivedCategoryIds_ = categoryRepository_.loadArchivedCategoryIds();
-    summary_ = repository_.loadSummary();
+    summary_ = transactionRepository_.loadSummary();
     for (const BankImportRepository::BankCsvProfileRecord& record :
          bankImport_.loadBankCsvProfiles()) {
         QJsonParseError parseError;
@@ -1334,7 +1335,7 @@ QVariantMap FinanceController::restoreDatabase(const QUrl& fileUrl)
     dateFilterFrom_ = {};
     dateFilterTo_ = {};
     lastCapitalSnapshotDate_ = {};
-    transactions_ = repository_.loadTransactions();
+    transactions_ = transactionRepository_.loadTransactions();
     projects_ = projectRepository_.loadProjects();
     recurringTransactions_ = recurringRepository_.loadRecurringTransactions();
     categories_ = categoryRepository_.loadCategories();
@@ -1367,7 +1368,7 @@ QVariantMap FinanceController::restoreDatabase(const QUrl& fileUrl)
         profile.name = record.name;
         bankCsvProfiles_.append(profile);
     }
-    summary_ = repository_.loadSummary();
+    summary_ = transactionRepository_.loadSummary();
     if (selectedProjectId_.isEmpty() && !projects_.isEmpty()) {
         selectedProjectId_ = projects_.constFirst().id();
         emit selectedProjectIdChanged();
@@ -1502,7 +1503,7 @@ QVariantMap FinanceController::clearAllData()
     rateProvider_.setManualRates(
         manualRubToRubRate_, manualUsdToRubRate_, manualEurToRubRate_, manualCnyToRubRate_);
     rateProvider_.setAutomaticUpdatesEnabled(true);
-    summary_ = repository_.loadSummary();
+    summary_ = transactionRepository_.loadSummary();
 
     emit transactionsChanged();
     emit categoriesChanged();
@@ -1717,12 +1718,12 @@ QVariantMap FinanceController::importTransactionsCsv(const QUrl& fileUrl)
         ++operationCount;
     }
 
-    if (!repository_.insertTransactions(importedTransactions)) {
-        result["error"] = repository_.lastError();
+    if (!transactionRepository_.insertTransactions(importedTransactions)) {
+        result["error"] = transactionRepository_.lastError();
         return result;
     }
-    transactions_ = repository_.loadTransactions();
-    summary_ = repository_.loadSummary();
+    transactions_ = transactionRepository_.loadTransactions();
+    summary_ = transactionRepository_.loadSummary();
     emit transactionsChanged();
     emit balanceChanged();
     emit accountsChanged();
@@ -2751,12 +2752,12 @@ QVariantMap FinanceController::importBankCsv(
             return result;
         }
     }
-    if (!repository_.insertTransactions(imported, review.categoryRules, review.recipientRules, newLinks, replacedBankTransactions)) {
-        result[QStringLiteral("error")] = repository_.lastError();
+    if (!transactionRepository_.insertTransactions(imported, review.categoryRules, review.recipientRules, newLinks, replacedBankTransactions)) {
+        result[QStringLiteral("error")] = transactionRepository_.lastError();
         return result;
     }
-    transactions_ = repository_.loadTransactions();
-    summary_ = repository_.loadSummary();
+    transactions_ = transactionRepository_.loadTransactions();
+    summary_ = transactionRepository_.loadSummary();
     emit transactionsChanged();
     emit balanceChanged();
     emit accountsChanged();
@@ -4061,7 +4062,7 @@ bool FinanceController::updateAccount(
         depositSettings_.append(*deposit);
         scheduleRecurringMaterialization();
     }
-    summary_ = repository_.loadSummary();
+    summary_ = transactionRepository_.loadSummary();
     emit accountsChanged();
     emit balanceChanged();
     emit transactionsChanged();
@@ -4081,8 +4082,8 @@ bool FinanceController::deleteAccount(const QString& id)
     if (accountIndex < 0) {
         return false;
     }
-    if (!repository_.isOpen() || !repository_.deleteAccount(id)) {
-        qWarning() << "Failed to delete account:" << repository_.lastError();
+    if (!repository_.isOpen() || !accountRepository_.deleteAccount(id)) {
+        qWarning() << "Failed to delete account:" << accountRepository_.lastError();
         return false;
     }
 
@@ -4095,10 +4096,10 @@ bool FinanceController::deleteAccount(const QString& id)
                 return settings.accountId() == id;
             }),
         depositSettings_.end());
-    transactions_ = repository_.loadTransactions();
+    transactions_ = transactionRepository_.loadTransactions();
     recurringTransactions_ = recurringRepository_.loadRecurringTransactions();
     investmentPositions_ = investmentRepository_.loadInvestmentPositions();
-    summary_ = repository_.loadSummary();
+    summary_ = transactionRepository_.loadSummary();
 
     if (selectedAccountId_ == id) {
         selectedAccountId_.clear();
@@ -5204,14 +5205,14 @@ bool FinanceController::addTransfer(
         QStringLiteral("transfer-in"), Money(targetMinorUnits, target->currency()),
         TransactionType::Income, occurredAt, normalizedDescription);
 
-    if (!repository_.isOpen() || !repository_.insertTransfer(outgoing, incoming)) {
-        qWarning() << "Failed to save transfer:" << repository_.lastError();
+    if (!repository_.isOpen() || !transactionRepository_.insertTransfer(outgoing, incoming)) {
+        qWarning() << "Failed to save transfer:" << transactionRepository_.lastError();
         return false;
     }
 
     transactions_.prepend(incoming);
     transactions_.prepend(outgoing);
-    summary_ = repository_.loadSummary();
+    summary_ = transactionRepository_.loadSummary();
     emit transactionsChanged();
     emit balanceChanged();
     emit accountsChanged();
@@ -5324,14 +5325,14 @@ bool FinanceController::updateOperation(
             normalizedDescription);
 
         if (!repository_.isOpen() ||
-            !repository_.replaceTransactionWithTransfer(id, outgoing, incoming)) {
+            !transactionRepository_.replaceTransactionWithTransfer(id, outgoing, incoming)) {
             qWarning() << "Failed to replace operation with transfer:"
-                       << repository_.lastError();
+                       << transactionRepository_.lastError();
             return false;
         }
 
-        transactions_ = repository_.loadTransactions();
-        summary_ = repository_.loadSummary();
+        transactions_ = transactionRepository_.loadTransactions();
+        summary_ = transactionRepository_.loadSummary();
         emit transactionsChanged();
         emit balanceChanged();
         emit accountsChanged();
@@ -5391,16 +5392,16 @@ bool FinanceController::updateOperation(
 
     const bool saved = repository_.isOpen() &&
         (originalIsTransfer
-            ? repository_.replaceTransaction(id, updated)
-            : repository_.updateTransaction(updated));
+            ? transactionRepository_.replaceTransaction(id, updated)
+            : transactionRepository_.updateTransaction(updated));
     if (!saved) {
         qWarning() << "Failed to update transaction:"
-                   << repository_.lastError();
+                   << transactionRepository_.lastError();
         return false;
     }
 
-    transactions_ = repository_.loadTransactions();
-    summary_ = repository_.loadSummary();
+    transactions_ = transactionRepository_.loadTransactions();
+    summary_ = transactionRepository_.loadSummary();
 
     emit transactionsChanged();
     emit balanceChanged();
@@ -5455,15 +5456,15 @@ QVariantMap FinanceController::transferDetails(const QString& id) const
 
 bool FinanceController::deleteHistoryRows(const QVariantList& rows)
 {
-    if (!repository_.isOpen() || !repository_.deleteHistoryRows(rows)) {
-        qWarning() << "Failed to delete selected operations:" << repository_.lastError();
+    if (!repository_.isOpen() || !transactionRepository_.deleteHistoryRows(rows)) {
+        qWarning() << "Failed to delete selected operations:" << transactionRepository_.lastError();
         return false;
     }
-    transactions_ = repository_.loadTransactions();
+    transactions_ = transactionRepository_.loadTransactions();
     investmentPositions_ = investmentRepository_.loadInvestmentPositions();
     cryptoTransactions_ = crypto_.loadCryptoTransactions();
     cryptoExchanges_ = crypto_.loadCryptoExchanges();
-    summary_ = repository_.loadSummary();
+    summary_ = transactionRepository_.loadSummary();
     emit transactionsChanged();
     emit investmentPositionsChanged();
     emit cryptoTransactionsChanged();
@@ -5485,14 +5486,14 @@ bool FinanceController::deleteTransaction(const QString& id)
     if (transactionIndex < 0) {
         return false;
     }
-    if (!repository_.isOpen() || !repository_.deleteTransaction(id)) {
+    if (!repository_.isOpen() || !transactionRepository_.deleteTransaction(id)) {
         qWarning() << "Failed to delete transaction:"
-                   << repository_.lastError();
+                   << transactionRepository_.lastError();
         return false;
     }
 
-    transactions_ = repository_.loadTransactions();
-    summary_ = repository_.loadSummary();
+    transactions_ = transactionRepository_.loadTransactions();
+    summary_ = transactionRepository_.loadSummary();
 
     emit transactionsChanged();
     emit balanceChanged();
@@ -5568,9 +5569,9 @@ bool FinanceController::addTransaction(
             );
 
     if (!repository_.isOpen() ||
-        !repository_.insertTransaction(transaction)) {
+        !transactionRepository_.insertTransaction(transaction)) {
         qWarning() << "Failed to save transaction:"
-                   << repository_.lastError();
+                   << transactionRepository_.lastError();
         return false;
     }
 
@@ -5667,7 +5668,7 @@ void FinanceController::reloadInvestments()
     investmentInstruments_=investmentRepository_.loadInvestmentInstruments();investmentPositions_=investmentRepository_.loadInvestmentPositions();
     investmentQuotes_=investmentRepository_.loadInvestmentQuotes();investmentOperations_=investmentRepository_.loadInvestmentOperations();
     // Investment operations are journal rows too: income, expense and balance totals follow them.
-    summary_=repository_.loadSummary();
+    summary_=transactionRepository_.loadSummary();
     emit investmentPositionsChanged();emit accountsChanged();emit transactionsChanged();emit balanceChanged();
 }
 
@@ -5838,13 +5839,13 @@ void FinanceController::materializeRecurringTransactions()
         const QVector<QDate> dates =
             RecurringScheduleCalculator::occurrences(
                 recurring, from, today);
-        QVector<FinanceRepository::RecurringOccurrence> occurrences;
+        QVector<TransactionRepository::RecurringOccurrence> occurrences;
         occurrences.reserve(dates.size());
         for (const QDate& date : dates) {
             const QString transactionId = QStringLiteral("recurring-")
                 + recurring.id() + QLatin1Char('-')
                 + date.toString(QStringLiteral("yyyyMMdd"));
-            occurrences.append(FinanceRepository::RecurringOccurrence{
+            occurrences.append(TransactionRepository::RecurringOccurrence{
                 date,
                 Transaction(
                     transactionId,
@@ -5861,10 +5862,10 @@ void FinanceController::materializeRecurringTransactions()
         }
 
         int inserted = 0;
-        if (!repository_.materializeRecurringOccurrences(
+        if (!transactionRepository_.materializeRecurringOccurrences(
                 recurring.id(), occurrences, today, &inserted)) {
             qWarning() << "Failed to materialize recurring transaction:"
-                       << recurring.id() << repository_.lastError();
+                       << recurring.id() << transactionRepository_.lastError();
             continue;
         }
         totalInserted += inserted;
@@ -5887,8 +5888,8 @@ void FinanceController::materializeRecurringTransactions()
     categories_ = categoryRepository_.loadCategories();
     archivedCategoryIds_ = categoryRepository_.loadArchivedCategoryIds();
     emit categoriesChanged();
-    transactions_ = repository_.loadTransactions();
-    summary_ = repository_.loadSummary();
+    transactions_ = transactionRepository_.loadTransactions();
+    summary_ = transactionRepository_.loadSummary();
     emit transactionsChanged();
     emit balanceChanged();
     emit accountsChanged();
@@ -5948,7 +5949,7 @@ int FinanceController::materializeDepositInterest()
         const QVector<QDate> dates =
             DepositInterestCalculator::occurrences(
                 settings, from, today);
-        QVector<FinanceRepository::DepositInterestOccurrence> occurrences;
+        QVector<TransactionRepository::DepositInterestOccurrence> occurrences;
         occurrences.reserve(dates.size());
 
         // Interest accrues day by day from the last payout (or from the opening of the deposit) to the next payout
@@ -5985,7 +5986,7 @@ int FinanceController::materializeDepositInterest()
                     : saturatedCapitalSubtract(
                         balanceMinor, transaction.money().minorUnits());
             }
-            for (const FinanceRepository::DepositInterestOccurrence& pending :
+            for (const TransactionRepository::DepositInterestOccurrence& pending :
                  std::as_const(occurrences)) {
                 balanceMinor = saturatedCapitalAdd(
                     balanceMinor,
@@ -6008,7 +6009,7 @@ int FinanceController::materializeDepositInterest()
                 + settings.accountId() + QLatin1Char('-')
                 + date.toString(QStringLiteral("yyyyMMdd"));
             occurrences.append(
-                FinanceRepository::DepositInterestOccurrence{
+                TransactionRepository::DepositInterestOccurrence{
                     date,
                     Transaction(
                         transactionId,
@@ -6021,10 +6022,10 @@ int FinanceController::materializeDepositInterest()
         }
 
         int inserted = 0;
-        if (!repository_.materializeDepositInterest(
+        if (!transactionRepository_.materializeDepositInterest(
                 settings, occurrences, today, &inserted)) {
             qWarning() << "Failed to materialize deposit interest:"
-                       << settings.accountId() << repository_.lastError();
+                       << settings.accountId() << transactionRepository_.lastError();
             continue;
         }
         totalInserted += inserted;
@@ -6304,7 +6305,7 @@ QVector<Transaction> FinanceController::dateFilteredTransactions() const
         transactions_, dateFilterFrom_, dateFilterTo_);
 }
 
-FinanceRepository::Summary FinanceController::dateFilteredSummary() const
+TransactionRepository::Summary FinanceController::dateFilteredSummary() const
 {
     if (!dateFilterActive()) {
         return summary_;
@@ -6312,7 +6313,7 @@ FinanceRepository::Summary FinanceController::dateFilteredSummary() const
 
     const DateSliceCalculator::Totals totals = DateSliceCalculator::calculate(
         accounts_, transactions_, dateFilterFrom_, dateFilterTo_);
-    FinanceRepository::Summary result;
+    TransactionRepository::Summary result;
     result.balance = totals.balance;
     result.income = totals.income;
     result.expense = totals.expense;

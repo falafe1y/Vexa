@@ -1,4 +1,5 @@
 #include "../services/BybitProvider.h"
+#include "../core/db/TransactionRepository.h"
 #include "../core/db/CryptoRepository.h"
 #include "../persistence/FinanceRepository.h"
 #include <QtTest>
@@ -180,7 +181,7 @@ private slots:
             FinanceRepository repository(path); const auto rows = CryptoRepository(repository.database()).loadCryptoExchanges(); QCOMPARE(rows.size(), 1);
             QCOMPARE(rows[0].toMap().value("name").toString(), QString("Мой Bybit"));
             QCOMPARE(rows[0].toMap().value("history").toList().size(), 2);
-            QVERIFY(repository.deleteHistoryRows({QVariantMap{{"isExchange", true}, {"walletId", "a"}, {"transactionId", "uta:old"}}}));
+            QVERIFY(TransactionRepository(repository.database()).deleteHistoryRows({QVariantMap{{"isExchange", true}, {"walletId", "a"}, {"transactionId", "uta:old"}}}));
             QCOMPARE(CryptoRepository(repository.database()).loadCryptoExchanges()[0].toMap().value("history").toList().size(), 1);
             QVERIFY(repository.clearAllUserData()); QVERIFY(CryptoRepository(repository.database()).loadCryptoExchanges().isEmpty());
         }

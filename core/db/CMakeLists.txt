@@ -19,6 +19,8 @@ add_library(core_db STATIC
     InvestmentRepository.h
     NotesRepository.cpp
     NotesRepository.h
+    OperationRows.cpp
+    OperationRows.h
     PlanningRepository.cpp
     PlanningRepository.h
     PositionHistory.cpp
@@ -34,5 +36,7 @@ add_library(core_db STATIC
     SnapshotTables.h
     SqlRow.cpp
     SqlRow.h
+    TransactionRepository.cpp
+    TransactionRepository.h
 )
 target_link_libraries(core_db PUBLIC core_model Qt6::Sql vexa_storage)
