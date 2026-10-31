@@ -1,5 +1,5 @@
 #include "DatabaseProtection.h"
-#include "../services/ContentUriIo.h"
+#include "../core/system/ContentUriIo.h"
 #include <QCoreApplication>
 #include <QProcess>
 #include <QFileInfo>

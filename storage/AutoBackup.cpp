@@ -13,7 +13,7 @@
 #include <algorithm>
 
 #ifdef Q_OS_ANDROID
-#include "../services/ContentUriIo.h"
+#include "../core/system/ContentUriIo.h"
 #include <QJniEnvironment>
 #include <QJniObject>
 #include <QtCore/qnativeinterface.h>

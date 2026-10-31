@@ -1,6 +1,6 @@
 #pragma once
 
-#include "CsvCodec.h"
+#include "../core/system/CsvCodec.h"
 #include "../core/model/transactions/BankCsvOperation.h"
 
 #include <QDateTime>

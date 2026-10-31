@@ -173,15 +173,8 @@ qt_add_qml_module(vexa
         SOURCES ui/computer/common/WindowScrollInput.cpp
         SOURCES interface/FinanceControllerBenchmark.cpp
         SOURCES interface/FinanceControllerPerformance.cpp
-        SOURCES services/CsvCodec.h
-        SOURCES services/CsvCodec.cpp
-        SOURCES services/ContentUriIo.h
         SOURCES services/BankCsvImporter.h
         SOURCES services/BankCsvImporter.cpp
-        SOURCES services/PdfStatementReader.h
-        SOURCES services/PdfStatementReader.cpp
-        SOURCES services/XlsxReader.h
-        SOURCES services/XlsxReader.cpp
         SOURCES services/ExchangeCredentials.h
         SOURCES services/ExchangeCredentials.cpp
         SOURCES interface/FinanceController.h
@@ -451,11 +444,11 @@ add_test(
 
 add_executable(CsvCodecTest
     tests/CsvCodecTest.cpp
-    services/CsvCodec.cpp
 )
 
 target_link_libraries(CsvCodecTest
     PRIVATE
+        core_system
         Qt6::Core
         Qt6::Test
 )
@@ -468,13 +461,11 @@ add_test(
 add_executable(BankCsvImporterTest
     tests/BankCsvImporterTest.cpp
     services/BankCsvImporter.cpp
-    services/PdfStatementReader.cpp
-    services/CsvCodec.cpp
-    services/XlsxReader.cpp
 )
 
 target_link_libraries(BankCsvImporterTest
     PRIVATE
+        core_system
         Qt6::Core
         Qt6::Test
         ZLIB::ZLIB
@@ -566,12 +557,9 @@ endif()
 
 add_executable(PdfStatementReaderTest
     tests/PdfStatementReaderTest.cpp
-    services/PdfStatementReader.cpp
     services/BankCsvImporter.cpp
-    services/CsvCodec.cpp
-    services/XlsxReader.cpp
 )
-target_link_libraries(PdfStatementReaderTest PRIVATE Qt6::Core Qt6::Gui Qt6::Test ZLIB::ZLIB)
+target_link_libraries(PdfStatementReaderTest PRIVATE core_system Qt6::Core Qt6::Gui Qt6::Test ZLIB::ZLIB)
 add_test(NAME PdfStatementReaderTest COMMAND PdfStatementReaderTest)
 
 # Scheduling, names and retention of automatic copies; no platform store is touched.

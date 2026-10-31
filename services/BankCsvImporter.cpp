@@ -1,6 +1,6 @@
 #include "BankCsvImporter.h"
-#include "XlsxReader.h"
-#include "PdfStatementReader.h"
+#include "../core/system/XlsxReader.h"
+#include "../core/system/PdfStatementReader.h"
 
 #include <QCryptographicHash>
 #include <QLocale>
