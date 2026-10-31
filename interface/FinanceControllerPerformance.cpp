@@ -9,7 +9,7 @@
 
 void FinanceController::rebuildInvestmentPerformance()
 {
-    if(!valuationHistoryReady_ || !repository_.isOpen())return;
+    if(!valuationHistoryReady_ || !preparedDatabase_.isOpen())return;
     InvestmentPerformanceInput input;
     performanceAccounts_.clear();
     // A group is a portfolio of one kind of accounts: all brokerage accounts or all deposits. Money moved between accounts

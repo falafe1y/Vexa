@@ -97,7 +97,7 @@ core/
   - `DatabaseMaintenance` в `core/db/`: бэкап, восстановление из копии, очистка данных, проверка схемы копии (`migrateBackup`) — из `FinanceRepository`;
   - из `storage/` в `core/db/`: `CipherDriver` (SQLCipher), `DatabaseEncryption` (шифрование, копия, восстановление файла базы), `PortableBackup` (формат `.vexabackup`); `core_db` больше не зависит от `vexa_storage`, а `vexa_storage` (остались `DatabaseProtection`, `AutoBackup`) зависит от `core_db`;
   - хранилище ключа базы (интерфейс `DatabaseKeyStore`, реализация для Windows и Android, `nativeDatabaseKeyStore()`) — `core/system/DatabaseKeyStore`. Исключение из правила независимости частей `core`: `core/db` подключает этот интерфейс из `core/system` (решено 31.10.2026)
-- [ ] 2.8 `FinanceRepository` опустел — удалить.
+- [x] 2.8 `FinanceRepository` удалён вместе с папкой `persistence/`. Открытие базы с подготовкой схемы — `core/db/PreparedDatabase`; хранилище ключа он не держит (это `core/system`): `nativeDatabaseKeyStore()` создаёт вызывающий — контроллер, в тестах сам тест
 
 ## Этап 3. `services`
 
@@ -105,6 +105,7 @@ core/
 - [ ] 3.2 По домену за шаг, в порядке этапа 2. Для каждого:
   - правила из `FinanceController` — в `core/model` (сущности и расчёты), не в `services`;
   - порядок шагов, транзакции и вызовы репозиториев — в сервис.
+- [ ] 3.x Разделить работу с ключом базы и шифрование (решено 31.10.2026, делать вместе с `DatabaseProtectionService`): в `core/system/DatabaseKeyStore` — прочитать ключ, создать случайный, сохранить и перечитать для проверки (сейчас `ensureKey` внутри `DatabaseEncryption`); в `core/db/DatabaseEncryption` — только работа с файлом базы: `open`, `convert`, `restore`, `recover`, `openSnapshot` получают готовый ключ вместо хранилища, плюс вопрос «база зашифрована?». Вызывающие (`DatabaseProtection`, `DatabaseMaintenance::restoreDatabase`, импорт в `PortableBackup`) сначала получают ключ, потом шифруют. Сохранить правила: ключ сохраняется и проверяется до перешифрования; для зашифрованной базы, которая не открывается, новый ключ не создаётся. После шага — убрать исключение из ADR-031
 - [ ] 3.3 Уведомления об изменениях (`transactionsChanged`, `accountsChanged`, `ratesChanged`) испускают сервисы.
 - [ ] 3.4 Данные для графиков и аналитики — в сервисах, обычными типами, без QML-специфики.
 

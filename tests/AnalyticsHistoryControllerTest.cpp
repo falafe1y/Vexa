@@ -14,7 +14,7 @@ private slots:
     void initTestCase(){QStandardPaths::setTestModeEnabled(true);}
     void capturesAllAssetsEvenWithUnknownCrypto(){
         QTemporaryDir dir;const auto path=dir.filePath("data.db");
-        {FinanceRepository r(path);QVERIFY(SettingsRepository(r.database()).saveAutomaticCurrencyRates(false));QVERIFY(SettingsRepository(r.database()).saveManualCurrencyRates(1,100,120,14));
+        {PreparedDatabase r(path);QVERIFY(SettingsRepository(r.database()).saveAutomaticCurrencyRates(false));QVERIFY(SettingsRepository(r.database()).saveManualCurrencyRates(1,100,120,14));
          QVERIFY(AccountRepository(r.database()).insertAccount({"fiat","Доллары",AssetType::Fiat,AccountType::DebitCard,Currency::USD,12345}));
          QVERIFY(AccountRepository(r.database()).insertAccount({"broker","Брокер",AssetType::Investment,AccountType::Brokerage,Currency::RUB,100000}));
          InvestmentPositionSettings settings;settings.manualValuation=true;settings.manualValueMinor=30000;settings.valuedAtUtc=QDateTime::currentDateTimeUtc();
@@ -22,7 +22,7 @@ private slots:
             {"position","broker","stock",3'000'000,100'000'000,{},{},settings},{},false,{},30100));
          QVERIFY(CryptoRepository(r.database()).insertCryptoWallet({"wallet","address","BITCOIN","BTC",8}));}
         {FinanceController c(nullptr,path);c.setAppCurrency("EUR");}
-        FinanceRepository r(path);const auto fiat=AnalyticsRepository(r.database()).loadDailyValuations(AssetDailyValuation::Fiat);
+        PreparedDatabase r(path);const auto fiat=AnalyticsRepository(r.database()).loadDailyValuations(AssetDailyValuation::Fiat);
         bool found=false;for(const auto& row:fiat)if(row.toMap().value("source_id").toString()=="cash:fiat"){
             found=true;QCOMPARE(row.toMap().value("currency").toString(),QString("USD"));
             QCOMPARE(row.toMap().value("value_minor").toLongLong(),qint64(12345));
@@ -37,7 +37,7 @@ private slots:
     }
     void manualCostCanBeClearedWithoutChangingQuantity(){
         QTemporaryDir dir;const auto path=dir.filePath("data.db");
-        {FinanceRepository r(path);QVERIFY(SettingsRepository(r.database()).saveAutomaticCurrencyRates(false));QVERIFY(SettingsRepository(r.database()).saveManualCurrencyRates(1,100,120,14));
+        {PreparedDatabase r(path);QVERIFY(SettingsRepository(r.database()).saveAutomaticCurrencyRates(false));QVERIFY(SettingsRepository(r.database()).saveManualCurrencyRates(1,100,120,14));
          QVERIFY(AccountRepository(r.database()).insertAccount({"broker","Брокер",AssetType::Investment,AccountType::Brokerage,Currency::RUB,100000}));}
         FinanceController c(nullptr,path);c.setSelectedAsset("investment");
         auto result=c.saveInvestmentPosition({{"accountId","broker"},{"searchIndex",-2},{"instrumentType",0},{"name","Акция"},{"symbol","TEST"},
@@ -56,7 +56,7 @@ private slots:
     }
     void negativeFutureClearingPriceIsPreserved(){
         QTemporaryDir dir;const auto path=dir.filePath("data.db"),at=QDateTime::currentDateTimeUtc().addSecs(-5).toString(Qt::ISODateWithMs);
-        {FinanceRepository r(path);QVERIFY(SettingsRepository(r.database()).saveAutomaticCurrencyRates(false));QVERIFY(SettingsRepository(r.database()).saveManualCurrencyRates(1,100,120,14));
+        {PreparedDatabase r(path);QVERIFY(SettingsRepository(r.database()).saveAutomaticCurrencyRates(false));QVERIFY(SettingsRepository(r.database()).saveManualCurrencyRates(1,100,120,14));
          QVERIFY(AccountRepository(r.database()).insertAccount({"broker","Брокер",AssetType::Investment,AccountType::Brokerage,Currency::RUB,200000}));
          InvestmentTerms t;t.pricing="future";t.currencyCode="RUB";t.priceStepMicros=1'000'000;t.stepValueMicros=10'000'000;
          InvestmentPositionSettings settings;settings.referencePriceMicros=100'000'000;settings.referenceAtUtc=QDateTime::currentDateTimeUtc().addSecs(-3600);
@@ -65,11 +65,11 @@ private slots:
         {FinanceController c(nullptr,path);c.setSelectedAsset("investment");
          auto result=c.recordInvestmentOperation({{"positionId","p"},{"kind","margin"},{"date",at},{"cashAmount","-1100"},{"price","-10"}});
          QVERIFY2(result.value("ok").toBool(),qPrintable(result.value("error").toString()));}
-        FinanceRepository r(path);QCOMPARE(InvestmentRepository(r.database()).loadInvestmentOperations().at(0).tradePriceMicros.value_or(0),qint64(-10'000'000));
+        PreparedDatabase r(path);QCOMPARE(InvestmentRepository(r.database()).loadInvestmentOperations().at(0).tradePriceMicros.value_or(0),qint64(-10'000'000));
     }
     void chargesAreSavedOnceAndEmptyMeansUnknown(){
         QTemporaryDir dir;const auto path=dir.filePath("data.db");
-        {FinanceRepository r(path);QVERIFY(SettingsRepository(r.database()).saveAutomaticCurrencyRates(false));QVERIFY(SettingsRepository(r.database()).saveManualCurrencyRates(1,100,120,14));
+        {PreparedDatabase r(path);QVERIFY(SettingsRepository(r.database()).saveAutomaticCurrencyRates(false));QVERIFY(SettingsRepository(r.database()).saveManualCurrencyRates(1,100,120,14));
          QVERIFY(AccountRepository(r.database()).insertAccount({"broker","Брокер",AssetType::Investment,AccountType::Brokerage,Currency::RUB,100000}));}
         {FinanceController c(nullptr,path);c.setSelectedAsset("investment");
          auto result=c.saveInvestmentPosition({{"accountId","broker"},{"searchIndex",-2},{"instrumentType",0},{"name","Акция"},{"symbol","TEST"},
@@ -80,7 +80,7 @@ private slots:
          result=c.recordInvestmentOperation({{"positionId",p.value("id")},{"kind","sell"},{"date",QDateTime::currentDateTimeUtc().toString(Qt::ISODateWithMs)},
             {"quantity","1"},{"cashAmount","110"},{"price","110"},{"remainingValue","220"},{"fee","1"},{"tax",""}});
          QVERIFY2(result.value("ok").toBool(),qPrintable(result.value("error").toString()));}
-        FinanceRepository r(path);const auto ops=InvestmentRepository(r.database()).loadInvestmentOperations();QCOMPARE(ops.size(),4);
+        PreparedDatabase r(path);const auto ops=InvestmentRepository(r.database()).loadInvestmentOperations();QCOMPARE(ops.size(),4);
         for(const auto& op:ops){if(op.kind=="buy")QCOMPARE(op.cashDeltaMinor,qint64(-30'000));if(op.kind=="sell")QVERIFY(!op.feeMinor);if(op.kind=="fee")QCOMPARE(op.cashDeltaMinor,qint64(-100));}
         const auto history=InvestmentRepository(r.database()).loadPositionHistory(InvestmentRepository(r.database()).loadInvestmentPositions().at(0).id());
         QCOMPARE(history.last().toMap().value("realized_net_minor").toLongLong(),qint64(867));

@@ -16,7 +16,7 @@ private slots:
     void initTestCase(){QStandardPaths::setTestModeEnabled(true);}
     void historyDownloadDoesNotRequirePortfolioObservations(){
         QTemporaryDir dir;const auto path=dir.filePath("data.db");const auto today=QDate::currentDate();
-        {FinanceRepository r(path);QVERIFY(SettingsRepository(r.database()).saveAutomaticCurrencyRates(false));}
+        {PreparedDatabase r(path);QVERIFY(SettingsRepository(r.database()).saveAutomaticCurrencyRates(false));}
         FinanceController c(nullptr,path);QVERIFY(!c.benchmarkComparison().value("canRefresh").toBool());
         c.selectBenchmarkIndex("index:IMOEX");auto comparison=c.benchmarkComparison();
         QVERIFY(comparison.value("canRefresh").toBool());QVERIFY(!comparison.value("available").toBool());
@@ -37,7 +37,7 @@ private slots:
     void cachedComparisonAndScopeChanges(){
         QTemporaryDir dir;const auto path=dir.filePath("data.db");const auto today=QDate::currentDate();const auto from=today.addDays(-3),to=today.addDays(-1);
         {
-            FinanceRepository r(path);QVERIFY(SettingsRepository(r.database()).saveAutomaticCurrencyRates(false));QVERIFY(AccountRepository(r.database()).insertAccount({"broker","Брокер",AssetType::Investment,AccountType::Brokerage,Currency::RUB,10000}));
+            PreparedDatabase r(path);QVERIFY(SettingsRepository(r.database()).saveAutomaticCurrencyRates(false));QVERIFY(AccountRepository(r.database()).insertAccount({"broker","Брокер",AssetType::Investment,AccountType::Brokerage,Currency::RUB,10000}));
             for(const auto& name:QSqlDatabase::connectionNames()){auto db=QSqlDatabase::database(name);if(db.databaseName()==path){QSqlQuery q(db);q.prepare("UPDATE accounts SET created_at=? WHERE id='broker'");q.addBindValue(QDateTime(from.addDays(-1),QTime(0,0)).toMSecsSinceEpoch());QVERIFY(q.exec());}}
             QVariantList prices;const qint64 amounts[]{10000,11000,12100};
             for(int i=0;i<3;++i){DailyValuationBatch b;b.date=from.addDays(i);b.observedAtUtc=QDateTime(b.date,QTime(12,0)).toUTC();
@@ -54,7 +54,7 @@ private slots:
         const auto backup=dir.filePath("saved.db");QVERIFY(c.backupDatabase(QUrl::fromLocalFile(backup)).value("ok").toBool());
         c.selectBenchmarkIndex("");QVERIFY(c.benchmarkSelection().isEmpty());QVERIFY(c.restoreDatabase(QUrl::fromLocalFile(backup)).value("ok").toBool());
         QVERIFY(c.benchmarkComparison().value("available").toBool());QVERIFY(c.clearAllData().value("ok").toBool());QVERIFY(c.benchmarkSelection().isEmpty());QVERIFY(!c.benchmarkComparison().value("available").toBool());
-        FinanceRepository r(path);QVERIFY(AnalyticsRepository(r.database()).loadBenchmarkPrices("index:IMOEX").isEmpty());
+        PreparedDatabase r(path);QVERIFY(AnalyticsRepository(r.database()).loadBenchmarkPrices("index:IMOEX").isEmpty());
     }
 };
 QTEST_GUILESS_MAIN(InvestmentBenchmarkControllerTest)

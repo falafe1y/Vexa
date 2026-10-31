@@ -32,7 +32,7 @@ QVariantList FinanceController::benchmarkPortfolioDates() const {
     return dates;
 }
 void FinanceController::rebuildBenchmarkComparison(){
-    if(!valuationHistoryReady_ || !repository_.isOpen())return;
+    if(!valuationHistoryReady_ || !preparedDatabase_.isOpen())return;
     auto descriptor=analyticsRepository_.loadBenchmarkSelection();
     if(descriptor.value("kind")=="index"){
         QVariantMap valid;for(const auto& v:benchmarkIndices())if(v.toMap().value("key")==descriptor.value("key"))valid=v.toMap();descriptor=valid;

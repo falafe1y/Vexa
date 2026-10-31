@@ -1,4 +1,5 @@
 #include <QtTest>
+#include "../core/system/DatabaseKeyStore.h"
 #include "../core/db/DatabaseMaintenance.h"
 #include "../core/db/AccountRepository.h"
 #include "../core/db/SettingsRepository.h"
@@ -11,7 +12,7 @@
 #include "../core/db/PortableBackup.h"
 #include "../core/db/CipherDriver.h"
 #include "storage/DatabaseProtection.h"
-#include "persistence/FinanceRepository.h"
+#include "../core/db/PreparedDatabase.h"
 
 namespace {
 class Keys : public DatabaseKeyStore {
@@ -26,13 +27,13 @@ const QString Notes = QString::fromUtf8("VEXA_PRIVATE_деньги_123456789");
 QByteArray bytes(const QString& path) { QFile file(path); if (!file.open(QIODevice::ReadOnly)) return {}; return file.readAll(); }
 bool write(const QString& path, const QByteArray& data) { QFile file(path); return file.open(QIODevice::WriteOnly) && file.write(data) == data.size(); }
 bool seed(const QString& path) {
-    FinanceRepository repository(path);
-    return repository.isOpen() && DatabaseMaintenance(repository.database(), repository.keyStore()).clearAllUserData() && NotesRepository(repository.database()).save(Notes)
+    PreparedDatabase repository(path);
+    return repository.isOpen() && DatabaseMaintenance(repository.database(), nativeDatabaseKeyStore()).clearAllUserData() && NotesRepository(repository.database()).save(Notes)
         && SettingsRepository(repository.database()).saveAppCurrency("CNY")
         && AccountRepository(repository.database()).insertAccount({"account", "Счёт", AssetType::Fiat, AccountType::Cash, Currency::RUB, 9007199254740993LL});
 }
 QString notes(const DatabaseAccess& access) {
-    FinanceRepository repository(access.path, access.key); QString value;
+    PreparedDatabase repository(access.path, access.key); QString value;
     if (repository.isOpen()) NotesRepository(repository.database()).load(value); return value;
 }
 bool sql(const DatabaseAccess& access, const QString& statement) {
@@ -80,7 +81,7 @@ private slots:
         QCOMPARE(restored.access.encrypted(), encryptedTarget); QCOMPARE(targetKeys.key, keyBefore);
         QCOMPARE(notes(restored.access), Notes);
         {
-            FinanceRepository repository(targetPath, targetKeys.key);
+            PreparedDatabase repository(targetPath, targetKeys.key);
             QCOMPARE(SettingsRepository(repository.database()).loadAppCurrency(), "CNY");
             QCOMPARE(AccountRepository(repository.database()).loadAccounts().first().initialBalanceMinor(), 9007199254740993LL);
         }

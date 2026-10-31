@@ -34,6 +34,8 @@ add_library(core_db STATIC
     PortableBackup.h
     PositionHistory.cpp
     PositionHistory.h
+    PreparedDatabase.cpp
+    PreparedDatabase.h
     PriceHistory.cpp
     PriceHistory.h
     ProjectRepository.cpp

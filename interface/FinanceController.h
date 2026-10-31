@@ -1,7 +1,7 @@
 #pragma once
 
 #include "../core/model/transactions/Transaction.h"
-#include "../persistence/FinanceRepository.h"
+#include "../core/db/PreparedDatabase.h"
 #include "../core/db/NotesRepository.h"
 #include "../core/db/SettingsRepository.h"
 #include "../core/db/BankImportRepository.h"
@@ -820,7 +820,7 @@ private:
     QVariantMap buildBankCsvInspection(const CsvCodec::ReadResult& csv,
         const QString& filePath, int headerRow) const;
     int bankCsvInspectionRequestId_ = 0;
-    FinanceRepository repository_;
+    PreparedDatabase preparedDatabase_;
     NotesRepository notes_;
     SettingsRepository settings_;
     BankImportRepository bankImport_;

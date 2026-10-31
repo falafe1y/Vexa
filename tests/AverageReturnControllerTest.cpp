@@ -15,7 +15,7 @@ private slots:
         QTemporaryDir dir;
         const auto path = dir.filePath("data.db");
         {
-            FinanceRepository r(path);
+            PreparedDatabase r(path);
             QVERIFY(SettingsRepository(r.database()).saveAutomaticCurrencyRates(false));
             QVERIFY(SettingsRepository(r.database()).saveManualCurrencyRates(1, 100, 120));
             QVERIFY(AccountRepository(r.database()).insertAccount({"broker", "Брокер", AssetType::Investment, AccountType::Brokerage, Currency::RUB, 1000000}));

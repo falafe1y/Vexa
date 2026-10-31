@@ -1,7 +1,7 @@
 #include "../core/db/CipherDriver.h"
 #include "../core/db/AccountRepository.h"
 #include "../core/db/InvestmentRepository.h"
-#include "../persistence/FinanceRepository.h"
+#include "../core/db/PreparedDatabase.h"
 
 #include <QTemporaryDir>
 #include <QSqlQuery>
@@ -28,7 +28,7 @@ void InvestmentRepositoryTest::updatesPositionInstrument()
 {
     QTemporaryDir temporaryDirectory;
     QVERIFY(temporaryDirectory.isValid());
-    FinanceRepository repository(temporaryDirectory.filePath(
+    PreparedDatabase repository(temporaryDirectory.filePath(
         QStringLiteral("investment-instrument-update.sqlite3")));
     QVERIFY2(repository.isOpen(), qPrintable(repository.lastError()));
 
@@ -76,7 +76,7 @@ void InvestmentRepositoryTest::storesUpdatesAndArchivesInvestmentModel()
     const QDateTime updatedQuoteAt = firstQuoteAt.addSecs(300);
 
     {
-        FinanceRepository repository(databasePath);
+        PreparedDatabase repository(databasePath);
         QVERIFY2(repository.isOpen(), qPrintable(repository.lastError()));
 
         const Account brokerage(
@@ -126,7 +126,7 @@ void InvestmentRepositoryTest::storesUpdatesAndArchivesInvestmentModel()
     }
 
     {
-        FinanceRepository repository(databasePath);
+        PreparedDatabase repository(databasePath);
         QVERIFY2(repository.isOpen(), qPrintable(repository.lastError()));
 
         const QVector<InvestmentInstrument> instruments =
@@ -176,7 +176,7 @@ void InvestmentRepositoryTest::rejectsInvalidInvestmentRelationsAndValues()
 {
     QTemporaryDir temporaryDirectory;
     QVERIFY(temporaryDirectory.isValid());
-    FinanceRepository repository(temporaryDirectory.filePath(
+    PreparedDatabase repository(temporaryDirectory.filePath(
         QStringLiteral("investment-validation.sqlite3")));
     QVERIFY2(repository.isOpen(), qPrintable(repository.lastError()));
 
@@ -230,7 +230,7 @@ void InvestmentRepositoryTest::archivesPositionsWithInvestmentAccount()
 {
     QTemporaryDir temporaryDirectory;
     QVERIFY(temporaryDirectory.isValid());
-    FinanceRepository repository(temporaryDirectory.filePath(
+    PreparedDatabase repository(temporaryDirectory.filePath(
         QStringLiteral("investment-account-archive.sqlite3")));
     QVERIFY2(repository.isOpen(), qPrintable(repository.lastError()));
 
@@ -279,7 +279,7 @@ void InvestmentRepositoryTest::migratesMoexRoutingColumns()
     }
     QSqlDatabase::removeDatabase(connectionName);
 
-    FinanceRepository repository(databasePath);
+    PreparedDatabase repository(databasePath);
     QVERIFY2(repository.isOpen(), qPrintable(repository.lastError()));
     QVector<InvestmentInstrument> instruments =
         InvestmentRepository(repository.database()).loadInvestmentInstruments();
@@ -330,7 +330,7 @@ void InvestmentRepositoryTest::migratesLegacyInvestmentAccountTypes()
     }
     QSqlDatabase::removeDatabase(connectionName);
 
-    FinanceRepository repository(databasePath);
+    PreparedDatabase repository(databasePath);
     QVERIFY2(repository.isOpen(), qPrintable(repository.lastError()));
     const QVector<Account> existingAccounts = AccountRepository(repository.database()).loadAccounts();
     QVERIFY(std::any_of(

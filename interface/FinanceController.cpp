@@ -1,4 +1,5 @@
 #include "FinanceController.h"
+#include "../core/system/DatabaseKeyStore.h"
 #include "../core/system/ExchangeCredentials.h"
 #include "../core/api/MoexInvestmentParser.h"
 #include <QtConcurrent>
@@ -445,20 +446,20 @@ QString investmentTypeName(const InvestmentInstrumentType type)
 
 FinanceController::FinanceController(QObject* parent, const QString& databasePath, const QByteArray& databaseKey)
     : QObject(parent)
-    , repository_(databasePath, databaseKey)
-    , notes_(repository_.database())
-    , settings_(repository_.database())
-    , bankImport_(repository_.database())
-    , crypto_(repository_.database())
-    , planning_(repository_.database())
-    , projectRepository_(repository_.database())
-    , categoryRepository_(repository_.database())
-    , recurringRepository_(repository_.database())
-    , investmentRepository_(repository_.database())
-    , analyticsRepository_(repository_.database())
-    , accountRepository_(repository_.database())
-    , transactionRepository_(repository_.database())
-    , maintenance_(repository_.database(), repository_.keyStore())
+    , preparedDatabase_(databasePath, databaseKey)
+    , notes_(preparedDatabase_.database())
+    , settings_(preparedDatabase_.database())
+    , bankImport_(preparedDatabase_.database())
+    , crypto_(preparedDatabase_.database())
+    , planning_(preparedDatabase_.database())
+    , projectRepository_(preparedDatabase_.database())
+    , categoryRepository_(preparedDatabase_.database())
+    , recurringRepository_(preparedDatabase_.database())
+    , investmentRepository_(preparedDatabase_.database())
+    , analyticsRepository_(preparedDatabase_.database())
+    , accountRepository_(preparedDatabase_.database())
+    , transactionRepository_(preparedDatabase_.database())
+    , maintenance_(preparedDatabase_.database(), nativeDatabaseKeyStore())
     , currencyConverter_(rateProvider_)
     , balanceCalculator_(currencyConverter_)
 {
@@ -754,9 +755,9 @@ FinanceController::FinanceController(QObject* parent, const QString& databasePat
         this,
         &FinanceController::materializeRecurringTransactions);
 
-    if (!repository_.isOpen()) {
+    if (!preparedDatabase_.isOpen()) {
         qWarning() << "Failed to open finance database:"
-                   << repository_.lastError();
+                   << preparedDatabase_.lastError();
         return;
     }
 
@@ -863,8 +864,8 @@ FinanceController::FinanceController(QObject* parent, const QString& databasePat
     }
 }
 
-bool FinanceController::storageReady() const { return repository_.isOpen(); }
-QString FinanceController::storageError() const { return repository_.lastError(); }
+bool FinanceController::storageReady() const { return preparedDatabase_.isOpen(); }
+QString FinanceController::storageError() const { return preparedDatabase_.lastError(); }
 
 FinanceController::~FinanceController()
 {
@@ -930,7 +931,7 @@ void FinanceController::loadNotes(const bool migrateLegacyFile)
     notesSaveTimer_.stop();
     notesDirty_ = false;
     notesError_.clear();
-    legacyNotesFilePath_ = QFileInfo(repository_.databasePath()).absolutePath()
+    legacyNotesFilePath_ = QFileInfo(preparedDatabase_.databasePath()).absolutePath()
         + QStringLiteral("/notes.txt");
     bool exists = false;
     QString text;
@@ -1053,7 +1054,7 @@ void FinanceController::setAppCurrency(const QString& currency)
 
     appCurrency_ = newCurrency;
 
-    if (repository_.isOpen() &&
+    if (preparedDatabase_.isOpen() &&
         !settings_.saveAppCurrency(currencyCode(newCurrency))) {
         qWarning() << "Failed to save application currency:"
                    << settings_.lastError();
@@ -1077,7 +1078,7 @@ void FinanceController::setAutomaticCurrencyRates(const bool enabled)
     if (enabled == automaticCurrencyRates_) {
         return;
     }
-    if (repository_.isOpen() &&
+    if (preparedDatabase_.isOpen() &&
         !settings_.saveAutomaticCurrencyRates(enabled)) {
         qWarning() << "Failed to save automatic currency-rate setting:"
                    << settings_.lastError();
@@ -1145,7 +1146,7 @@ bool FinanceController::saveManualCurrencyRates(
             rublesPerRub, rublesPerUsd, rublesPerEur, rublesPerCny)) {
         return false;
     }
-    if (repository_.isOpen() &&
+    if (preparedDatabase_.isOpen() &&
         !settings_.saveManualCurrencyRates(
             rublesPerRub, rublesPerUsd, rublesPerEur, rublesPerCny)) {
         qWarning() << "Failed to save manual currency rates:"
@@ -3687,7 +3688,7 @@ void FinanceController::setAnalyticsCurrency(const QString& currency)
     if (normalized == analyticsCurrency_) {
         return;
     }
-    if (repository_.isOpen() &&
+    if (preparedDatabase_.isOpen() &&
         !settings_.saveAnalyticsCurrency(currencyCode(normalized))) {
         qWarning() << "Failed to save analytics currency:"
                    << settings_.lastError();
@@ -4021,7 +4022,7 @@ bool FinanceController::updateAccount(
     // The rate before this update: a change of the rate starts a new step of the rate history from today
     const DepositSettings* previousDeposit = depositSettingsForAccount(id);
     const int previousRate = previousDeposit ? previousDeposit->annualRateBasisPoints() : -1;
-    if (!repository_.isOpen() ||
+    if (!preparedDatabase_.isOpen() ||
         !accountRepository_.updateAccountAndDeposit(updated, deposit)) {
         qWarning() << "Failed to update account:" << accountRepository_.lastError();
         return false;
@@ -4087,7 +4088,7 @@ bool FinanceController::deleteAccount(const QString& id)
     if (accountIndex < 0) {
         return false;
     }
-    if (!repository_.isOpen() || !accountRepository_.deleteAccount(id)) {
+    if (!preparedDatabase_.isOpen() || !accountRepository_.deleteAccount(id)) {
         qWarning() << "Failed to delete account:" << accountRepository_.lastError();
         return false;
     }
@@ -4914,7 +4915,7 @@ bool FinanceController::addCategory(
         normalizedName,
         categoryType);
 
-    if (!repository_.isOpen() || !categoryRepository_.insertCategory(category)) {
+    if (!preparedDatabase_.isOpen() || !categoryRepository_.insertCategory(category)) {
         qWarning() << "Failed to save category:" << categoryRepository_.lastError();
         return false;
     }
@@ -5210,7 +5211,7 @@ bool FinanceController::addTransfer(
         QStringLiteral("transfer-in"), Money(targetMinorUnits, target->currency()),
         TransactionType::Income, occurredAt, normalizedDescription);
 
-    if (!repository_.isOpen() || !transactionRepository_.insertTransfer(outgoing, incoming)) {
+    if (!preparedDatabase_.isOpen() || !transactionRepository_.insertTransfer(outgoing, incoming)) {
         qWarning() << "Failed to save transfer:" << transactionRepository_.lastError();
         return false;
     }
@@ -5329,7 +5330,7 @@ bool FinanceController::updateOperation(
             occurredAt,
             normalizedDescription);
 
-        if (!repository_.isOpen() ||
+        if (!preparedDatabase_.isOpen() ||
             !transactionRepository_.replaceTransactionWithTransfer(id, outgoing, incoming)) {
             qWarning() << "Failed to replace operation with transfer:"
                        << transactionRepository_.lastError();
@@ -5395,7 +5396,7 @@ bool FinanceController::updateOperation(
         original.recipient()
         );
 
-    const bool saved = repository_.isOpen() &&
+    const bool saved = preparedDatabase_.isOpen() &&
         (originalIsTransfer
             ? transactionRepository_.replaceTransaction(id, updated)
             : transactionRepository_.updateTransaction(updated));
@@ -5461,7 +5462,7 @@ QVariantMap FinanceController::transferDetails(const QString& id) const
 
 bool FinanceController::deleteHistoryRows(const QVariantList& rows)
 {
-    if (!repository_.isOpen() || !transactionRepository_.deleteHistoryRows(rows)) {
+    if (!preparedDatabase_.isOpen() || !transactionRepository_.deleteHistoryRows(rows)) {
         qWarning() << "Failed to delete selected operations:" << transactionRepository_.lastError();
         return false;
     }
@@ -5491,7 +5492,7 @@ bool FinanceController::deleteTransaction(const QString& id)
     if (transactionIndex < 0) {
         return false;
     }
-    if (!repository_.isOpen() || !transactionRepository_.deleteTransaction(id)) {
+    if (!preparedDatabase_.isOpen() || !transactionRepository_.deleteTransaction(id)) {
         qWarning() << "Failed to delete transaction:"
                    << transactionRepository_.lastError();
         return false;
@@ -5573,7 +5574,7 @@ bool FinanceController::addTransaction(
             projectId
             );
 
-    if (!repository_.isOpen() ||
+    if (!preparedDatabase_.isOpen() ||
         !transactionRepository_.insertTransaction(transaction)) {
         qWarning() << "Failed to save transaction:"
                    << transactionRepository_.lastError();
@@ -5790,7 +5791,7 @@ void FinanceController::scheduleRecurringMaterialization()
 void FinanceController::materializeRecurringTransactions()
 {
     recurringMaterializationScheduled_ = false;
-    if (!repository_.isOpen()) {
+    if (!preparedDatabase_.isOpen()) {
         return;
     }
 
@@ -6783,7 +6784,7 @@ bool FinanceController::deleteFinancialGoal(const QString& id)
 
 void FinanceController::captureCapitalSnapshot(const bool overwriteToday)
 {
-    if (!repository_.isOpen() || !valuationHistoryReady_) return;
+    if (!preparedDatabase_.isOpen() || !valuationHistoryReady_) return;
     if (restoringDatabase_) { rebuildInvestmentPerformance(); return; }
     const QDate today=QDate::currentDate();
     if (!overwriteToday && lastCapitalSnapshotDate_==today) return;

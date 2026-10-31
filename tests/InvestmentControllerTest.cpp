@@ -34,13 +34,13 @@ static qint64 balance(FinanceController& c) {
     c.setSelectedAsset("investment");for(const auto& item:c.accounts())if(item.toMap().value("id").toString()=="broker")return item.toMap().value("balanceMinor").toLongLong();
     return -1;
 }
-static bool seed(FinanceRepository& r) {
+static bool seed(PreparedDatabase& r) {
     return r.isOpen() && SettingsRepository(r.database()).saveAutomaticCurrencyRates(false) && SettingsRepository(r.database()).saveManualCurrencyRates(1,100,120) &&
         AccountRepository(r.database()).insertAccount({"broker","Брокер",AssetType::Investment,AccountType::Brokerage,Currency::RUB,10'000'000});
 }
 void InvestmentControllerTest::clearingKeepsCapitalAndSurvivesRestart() {
     QTemporaryDir dir;const auto path=dir.filePath("data.db");const auto at=QDateTime::currentDateTimeUtc().addSecs(-5);
-    {FinanceRepository r(path);QVERIFY(seed(r));InvestmentTerms t;t.engine="futures";t.market="forts";t.pricing="future";t.currencyCode="RUB";t.priceStepMicros=1'000'000;t.stepValueMicros=10'000'000;
+    {PreparedDatabase r(path);QVERIFY(seed(r));InvestmentTerms t;t.engine="futures";t.market="forts";t.pricing="future";t.currencyCode="RUB";t.priceStepMicros=1'000'000;t.stepValueMicros=10'000'000;
      InvestmentPositionSettings s;s.referencePriceMicros=100'000'000;s.referenceAtUtc=at.addSecs(-3600);s.blockedMarginMinor=2'000'000;
      QVERIFY(InvestmentRepository(r.database()).saveInvestmentBundle({"future","SiZ6","","Фьючерс",InvestmentInstrumentType::Future,Currency::RUB,"MOEX","RFUD",t},
        {"position","broker","future",2'000'000,100'000'000,{},{},s},InvestmentQuote("future",110'000'000,at,t),false));}
@@ -53,7 +53,7 @@ void InvestmentControllerTest::clearingKeepsCapitalAndSurvivesRestart() {
 }
 void InvestmentControllerTest::bondCouponAndTradesPreserveCapital() {
     QTemporaryDir dir;const auto path=dir.filePath("data.db");const auto at=QDateTime::currentDateTimeUtc().addSecs(-5);
-    {FinanceRepository r(path);QVERIFY(seed(r));InvestmentTerms t;t.engine="stock";t.market="bonds";t.pricing="bond";t.currencyCode="RUB";t.faceValueMicros=1'000'000'000;t.accruedInterestMicros=20'000'000;
+    {PreparedDatabase r(path);QVERIFY(seed(r));InvestmentTerms t;t.engine="stock";t.market="bonds";t.pricing="bond";t.currencyCode="RUB";t.faceValueMicros=1'000'000'000;t.accruedInterestMicros=20'000'000;
      QVERIFY(InvestmentRepository(r.database()).saveInvestmentBundle({"bond","BOND","","Облигация",InvestmentInstrumentType::Bond,Currency::RUB,"MOEX","TQCB",t},
        {"position","broker","bond",10'000'000,95'000'000},InvestmentQuote("bond",95'000'000,at,t),false));}
     FinanceController c(nullptr,path);QCOMPARE(balance(c),qint64(10'970'000));
@@ -66,7 +66,7 @@ void InvestmentControllerTest::bondCouponAndTradesPreserveCapital() {
 }
 void InvestmentControllerTest::shortOptionIsAnObligation() {
     QTemporaryDir dir;const auto path=dir.filePath("data.db");const auto at=QDateTime::currentDateTimeUtc().addSecs(-5);
-    {FinanceRepository r(path);QVERIFY(seed(r));InvestmentTerms t;t.engine="futures";t.market="options";t.pricing="premium_option";t.currencyCode="RUB";t.multiplierMicros=100'000'000;
+    {PreparedDatabase r(path);QVERIFY(seed(r));InvestmentTerms t;t.engine="futures";t.market="options";t.pricing="premium_option";t.currencyCode="RUB";t.multiplierMicros=100'000'000;
      InvestmentPositionSettings s;s.direction=-1;
      InvestmentOperation opening{"opening","broker","position","option","buy",100'000,1'000'000,at,"Продажа опциона"};
      QVERIFY(InvestmentRepository(r.database()).saveInvestmentBundle({"option","OPT","","Опцион",InvestmentInstrumentType::Option,Currency::RUB,"MOEX","ROPD",t},
@@ -77,7 +77,7 @@ void InvestmentControllerTest::shortOptionIsAnObligation() {
 }
 void InvestmentControllerTest::foreignCurrencyAndMissingRateAreExplicit() {
     QTemporaryDir dir;const auto path=dir.filePath("data.db");
-    {FinanceRepository r(path);QVERIFY(seed(r));InvestmentTerms t;t.engine="stock";t.market="shares";t.currencyCode="USD";
+    {PreparedDatabase r(path);QVERIFY(seed(r));InvestmentTerms t;t.engine="stock";t.market="shares";t.currencyCode="USD";
      QVERIFY(InvestmentRepository(r.database()).saveInvestmentBundle({"foreign","USDSTOCK","","Акция",InvestmentInstrumentType::Stock,Currency::USD,"MOEX","TQTF",t},
        {"foreign-position","broker","foreign",10'000'000,1'000'000},InvestmentQuote("foreign",1'000'000,QDateTime::currentDateTimeUtc(),t),false));
      t.currencyCode="XYZ";QVERIFY(InvestmentRepository(r.database()).saveInvestmentBundle({"unknown","UNKNOWN","","Акция",InvestmentInstrumentType::Stock,Currency::RUB,"MOEX","TQTF",t},
@@ -88,7 +88,7 @@ void InvestmentControllerTest::foreignCurrencyAndMissingRateAreExplicit() {
     QVERIFY2(result.value("ok").toBool(),qPrintable(result.value("error").toString()));QCOMPARE(balance(c),qint64(10'150'000));QVERIFY(!c.investmentValuationIncomplete());
 }
 void InvestmentControllerTest::manuallyAddsEveryAssetClass() {
-    QTemporaryDir dir;const auto path=dir.filePath("data.db");{FinanceRepository r(path);QVERIFY(seed(r));}
+    QTemporaryDir dir;const auto path=dir.filePath("data.db");{PreparedDatabase r(path);QVERIFY(seed(r));}
     FinanceController c(nullptr,path);c.setSelectedAsset("investment");
     for(int type=0;type<=10;++type){const auto result=c.saveInvestmentPosition({{"accountId","broker"},{"searchIndex",-2},
         {"instrumentType",type},{"name",QStringLiteral("Инструмент %1").arg(type)},{"symbol",QStringLiteral("ASSET%1").arg(type)},
@@ -110,7 +110,7 @@ static QVariantMap investmentHalf(const QVariantList& rows,const QString& kind,c
         if(row.value("type").toString()=="transfer" && row.value("kind").toString()==kind && row.value("direction").toString()==direction)return row;}
     return {};
 }
-static void seedBondPosition(FinanceRepository& r,const QDateTime& at,qint64 blockedMargin=0) {
+static void seedBondPosition(PreparedDatabase& r,const QDateTime& at,qint64 blockedMargin=0) {
     // No accrued interest: trades at the clean price then move the cash and the holding by the same amount
     InvestmentTerms t;t.engine="stock";t.market="bonds";t.pricing="bond";t.currencyCode="RUB";t.faceValueMicros=1'000'000'000;t.accruedInterestMicros=0;
     InvestmentPositionSettings settings;settings.blockedMarginMinor=blockedMargin;
@@ -119,7 +119,7 @@ static void seedBondPosition(FinanceRepository& r,const QDateTime& at,qint64 blo
 }
 void InvestmentControllerTest::transferToDepositAndBackKeepsBothHalves() {
     QTemporaryDir dir;const auto path=dir.filePath("data.db");const auto now=QDateTime::currentDateTimeUtc().addSecs(-5);
-    {FinanceRepository r(path);QVERIFY(seed(r));
+    {PreparedDatabase r(path);QVERIFY(seed(r));
      QVERIFY(AccountRepository(r.database()).insertAccount({"cash","Сбер",AssetType::Fiat,AccountType::DebitCard,Currency::RUB,500'000}));
      QVERIFY(AccountRepository(r.database()).insertAccount({"deposit","Вклад",AssetType::Investment,AccountType::Deposit,Currency::RUB,0}));}
     FinanceController c(nullptr,path);
@@ -135,7 +135,7 @@ void InvestmentControllerTest::transferToDepositAndBackKeepsBothHalves() {
 }
 void InvestmentControllerTest::tradesAreTransferHalvesNotIncome() {
     QTemporaryDir dir;const auto path=dir.filePath("data.db");const auto at=QDateTime::currentDateTimeUtc().addSecs(-5);
-    {FinanceRepository r(path);QVERIFY(seed(r));seedBondPosition(r,at);}
+    {PreparedDatabase r(path);QVERIFY(seed(r));seedBondPosition(r,at);}
     FinanceController c(nullptr,path);const qint64 base=balance(c);
     auto result=c.recordInvestmentOperation({{"positionId","position"},{"kind","buy"},{"date",at.toString(Qt::ISODate)},{"cashAmount","-4750"},{"quantity","5"},{"price","95"}});
     QVERIFY2(result.value("ok").toBool(),qPrintable(result.value("error").toString()));
@@ -164,7 +164,7 @@ void InvestmentControllerTest::tradesAreTransferHalvesNotIncome() {
 }
 void InvestmentControllerTest::proceedsOfSaleTransferToFiat() {
     QTemporaryDir dir;const auto path=dir.filePath("data.db");const auto at=QDateTime::currentDateTimeUtc().addSecs(-5);
-    {FinanceRepository r(path);QVERIFY(seed(r));seedBondPosition(r,at);
+    {PreparedDatabase r(path);QVERIFY(seed(r));seedBondPosition(r,at);
      QVERIFY(AccountRepository(r.database()).insertAccount({"cash","Сбер",AssetType::Fiat,AccountType::DebitCard,Currency::RUB,0}));}
     FinanceController c(nullptr,path);const qint64 base=balance(c);
     auto result=c.recordInvestmentOperation({{"positionId","position"},{"kind","sell"},{"date",at.toString(Qt::ISODate)},{"cashAmount","4750"},{"quantity","5"}});
@@ -183,7 +183,7 @@ static QVariantMap brokerage(FinanceController& c,const QString& id) {
 }
 void InvestmentControllerTest::brokerTransfersCannotTouchBlockedMargin() {
     QTemporaryDir dir;const auto path=dir.filePath("data.db");const auto at=QDateTime::currentDateTimeUtc().addSecs(-5);
-    {FinanceRepository r(path);QVERIFY(seed(r));seedBondPosition(r,at,200'000);
+    {PreparedDatabase r(path);QVERIFY(seed(r));seedBondPosition(r,at,200'000);
      QVERIFY(AccountRepository(r.database()).insertAccount({"cash","Сбер",AssetType::Fiat,AccountType::DebitCard,Currency::RUB,0}));}
     FinanceController c(nullptr,path);
     // 100 000 RUB of cash, 2 000 RUB of it blocked by the bond position: only 98 000 RUB may leave the account
@@ -199,7 +199,7 @@ void InvestmentControllerTest::brokerTransfersCannotTouchBlockedMargin() {
 }
 void InvestmentControllerTest::purchaseKeepsChosenDate() {
     QTemporaryDir dir;const auto path=dir.filePath("data.db");const auto when=QDateTime::currentDateTimeUtc().addDays(-3);
-    {FinanceRepository r(path);QVERIFY(seed(r));}
+    {PreparedDatabase r(path);QVERIFY(seed(r));}
     FinanceController c(nullptr,path);c.setSelectedAsset("investment");
     const auto result=c.saveInvestmentPosition({{"accountId","broker"},{"searchIndex",-2},{"instrumentType",0},
         {"name",QStringLiteral("Доля")},{"symbol",QStringLiteral("SHARE")},{"quantity","2"},{"averagePrice","50"},
@@ -216,7 +216,7 @@ void InvestmentControllerTest::purchaseKeepsChosenDate() {
 }
 void InvestmentControllerTest::purchaseBeyondFreeMoneyIsRefused() {
     QTemporaryDir dir;const auto path=dir.filePath("data.db");
-    {FinanceRepository r(path);QVERIFY(seed(r));}
+    {PreparedDatabase r(path);QVERIFY(seed(r));}
     FinanceController c(nullptr,path);c.setSelectedAsset("investment");
     // The brokerage account holds 100 000 RUB of free money: a purchase above that is refused
     const auto refused=c.saveInvestmentPosition({{"accountId","broker"},{"searchIndex",-2},{"instrumentType",0},
@@ -235,7 +235,7 @@ void InvestmentControllerTest::purchaseBeyondFreeMoneyIsRefused() {
 }
 void InvestmentControllerTest::couponAndFeeAreIncomeAndExpenseOfTheBrokerAccount() {
     QTemporaryDir dir;const auto path=dir.filePath("data.db");const auto at=QDateTime::currentDateTimeUtc().addSecs(-5);
-    {FinanceRepository r(path);QVERIFY(seed(r));seedBondPosition(r,at);}
+    {PreparedDatabase r(path);QVERIFY(seed(r));seedBondPosition(r,at);}
     FinanceController c(nullptr,path);
     const qint64 income=c.incomeMinorUnits(),expense=c.expenseMinorUnits();
     // A coupon is income recorded on the account where it arrived; a broker fee is an expense of that account
@@ -257,7 +257,7 @@ void InvestmentControllerTest::couponAndFeeAreIncomeAndExpenseOfTheBrokerAccount
 }
 void InvestmentControllerTest::negativeFiatBalanceIsShownAsIs() {
     QTemporaryDir dir;const auto path=dir.filePath("data.db");
-    {FinanceRepository r(path);QVERIFY(seed(r));
+    {PreparedDatabase r(path);QVERIFY(seed(r));
      QVERIFY(AccountRepository(r.database()).insertAccount({"cash","Сбер",AssetType::Fiat,AccountType::DebitCard,Currency::RUB,0}));}
     FinanceController c(nullptr,path);
     // No warnings and no refusals on ordinary accounts: the balance simply goes below zero
@@ -267,7 +267,7 @@ void InvestmentControllerTest::negativeFiatBalanceIsShownAsIs() {
 }
 void InvestmentControllerTest::saleWritesCommissionAndTaxAsExpenses() {
     QTemporaryDir dir;const auto path=dir.filePath("data.db");const auto at=QDateTime::currentDateTimeUtc().addSecs(-5);
-    {FinanceRepository r(path);QVERIFY(seed(r));seedBondPosition(r,at);}
+    {PreparedDatabase r(path);QVERIFY(seed(r));seedBondPosition(r,at);}
     FinanceController c(nullptr,path);const qint64 base=balance(c);
     const qint64 income=c.incomeMinorUnits(),expense=c.expenseMinorUnits();
     // The sale keeps the gross amount (5 bonds at 95% of 1000 RUB); commission and tax are expenses of the same position
@@ -286,7 +286,7 @@ void InvestmentControllerTest::saleWritesCommissionAndTaxAsExpenses() {
 }
 void InvestmentControllerTest::brokerChargeIsExpenseWithoutPosition() {
     QTemporaryDir dir;const auto path=dir.filePath("data.db");const auto at=QDateTime::currentDateTimeUtc().addSecs(-5);
-    {FinanceRepository r(path);QVERIFY(seed(r));
+    {PreparedDatabase r(path);QVERIFY(seed(r));
      QVERIFY(AccountRepository(r.database()).insertAccount({"cash","Сбер",AssetType::Fiat,AccountType::DebitCard,Currency::RUB,50'000}));}
     FinanceController c(nullptr,path);const qint64 base=balance(c);const qint64 expense=c.expenseMinorUnits();
     // A tax withheld by the broker is an expense of the account, recorded without any position
@@ -305,7 +305,7 @@ void InvestmentControllerTest::brokerChargeIsExpenseWithoutPosition() {
 }
 void InvestmentControllerTest::transferCannotExceedSourceBalance() {
     QTemporaryDir dir;const auto path=dir.filePath("data.db");const auto at=QDateTime::currentDateTimeUtc().addSecs(-5);
-    {FinanceRepository r(path);QVERIFY(seed(r));
+    {PreparedDatabase r(path);QVERIFY(seed(r));
      QVERIFY(AccountRepository(r.database()).insertAccount({"cash","Сбер",AssetType::Fiat,AccountType::DebitCard,Currency::RUB,50'000}));}
     FinanceController c(nullptr,path);
     // Money is not created by transfers: more than the balance is refused, and an empty account pays nothing
@@ -316,7 +316,7 @@ void InvestmentControllerTest::transferCannotExceedSourceBalance() {
 }
 void InvestmentControllerTest::buyCommissionIsSeparateRowOnExistingPosition() {
     QTemporaryDir dir;const auto path=dir.filePath("data.db");const auto at=QDateTime::currentDateTimeUtc().addSecs(-5);
-    {FinanceRepository r(path);QVERIFY(seed(r));seedBondPosition(r,at);}
+    {PreparedDatabase r(path);QVERIFY(seed(r));seedBondPosition(r,at);}
     FinanceController c(nullptr,path);const qint64 base=balance(c);const qint64 expense=c.expenseMinorUnits();
     // The purchase stays gross; its commission is a row of its own that leaves the account
     const auto result=c.recordInvestmentOperation({{"positionId","position"},{"kind","buy"},{"date",at.toString(Qt::ISODate)},
@@ -333,7 +333,7 @@ void InvestmentControllerTest::buyCommissionIsSeparateRowOnExistingPosition() {
 }
 void InvestmentControllerTest::purchaseNeedsFreeMoneyUntilFunded() {
     QTemporaryDir dir;const auto path=dir.filePath("data.db");const auto at=QDateTime::currentDateTimeUtc().addSecs(-5);
-    {FinanceRepository r(path);QVERIFY(SettingsRepository(r.database()).saveAutomaticCurrencyRates(false) && SettingsRepository(r.database()).saveManualCurrencyRates(1,100,120));
+    {PreparedDatabase r(path);QVERIFY(SettingsRepository(r.database()).saveAutomaticCurrencyRates(false) && SettingsRepository(r.database()).saveManualCurrencyRates(1,100,120));
      // A brokerage account with no money, and a fiat account with 1 500 RUB to fund it
      QVERIFY(AccountRepository(r.database()).insertAccount({"broker","Брокер",AssetType::Investment,AccountType::Brokerage,Currency::RUB,0}));
      QVERIFY(AccountRepository(r.database()).insertAccount({"cash","Сбер",AssetType::Fiat,AccountType::DebitCard,Currency::RUB,150'000}));}
@@ -360,7 +360,7 @@ void InvestmentControllerTest::purchaseNeedsFreeMoneyUntilFunded() {
 }
 void InvestmentControllerTest::manualPositionCannotCreateMoney() {
     QTemporaryDir dir;const auto path=dir.filePath("data.db");const auto at=QDateTime::currentDateTimeUtc().addSecs(-5);
-    {FinanceRepository r(path);QVERIFY(seed(r));}
+    {PreparedDatabase r(path);QVERIFY(seed(r));}
     FinanceController c(nullptr,path);c.setSelectedAsset("investment");
     const auto made=c.saveInvestmentPosition({{"accountId","broker"},{"searchIndex",-2},{"instrumentType",0},
         {"name",QStringLiteral("Акция")},{"symbol",QStringLiteral("MANUAL")},{"quantity","1"},{"manualValuation",true},{"manualValue","110"}});

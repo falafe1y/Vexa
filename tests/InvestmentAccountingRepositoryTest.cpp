@@ -1,8 +1,9 @@
 #include "../core/db/CipherDriver.h"
+#include "../core/system/DatabaseKeyStore.h"
 #include "../core/db/DatabaseMaintenance.h"
 #include "../core/db/AccountRepository.h"
 #include "../core/db/InvestmentRepository.h"
-#include "../persistence/FinanceRepository.h"
+#include "../core/db/PreparedDatabase.h"
 #include "../core/model/investments/InvestmentValuation.h"
 #include <QTemporaryDir>
 #include <QSqlQuery>
@@ -29,7 +30,7 @@ static InvestmentPosition pos(qint64 qty=2'000'000) {
     return {"position","broker","future",qty,100'000'000,{},{},s};
 }
 void InvestmentAccountingRepositoryTest::openingTradeAndClearingAreAtomic() {
-    QTemporaryDir dir;FinanceRepository r(dir.filePath("data.db"));QVERIFY2(r.isOpen(),qPrintable(r.lastError()));QVERIFY(AccountRepository(r.database()).insertAccount(broker()));
+    QTemporaryDir dir;PreparedDatabase r(dir.filePath("data.db"));QVERIFY2(r.isOpen(),qPrintable(r.lastError()));QVERIFY(AccountRepository(r.database()).insertAccount(broker()));
     const auto p=pos();auto at=QDateTime::currentDateTimeUtc();InvestmentQuote q("future",110'000'000,at,futureTerms());
     InvestmentOperation op{"opening","broker","position","future","buy",-100,2'000'000,at.addSecs(-300),"Комиссия открытия"};
     QVERIFY2(InvestmentRepository(r.database()).saveInvestmentBundle(future(),p,q,false,op),qPrintable(r.lastError()));
@@ -45,7 +46,7 @@ void InvestmentAccountingRepositoryTest::openingTradeAndClearingAreAtomic() {
     QCOMPARE(cash,qint64(10'019'900));
 }
 void InvestmentAccountingRepositoryTest::failureRollsBackPositionAndCash() {
-    QTemporaryDir dir;FinanceRepository r(dir.filePath("data.db"));QVERIFY(AccountRepository(r.database()).insertAccount(broker()));
+    QTemporaryDir dir;PreparedDatabase r(dir.filePath("data.db"));QVERIFY(AccountRepository(r.database()).insertAccount(broker()));
     const auto p=pos();InvestmentQuote q("future",110'000'000,QDateTime::currentDateTimeUtc(),futureTerms());
     QVERIFY(InvestmentRepository(r.database()).saveInvestmentBundle(future(),p,q,false));const auto before=InvestmentRepository(r.database()).loadInvestmentPositions().at(0);
     InvestmentPosition next(before.id(),before.accountId(),before.instrumentId(),1'000'000,before.averagePriceMicros(),{},{},before.settings());
@@ -58,7 +59,7 @@ void InvestmentAccountingRepositoryTest::failureRollsBackPositionAndCash() {
 }
 void InvestmentAccountingRepositoryTest::migratesExistingPositionsWithoutLosingData() {
     QTemporaryDir dir;const auto path=dir.filePath("old.db");
-    {FinanceRepository r(path);QVERIFY(AccountRepository(r.database()).insertAccount(broker()));
+    {PreparedDatabase r(path);QVERIFY(AccountRepository(r.database()).insertAccount(broker()));
      InvestmentInstrument i("stock","SBER","","Сбер",InvestmentInstrumentType::Stock,Currency::RUB,"MOEX","TQBR");
      QVERIFY(InvestmentRepository(r.database()).insertInvestmentInstrument(i));QVERIFY(InvestmentRepository(r.database()).insertInvestmentPosition({"stock-position","broker","stock",5'000'000,120'000'000}));
      QVERIFY(InvestmentRepository(r.database()).saveInvestmentQuote({"stock",281'440'000,QDateTime::currentDateTimeUtc()}));}
@@ -77,7 +78,7 @@ void InvestmentAccountingRepositoryTest::migratesExistingPositionsWithoutLosingD
         "DROP TABLE investment_quotes", "ALTER TABLE legacy_quotes RENAME TO investment_quotes"};
      for(const auto& statement:sql)QVERIFY2(q.exec(statement),qPrintable(q.lastError().text()));q.finish();db.close();}
     QSqlDatabase::removeDatabase(connection);
-    FinanceRepository migrated(path);QVERIFY2(migrated.isOpen(),qPrintable(migrated.lastError()));
+    PreparedDatabase migrated(path);QVERIFY2(migrated.isOpen(),qPrintable(migrated.lastError()));
     QCOMPARE(InvestmentRepository(migrated.database()).loadInvestmentPositions().at(0).quantityMicros(),qint64(5'000'000));
     QCOMPARE(InvestmentRepository(migrated.database()).loadInvestmentQuotes().at(0).priceMicros(),qint64(281'440'000));
     QVERIFY2(InvestmentRepository(migrated.database()).insertInvestmentInstrument(future()),qPrintable(migrated.lastError()));
@@ -85,23 +86,23 @@ void InvestmentAccountingRepositoryTest::migratesExistingPositionsWithoutLosingD
 }
 void InvestmentAccountingRepositoryTest::backupRestoreKeepsTermsOperationsAndCurrentValues() {
     QTemporaryDir dir;const auto copy=dir.filePath("backup.db");
-    {FinanceRepository source(dir.filePath("source.db"));QVERIFY(AccountRepository(source.database()).insertAccount(broker()));
+    {PreparedDatabase source(dir.filePath("source.db"));QVERIFY(AccountRepository(source.database()).insertAccount(broker()));
      const auto p=pos();InvestmentQuote q("future",110'000'000,QDateTime::currentDateTimeUtc(),futureTerms());
      InvestmentOperation op{"opening","broker","position","future","buy",-100,2'000'000,QDateTime::currentDateTimeUtc(),"Открытие"};
-     QVERIFY(InvestmentRepository(source.database()).saveInvestmentBundle(future(),p,q,false,op));QVERIFY(DatabaseMaintenance(source.database(), source.keyStore()).backupDatabase(copy));}
-    FinanceRepository target(dir.filePath("target.db"));QVERIFY(AccountRepository(target.database()).insertAccount({"broker","Мой счёт",AssetType::Investment,AccountType::Brokerage,Currency::RUB,777}));
-    QVERIFY2(DatabaseMaintenance(target.database(), target.keyStore()).restoreDatabase(copy),qPrintable(target.lastError()));
+     QVERIFY(InvestmentRepository(source.database()).saveInvestmentBundle(future(),p,q,false,op));QVERIFY(DatabaseMaintenance(source.database(), nativeDatabaseKeyStore()).backupDatabase(copy));}
+    PreparedDatabase target(dir.filePath("target.db"));QVERIFY(AccountRepository(target.database()).insertAccount({"broker","Мой счёт",AssetType::Investment,AccountType::Brokerage,Currency::RUB,777}));
+    QVERIFY2(DatabaseMaintenance(target.database(), nativeDatabaseKeyStore()).restoreDatabase(copy),qPrintable(target.lastError()));
     QCOMPARE(InvestmentRepository(target.database()).loadInvestmentOperations().size(),1);QCOMPARE(InvestmentRepository(target.database()).loadInvestmentInstruments().at(0).terms().pricing,QStringLiteral("future"));
     QCOMPARE(InvestmentRepository(target.database()).loadInvestmentPositions().at(0).settings().blockedMarginMinor,qint64(2'000'000));
     const auto accounts=AccountRepository(target.database()).loadAccounts();
     const auto account=std::find_if(accounts.cbegin(),accounts.cend(),[](const auto& a){return a.id()==QStringLiteral("broker");});
     QVERIFY(account!=accounts.cend());QCOMPARE(account->initialBalanceMinor(),broker().initialBalanceMinor());
-    QVERIFY(DatabaseMaintenance(target.database(), target.keyStore()).restoreDatabase(copy));QCOMPARE(InvestmentRepository(target.database()).loadInvestmentOperations().size(),1);
-    QVERIFY(DatabaseMaintenance(target.database(), target.keyStore()).clearAllUserData());QVERIFY(InvestmentRepository(target.database()).loadInvestmentOperations().isEmpty());
+    QVERIFY(DatabaseMaintenance(target.database(), nativeDatabaseKeyStore()).restoreDatabase(copy));QCOMPARE(InvestmentRepository(target.database()).loadInvestmentOperations().size(),1);
+    QVERIFY(DatabaseMaintenance(target.database(), nativeDatabaseKeyStore()).clearAllUserData());QVERIFY(InvestmentRepository(target.database()).loadInvestmentOperations().isEmpty());
 }
 
 void InvestmentAccountingRepositoryTest::operationCurrencyAndZeroOptionQuotesAreProtected() {
-    QTemporaryDir dir;FinanceRepository r(dir.filePath("data.db"));QVERIFY(AccountRepository(r.database()).insertAccount(broker()));
+    QTemporaryDir dir;PreparedDatabase r(dir.filePath("data.db"));QVERIFY(AccountRepository(r.database()).insertAccount(broker()));
     InvestmentTerms t;t.engine="futures";t.market="options";t.pricing="premium_option";t.currencyCode="RUB";
     InvestmentOperation op{"opening","broker","option-position","option","buy",-100,1'000'000,QDateTime::currentDateTimeUtc(),"Открытие"};
     QVERIFY(InvestmentRepository(r.database()).saveInvestmentBundle({"option","OPT","","Опцион",InvestmentInstrumentType::Option,Currency::RUB,"MOEX","ROPD",t},

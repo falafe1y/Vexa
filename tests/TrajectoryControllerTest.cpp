@@ -28,7 +28,7 @@ QVariantMap selection(bool allSources, const QStringList& sourceIds)
 
 void prepareRates(const QString& path)
 {
-    FinanceRepository r(path);
+    PreparedDatabase r(path);
     QVERIFY(SettingsRepository(r.database()).saveAutomaticCurrencyRates(false));
     QVERIFY(SettingsRepository(r.database()).saveManualCurrencyRates(1, 100, 120));
 }
