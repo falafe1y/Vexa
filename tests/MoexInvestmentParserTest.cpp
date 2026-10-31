@@ -1,4 +1,4 @@
-#include "../services/MoexInvestmentParser.h"
+#include "../core/api/MoexInvestmentParser.h"
 
 #include <QtTest>
 

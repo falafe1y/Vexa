@@ -1,8 +1,8 @@
 #pragma once
 
 #include "CurrencyRateCache.h"
-#include "../core/model/analytics/AnalyticsHistory.h"
-#include "../core/model/money/CurrencyRateProvider.h"
+#include "../model/analytics/AnalyticsHistory.h"
+#include "../model/money/CurrencyRateProvider.h"
 
 #include <QNetworkAccessManager>
 #include <QObject>

@@ -1,6 +1,7 @@
 #include "../persistence/FinanceRepository.h"
 #include "../core/db/AnalyticsRepository.h"
-#include "../services/InvestmentBenchmark.h"
+#include "../core/model/analytics/InvestmentBenchmark.h"
+#include "../core/api/MoexBenchmarkParser.h"
 #include <QTemporaryDir>
 #include <QtTest>
 

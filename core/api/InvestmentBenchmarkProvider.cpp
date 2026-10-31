@@ -1,5 +1,5 @@
 #include "InvestmentBenchmarkProvider.h"
-#include "InvestmentBenchmark.h"
+#include "MoexBenchmarkParser.h"
 #include "MoexInvestmentParser.h"
 #include <QNetworkReply>
 #include <QNetworkRequest>

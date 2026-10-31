@@ -1,4 +1,5 @@
-#include "../services/InvestmentBenchmark.h"
+#include "../core/model/analytics/InvestmentBenchmark.h"
+#include "../core/api/MoexBenchmarkParser.h"
 #include <QtTest>
 #include <QJsonDocument>
 #include <QJsonObject>

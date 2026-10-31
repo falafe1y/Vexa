@@ -2,7 +2,8 @@
 #include "../core/db/AccountRepository.h"
 #include "../core/db/AnalyticsRepository.h"
 #include "../core/db/SettingsRepository.h"
-#include "../services/InvestmentBenchmark.h"
+#include "../core/model/analytics/InvestmentBenchmark.h"
+#include "../core/api/MoexBenchmarkParser.h"
 #include <QTemporaryDir>
 #include <QStandardPaths>
 #include <QSqlQuery>

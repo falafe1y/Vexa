@@ -1,6 +1,6 @@
 #pragma once
 
-#include "../core/model/crypto/CryptoTransaction.h"
+#include "../model/crypto/CryptoTransaction.h"
 
 #include <QByteArray>
 #include <QHash>

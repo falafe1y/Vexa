@@ -58,6 +58,8 @@ add_library(core_model STATIC
     analytics/FinancialTrajectory.h
     analytics/FinancialTrajectoryCalculator.cpp
     analytics/FinancialTrajectoryCalculator.h
+    analytics/InvestmentBenchmark.cpp
+    analytics/InvestmentBenchmark.h
     analytics/InvestmentPerformanceCalculator.cpp
     analytics/InvestmentPerformanceCalculator.h
     analytics/InvestmentReturn.cpp

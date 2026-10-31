@@ -1,6 +1,6 @@
 #include "FinanceController.h"
 #include "../services/ExchangeCredentials.h"
-#include "../services/MoexInvestmentParser.h"
+#include "../core/api/MoexInvestmentParser.h"
 #include <QtConcurrent>
 #include <QFutureWatcher>
 #include <QSignalBlocker>
@@ -16,9 +16,9 @@
 #include "../core/model/transactions/RecurringScheduleCalculator.h"
 #include "../services/ContentUriIo.h"
 #include "../services/CsvCodec.h"
-#include "../services/CryptoParser.h"
+#include "../core/api/CryptoParser.h"
 #include "../core/model/transactions/TransactionDateFilter.h"
-#include "../services/TronUsdtParser.h"
+#include "../core/api/TronUsdtParser.h"
 #include "../core/model/analytics/FinancialTrajectoryCalculator.h"
 
 #include <QDebug>

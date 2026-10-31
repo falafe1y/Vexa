@@ -1,6 +1,6 @@
-#include "../services/CurrencyRateCache.h"
+#include "../core/api/CurrencyRateCache.h"
 #include "../core/model/money/CurrencyRateProvider.h"
-#include "../services/CbrCurrencyRateProvider.h"
+#include "../core/api/CbrCurrencyRateProvider.h"
 #include "../core/model/money/CurrencyConverter.h"
 
 #include <QFile>

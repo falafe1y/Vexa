@@ -171,10 +171,6 @@ qt_add_qml_module(vexa
         SOURCES ui/computer/notes/NotebookLayout.h
         SOURCES ui/computer/common/WindowScrollInput.h
         SOURCES ui/computer/common/WindowScrollInput.cpp
-        SOURCES services/InvestmentBenchmark.h
-        SOURCES services/InvestmentBenchmark.cpp
-        SOURCES services/InvestmentBenchmarkProvider.h
-        SOURCES services/InvestmentBenchmarkProvider.cpp
         SOURCES interface/FinanceControllerBenchmark.cpp
         SOURCES interface/FinanceControllerPerformance.cpp
         SOURCES services/CsvCodec.h
@@ -186,26 +182,8 @@ qt_add_qml_module(vexa
         SOURCES services/PdfStatementReader.cpp
         SOURCES services/XlsxReader.h
         SOURCES services/XlsxReader.cpp
-        SOURCES services/CurrencyRateCache.h
-        SOURCES services/CurrencyRateCache.cpp
-        SOURCES services/CbrCurrencyRateProvider.h
-        SOURCES services/CbrCurrencyRateProvider.cpp
-        SOURCES services/CbrFxHistory.h
-        SOURCES services/CbrFxHistory.cpp
-        SOURCES services/TronUsdtParser.h
-        SOURCES services/TronUsdtParser.cpp
-        SOURCES services/CryptoParser.h
-        SOURCES services/CryptoParser.cpp
-        SOURCES services/CryptoProvider.h
-        SOURCES services/CryptoProvider.cpp
-        SOURCES services/BybitProvider.h
-        SOURCES services/BybitProvider.cpp
         SOURCES services/ExchangeCredentials.h
         SOURCES services/ExchangeCredentials.cpp
-        SOURCES services/MoexInvestmentParser.h
-        SOURCES services/MoexInvestmentParser.cpp
-        SOURCES services/MoexInvestmentProvider.h
-        SOURCES services/MoexInvestmentProvider.cpp
         SOURCES interface/FinanceController.h
         SOURCES interface/FinanceController.cpp
         SOURCES persistence/FinanceRepository.h
@@ -311,13 +289,11 @@ add_test(
 
 add_executable(CurrencyRateCacheTest
     tests/CurrencyRateCacheTest.cpp
-    services/CurrencyRateCache.cpp
-    services/CbrCurrencyRateProvider.cpp
-    services/CbrFxHistory.cpp
 )
 
 target_link_libraries(CurrencyRateCacheTest
     PRIVATE
+        core_api
         core_model
         Qt6::Core
         Qt6::Network
@@ -458,11 +434,12 @@ add_test(
 
 add_executable(MoexInvestmentParserTest
     tests/MoexInvestmentParserTest.cpp
-    services/MoexInvestmentParser.cpp
 )
 
 target_link_libraries(MoexInvestmentParserTest
     PRIVATE
+        core_model
+        core_api
         Qt6::Core
         Qt6::Test
 )
@@ -510,11 +487,12 @@ add_test(
 
 add_executable(TronUsdtParserTest
     tests/TronUsdtParserTest.cpp
-    services/TronUsdtParser.cpp
 )
 
 target_link_libraries(TronUsdtParserTest
     PRIVATE
+        core_model
+        core_api
         Qt6::Core
         Qt6::Test
 )
@@ -526,11 +504,12 @@ add_test(
 
 add_executable(CryptoParserTest
     tests/CryptoParserTest.cpp
-    services/CryptoParser.cpp
 )
 
 target_link_libraries(CryptoParserTest
     PRIVATE
+        core_model
+        core_api
         Qt6::Core
         Qt6::Test
 )
@@ -607,10 +586,9 @@ add_test(NAME AutoBackupTest COMMAND AutoBackupTest)
 
 add_executable(BybitProviderTest
     tests/BybitProviderTest.cpp
-    services/BybitProvider.cpp
     persistence/FinanceRepository.cpp
 )
-target_link_libraries(BybitProviderTest PRIVATE core_model core_db Qt6::Core Qt6::Test Qt6::Network Qt6::Sql)
+target_link_libraries(BybitProviderTest PRIVATE core_api core_model core_db Qt6::Core Qt6::Test Qt6::Network Qt6::Sql)
 add_test(NAME BybitProviderTest COMMAND BybitProviderTest)
 
 add_executable(BankCategoryMatcherTest
@@ -700,8 +678,8 @@ add_executable(CryptoCostBasisTest tests/CryptoCostBasisTest.cpp)
 target_link_libraries(CryptoCostBasisTest PRIVATE core_model Qt6::Core Qt6::Test)
 add_test(NAME CryptoCostBasisTest COMMAND CryptoCostBasisTest)
 
-add_executable(CbrFxHistoryTest tests/CbrFxHistoryTest.cpp services/CbrFxHistory.cpp)
-target_link_libraries(CbrFxHistoryTest PRIVATE Qt6::Core Qt6::Test)
+add_executable(CbrFxHistoryTest tests/CbrFxHistoryTest.cpp)
+target_link_libraries(CbrFxHistoryTest PRIVATE core_model core_api Qt6::Core Qt6::Test)
 add_test(NAME CbrFxHistoryTest COMMAND CbrFxHistoryTest)
 
 add_executable(CreditDebtFlagControllerTest tests/CreditDebtFlagControllerTest.cpp ${investment_controller_test_sources} services/BankRecipients.qrc)
@@ -728,12 +706,12 @@ target_compile_features(InvestmentRiskTest PRIVATE cxx_std_17)
 target_link_libraries(InvestmentRiskTest PRIVATE core_model)
 add_test(NAME InvestmentRiskTest COMMAND InvestmentRiskTest)
 
-add_executable(InvestmentBenchmarkTest tests/InvestmentBenchmarkTest.cpp services/InvestmentBenchmark.cpp)
-target_link_libraries(InvestmentBenchmarkTest PRIVATE Qt6::Core Qt6::Test)
+add_executable(InvestmentBenchmarkTest tests/InvestmentBenchmarkTest.cpp)
+target_link_libraries(InvestmentBenchmarkTest PRIVATE core_model core_api Qt6::Core Qt6::Test)
 add_test(NAME InvestmentBenchmarkTest COMMAND InvestmentBenchmarkTest)
 
-add_executable(InvestmentBenchmarkRepositoryTest tests/InvestmentBenchmarkRepositoryTest.cpp persistence/FinanceRepository.cpp services/InvestmentBenchmark.cpp)
-target_link_libraries(InvestmentBenchmarkRepositoryTest PRIVATE core_model core_db vexa_storage Qt6::Test Qt6::Sql)
+add_executable(InvestmentBenchmarkRepositoryTest tests/InvestmentBenchmarkRepositoryTest.cpp persistence/FinanceRepository.cpp)
+target_link_libraries(InvestmentBenchmarkRepositoryTest PRIVATE core_api core_model core_db vexa_storage Qt6::Test Qt6::Sql)
 add_test(NAME InvestmentBenchmarkRepositoryTest COMMAND InvestmentBenchmarkRepositoryTest)
 add_executable(InvestmentBenchmarkControllerTest tests/InvestmentBenchmarkControllerTest.cpp ${investment_controller_test_sources} services/BankRecipients.qrc)
 target_link_libraries(InvestmentBenchmarkControllerTest PRIVATE core vexa_storage Qt6::Core Qt6::Gui Qt6::Sql Qt6::Network Qt6::Concurrent Qt6::Test ZLIB::ZLIB)

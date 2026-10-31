@@ -1,4 +1,4 @@
-#include "../services/CryptoParser.h"
+#include "../core/api/CryptoParser.h"
 
 #include <QtTest>
 

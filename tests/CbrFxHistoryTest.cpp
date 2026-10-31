@@ -1,4 +1,4 @@
-#include "../services/CbrFxHistory.h"
+#include "../core/api/CbrFxHistory.h"
 #include <QtTest>
 
 class CbrFxHistoryTest : public QObject {

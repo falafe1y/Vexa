@@ -2,7 +2,7 @@
 
 Решение — ADR-031 (слои) и ADR-032 (имена) в `docs/ADR.md`. Здесь — целевая схема и план по шагам с отметками.
 
-Дата последнего обновления: 30.10.2026.
+Дата последнего обновления: 31.10.2026.
 
 ## Целевая схема
 
@@ -88,7 +88,7 @@ core/
   - [x] 2.3.11 `AccountRepository` — счета, настройки вкладов, история ставок (8 методов). `deleteAccount` (удаляет и операции счёта, закрывает позиции брокера) и `materializeDepositInterest` (начисление процентов пишет операции) пока у `FinanceRepository`: оба — сценарии на несколько областей, решаются в 2.3.12
   - [x] 2.3.12 `TransactionRepository` — операции: список, сводка, добавление, переводы, изменение, замена, удаление, удаление строк истории, запись импорта выписки с правилами и связями, создание операций по расписанию и процентов по вкладу (12 методов). Помощники записи журнала операций — общий `core/db/OperationRows`. `deleteAccount` — в `AccountRepository` (удаляет и операции счёта через `deleteOperationRows`). В `FinanceRepository` остались бэкап, восстановление, очистка и проверка схемы копии (шаг 2.7)
 - [x] 2.4 Банковский импорт: тип строки выписки `BankCsvOperation`, сопоставители `BankCategoryMatcher` и `BankRecipientMatcher`, разбор выбора по строкам `BankImportReview` — в `core/model/transactions/`. Встроенный словарь получателей — объект модели `BankRecipientDictionary` (строится из JSON); сопоставители получают его параметром. Решено 30.10.2026: встроенный ресурс читает слой приложения (сейчас `FinanceController`, на этапе 3 — сервис импорта), а не модель
-- [ ] 2.5 Провайдеры и парсеры ответов — в `core/api/`. `services/InvestmentBenchmark` разделить: `parseBenchmarkPage`, `mergeBenchmarkRows` и список индексов `investmentBenchmarkIndices` — в `core/api` (Мосбиржа), `compareInvestmentBenchmark` — в `core/model/analytics/`.
+- [x] 2.5 Провайдеры и разбор ответов — библиотека `core_api` в `core/api/` (Qt Network): ЦБ (`CbrCurrencyRateProvider`, `CbrFxHistory`, кеш курсов `CurrencyRateCache`), Мосбиржа (`MoexInvestmentProvider`, `MoexInvestmentParser`, `InvestmentBenchmarkProvider`), биржи и блокчейны (`CryptoProvider`, `BybitProvider`, `CryptoParser`, `TronUsdtParser`). `InvestmentBenchmark` разделён: список бенчмарков, разбор и склейка страниц Мосбиржи — `core/api/MoexBenchmarkParser`, сравнение с портфелем — `core/model/analytics/InvestmentBenchmark`. Ключи бирж (`ExchangeCredentials`) — в 2.6 (`core/system`)
 - [ ] 2.6 Файлы и форматы — в `core/system/`: `CsvCodec`, `XlsxReader`, `PdfStatementReader`, `ContentUriIo`. Разбор форматов отделить от доступа к файлам: `PdfStatementReader` делится на получение слов (`pdftotext`/PDFBox) и раскладку в строки (`parsePages`). Как понимать выписку по профилю банка (`BankCsvImporter`) — в `core/model`.
 - [ ] 2.7 Бэкап, восстановление и очистка базы — `DatabaseMaintenance` в `core/db/`.
 - [ ] 2.8 `FinanceRepository` опустел — удалить.

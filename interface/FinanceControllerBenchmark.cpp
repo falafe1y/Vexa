@@ -1,5 +1,6 @@
 #include "FinanceController.h"
-#include "../services/InvestmentBenchmark.h"
+#include "../core/model/analytics/InvestmentBenchmark.h"
+#include "../core/api/MoexBenchmarkParser.h"
 #include <QRegularExpression>
 
 QVariantList FinanceController::benchmarkIndices() const {return investmentBenchmarkIndices();}

@@ -2,6 +2,20 @@
 #include <QtTest>
 #include <QFile>
 
+namespace
+{
+// The built-in dictionary, read once from the application resources
+const BankRecipientDictionary& dictionary()
+{
+    static const BankRecipientDictionary loaded = [] {
+        QFile file(QStringLiteral(":/bank-import/recipients.json"));
+        return file.open(QIODevice::ReadOnly)
+            ? BankRecipientDictionary::fromJson(file.readAll()) : BankRecipientDictionary();
+    }();
+    return loaded;
+}
+}
+
 class BankCategoryMatcherTest final : public QObject
 {
     Q_OBJECT
@@ -92,18 +106,3 @@ void BankCategoryMatcherTest::unknownMerchantsKeepIdentifyingNumbers()
 
 QTEST_GUILESS_MAIN(BankCategoryMatcherTest)
 #include "BankCategoryMatcherTest.moc"
-
-namespace
-{
-// The built-in dictionary, read once from the application resources
-const BankRecipientDictionary& dictionary()
-{
-    static const BankRecipientDictionary loaded = [] {
-        QFile file(QStringLiteral(":/bank-import/recipients.json"));
-        return file.open(QIODevice::ReadOnly)
-            ? BankRecipientDictionary::fromJson(file.readAll()) : BankRecipientDictionary();
-    }();
-    return loaded;
-}
-}
-

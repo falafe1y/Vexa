@@ -1,7 +1,7 @@
 #pragma once
 
-#include "../core/model/crypto/CryptoTransaction.h"
-#include "../core/model/crypto/CryptoWallet.h"
+#include "../model/crypto/CryptoTransaction.h"
+#include "../model/crypto/CryptoWallet.h"
 
 #include <QDateTime>
 #include <QNetworkAccessManager>
