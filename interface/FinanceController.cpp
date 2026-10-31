@@ -7,7 +7,7 @@
 #include <QScopedValueRollback>
 #include <QRandomGenerator>
 
-#include "../services/BankCsvImporter.h"
+#include "../core/system/BankCsvImporter.h"
 #include "../core/model/transactions/BankCategoryMatcher.h"
 #include "../core/model/transactions/BankImportReview.h"
 #include "../core/model/analytics/CapitalHistoryCalculator.h"

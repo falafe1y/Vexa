@@ -1,4 +1,5 @@
-#include "../services/BankCsvImporter.h"
+#include "../core/system/BankCsvImporter.h"
+#include "../core/model/transactions/BankStatementParser.h"
 
 #include <QFile>
 #include <QTemporaryDir>
@@ -65,19 +66,19 @@ QByteArray storedZip(const QVector<QPair<QByteArray, QByteArray>>& files)
 void BankCsvImporterTest::parsesCommonMoneyFormats()
 {
     qint64 amount = 0;
-    QVERIFY(BankCsvImporter::parseAmountMinor(
+    QVERIFY(BankStatementParser::parseAmountMinor(
         QStringLiteral("1 234,56 ₽"), amount));
     QCOMPARE(amount, qint64(123'456));
-    QVERIFY(BankCsvImporter::parseAmountMinor(
+    QVERIFY(BankStatementParser::parseAmountMinor(
         QStringLiteral("(123.45)"), amount));
     QCOMPARE(amount, qint64(-12'345));
-    QVERIFY(BankCsvImporter::parseAmountMinor(
+    QVERIFY(BankStatementParser::parseAmountMinor(
         QStringLiteral("1.234,56"), amount));
     QCOMPARE(amount, qint64(123'456));
-    QVERIFY(BankCsvImporter::parseAmountMinor(
+    QVERIFY(BankStatementParser::parseAmountMinor(
         QStringLiteral("1,234.56"), amount));
     QCOMPARE(amount, qint64(123'456));
-    QVERIFY(BankCsvImporter::parseAmountMinor(
+    QVERIFY(BankStatementParser::parseAmountMinor(
         QStringLiteral("123,45-"), amount));
     QCOMPARE(amount, qint64(-12'345));
 }

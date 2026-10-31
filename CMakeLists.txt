@@ -173,8 +173,6 @@ qt_add_qml_module(vexa
         SOURCES ui/computer/common/WindowScrollInput.cpp
         SOURCES interface/FinanceControllerBenchmark.cpp
         SOURCES interface/FinanceControllerPerformance.cpp
-        SOURCES services/BankCsvImporter.h
-        SOURCES services/BankCsvImporter.cpp
         SOURCES services/ExchangeCredentials.h
         SOURCES services/ExchangeCredentials.cpp
         SOURCES interface/FinanceController.h
@@ -460,7 +458,6 @@ add_test(
 
 add_executable(BankCsvImporterTest
     tests/BankCsvImporterTest.cpp
-    services/BankCsvImporter.cpp
 )
 
 target_link_libraries(BankCsvImporterTest
@@ -557,7 +554,6 @@ endif()
 
 add_executable(PdfStatementReaderTest
     tests/PdfStatementReaderTest.cpp
-    services/BankCsvImporter.cpp
 )
 target_link_libraries(PdfStatementReaderTest PRIVATE core_system Qt6::Core Qt6::Gui Qt6::Test ZLIB::ZLIB)
 add_test(NAME PdfStatementReaderTest COMMAND PdfStatementReaderTest)

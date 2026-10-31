@@ -1,14 +1,13 @@
 #pragma once
+#include "BankCsvOperation.h"
 
-#include "../core/system/CsvCodec.h"
-#include "../core/model/transactions/BankCsvOperation.h"
-
-#include <QDateTime>
+#include <QChar>
 #include <QJsonObject>
 #include <QString>
 #include <QStringList>
 #include <QVector>
 
+// How to read the statements of one bank: the columns of the date, amount, recipient and so on
 struct BankCsvProfile
 {
     QString id;
@@ -38,6 +37,7 @@ struct BankCsvProfile
     static BankCsvProfile fromJson(const QJsonObject& object);
 };
 
+// The operations read from a statement and the rows that could not be read
 struct BankCsvParseResult
 {
     QVector<BankCsvOperation> operations;
@@ -45,23 +45,4 @@ struct BankCsvParseResult
     int rejected = 0;
     QChar delimiter;
     QString encoding;
-};
-
-class BankCsvImporter final
-{
-public:
-    static CsvCodec::ReadOptions readOptions(const BankCsvProfile& profile);
-    static CsvCodec::ReadResult readTable(
-        const QString& filePath,
-        const BankCsvProfile& profile
-        );
-    static BankCsvParseResult parse(
-        const QString& filePath,
-        const BankCsvProfile& profile
-        );
-    static bool parseAmountMinor(const QString& text, qint64& minorUnits);
-    static QDateTime parseDateTime(
-        const QString& text,
-        const QString& format
-        );
 };

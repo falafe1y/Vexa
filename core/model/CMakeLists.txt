@@ -18,12 +18,16 @@ add_library(core_model STATIC
     transactions/BankCategoryMatcher.h
     transactions/BankCategoryRule.h
     transactions/BankCsvOperation.h
+    transactions/BankCsvProfile.cpp
+    transactions/BankCsvProfile.h
     transactions/BankImportReview.cpp
     transactions/BankImportReview.h
     transactions/BankRecipientDictionary.cpp
     transactions/BankRecipientDictionary.h
     transactions/BankRecipientMatcher.cpp
     transactions/BankRecipientMatcher.h
+    transactions/BankStatementParser.cpp
+    transactions/BankStatementParser.h
     transactions/BankRecipientRule.h
     transactions/Category.h
     transactions/DateSliceCalculator.cpp

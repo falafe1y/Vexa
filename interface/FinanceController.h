@@ -15,7 +15,7 @@
 #include "../core/db/AccountRepository.h"
 #include "../core/db/TransactionRepository.h"
 #include "../core/model/accounts/BalanceCalculator.h"
-#include "../services/BankCsvImporter.h"
+#include "../core/system/BankCsvImporter.h"
 #include "../core/model/transactions/BankRecipientDictionary.h"
 #include "../core/model/analytics/CapitalHistoryCalculator.h"
 #include "../core/model/investments/InvestmentValuation.h"

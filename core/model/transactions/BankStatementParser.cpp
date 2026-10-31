@@ -1,11 +1,7 @@
-#include "BankCsvImporter.h"
-#include "../core/system/XlsxReader.h"
-#include "../core/system/PdfStatementReader.h"
+#include "BankStatementParser.h"
 
 #include <QCryptographicHash>
 #include <QLocale>
-#include <QFileInfo>
-#include <QMutex>
 #include <QTime>
 
 #include <cmath>
@@ -95,135 +91,7 @@ qint64 positiveMagnitude(const qint64 value)
 }
 }
 
-QJsonObject BankCsvProfile::toJson() const
-{
-    return {
-        {QStringLiteral("id"), id},
-        {QStringLiteral("name"), name},
-        {QStringLiteral("accountId"), accountId},
-        {QStringLiteral("incomeCategoryId"), incomeCategoryId},
-        {QStringLiteral("expenseCategoryId"), expenseCategoryId},
-        {QStringLiteral("encoding"), encoding},
-        {QStringLiteral("delimiter"), delimiter},
-        {QStringLiteral("dateFormat"), dateFormat},
-        {QStringLiteral("amountMode"), amountMode},
-        {QStringLiteral("headerRow"), headerRow},
-        {QStringLiteral("dateColumn"), dateColumn},
-        {QStringLiteral("amountColumn"), amountColumn},
-        {QStringLiteral("incomeColumn"), incomeColumn},
-        {QStringLiteral("expenseColumn"), expenseColumn},
-        {QStringLiteral("descriptionColumn"), descriptionColumn},
-        {QStringLiteral("recipientColumn"), recipientColumn},
-        {QStringLiteral("recipientIdColumn"), recipientIdColumn},
-        {QStringLiteral("idColumn"), idColumn},
-        {QStringLiteral("categoryColumn"), categoryColumn},
-        {QStringLiteral("directionColumn"), directionColumn},
-        {QStringLiteral("currencyColumn"), currencyColumn},
-        {QStringLiteral("positiveMeansIncome"), positiveMeansIncome}
-    };
-}
-
-BankCsvProfile BankCsvProfile::fromJson(const QJsonObject& object)
-{
-    BankCsvProfile profile;
-    profile.id = object.value(QStringLiteral("id")).toString();
-    profile.name = object.value(QStringLiteral("name")).toString();
-    profile.accountId = object.value(QStringLiteral("accountId")).toString();
-    profile.incomeCategoryId = object.value(
-        QStringLiteral("incomeCategoryId")).toString();
-    profile.expenseCategoryId = object.value(
-        QStringLiteral("expenseCategoryId")).toString();
-    profile.encoding = object.value(QStringLiteral("encoding"))
-        .toString(QStringLiteral("auto"));
-    profile.delimiter = object.value(QStringLiteral("delimiter"))
-        .toString(QStringLiteral("auto"));
-    profile.dateFormat = object.value(QStringLiteral("dateFormat"))
-        .toString(QStringLiteral("auto"));
-    profile.amountMode = object.value(QStringLiteral("amountMode"))
-        .toString(QStringLiteral("signed"));
-    profile.headerRow = object.value(QStringLiteral("headerRow")).toInt();
-    profile.dateColumn = object.value(QStringLiteral("dateColumn")).toInt(-1);
-    profile.amountColumn = object.value(QStringLiteral("amountColumn")).toInt(-1);
-    profile.incomeColumn = object.value(QStringLiteral("incomeColumn")).toInt(-1);
-    profile.expenseColumn = object.value(QStringLiteral("expenseColumn")).toInt(-1);
-    profile.recipientColumn = object.value(QStringLiteral("recipientColumn")).toInt(-1);
-    profile.recipientIdColumn = object.value(QStringLiteral("recipientIdColumn")).toInt(-1);
-    profile.descriptionColumn = object.value(
-        QStringLiteral("descriptionColumn")).toInt(-1);
-    profile.idColumn = object.value(QStringLiteral("idColumn")).toInt(-1);
-    profile.categoryColumn = object.value(
-        QStringLiteral("categoryColumn")).toInt(-1);
-    profile.directionColumn = object.value(
-        QStringLiteral("directionColumn")).toInt(-1);
-    profile.currencyColumn = object.value(
-        QStringLiteral("currencyColumn")).toInt(-1);
-    profile.positiveMeansIncome = object.value(
-        QStringLiteral("positiveMeansIncome")).toBool(true);
-    return profile;
-}
-
-CsvCodec::ReadResult BankCsvImporter::readTable(
-    const QString& filePath,
-    const BankCsvProfile& profile)
-{
-    if (filePath.endsWith(QStringLiteral(".pdf"), Qt::CaseInsensitive)) {
-        // Keep one successfully decoded statement. Preview and import reuse it.
-        // The cache is shared with background inspection and bounded to one file.
-        static QMutex mutex;
-        static QString cachedPath;
-        static qint64 cachedSize = -1;
-        static QDateTime cachedModified;
-        static CsvCodec::ReadResult cachedTable;
-        const QFileInfo before(filePath);
-        const QString path = before.canonicalFilePath();
-        {
-            QMutexLocker lock(&mutex);
-            if (!path.isEmpty() && path == cachedPath && before.size() == cachedSize &&
-                before.lastModified() == cachedModified) return cachedTable;
-        }
-        const auto table = PdfStatementReader::read(filePath);
-        const QFileInfo after(filePath);
-        if (table.error.isEmpty() && !path.isEmpty() && before.size() == after.size() &&
-            before.lastModified() == after.lastModified()) {
-            QMutexLocker lock(&mutex);
-            cachedPath = path; cachedSize = after.size(); cachedModified = after.lastModified();
-            cachedTable = table;
-        }
-        return table;
-    }
-    if (filePath.endsWith(QStringLiteral(".xlsx"), Qt::CaseInsensitive)) {
-        const auto xlsx = XlsxReader::readFirstSheet(filePath);
-        return {xlsx.rows, xlsx.error, {}, QStringLiteral("XLSX")};
-    }
-    return CsvCodec::readFile(filePath, readOptions(profile));
-}
-
-CsvCodec::ReadOptions BankCsvImporter::readOptions(
-    const BankCsvProfile& profile
-    )
-{
-    CsvCodec::ReadOptions options;
-    if (profile.delimiter == QStringLiteral("semicolon")) {
-        options.delimiter = QLatin1Char(';');
-    } else if (profile.delimiter == QStringLiteral("comma")) {
-        options.delimiter = QLatin1Char(',');
-    } else if (profile.delimiter == QStringLiteral("tab")) {
-        options.delimiter = QLatin1Char('\t');
-    }
-
-    if (profile.encoding == QStringLiteral("utf8")) {
-        options.encoding = CsvCodec::Encoding::Utf8;
-    } else if (profile.encoding == QStringLiteral("windows1251")) {
-        options.encoding = CsvCodec::Encoding::Windows1251;
-    } else if (profile.encoding == QStringLiteral("utf16le")) {
-        options.encoding = CsvCodec::Encoding::Utf16Le;
-    } else if (profile.encoding == QStringLiteral("utf16be")) {
-        options.encoding = CsvCodec::Encoding::Utf16Be;
-    }
-    return options;
-}
-
-bool BankCsvImporter::parseAmountMinor(
+bool BankStatementParser::parseAmountMinor(
     const QString& text,
     qint64& minorUnits
     )
@@ -289,7 +157,7 @@ bool BankCsvImporter::parseAmountMinor(
     return true;
 }
 
-QDateTime BankCsvImporter::parseDateTime(
+QDateTime BankStatementParser::parseDateTime(
     const QString& text,
     const QString& format
     )
@@ -342,37 +210,20 @@ QDateTime BankCsvImporter::parseDateTime(
     return {};
 }
 
-BankCsvParseResult BankCsvImporter::parse(
-    const QString& filePath,
-    const BankCsvProfile& requestedProfile
+BankCsvParseResult BankStatementParser::parse(
+    const QVector<QStringList>& rows,
+    const BankCsvProfile& profile
     )
 {
-    BankCsvProfile profile = requestedProfile;
-    if (filePath.endsWith(QStringLiteral(".pdf"), Qt::CaseInsensitive)) {
-        profile.headerRow = 0;
-        profile.dateColumn = 0; profile.amountColumn = 1;
-        profile.descriptionColumn = 2; profile.idColumn = 3;
-        profile.recipientColumn = -1; profile.recipientIdColumn = -1;
-        profile.currencyColumn = 4; profile.directionColumn = -1;
-        profile.categoryColumn = -1; profile.amountMode = QStringLiteral("signed");
-        profile.dateFormat = QStringLiteral("auto"); profile.positiveMeansIncome = true;
-    }
     BankCsvParseResult result;
-    const CsvCodec::ReadResult csv = readTable(filePath, profile);
-    result.delimiter = csv.delimiter;
-    result.encoding = csv.encoding;
-    if (!csv.error.isEmpty()) {
-        result.errors.append(csv.error);
-        return result;
-    }
-    if (profile.headerRow < 0 || profile.headerRow >= csv.rows.size()) {
+    if (profile.headerRow < 0 || profile.headerRow >= rows.size()) {
         result.errors.append(QStringLiteral("Header row is outside the CSV file"));
         return result;
     }
 
     for (qsizetype rowIndex = profile.headerRow + 1;
-         rowIndex < csv.rows.size(); ++rowIndex) {
-        const QStringList& row = csv.rows[rowIndex];
+         rowIndex < rows.size(); ++rowIndex) {
+        const QStringList& row = rows[rowIndex];
         if (rowIsEmpty(row)) {
             continue;
         }
