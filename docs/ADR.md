@@ -368,7 +368,7 @@
 - Удаление приложения удаляет ключ Keystore, и зашифрованная база становится недоступной. Это предупреждается при включении шифрования и в описании. Единственное восстановление — копия `.vexabackup`. Решение пользователя: оставить и предупреждать.
 - Облачная резервная копия Android (Auto Backup) отключена: `android:allowBackup="false"`. Иначе база попала бы в облако пользователя (Google Drive).
 
-**Код.** `storage/DatabaseEncryption.cpp` (`NativeKeyStore`, ветка Android), `core/system/PasswordStore.cpp`, `storage/DatabaseProtection.cpp` (`supported`), `packaging/android/AndroidManifest.xml`, `ui/computer/settings/DatabaseEncryptionSettings.qml`.
+**Код.** `core/db/DatabaseEncryption.cpp` (`NativeKeyStore`, ветка Android), `core/system/PasswordStore.cpp`, `storage/DatabaseProtection.cpp` (`supported`), `packaging/android/AndroidManifest.xml`, `ui/computer/settings/DatabaseEncryptionSettings.qml`.
 
 ---
 
@@ -431,7 +431,7 @@
 ---
 
 ## ADR-031. Архитектура: UI → service → core, правила в core/model
-**Статус:** Принято (23.10.2026). В работе: этап 1 плана (шаги 1.1–1.7), шаги 2.1–2.6 сделаны (библиотека `core_model` в `core/model/`, зависит только от Qt Core; обёртка `core` подключает весь слой). План и отметки шагов — `docs/architecture.md`.
+**Статус:** Принято (23.10.2026). В работе: этап 1 плана (шаги 1.1–1.7), шаги 2.1–2.7 сделаны (библиотека `core_model` в `core/model/`, зависит только от Qt Core; обёртка `core` подключает весь слой). План и отметки шагов — `docs/architecture.md`.
 
 **Решение.** Код делится на три слоя. Зависимости идут только сверху вниз:
 - **UI** — только отрисовка и ввод: QML и тонкая прослойка под конкретный экран (модели списков, форматирование «1 234,50 ₽»).
@@ -441,7 +441,7 @@
   - `core/db` — подключение, миграции, репозитории.
   - `core/api` — внешние API: ЦБ, MOEX, Bybit, Tron (запросы и разбор ответов).
   - `core/system` — всё, что приходит из ОС: файлы и `content://`, запуск `pdftotext` и PDFBox, форматы CSV, XLSX и PDF, хранилище ключей, события блокировки и сна ОС. Разбор форматов отделён от доступа к файлам: разбор получает байты.
-  - `db`, `api` и `system` зависят от `model`, но не друг от друга. `model` ни от чего не зависит.
+  - `db`, `api` и `system` зависят от `model`, но не друг от друга. `model` ни от чего не зависит. Исключение (31.10.2026): `core/db` (шифрование базы) подключает интерфейс хранилища ключа `DatabaseKeyStore` из `core/system`: хранение ключа — это служба ОС.
 
 **Сервисы и core/db.** `service` обращается к репозиториям `core/db` напрямую, без интерфейсов: SQLite не меняется, а тесты на временной базе заодно проверяют SQL. Интерфейс заводится только там, где реализацию нужно подменять в тестах — внешние API (как `CurrencyRateProvider` и `TestCurrencyRateProvider`).
 

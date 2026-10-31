@@ -14,6 +14,7 @@
 #include "../core/db/AnalyticsRepository.h"
 #include "../core/db/AccountRepository.h"
 #include "../core/db/TransactionRepository.h"
+#include "../core/db/DatabaseMaintenance.h"
 #include "../core/model/accounts/BalanceCalculator.h"
 #include "../core/system/BankCsvImporter.h"
 #include "../core/model/transactions/BankRecipientDictionary.h"
@@ -832,6 +833,7 @@ private:
     AnalyticsRepository analyticsRepository_;
     AccountRepository accountRepository_;
     TransactionRepository transactionRepository_;
+    DatabaseMaintenance maintenance_;
     CbrCurrencyRateProvider rateProvider_;
     CurrencyConverter currencyConverter_;
     BalanceCalculator balanceCalculator_;

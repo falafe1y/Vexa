@@ -1,4 +1,5 @@
 #include "../persistence/FinanceRepository.h"
+#include "../core/db/DatabaseMaintenance.h"
 #include "../core/db/AnalyticsRepository.h"
 #include "../core/model/analytics/InvestmentBenchmark.h"
 #include "../core/api/MoexBenchmarkParser.h"
@@ -17,8 +18,8 @@ private slots:
         QVERIFY(AnalyticsRepository(r.database()).saveBenchmarkHistory(descriptor,prices,from,to));QCOMPARE(AnalyticsRepository(r.database()).loadBenchmarkSelection().value("key"),descriptor.value("key"));
         QVERIFY(AnalyticsRepository(r.database()).benchmarkHistoryCovered("index:IMOEX",from,to));QVERIFY(!AnalyticsRepository(r.database()).benchmarkHistoryCovered("index:IMOEX",from,to.addDays(1)));
         const auto saved=AnalyticsRepository(r.database()).loadBenchmarkPrices("index:IMOEX");QCOMPARE(saved.size(),2);QCOMPARE(saved.first().toMap().value("price_micros").toLongLong(),123456789012345LL);QVERIFY(saved.last().toMap().value("price_micros").isNull());
-        const auto backup=dir.filePath("saved.db");QVERIFY(r.backupDatabase(backup));QVERIFY(r.clearAllUserData());QVERIFY(AnalyticsRepository(r.database()).loadBenchmarkPrices("index:IMOEX").isEmpty());QVERIFY(AnalyticsRepository(r.database()).loadBenchmarkSelection().isEmpty());
-        QVERIFY(r.restoreDatabase(backup));QCOMPARE(AnalyticsRepository(r.database()).loadBenchmarkPrices("index:IMOEX").size(),2);QVERIFY(AnalyticsRepository(r.database()).benchmarkHistoryCovered("index:IMOEX",from,to));QCOMPARE(AnalyticsRepository(r.database()).loadBenchmarkSelection().value("key"),descriptor.value("key"));
+        const auto backup=dir.filePath("saved.db");QVERIFY(DatabaseMaintenance(r.database(), r.keyStore()).backupDatabase(backup));QVERIFY(DatabaseMaintenance(r.database(), r.keyStore()).clearAllUserData());QVERIFY(AnalyticsRepository(r.database()).loadBenchmarkPrices("index:IMOEX").isEmpty());QVERIFY(AnalyticsRepository(r.database()).loadBenchmarkSelection().isEmpty());
+        QVERIFY(DatabaseMaintenance(r.database(), r.keyStore()).restoreDatabase(backup));QCOMPARE(AnalyticsRepository(r.database()).loadBenchmarkPrices("index:IMOEX").size(),2);QVERIFY(AnalyticsRepository(r.database()).benchmarkHistoryCovered("index:IMOEX",from,to));QCOMPARE(AnalyticsRepository(r.database()).loadBenchmarkSelection().value("key"),descriptor.value("key"));
     }
     void nativeParserRowsCanBeStored(){
         QTemporaryDir dir;FinanceRepository r(dir.filePath("data.db"));const auto descriptor=investmentBenchmarkIndices().first().toMap();

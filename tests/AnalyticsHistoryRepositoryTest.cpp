@@ -1,11 +1,12 @@
 #include "../persistence/FinanceRepository.h"
+#include "../core/db/DatabaseMaintenance.h"
 #include "../core/db/TransactionRepository.h"
 #include "../core/db/AccountRepository.h"
 #include "../core/db/AnalyticsRepository.h"
 #include "../core/db/CryptoRepository.h"
 #include "../core/db/InvestmentRepository.h"
-#include "storage/CipherDriver.h"
-#include "storage/PortableBackup.h"
+#include "../core/db/CipherDriver.h"
+#include "../core/db/PortableBackup.h"
 #include <QTemporaryDir>
 #include <QSqlQuery>
 #include <QSqlError>
@@ -240,11 +241,11 @@ private slots:
         QTemporaryDir dir;const auto copy=dir.filePath("copy.sqlite3");
         {FinanceRepository r(dir.filePath("source.db"));QVERIFY(AccountRepository(r.database()).insertAccount(broker()));
          auto op=operation("buy","buy",-10001,3'000'000);op.feeMinor=1;
-         QVERIFY(InvestmentRepository(r.database()).saveInvestmentBundle(stock(),position(),{},false,op));QVERIFY(AnalyticsRepository(r.database()).saveDailyValuations(batch()));QVERIFY(r.backupDatabase(copy));}
-        FinanceRepository target(dir.filePath("target.db"));QVERIFY2(target.restoreDatabase(copy),qPrintable(target.lastError()));
+         QVERIFY(InvestmentRepository(r.database()).saveInvestmentBundle(stock(),position(),{},false,op));QVERIFY(AnalyticsRepository(r.database()).saveDailyValuations(batch()));QVERIFY(DatabaseMaintenance(r.database(), r.keyStore()).backupDatabase(copy));}
+        FinanceRepository target(dir.filePath("target.db"));QVERIFY2(DatabaseMaintenance(target.database(), target.keyStore()).restoreDatabase(copy),qPrintable(target.lastError()));
         QCOMPARE(InvestmentRepository(target.database()).loadPositionHistory("position").size(),1);QCOMPARE(InvestmentRepository(target.database()).investmentCostBasis("position").toLongLong(),qint64(10001));
-        QCOMPARE(AnalyticsRepository(target.database()).loadDailyValuations(AssetDailyValuation::Crypto).size(),1);QVERIFY(target.restoreDatabase(copy));
-        QVERIFY(target.clearAllUserData());QVERIFY(InvestmentRepository(target.database()).loadPositionHistory("position").isEmpty());QVERIFY(AnalyticsRepository(target.database()).loadDailyValuations(AssetDailyValuation::Fiat).isEmpty());
+        QCOMPARE(AnalyticsRepository(target.database()).loadDailyValuations(AssetDailyValuation::Crypto).size(),1);QVERIFY(DatabaseMaintenance(target.database(), target.keyStore()).restoreDatabase(copy));
+        QVERIFY(DatabaseMaintenance(target.database(), target.keyStore()).clearAllUserData());QVERIFY(InvestmentRepository(target.database()).loadPositionHistory("position").isEmpty());QVERIFY(AnalyticsRepository(target.database()).loadDailyValuations(AssetDailyValuation::Fiat).isEmpty());
     }
 };
 QTEST_GUILESS_MAIN(AnalyticsHistoryRepositoryTest)

@@ -27,13 +27,12 @@ if(WIN32)
 endif()
 
 add_library(vexa_storage STATIC
-    CipherDriver.cpp CipherDriver.h DatabaseEncryption.cpp DatabaseEncryption.h
-    DatabaseProtection.cpp DatabaseProtection.h PortableBackup.cpp PortableBackup.h
+    DatabaseProtection.cpp DatabaseProtection.h
     AutoBackup.cpp AutoBackup.h)
 set_target_properties(vexa_storage PROPERTIES AUTOMOC ON POSITION_INDEPENDENT_CODE ON)
 target_compile_features(vexa_storage PUBLIC cxx_std_17)
 target_include_directories(vexa_storage PUBLIC ${CMAKE_CURRENT_LIST_DIR}/..)
-target_link_libraries(vexa_storage PUBLIC Qt6::Core Qt6::Sql Qt6::Concurrent PRIVATE vexa_sqlcipher vexa_access core_system)
+target_link_libraries(vexa_storage PUBLIC core_db Qt6::Core Qt6::Sql Qt6::Concurrent PRIVATE vexa_access core_system)
 if(WIN32)
     target_link_libraries(vexa_storage PRIVATE advapi32)
 endif()

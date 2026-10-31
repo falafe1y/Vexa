@@ -1,4 +1,5 @@
-#include "storage/CipherDriver.h"
+#include "../core/db/CipherDriver.h"
+#include "../core/db/DatabaseMaintenance.h"
 #include "../core/db/AccountRepository.h"
 #include "../core/db/InvestmentRepository.h"
 #include "../persistence/FinanceRepository.h"
@@ -87,16 +88,16 @@ void InvestmentAccountingRepositoryTest::backupRestoreKeepsTermsOperationsAndCur
     {FinanceRepository source(dir.filePath("source.db"));QVERIFY(AccountRepository(source.database()).insertAccount(broker()));
      const auto p=pos();InvestmentQuote q("future",110'000'000,QDateTime::currentDateTimeUtc(),futureTerms());
      InvestmentOperation op{"opening","broker","position","future","buy",-100,2'000'000,QDateTime::currentDateTimeUtc(),"Открытие"};
-     QVERIFY(InvestmentRepository(source.database()).saveInvestmentBundle(future(),p,q,false,op));QVERIFY(source.backupDatabase(copy));}
+     QVERIFY(InvestmentRepository(source.database()).saveInvestmentBundle(future(),p,q,false,op));QVERIFY(DatabaseMaintenance(source.database(), source.keyStore()).backupDatabase(copy));}
     FinanceRepository target(dir.filePath("target.db"));QVERIFY(AccountRepository(target.database()).insertAccount({"broker","Мой счёт",AssetType::Investment,AccountType::Brokerage,Currency::RUB,777}));
-    QVERIFY2(target.restoreDatabase(copy),qPrintable(target.lastError()));
+    QVERIFY2(DatabaseMaintenance(target.database(), target.keyStore()).restoreDatabase(copy),qPrintable(target.lastError()));
     QCOMPARE(InvestmentRepository(target.database()).loadInvestmentOperations().size(),1);QCOMPARE(InvestmentRepository(target.database()).loadInvestmentInstruments().at(0).terms().pricing,QStringLiteral("future"));
     QCOMPARE(InvestmentRepository(target.database()).loadInvestmentPositions().at(0).settings().blockedMarginMinor,qint64(2'000'000));
     const auto accounts=AccountRepository(target.database()).loadAccounts();
     const auto account=std::find_if(accounts.cbegin(),accounts.cend(),[](const auto& a){return a.id()==QStringLiteral("broker");});
     QVERIFY(account!=accounts.cend());QCOMPARE(account->initialBalanceMinor(),broker().initialBalanceMinor());
-    QVERIFY(target.restoreDatabase(copy));QCOMPARE(InvestmentRepository(target.database()).loadInvestmentOperations().size(),1);
-    QVERIFY(target.clearAllUserData());QVERIFY(InvestmentRepository(target.database()).loadInvestmentOperations().isEmpty());
+    QVERIFY(DatabaseMaintenance(target.database(), target.keyStore()).restoreDatabase(copy));QCOMPARE(InvestmentRepository(target.database()).loadInvestmentOperations().size(),1);
+    QVERIFY(DatabaseMaintenance(target.database(), target.keyStore()).clearAllUserData());QVERIFY(InvestmentRepository(target.database()).loadInvestmentOperations().isEmpty());
 }
 
 void InvestmentAccountingRepositoryTest::operationCurrencyAndZeroOptionQuotesAreProtected() {

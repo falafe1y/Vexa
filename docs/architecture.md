@@ -21,7 +21,7 @@ core/
 Правила зависимостей:
 - слой видит только слои ниже;
 - `core/model` ни от чего не зависит;
-- `core/db`, `core/api`, `core/system` зависят от `core/model`, но не друг от друга;
+- `core/db`, `core/api`, `core/system` зависят от `core/model`, но не друг от друга. Исключение: `core/db` подключает интерфейс хранилища ключа базы `DatabaseKeyStore` из `core/system`;
 - `services` обращается к `core/db` напрямую; интерфейсы — только для того, что подменяется в тестах (внешние API);
 - каждая часть — отдельная статическая библиотека CMake: `core_model`, `core_db`, `core_api`, `core_system`, `services`. Так компилятор не даст `core/model` подключить SQL или сеть;
 - библиотека-обёртка `core` (`INTERFACE`) подключает все части `core` разом — для приложения. Тесты линкуются точечно: тесты расчётов только с `core_model`.
@@ -93,7 +93,10 @@ core/
   - [x] 2.6.1 Файлы и форматы: `CsvCodec`, `XlsxReader`, `PdfStatementReader`, `ContentUriIo` перенесены как есть (разбор байтов уже отделён от доступа к файлу на уровне функций: `CsvCodec::parseBytes`, `PdfStatementReader::parsePages`). `vexa_storage` линкуется с `core_system` вместо компиляции `ContentUriIo.cpp` у себя
   - [x] 2.6.2 `BankCsvImporter` разделён: чтение файла выписки (CSV/XLSX/PDF, раскладка колонок PDF, кеш прочитанного PDF) — `core/system/BankCsvImporter`, понимание строк по профилю банка (даты, суммы, знак, валюта, отпечатки строк) — `core/model/transactions/BankStatementParser`, профиль банка и результат разбора — `core/model/transactions/BankCsvProfile`. Точка входа `BankCsvImporter::parse(путь, профиль)` прежняя
   - [x] 2.6.3 Ключи бирж `ExchangeCredentials` и хранилища секретов `PasswordStore` (Диспетчер учётных данных, Secret Service) и `AndroidVault` (Android Keystore) — в `core/system`; платформенные зависимости (advapi32, crypt32, Qt DBus) — у `core_system`. `vexa_access` линкуется с `core_system`
-- [ ] 2.7 Бэкап, восстановление и очистка базы — `DatabaseMaintenance` в `core/db/`.
+- [x] 2.7 Обслуживание базы и её техника (31.10.2026):
+  - `DatabaseMaintenance` в `core/db/`: бэкап, восстановление из копии, очистка данных, проверка схемы копии (`migrateBackup`) — из `FinanceRepository`;
+  - из `storage/` в `core/db/`: `CipherDriver` (SQLCipher), `DatabaseEncryption` (шифрование, копия, восстановление файла базы), `PortableBackup` (формат `.vexabackup`); `core_db` больше не зависит от `vexa_storage`, а `vexa_storage` (остались `DatabaseProtection`, `AutoBackup`) зависит от `core_db`;
+  - хранилище ключа базы (интерфейс `DatabaseKeyStore`, реализация для Windows и Android, `nativeDatabaseKeyStore()`) — `core/system/DatabaseKeyStore`. Исключение из правила независимости частей `core`: `core/db` подключает этот интерфейс из `core/system` (решено 31.10.2026)
 - [ ] 2.8 `FinanceRepository` опустел — удалить.
 
 ## Этап 3. `services`

@@ -1,4 +1,5 @@
-# Core database: the SQLCipher connection, the schema and the repositories.
+# Core database: the SQLCipher driver and connection, encryption, portable backups,
+# the schema and the repositories.
 add_library(core_db STATIC
     AccountRepository.cpp
     AccountRepository.h
@@ -8,10 +9,16 @@ add_library(core_db STATIC
     BankImportRepository.h
     CategoryRepository.cpp
     CategoryRepository.h
+    CipherDriver.cpp
+    CipherDriver.h
     CryptoRepository.cpp
     CryptoRepository.h
     Database.cpp
     Database.h
+    DatabaseEncryption.cpp
+    DatabaseEncryption.h
+    DatabaseMaintenance.cpp
+    DatabaseMaintenance.h
     DatabaseSchema.cpp
     DatabaseSchema.h
     HistorySavepoint.h
@@ -23,6 +30,8 @@ add_library(core_db STATIC
     OperationRows.h
     PlanningRepository.cpp
     PlanningRepository.h
+    PortableBackup.cpp
+    PortableBackup.h
     PositionHistory.cpp
     PositionHistory.h
     PriceHistory.cpp
@@ -39,4 +48,6 @@ add_library(core_db STATIC
     TransactionRepository.cpp
     TransactionRepository.h
 )
-target_link_libraries(core_db PUBLIC core_model Qt6::Sql vexa_storage)
+set_target_properties(core_db PROPERTIES POSITION_INDEPENDENT_CODE ON)
+target_compile_features(core_db PUBLIC cxx_std_17)
+target_link_libraries(core_db PUBLIC core_model Qt6::Sql PRIVATE vexa_sqlcipher)

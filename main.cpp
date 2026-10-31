@@ -20,6 +20,7 @@
 #include "security/SystemLockMonitor.h"
 
 #include "interface/FinanceController.h"
+#include "core/db/DatabaseMaintenance.h"
 #include "ui/computer/common/WindowScrollInput.h"
 #include "ui/computer/notes/NotebookLayout.h"
 
@@ -74,7 +75,7 @@ int main(int argc, char *argv[])
     app.setQuitOnLastWindowClosed(false);
     AppAccess appAccess(dataDirectory);
     DatabaseProtection databaseProtection(QDir(dataDirectory).filePath("vexa.sqlite3"));
-    databaseProtection.setBackupSchemaValidator(FinanceRepository::migrateBackup);
+    databaseProtection.setBackupSchemaValidator(DatabaseMaintenance::migrateBackup);
     std::unique_ptr<SystemLockMonitor> systemLock;
     const auto syncSystemLock = [&] {
         if (!appAccess.storeAvailable()) {

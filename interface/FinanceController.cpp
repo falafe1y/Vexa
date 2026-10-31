@@ -458,6 +458,7 @@ FinanceController::FinanceController(QObject* parent, const QString& databasePat
     , analyticsRepository_(repository_.database())
     , accountRepository_(repository_.database())
     , transactionRepository_(repository_.database())
+    , maintenance_(repository_.database(), repository_.keyStore())
     , currencyConverter_(rateProvider_)
     , balanceCalculator_(currencyConverter_)
 {
@@ -1288,9 +1289,9 @@ QVariantMap FinanceController::backupDatabase(const QUrl& fileUrl)
     if (!saveNotes()) {
         return {{QStringLiteral("ok"), false}, {QStringLiteral("error"), notesError_}};
     }
-    if (!repository_.backupDatabase(path)) {
+    if (!maintenance_.backupDatabase(path)) {
         return {{QStringLiteral("ok"), false},
-                {QStringLiteral("error"), repository_.lastError()}};
+                {QStringLiteral("error"), maintenance_.lastError()}};
     }
     return {{QStringLiteral("ok"), true}, {QStringLiteral("path"), path}};
 }
@@ -1301,8 +1302,8 @@ QVariantMap FinanceController::restoreDatabase(const QUrl& fileUrl)
         return {{QStringLiteral("ok"), false}, {QStringLiteral("error"), notesError_}};
     qint64 restoredRecords = 0;
     QString previousBackupPath;
-    if (!repository_.restoreDatabase(fileUrl.toLocalFile(), &restoredRecords, &previousBackupPath)) {
-        return {{QStringLiteral("ok"), false}, {QStringLiteral("error"), repository_.lastError()}};
+    if (!maintenance_.restoreDatabase(fileUrl.toLocalFile(), &restoredRecords, &previousBackupPath)) {
+        return {{QStringLiteral("ok"), false}, {QStringLiteral("error"), maintenance_.lastError()}};
     }
     const QScopedValueRollback<bool> restoring(restoringDatabase_, true);
     cancelPendingAssetRequests();
@@ -1430,9 +1431,9 @@ QVariantMap FinanceController::restoreDatabase(const QUrl& fileUrl)
 
 QVariantMap FinanceController::clearAllData()
 {
-    if (!repository_.clearAllUserData()) {
+    if (!maintenance_.clearAllUserData()) {
         return {{QStringLiteral("ok"), false},
-                {QStringLiteral("error"), repository_.lastError()}};
+                {QStringLiteral("error"), maintenance_.lastError()}};
     }
 
     cancelPendingAssetRequests();

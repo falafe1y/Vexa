@@ -49,6 +49,7 @@ public:
     bool saveCryptoPriceAttemptUtc(const QDateTime& attemptedAtUtc);
     QString loadCryptoManualState() const;
     bool saveCryptoManualState(const QString& state);
+    // Purchase price of the coins without trades, by "exchangeId|coin"
     QVariantMap loadCryptoCostBasis() const;
     bool saveCryptoCostBasis(const QString& exchangeId, const QString& coin, const QVariantMap& basis);
     qint64 loadCryptoHistoryFromMs(const QString& exchangeId) const;

@@ -10,6 +10,8 @@ add_library(core_system STATIC
     ContentUriIo.h
     CsvCodec.cpp
     CsvCodec.h
+    DatabaseKeyStore.cpp
+    DatabaseKeyStore.h
     ExchangeCredentials.cpp
     ExchangeCredentials.h
     PasswordStore.cpp

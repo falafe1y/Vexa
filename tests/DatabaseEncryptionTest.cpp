@@ -1,12 +1,13 @@
 #include <QtTest>
+#include "../core/db/DatabaseMaintenance.h"
 #include "../core/db/NotesRepository.h"
 #include <QTemporaryDir>
 #include <QSqlQuery>
 #include <QSqlError>
 #include <QFile>
 #include <QUuid>
-#include "storage/DatabaseEncryption.h"
-#include "storage/CipherDriver.h"
+#include "../core/db/DatabaseEncryption.h"
+#include "../core/db/CipherDriver.h"
 #include "persistence/FinanceRepository.h"
 
 class TestDatabaseKeys final : public DatabaseKeyStore {
@@ -158,16 +159,16 @@ private slots:
         const auto path = dir.filePath("finance.db"); const auto backup = dir.filePath("copy.sqlite3");
         { FinanceRepository repository(path, {}, keys); QVERIFY2(repository.isOpen(), qPrintable(repository.lastError())); QVERIFY(NotesRepository(repository.database()).save(secret)); }
         const auto plainBackup = dir.filePath("plain.sqlite3");
-        { FinanceRepository repository(path, {}, keys); QVERIFY(repository.backupDatabase(plainBackup)); }
+        { FinanceRepository repository(path, {}, keys); QVERIFY(DatabaseMaintenance(repository.database(), repository.keyStore()).backupDatabase(plainBackup)); }
         auto encrypted = DatabaseEncryption::convert(path, true, *keys); QVERIFY2(encrypted.ok, qPrintable(encrypted.error));
         {
             FinanceRepository repository(path, keys->key, keys); QVERIFY2(repository.isOpen(), qPrintable(repository.lastError()));
             QVERIFY(NotesRepository(repository.database()).save("before plain restore"));
-            QVERIFY2(repository.restoreDatabase(plainBackup), qPrintable(repository.lastError()));
+            QVERIFY2(DatabaseMaintenance(repository.database(), repository.keyStore()).restoreDatabase(plainBackup), qPrintable(repository.lastError()));
             QString plainNotes; QVERIFY(NotesRepository(repository.database()).load(plainNotes)); QCOMPARE(plainNotes, secret);
-            QVERIFY2(repository.backupDatabase(backup), qPrintable(repository.lastError()));
+            QVERIFY2(DatabaseMaintenance(repository.database(), repository.keyStore()).backupDatabase(backup), qPrintable(repository.lastError()));
             QVERIFY(NotesRepository(repository.database()).save("changed"));
-            QVERIFY2(repository.restoreDatabase(backup), qPrintable(repository.lastError()));
+            QVERIFY2(DatabaseMaintenance(repository.database(), repository.keyStore()).restoreDatabase(backup), qPrintable(repository.lastError()));
             QString notes; QVERIFY(NotesRepository(repository.database()).load(notes)); QCOMPARE(notes, secret);
         }
         QVERIFY(!bytes(path).startsWith("SQLite format 3"));
@@ -175,7 +176,7 @@ private slots:
         {
             FinanceRepository repository(path, {}, keys); QVERIFY(repository.isOpen());
             QVERIFY(NotesRepository(repository.database()).save("changed again"));
-            QVERIFY2(repository.restoreDatabase(backup), qPrintable(repository.lastError()));
+            QVERIFY2(DatabaseMaintenance(repository.database(), repository.keyStore()).restoreDatabase(backup), qPrintable(repository.lastError()));
             QString notes; QVERIFY(NotesRepository(repository.database()).load(notes)); QCOMPARE(notes, secret);
         }
         QVERIFY(bytes(path).startsWith("SQLite format 3"));

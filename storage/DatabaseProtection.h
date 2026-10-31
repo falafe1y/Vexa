@@ -1,6 +1,6 @@
 #pragma once
-#include "DatabaseEncryption.h"
-#include "PortableBackup.h"
+#include "../core/db/DatabaseEncryption.h"
+#include "../core/db/PortableBackup.h"
 #include "AutoBackup.h"
 #include <QObject>
 #include <QFutureWatcher>

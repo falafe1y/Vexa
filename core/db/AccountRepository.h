@@ -26,6 +26,7 @@ public:
         const Account& account,
         const std::optional<DepositSettings>& settings
         );
+    // Rate history of deposits by account id: a list of {"from": "yyyy-MM-dd", "bps": int}, sorted by day
     QVariantMap loadDepositRateSteps() const;
     bool saveDepositRateSteps(const QString& accountId, const QVariantList& steps);
     bool deleteAccount(const QString& id);

@@ -1,4 +1,5 @@
 #include "../persistence/FinanceRepository.h"
+#include "../core/db/DatabaseMaintenance.h"
 #include "../core/db/TransactionRepository.h"
 #include "../core/db/AccountRepository.h"
 #include "../core/db/AnalyticsRepository.h"
@@ -26,7 +27,7 @@
 #include <QTimeZone>
 #include <QUuid>
 #include <QtTest>
-#include "storage/CipherDriver.h"
+#include "../core/db/CipherDriver.h"
 
 #include <algorithm>
 
@@ -171,13 +172,13 @@ void FinanceRepositoryTest::cnyMigrationPreservesData()
     }
     QSqlDatabase::removeDatabase(connection);
     const auto backup=directory.filePath("backup.sqlite3");
-    QVERIFY(migrated.backupDatabase(backup));
+    QVERIFY(DatabaseMaintenance(migrated.database(), migrated.keyStore()).backupDatabase(backup));
     FinanceRepository restored(directory.filePath("restored.sqlite3"));
-    QVERIFY2(restored.restoreDatabase(backup),qPrintable(restored.lastError()));
+    QVERIFY2(DatabaseMaintenance(restored.database(), restored.keyStore()).restoreDatabase(backup),qPrintable(restored.lastError()));
     QCOMPARE(SettingsRepository(restored.database()).loadManualCnyToRubRate(),13.25);
     QCOMPARE(TransactionRepository(restored.database()).loadSummary().balance[static_cast<int>(Currency::CNY)],qint64(9500));
     QCOMPARE(PlanningRepository(restored.database()).loadFinancialGoals().first().currency,Currency::CNY);
-    QVERIFY(restored.restoreDatabase(backup));
+    QVERIFY(DatabaseMaintenance(restored.database(), restored.keyStore()).restoreDatabase(backup));
     QCOMPARE(TransactionRepository(restored.database()).loadTransactions().size(),2);
     FinanceRepository reopened(path);
     QVERIFY(reopened.isOpen());
@@ -189,8 +190,8 @@ void FinanceRepositoryTest::replacesExistingDataAndIsIdempotent()
     QTemporaryDir directory;
     FinanceRepository current(directory.filePath(QStringLiteral("current.sqlite3")));
     FinanceRepository old(directory.filePath(QStringLiteral("old.sqlite3")));
-    QVERIFY(current.clearAllUserData());
-    QVERIFY(old.clearAllUserData());
+    QVERIFY(DatabaseMaintenance(current.database(), current.keyStore()).clearAllUserData());
+    QVERIFY(DatabaseMaintenance(old.database(), old.keyStore()).clearAllUserData());
     const Account existing(QStringLiteral("shared"), QStringLiteral("Текущее имя"),
                            AssetType::Fiat, AccountType::DebitCard, Currency::RUB);
     const Account previous(QStringLiteral("shared"), QStringLiteral("Старое имя"),
@@ -219,14 +220,14 @@ void FinanceRepositoryTest::replacesExistingDataAndIsIdempotent()
     QVERIFY(SettingsRepository(current.database()).saveAppCurrency(QStringLiteral("EUR")));
     QVERIFY(SettingsRepository(old.database()).saveAppCurrency(QStringLiteral("USD")));
     const QString copy = directory.filePath(QStringLiteral("backup.sqlite3"));
-    QVERIFY(old.backupDatabase(copy));
+    QVERIFY(DatabaseMaintenance(old.database(), old.keyStore()).backupDatabase(copy));
     QFile file(copy);
     QVERIFY(file.open(QIODevice::ReadOnly));
     const QByteArray before = QCryptographicHash::hash(file.readAll(), QCryptographicHash::Sha256);
     file.close();
     qint64 added = -1;
     QString previousPath;
-    QVERIFY2(current.restoreDatabase(copy, &added, &previousPath), qPrintable(current.lastError()));
+    QVERIFY2(DatabaseMaintenance(current.database(), current.keyStore()).restoreDatabase(copy, &added, &previousPath), qPrintable(current.lastError()));
     QVERIFY(added > 2);
     QVERIFY(QFileInfo::exists(previousPath));
     FinanceRepository previousState(previousPath);
@@ -244,7 +245,7 @@ void FinanceRepositoryTest::replacesExistingDataAndIsIdempotent()
             QCOMPARE(tx.description(), oldShared.description());
         }
     }
-    QVERIFY2(current.restoreDatabase(copy, &added, &previousPath), qPrintable(current.lastError()));
+    QVERIFY2(DatabaseMaintenance(current.database(), current.keyStore()).restoreDatabase(copy, &added, &previousPath), qPrintable(current.lastError()));
     QVERIFY(added > 2);
     QCOMPARE(TransactionRepository(current.database()).loadTransactions().size(), 2);
     QVERIFY(file.open(QIODevice::ReadOnly));
@@ -257,26 +258,26 @@ void FinanceRepositoryTest::restoreRejectsInvalidFilesAndRollsBackSchemaConflict
     const QString currentPath = directory.filePath(QStringLiteral("current.sqlite3"));
     FinanceRepository current(currentPath);
     FinanceRepository source(directory.filePath(QStringLiteral("source.sqlite3")));
-    QVERIFY(current.clearAllUserData());
-    QVERIFY(source.clearAllUserData());
+    QVERIFY(DatabaseMaintenance(current.database(), current.keyStore()).clearAllUserData());
+    QVERIFY(DatabaseMaintenance(source.database(), source.keyStore()).clearAllUserData());
     QVERIFY(AccountRepository(source.database()).insertAccount(Account(QStringLiteral("new"), QStringLiteral("Новый"),
         AssetType::Fiat, AccountType::Cash, Currency::RUB)));
     QVERIFY(AccountRepository(current.database()).insertAccount(Account(QStringLiteral("survivor"), QStringLiteral("Сохранить"), AssetType::Fiat, AccountType::Cash, Currency::RUB)));
     QVERIFY(NotesRepository(current.database()).save(QStringLiteral("Не потерять")));
     qint64 added = 9;
     QString previousPath;
-    QVERIFY(!current.restoreDatabase(directory.filePath(QStringLiteral("absent.sqlite3")), &added, &previousPath));
+    QVERIFY(!DatabaseMaintenance(current.database(), current.keyStore()).restoreDatabase(directory.filePath(QStringLiteral("absent.sqlite3")), &added, &previousPath));
     QVERIFY(!QFileInfo::exists(directory.filePath(QStringLiteral("absent.sqlite3"))));
     QCOMPARE(added, 0);
     QVERIFY(previousPath.isEmpty());
-    QVERIFY(!current.restoreDatabase(currentPath));
+    QVERIFY(!DatabaseMaintenance(current.database(), current.keyStore()).restoreDatabase(currentPath));
     const QString invalidPath = directory.filePath(QStringLiteral("invalid.sqlite3"));
     QFile invalid(invalidPath);
     QVERIFY(invalid.open(QIODevice::WriteOnly));
     invalid.write("not a database"); invalid.close();
-    QVERIFY(!current.restoreDatabase(invalidPath));
+    QVERIFY(!DatabaseMaintenance(current.database(), current.keyStore()).restoreDatabase(invalidPath));
     const QString backup = directory.filePath(QStringLiteral("backup.sqlite3"));
-    QVERIFY(source.backupDatabase(backup));
+    QVERIFY(DatabaseMaintenance(source.database(), source.keyStore()).backupDatabase(backup));
     const QString connection = QStringLiteral("incompatible-restore-test");
     {
         auto database = addCipherDatabase(connection);
@@ -287,7 +288,7 @@ void FinanceRepositoryTest::restoreRejectsInvalidFilesAndRollsBackSchemaConflict
         QVERIFY(query.exec(QStringLiteral("ALTER TABLE settings ADD COLUMN future_column TEXT")));
     }
     QSqlDatabase::removeDatabase(connection);
-    QVERIFY(!current.restoreDatabase(backup, &added, &previousPath));
+    QVERIFY(!DatabaseMaintenance(current.database(), current.keyStore()).restoreDatabase(backup, &added, &previousPath));
     QCOMPARE(added, 0);
     QCOMPARE(AccountRepository(current.database()).loadAccounts().size(), 1);
     QCOMPARE(AccountRepository(current.database()).loadAccounts().first().id(), QStringLiteral("survivor"));
@@ -305,8 +306,8 @@ void FinanceRepositoryTest::restoresCompositeKeysAndRelatedRows()
     QTemporaryDir directory;
     FinanceRepository current(directory.filePath(QStringLiteral("current.sqlite3")));
     FinanceRepository source(directory.filePath(QStringLiteral("source.sqlite3")));
-    QVERIFY(current.clearAllUserData());
-    QVERIFY(source.clearAllUserData());
+    QVERIFY(DatabaseMaintenance(current.database(), current.keyStore()).clearAllUserData());
+    QVERIFY(DatabaseMaintenance(source.database(), source.keyStore()).clearAllUserData());
     const Account first(QStringLiteral("a"), QStringLiteral("Первый"), AssetType::Fiat, AccountType::Cash, Currency::RUB);
     const Account second(QStringLiteral("b"), QStringLiteral("Второй"), AssetType::Fiat, AccountType::Cash, Currency::RUB);
     const Category category(QStringLiteral("food"), QStringLiteral("Еда"), CategoryType::Expense);
@@ -323,13 +324,13 @@ void FinanceRepositoryTest::restoresCompositeKeysAndRelatedRows()
     rule.categoryId = category.id();
     QVERIFY2(TransactionRepository(source.database()).insertTransactions({}, {rule}), qPrintable(source.lastError()));
     const QString backup = directory.filePath(QStringLiteral("backup.sqlite3"));
-    QVERIFY(source.backupDatabase(backup));
-    QVERIFY2(current.restoreDatabase(backup), qPrintable(current.lastError()));
+    QVERIFY(DatabaseMaintenance(source.database(), source.keyStore()).backupDatabase(backup));
+    QVERIFY2(DatabaseMaintenance(current.database(), current.keyStore()).restoreDatabase(backup), qPrintable(current.lastError()));
     QCOMPARE(AccountRepository(current.database()).loadAccounts().size(), 2);
     QCOMPARE(TransactionRepository(current.database()).loadTransactions().size(), 2);
     QCOMPARE(BankImportRepository(current.database()).loadBankCategoryRules().size(), 1);
     qint64 added = -1;
-    QVERIFY2(current.restoreDatabase(backup, &added), qPrintable(current.lastError()));
+    QVERIFY2(DatabaseMaintenance(current.database(), current.keyStore()).restoreDatabase(backup, &added), qPrintable(current.lastError()));
     QVERIFY(added > 0);
     QCOMPARE(TransactionRepository(current.database()).loadSummary().balance[0], 0);
 }
@@ -340,9 +341,9 @@ void FinanceRepositoryTest::restoresEveryBackupTableExactly()
     const QString currentPath = directory.filePath(QStringLiteral("current.sqlite3"));
     FinanceRepository current(currentPath);
     FinanceRepository source(directory.filePath(QStringLiteral("source.sqlite3")));
-    QVERIFY(current.clearAllUserData()); QVERIFY(source.clearAllUserData());
+    QVERIFY(DatabaseMaintenance(current.database(), current.keyStore()).clearAllUserData()); QVERIFY(DatabaseMaintenance(source.database(), source.keyStore()).clearAllUserData());
     const QString backup = directory.filePath(QStringLiteral("backup.sqlite3"));
-    QVERIFY(source.backupDatabase(backup));
+    QVERIFY(DatabaseMaintenance(source.database(), source.keyStore()).backupDatabase(backup));
     const QString connection = QStringLiteral("all-tables-restore-test");
     QMap<QString, QStringList> expected;
     const auto readRows = [](QSqlDatabase& database, const QString& table) {
@@ -404,7 +405,7 @@ void FinanceRepositoryTest::restoresEveryBackupTableExactly()
     }
     QSqlDatabase::removeDatabase(connection);
     qint64 added = -1;
-    QVERIFY2(current.restoreDatabase(backup, &added), qPrintable(current.lastError()));
+    QVERIFY2(DatabaseMaintenance(current.database(), current.keyStore()).restoreDatabase(backup, &added), qPrintable(current.lastError()));
     QVERIFY(added > 20);
     {
         auto database = addCipherDatabase(connection);
@@ -417,7 +418,7 @@ void FinanceRepositoryTest::restoresEveryBackupTableExactly()
         QVERIFY(!query.next());
     }
     QSqlDatabase::removeDatabase(connection);
-    QVERIFY2(current.restoreDatabase(backup, &added), qPrintable(current.lastError()));
+    QVERIFY2(DatabaseMaintenance(current.database(), current.keyStore()).restoreDatabase(backup, &added), qPrintable(current.lastError()));
     QVERIFY(added > 20);
 }
 
@@ -426,10 +427,10 @@ void FinanceRepositoryTest::restoresOlderCopyWithOptionalColumnsMissing()
     QTemporaryDir directory;
     FinanceRepository current(directory.filePath(QStringLiteral("current.sqlite3")));
     FinanceRepository source(directory.filePath(QStringLiteral("source.sqlite3")));
-    QVERIFY(current.clearAllUserData()); QVERIFY(source.clearAllUserData());
+    QVERIFY(DatabaseMaintenance(current.database(), current.keyStore()).clearAllUserData()); QVERIFY(DatabaseMaintenance(source.database(), source.keyStore()).clearAllUserData());
     QVERIFY(AccountRepository(source.database()).insertAccount(Account(QStringLiteral("old"), QStringLiteral("Старый"), AssetType::Fiat, AccountType::Cash, Currency::RUB)));
     const QString backup = directory.filePath(QStringLiteral("backup.sqlite3"));
-    QVERIFY(source.backupDatabase(backup));
+    QVERIFY(DatabaseMaintenance(source.database(), source.keyStore()).backupDatabase(backup));
     const QString connection = QStringLiteral("older-restore-test");
     {
         auto database = addCipherDatabase(connection);
@@ -440,7 +441,7 @@ void FinanceRepositoryTest::restoresOlderCopyWithOptionalColumnsMissing()
         QVERIFY(query.exec(QStringLiteral("DROP TABLE notes")));
     }
     QSqlDatabase::removeDatabase(connection);
-    QVERIFY2(current.restoreDatabase(backup), qPrintable(current.lastError()));
+    QVERIFY2(DatabaseMaintenance(current.database(), current.keyStore()).restoreDatabase(backup), qPrintable(current.lastError()));
     QCOMPARE(AccountRepository(current.database()).loadAccounts().size(), 1);
     QCOMPARE(AccountRepository(current.database()).loadAccounts().first().id(), QStringLiteral("old"));
     QString notes; bool exists = false;
@@ -456,7 +457,7 @@ void FinanceRepositoryTest::createsConsistentDatabaseBackup()
     const QString backupPath = directory.filePath(QStringLiteral("backup.sqlite3"));
     FinanceRepository source(sourcePath);
     QVERIFY2(source.isOpen(), qPrintable(source.lastError()));
-    QVERIFY(source.backupDatabase(backupPath));
+    QVERIFY(DatabaseMaintenance(source.database(), source.keyStore()).backupDatabase(backupPath));
     QVERIFY(QFileInfo::exists(backupPath));
 
     {
@@ -464,7 +465,7 @@ void FinanceRepositoryTest::createsConsistentDatabaseBackup()
         QVERIFY2(backup.isOpen(), qPrintable(backup.lastError()));
         QCOMPARE(AccountRepository(backup.database()).loadAccounts().size(), AccountRepository(source.database()).loadAccounts().size());
     }
-    QVERIFY(source.backupDatabase(backupPath)); // Replaces an existing backup atomically.
+    QVERIFY(DatabaseMaintenance(source.database(), source.keyStore()).backupDatabase(backupPath)); // Replaces an existing backup atomically.
 }
 
 void FinanceRepositoryTest::clearsAllUserDataAndResetsSettings()
@@ -482,7 +483,7 @@ void FinanceRepositoryTest::clearsAllUserDataAndResetsSettings()
     QVERIFY(BankImportRepository(repository.database()).saveBankCsvProfile(
         QStringLiteral("profile"), QStringLiteral("Импорт"), QStringLiteral("{}")));
 
-    QVERIFY2(repository.clearAllUserData(), qPrintable(repository.lastError()));
+    QVERIFY2(DatabaseMaintenance(repository.database(), repository.keyStore()).clearAllUserData(), qPrintable(repository.lastError()));
     QVERIFY(AccountRepository(repository.database()).loadAccounts().isEmpty());
     QVERIFY(TransactionRepository(repository.database()).loadTransactions().isEmpty());
     QVERIFY(PlanningRepository(repository.database()).loadFinancialGoals().isEmpty());
@@ -2036,12 +2037,12 @@ void FinanceRepositoryTest::bankCategoryRulesPersistAndRollbackWithImport()
         QCOMPARE(rules.front().pattern, QStringLiteral("пятерочка"));
         QCOMPARE(rules.front().categoryId, QStringLiteral("groceries"));
         const QString backupPath = directory.filePath(QStringLiteral("backup.sqlite3"));
-        QVERIFY(reopened.backupDatabase(backupPath));
+        QVERIFY(DatabaseMaintenance(reopened.database(), reopened.keyStore()).backupDatabase(backupPath));
         FinanceRepository backup(backupPath);
         QCOMPARE(BankImportRepository(backup.database()).loadBankCategoryRules().size(), 1);
         QVERIFY(CategoryRepository(reopened.database()).archiveCategory(QStringLiteral("groceries")));
         QVERIFY(BankImportRepository(reopened.database()).loadBankCategoryRules().isEmpty());
-        QVERIFY(reopened.clearAllUserData());
+        QVERIFY(DatabaseMaintenance(reopened.database(), reopened.keyStore()).clearAllUserData());
         QVERIFY(BankImportRepository(reopened.database()).loadBankCategoryRules().isEmpty());
     }
 }

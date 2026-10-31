@@ -1,4 +1,5 @@
 #include <QtTest>
+#include "../core/db/DatabaseMaintenance.h"
 #include "../core/db/AccountRepository.h"
 #include "../core/db/SettingsRepository.h"
 #include "../core/db/NotesRepository.h"
@@ -7,8 +8,8 @@
 #include <QSqlQuery>
 #include <QSqlError>
 #include <QUuid>
-#include "storage/PortableBackup.h"
-#include "storage/CipherDriver.h"
+#include "../core/db/PortableBackup.h"
+#include "../core/db/CipherDriver.h"
 #include "storage/DatabaseProtection.h"
 #include "persistence/FinanceRepository.h"
 
@@ -26,7 +27,7 @@ QByteArray bytes(const QString& path) { QFile file(path); if (!file.open(QIODevi
 bool write(const QString& path, const QByteArray& data) { QFile file(path); return file.open(QIODevice::WriteOnly) && file.write(data) == data.size(); }
 bool seed(const QString& path) {
     FinanceRepository repository(path);
-    return repository.isOpen() && repository.clearAllUserData() && NotesRepository(repository.database()).save(Notes)
+    return repository.isOpen() && DatabaseMaintenance(repository.database(), repository.keyStore()).clearAllUserData() && NotesRepository(repository.database()).save(Notes)
         && SettingsRepository(repository.database()).saveAppCurrency("CNY")
         && AccountRepository(repository.database()).insertAccount({"account", "Счёт", AssetType::Fiat, AccountType::Cash, Currency::RUB, 9007199254740993LL});
 }
@@ -67,7 +68,7 @@ private slots:
         QCOMPARE(bytes(output).startsWith("VEXABACKUP"), !plaintextExport);
         // A portable file opens without consulting the old device key.
         sourceKeys.key.clear();
-        auto imported = PortableBackup::prepareImport(output, dir.filePath("work"), Password, targetKeys, FinanceRepository::migrateBackup);
+        auto imported = PortableBackup::prepareImport(output, dir.filePath("work"), Password, targetKeys, DatabaseMaintenance::migrateBackup);
         QVERIFY2(imported.ok, qPrintable(imported.error));
         QVERIFY(imported.prepared->access.encrypted());
         QVERIFY(!bytes(imported.prepared->access.path).contains(Notes.toUtf8()));
@@ -98,10 +99,10 @@ private slots:
         for (const auto& password : {Password, QString("x'") + QString(64, 'a') + "'"}) {
             const auto output = dir.filePath("copy.vexabackup");
             QVERIFY(PortableBackup::exportFile({path}, output, dir.filePath("work"), password, false, "test").ok);
-            auto restored = PortableBackup::prepareImport(output, dir.filePath("work"), password, keys, FinanceRepository::migrateBackup);
+            auto restored = PortableBackup::prepareImport(output, dir.filePath("work"), password, keys, DatabaseMaintenance::migrateBackup);
             QVERIFY2(restored.ok, qPrintable(restored.error));
-            QVERIFY(!PortableBackup::prepareImport(output, dir.filePath("work"), password + "x", keys, FinanceRepository::migrateBackup).ok);
-            if (password == Password) QVERIFY(!PortableBackup::prepareImport(output, dir.filePath("work"), password.trimmed(), keys, FinanceRepository::migrateBackup).ok);
+            QVERIFY(!PortableBackup::prepareImport(output, dir.filePath("work"), password + "x", keys, DatabaseMaintenance::migrateBackup).ok);
+            if (password == Password) QVERIFY(!PortableBackup::prepareImport(output, dir.filePath("work"), password.trimmed(), keys, DatabaseMaintenance::migrateBackup).ok);
         }
     }
     void damagedFilesAndUnknownVersions() {
@@ -113,12 +114,12 @@ private slots:
         auto corrupt = good; corrupt[corrupt.size()-100] ^= 0x55; invalid.append(corrupt);
         for (const auto& data : invalid) {
             QVERIFY(write(output, data));
-            QVERIFY(!PortableBackup::prepareImport(output, dir.filePath("work"), Password, keys, FinanceRepository::migrateBackup).ok);
+            QVERIFY(!PortableBackup::prepareImport(output, dir.filePath("work"), Password, keys, DatabaseMaintenance::migrateBackup).ok);
             QCOMPARE(notes({path}), Notes);
         }
         QCOMPARE(keys.writes, 0);
         QVERIFY(write(output, good));
-        auto imported = PortableBackup::prepareImport(output, dir.filePath("work"), Password, keys, FinanceRepository::migrateBackup);
+        auto imported = PortableBackup::prepareImport(output, dir.filePath("work"), Password, keys, DatabaseMaintenance::migrateBackup);
         QVERIFY(imported.ok);
         const auto staged = imported.prepared->access.path;
         QVERIFY(write(output, "replaced after preview"));
@@ -129,11 +130,11 @@ private slots:
         QTemporaryDir dir; Keys keys; const auto path = dir.filePath("source.db"), output = dir.filePath("copy.vexabackup"); QVERIFY(seed(path));
         QVERIFY(sql({path}, "CREATE TABLE future_feature(id INTEGER PRIMARY KEY)"));
         QVERIFY(PortableBackup::exportFile({path}, output, dir.filePath("work"), Password, false, "test").ok);
-        QVERIFY(!PortableBackup::prepareImport(output, dir.filePath("work"), Password, keys, FinanceRepository::migrateBackup).ok);
+        QVERIFY(!PortableBackup::prepareImport(output, dir.filePath("work"), Password, keys, DatabaseMaintenance::migrateBackup).ok);
         QVERIFY(sql({path}, "DROP TABLE future_feature"));
         QVERIFY(sql({path}, "CREATE TRIGGER unexpected AFTER UPDATE ON notes BEGIN DELETE FROM accounts; END"));
         QVERIFY(PortableBackup::exportFile({path}, output, dir.filePath("work"), Password, false, "test").ok);
-        QVERIFY(!PortableBackup::prepareImport(output, dir.filePath("work"), Password, keys, FinanceRepository::migrateBackup).ok);
+        QVERIFY(!PortableBackup::prepareImport(output, dir.filePath("work"), Password, keys, DatabaseMaintenance::migrateBackup).ok);
         QVERIFY(sql({path}, "DROP TRIGGER unexpected"));
         const auto connection = QUuid::createUuid().toString();
         {
@@ -143,7 +144,7 @@ private slots:
         }
         QSqlDatabase::removeDatabase(connection);
         QVERIFY(PortableBackup::exportFile({path}, output, dir.filePath("work"), Password, false, "test").ok);
-        QVERIFY(!PortableBackup::prepareImport(output, dir.filePath("work"), Password, keys, FinanceRepository::migrateBackup).ok);
+        QVERIFY(!PortableBackup::prepareImport(output, dir.filePath("work"), Password, keys, DatabaseMaintenance::migrateBackup).ok);
     }
     void sameColumnsWrittenDifferentlyAreAccepted() {
         // A database upgraded with ALTER TABLE keeps the text of its first CREATE TABLE: only the columns and objects count
@@ -157,20 +158,20 @@ private slots:
         }
         QSqlDatabase::removeDatabase(connection);
         QVERIFY(PortableBackup::exportFile({path}, output, dir.filePath("work"), Password, false, "test").ok);
-        QVERIFY(PortableBackup::prepareImport(output, dir.filePath("work"), Password, keys, FinanceRepository::migrateBackup).ok);
+        QVERIFY(PortableBackup::prepareImport(output, dir.filePath("work"), Password, keys, DatabaseMaintenance::migrateBackup).ok);
         QVERIFY(sql({path}, "ALTER TABLE accounts ADD COLUMN extra TEXT"));
         QVERIFY(PortableBackup::exportFile({path}, output, dir.filePath("work"), Password, false, "test").ok);
-        QVERIFY(!PortableBackup::prepareImport(output, dir.filePath("work"), Password, keys, FinanceRepository::migrateBackup).ok);
+        QVERIFY(!PortableBackup::prepareImport(output, dir.filePath("work"), Password, keys, DatabaseMaintenance::migrateBackup).ok);
     }
     void legacySnapshotsAndWal() {
         QTemporaryDir dir; Keys keys; const auto path = dir.filePath("source.db"), output = dir.filePath("legacy.sqlite3"); QVERIFY(seed(path));
         auto source = DatabaseEncryption::convert(path, true, keys); QVERIFY(source.ok); QString error;
         QVERIFY(DatabaseEncryption::snapshot(source.access, output, error));
-        QVERIFY(PortableBackup::prepareImport(output, dir.filePath("work"), {}, keys, FinanceRepository::migrateBackup).ok);
+        QVERIFY(PortableBackup::prepareImport(output, dir.filePath("work"), {}, keys, DatabaseMaintenance::migrateBackup).ok);
         Keys other;
-        QVERIFY(!PortableBackup::prepareImport(output, dir.filePath("work"), {}, other, FinanceRepository::migrateBackup).ok);
+        QVERIFY(!PortableBackup::prepareImport(output, dir.filePath("work"), {}, other, DatabaseMaintenance::migrateBackup).ok);
         QVERIFY(write(output+"-wal", "not checkpointed"));
-        QVERIFY(!PortableBackup::prepareImport(output, dir.filePath("work"), {}, keys, FinanceRepository::migrateBackup).ok);
+        QVERIFY(!PortableBackup::prepareImport(output, dir.filePath("work"), {}, keys, DatabaseMaintenance::migrateBackup).ok);
         QCOMPARE(other.writes, 0);
     }
     void failedExportPreservesExistingFileAndLiveDatabase() {
@@ -186,7 +187,7 @@ private slots:
         const auto source = dir.filePath("source.db"), target = dir.filePath("unreadable.db"), output = dir.filePath("copy.vexabackup");
         QVERIFY(seed(source));
         QVERIFY(PortableBackup::exportFile({source}, output, dir.filePath("work"), Password, false, "test").ok);
-        auto prepared = PortableBackup::prepareImport(output, dir.filePath("work"), Password, keys, FinanceRepository::migrateBackup);
+        auto prepared = PortableBackup::prepareImport(output, dir.filePath("work"), Password, keys, DatabaseMaintenance::migrateBackup);
         QVERIFY(prepared.ok);
         for (const auto& suffix : {QString(), QString("-wal"), QString("-shm")}) QVERIFY(write(target + suffix, "original" + suffix.toUtf8()));
         const auto recovered = DatabaseEncryption::recover(target, prepared.prepared->access, keys);
@@ -198,7 +199,7 @@ private slots:
     }
     void previewIsBoundToUnlockedSession() {
         QTemporaryDir dir; const auto path = dir.filePath("live.db"), output = dir.filePath("copy.vexabackup"); QVERIFY(seed(path));
-        DatabaseProtection manager(path); manager.setBackupSchemaValidator(FinanceRepository::migrateBackup);
+        DatabaseProtection manager(path); manager.setBackupSchemaValidator(DatabaseMaintenance::migrateBackup);
         manager.setAdmitted(true); manager.prepare(); QVERIFY(QTest::qWaitFor([&] { return manager.ready(); }, 10000));
         QSignalSpy exported(&manager, &DatabaseProtection::backupExported);
         manager.exportBackup(QUrl::fromLocalFile(output), Password, false);

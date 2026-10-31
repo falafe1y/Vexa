@@ -1,5 +1,5 @@
 #pragma once
-#include "storage/DatabaseEncryption.h"
+#include "DatabaseEncryption.h"
 
 #include <QSqlDatabase>
 

@@ -1,4 +1,5 @@
-#include "storage/CipherDriver.h"
+#include "../core/db/CipherDriver.h"
+#include "../core/db/DatabaseMaintenance.h"
 #include "../core/db/AccountRepository.h"
 #include "../core/db/SettingsRepository.h"
 #include "../core/db/NotesRepository.h"
@@ -21,7 +22,7 @@ private slots:
 };
 static bool seed(const QString& path) {
     FinanceRepository r(path);
-    return r.isOpen() && r.clearAllUserData() && SettingsRepository(r.database()).saveAutomaticCurrencyRates(false);
+    return r.isOpen() && DatabaseMaintenance(r.database(), r.keyStore()).clearAllUserData() && SettingsRepository(r.database()).saveAutomaticCurrencyRates(false);
 }
 static bool writeLegacy(const QString& path, const QString& text) {
     QFile f(path);
@@ -54,7 +55,7 @@ void BackupRestoreControllerTest::replacementRefreshesSettingsAndNotes() {
     QVERIFY(seed(path)); QVERIFY(seed(source));
     { FinanceRepository r(source); QVERIFY(NotesRepository(r.database()).save("Из копии")); QVERIFY(SettingsRepository(r.database()).saveAppCurrency("EUR"));
       QVERIFY(SettingsRepository(r.database()).saveAnalyticsCurrency("CNY")); QVERIFY(SettingsRepository(r.database()).saveManualCurrencyRates(1,95,105,14));
-      QVERIFY(AccountRepository(r.database()).insertAccount({"restored","Из копии",AssetType::Fiat,AccountType::Cash,Currency::RUB})); QVERIFY(r.backupDatabase(backup)); }
+      QVERIFY(AccountRepository(r.database()).insertAccount({"restored","Из копии",AssetType::Fiat,AccountType::Cash,Currency::RUB})); QVERIFY(DatabaseMaintenance(r.database(), r.keyStore()).backupDatabase(backup)); }
     FinanceController c(nullptr,path); c.setNotesText("Несохранённый текущий текст");
     const auto result=c.restoreDatabase(QUrl::fromLocalFile(backup));
     QVERIFY2(result.value("ok").toBool(),qPrintable(result.value("error").toString()));
@@ -75,7 +76,7 @@ void BackupRestoreControllerTest::failedRestorePreservesNotes() {
 void BackupRestoreControllerTest::oldBackupClearsNotesWithoutReimport() {
     QTemporaryDir dir; const auto path=dir.filePath("data.db"), source=dir.filePath("source.db"), backup=dir.filePath("copy.db");
     QVERIFY(seed(path)); QVERIFY(seed(source));
-    { FinanceRepository r(source); QVERIFY(r.backupDatabase(backup)); }
+    { FinanceRepository r(source); QVERIFY(DatabaseMaintenance(r.database(), r.keyStore()).backupDatabase(backup)); }
     const QString connection="old-backup-notes";
     { auto db=addCipherDatabase(connection); db.setDatabaseName(backup); QVERIFY(db.open());
       QSqlQuery query(db); QVERIFY(query.exec("DROP TABLE notes")); }

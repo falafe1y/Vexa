@@ -1,6 +1,6 @@
 #pragma once
 #include "../core/db/Database.h"
-#include "storage/DatabaseEncryption.h"
+#include "../core/db/DatabaseEncryption.h"
 
 #include "../core/model/transactions/Transaction.h"
 #include "../core/model/transactions/BankCategoryRule.h"
@@ -35,9 +35,6 @@
 class FinanceRepository
 {
 public:
-    static bool migrateBackup(const DatabaseAccess& access, const QString& workspace, QString& error);
-
-
 
     explicit FinanceRepository(const QString& databasePath = {}, const QByteArray& databaseKey = {},
                                std::shared_ptr<DatabaseKeyStore> keyStore = {});
@@ -48,16 +45,11 @@ public:
 
     bool isOpen() const;
     QString lastError() const;
-    bool backupDatabase(const QString& destinationPath);
-    // Replace all user data atomically; retain a backup of the previous state.
-    bool restoreDatabase(const QString& sourcePath, qint64* restoredRecords = nullptr,
-                         QString* previousBackupPath = nullptr);
     QString databasePath() const;
     // The connection, for the repositories split out of this class; temporary until they own it
     Database& database();
-    bool clearAllUserData();
-    // Purchase price of the coins without trades, by "exchangeId|coin"
-    // Rate history of deposits by account id: a list of {"from": "yyyy-MM-dd", "bps": int}, sorted by day
+    // The key store the repository was opened with; temporary, for DatabaseMaintenance
+    std::shared_ptr<DatabaseKeyStore> keyStore() const;
 
 private:
 

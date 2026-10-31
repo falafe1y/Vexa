@@ -1,4 +1,5 @@
 #include "../core/api/BybitProvider.h"
+#include "../core/db/DatabaseMaintenance.h"
 #include "../core/db/TransactionRepository.h"
 #include "../core/db/CryptoRepository.h"
 #include "../persistence/FinanceRepository.h"
@@ -183,7 +184,7 @@ private slots:
             QCOMPARE(rows[0].toMap().value("history").toList().size(), 2);
             QVERIFY(TransactionRepository(repository.database()).deleteHistoryRows({QVariantMap{{"isExchange", true}, {"walletId", "a"}, {"transactionId", "uta:old"}}}));
             QCOMPARE(CryptoRepository(repository.database()).loadCryptoExchanges()[0].toMap().value("history").toList().size(), 1);
-            QVERIFY(repository.clearAllUserData()); QVERIFY(CryptoRepository(repository.database()).loadCryptoExchanges().isEmpty());
+            QVERIFY(DatabaseMaintenance(repository.database(), repository.keyStore()).clearAllUserData()); QVERIFY(CryptoRepository(repository.database()).loadCryptoExchanges().isEmpty());
         }
     }
 };
