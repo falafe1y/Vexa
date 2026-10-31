@@ -353,7 +353,7 @@
 
 **Решение.** Ключи и секреты бирж на телефоне хранятся так же, как ключ базы: запись шифруется ключом Android Keystore, который не выгружается из устройства. На ПК ключи защищает DPAPI. Отдельного пароля и подтверждения отпечатком нет. Подтверждение отпечатком — отдельное решение, если понадобится.
 
-**Код.** `services/ExchangeCredentials.cpp` (ветка Android), `security/AndroidVault.cpp`, `packaging/android/src/org/qtproject/example/vexa/SecretVault.java`.
+**Код.** `core/system/ExchangeCredentials.cpp` (ветка Android), `core/system/AndroidVault.cpp`, `packaging/android/src/org/qtproject/example/vexa/SecretVault.java`.
 
 **Следствие.** Ключи пропадают при удалении приложения (см. ADR-025).
 
@@ -368,7 +368,7 @@
 - Удаление приложения удаляет ключ Keystore, и зашифрованная база становится недоступной. Это предупреждается при включении шифрования и в описании. Единственное восстановление — копия `.vexabackup`. Решение пользователя: оставить и предупреждать.
 - Облачная резервная копия Android (Auto Backup) отключена: `android:allowBackup="false"`. Иначе база попала бы в облако пользователя (Google Drive).
 
-**Код.** `storage/DatabaseEncryption.cpp` (`NativeKeyStore`, ветка Android), `security/PasswordStore.cpp`, `storage/DatabaseProtection.cpp` (`supported`), `packaging/android/AndroidManifest.xml`, `ui/computer/settings/DatabaseEncryptionSettings.qml`.
+**Код.** `storage/DatabaseEncryption.cpp` (`NativeKeyStore`, ветка Android), `core/system/PasswordStore.cpp`, `storage/DatabaseProtection.cpp` (`supported`), `packaging/android/AndroidManifest.xml`, `ui/computer/settings/DatabaseEncryptionSettings.qml`.
 
 ---
 
@@ -431,7 +431,7 @@
 ---
 
 ## ADR-031. Архитектура: UI → service → core, правила в core/model
-**Статус:** Принято (23.10.2026). В работе: этап 1 плана (шаги 1.1–1.7), шаги 2.1–2.5 и 2.6.1–2.6.2 сделаны (библиотека `core_model` в `core/model/`, зависит только от Qt Core; обёртка `core` подключает весь слой). План и отметки шагов — `docs/architecture.md`.
+**Статус:** Принято (23.10.2026). В работе: этап 1 плана (шаги 1.1–1.7), шаги 2.1–2.6 сделаны (библиотека `core_model` в `core/model/`, зависит только от Qt Core; обёртка `core` подключает весь слой). План и отметки шагов — `docs/architecture.md`.
 
 **Решение.** Код делится на три слоя. Зависимости идут только сверху вниз:
 - **UI** — только отрисовка и ввод: QML и тонкая прослойка под конкретный экран (модели списков, форматирование «1 234,50 ₽»).

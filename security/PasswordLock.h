@@ -1,5 +1,5 @@
 #pragma once
-#include "PasswordStore.h"
+#include "../core/system/PasswordStore.h"
 #include <QJsonObject>
 #include <functional>
 

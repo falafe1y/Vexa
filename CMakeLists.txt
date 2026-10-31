@@ -173,8 +173,6 @@ qt_add_qml_module(vexa
         SOURCES ui/computer/common/WindowScrollInput.cpp
         SOURCES interface/FinanceControllerBenchmark.cpp
         SOURCES interface/FinanceControllerPerformance.cpp
-        SOURCES services/ExchangeCredentials.h
-        SOURCES services/ExchangeCredentials.cpp
         SOURCES interface/FinanceController.h
         SOURCES interface/FinanceController.cpp
         SOURCES persistence/FinanceRepository.h

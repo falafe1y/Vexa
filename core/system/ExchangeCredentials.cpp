@@ -6,7 +6,7 @@
 #include <QSaveFile>
 #include <QStandardPaths>
 #include <QProcess>
-#include "../security/AndroidVault.h"
+#include "AndroidVault.h"
 #ifdef Q_OS_WIN
 #include <windows.h>
 #include <wincrypt.h>

@@ -1,5 +1,5 @@
 #include "AutoBackup.h"
-#include "../security/AndroidVault.h"
+#include "../core/system/AndroidVault.h"
 
 #include <QCoreApplication>
 #include <QDir>
