@@ -1,5 +1,10 @@
+#include "Account.h"
+#include "Category.h"
+
 #include <QGuiApplication>
 #include <QQmlApplicationEngine>
+
+using namespace core::model;
 
 int main(int argc, char *argv[])
 {

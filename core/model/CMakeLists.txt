@@ -1,4 +1,8 @@
 add_library(core_model STATIC
+    Account.h
+    Account.cpp
+    Category.h
+    Category.cpp
     Currency.cpp
     Currency.h
     Money.cpp
