@@ -1,5 +1,6 @@
 #include "Account.h"
 #include "Category.h"
+#include "Operation.h"
 
 #include <QGuiApplication>
 #include <QQmlApplicationEngine>

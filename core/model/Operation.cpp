@@ -89,15 +89,21 @@ Operation Operation::transfer(QUuid id,
         throw std::invalid_argument("Transfer amount must be positive");
     }
 
-    if (amount.currency() != from.currency() ||
-        amount.currency() != to.currency()) {
-        throw std::invalid_argument("Transfer amount must match both account currencies");
+    if (amount.currency() != from.currency()) {
+        throw std::invalid_argument("Transfer amount must match the source currency");
+    }
+
+    const auto rate = ExchangeRate::fixed(from.currency(), to.currency());
+    const auto receivedAmount = rate.convert(amount);
+
+    if (receivedAmount.minorUnits() == 0) {
+        throw std::invalid_argument("Transfer amount rounds to zero");
     }
 
     return Operation{
         id,
         date,
-        Transfer{from.id(), to.id(), amount, amount}
+        Transfer{from.id(), to.id(), amount, receivedAmount, rate}
     };
 }
 

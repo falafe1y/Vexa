@@ -3,6 +3,7 @@
 #include "Account.h"
 #include "Category.h"
 #include "Money.h"
+#include "ExchangeRate.h"
 
 #include <QDate>
 #include <QUuid>
@@ -32,8 +33,9 @@ public:
     {
         QUuid fromAccountId;
         QUuid toAccountId;
-        Money debitedAmount;
-        Money creditedAmount;
+        Money sentAmount;
+        Money receivedAmount;
+        ExchangeRate rate;
     };
 
     using Details = std::variant<Income, Expense, Transfer>;
