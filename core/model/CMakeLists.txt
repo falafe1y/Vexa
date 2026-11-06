@@ -9,6 +9,7 @@ add_library(core_model STATIC
     Money.h
     Operation.h Operation.cpp
     ExchangeRate.h ExchangeRate.cpp
+    Ledger.h Ledger.cpp
 )
 
 target_compile_features(core_model PUBLIC cxx_std_20)
