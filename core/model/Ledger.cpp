@@ -1,7 +1,10 @@
 #include "Ledger.h"
+#include "ExchangeRate.h"
 
 #include <stdexcept>
 #include <variant>
+#include <map>
+#include <string_view>
 
 namespace core::model {
 
@@ -88,6 +91,43 @@ Money Ledger::balance(const QUuid& accountId) const
     return current;
 }
 
+Money Ledger::debt(const QUuid& accountId) const
+{
+    const auto current = balance(accountId);
+    const auto zero = Money::fromMinorUnits(0, current.currency());
+
+    if (current.minorUnits() < 0) {
+        return zero - current;
+    }
+
+    return zero;
+}
+
+Money Ledger::totalBalance(Currency targetCurrency) const
+{
+    std::map<std::string_view, Money> subtotals;
+
+    for (const auto& account : accounts_) {
+        const auto current = balance(account.id());
+        const auto [position, inserted] =
+            subtotals.try_emplace(current.currency().code(), current);
+
+        if (!inserted) {
+            position->second = position->second + current;
+        }
+    }
+
+    auto total = Money::fromMinorUnits(0, targetCurrency);
+
+    for (const auto& entry : subtotals) {
+        const Money& subtotal = entry.second;
+        const auto rate = ExchangeRate::fixed(subtotal.currency(), targetCurrency);
+        total = total + rate.convert(subtotal);
+    }
+
+    return total;
+}
+
 const Account& Ledger::requireAccount(const QUuid& accountId) const
 {
     const auto account = accounts_.constFind(accountId);
@@ -119,7 +159,7 @@ void Ledger::checkAccountChange(const QUuid& accountId,
         throw std::invalid_argument("Account is archived");
     }
 
-    // Проверяем валюту и переполнение средствами Money.
+    // проверка валюты и переполнения средствами Money.
     (void)applyToBalance(balance(accountId), accountId, details);
 }
 
