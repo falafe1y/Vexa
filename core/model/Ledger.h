@@ -25,6 +25,7 @@ public:
     void addOperation(const Operation& operation);
 
     [[nodiscard]] Money balance(const QUuid& accountId) const;
+    [[nodiscard]] Money availableBalance(const QUuid& accountId) const;
     [[nodiscard]] Money debt(const QUuid& accountId) const;
     [[nodiscard]] Money totalBalance(Currency targetCurrency) const;
 

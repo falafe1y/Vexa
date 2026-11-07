@@ -6,6 +6,7 @@
 #include "Currency.h"
 #include "Database.h"
 #include "Ledger.h"
+#include "Money.h"
 
 #include <QDate>
 #include <QTemporaryDir>
@@ -20,6 +21,172 @@
 #include <QStandardPaths>
 #include <QTemporaryDir>
 #include <memory>
+
+void checkCreditCards()
+{
+    using namespace core::model;
+
+    const auto require = [](bool condition, const char* message) {
+        if (!condition) {
+            throw std::runtime_error(message);
+        }
+    };
+
+    const auto rub = Currency::fromCode("RUB");
+    const auto usd = Currency::fromCode("USD");
+
+    const auto expectInvalidLimit = [&](
+                                        AccountType type,
+                                        Money limit)
+    {
+        bool rejected = false;
+
+        try {
+            (void)Account{
+                QUuid::createUuid(),
+                QStringLiteral("Проверка"),
+                type,
+                Money::fromMinorUnits(0, rub),
+                limit
+            };
+        } catch (const std::invalid_argument&) {
+            rejected = true;
+        }
+
+        require(rejected, "Invalid credit limit was accepted");
+    };
+
+    expectInvalidLimit(
+        AccountType::CreditCard,
+        Money::fromMinorUnits(-1, rub)
+        );
+
+    expectInvalidLimit(
+        AccountType::CreditCard,
+        Money::fromMinorUnits(1, usd)
+        );
+
+    expectInvalidLimit(
+        AccountType::Cash,
+        Money::fromMinorUnits(1, rub)
+        );
+
+    expectInvalidLimit(
+        AccountType::DebitCard,
+        Money::fromMinorUnits(1, rub)
+        );
+
+    QTemporaryDir directory;
+
+    require(
+        directory.isValid(),
+        "Cannot create credit card test directory"
+        );
+
+    const QString filePath = directory.filePath(
+        QStringLiteral("credit-card-test.sqlite3")
+        );
+
+    QUuid creditId;
+    QUuid cashId;
+
+    {
+        core::db::Database database{filePath};
+
+        auto ledger = Ledger::fromStoredData(
+            database.loadAccounts(),
+            database.loadCategories(),
+            database.loadOperations()
+            );
+
+        services::AccountService accounts{database, ledger};
+        services::OperationService operations{database, ledger};
+
+        creditId = accounts.create(
+            QStringLiteral("Кредитка"),
+            AccountType::CreditCard,
+            QStringLiteral("RUB"),
+            -6'000'000,
+            9'000'000
+            );
+
+        require(
+            ledger.balance(creditId).minorUnits() == -6'000'000 &&
+                ledger.debt(creditId).minorUnits() == 6'000'000 &&
+                ledger.availableBalance(creditId).minorUnits() ==
+                    3'000'000,
+            "Incorrect initial credit card values"
+            );
+
+        cashId = accounts.create(
+            QStringLiteral("Наличные"),
+            AccountType::Cash,
+            QStringLiteral("RUB"),
+            2'000'000
+            );
+
+        // Погашаем 10 000 рублей переводом с наличных.
+        (void)operations.transfer(
+            cashId,
+            creditId,
+            1'000'000,
+            QDate::currentDate()
+            );
+
+        require(
+            ledger.debt(creditId).minorUnits() == 5'000'000 &&
+                ledger.availableBalance(creditId).minorUnits() ==
+                    4'000'000,
+            "Incorrect credit card values after repayment"
+            );
+    }
+
+    {
+        core::db::Database database{filePath};
+
+        auto ledger = Ledger::fromStoredData(
+            database.loadAccounts(),
+            database.loadCategories(),
+            database.loadOperations()
+            );
+
+        require(
+            ledger.account(creditId).creditLimit().minorUnits() ==
+                9'000'000,
+            "Credit limit was not saved"
+            );
+
+        require(
+            ledger.account(cashId).creditLimit().minorUnits() == 0,
+            "Cash account has a credit limit"
+            );
+
+        require(
+            ledger.balance(creditId).minorUnits() == -5'000'000 &&
+                ledger.debt(creditId).minorUnits() == 5'000'000 &&
+                ledger.availableBalance(creditId).minorUnits() ==
+                    4'000'000,
+            "Credit card values changed after reopening database"
+            );
+
+        require(
+            ledger.balance(cashId).minorUnits() == 1'000'000 &&
+                ledger.totalBalance(rub).minorUnits() == -4'000'000,
+            "Credit limit was incorrectly included in total balance"
+            );
+
+        qDebug() << "Лимит:"
+                 << ledger.account(creditId).creditLimit().minorUnits();
+
+        qDebug() << "Долг:"
+                 << ledger.debt(creditId).minorUnits();
+
+        qDebug() << "Доступно:"
+                 << ledger.availableBalance(creditId).minorUnits();
+
+        qDebug() << "Проверка кредитки пройдена";
+    }
+}
 
 void checkArchiving()
 {
@@ -300,6 +467,14 @@ int main(int argc, char* argv[])
         qCritical() << "Ошибка проверки архивирования:"
                     << error.what();
 
+        return 1;
+    }
+
+    try {
+        checkArchiving();
+        checkCreditCards();
+    } catch (const std::exception& error) {
+        qCritical() << "Ошибка проверки:" << error.what();
         return 1;
     }
 

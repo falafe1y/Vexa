@@ -1,16 +1,18 @@
 #include "Database.h"
 
-#include <QSqlDatabase>
-#include <QSqlError>
-#include <QUuid>
-#include <QSqlQuery>
-#include <QVariant>
+#include "Currency.h"
+#include "ExchangeRate.h"
+#include "Money.h"
+
 #include <QDate>
 #include <QMetaType>
+#include <QSqlDatabase>
+#include <QSqlError>
 #include <QSqlQuery>
 #include <QVariant>
-#include <variant>
+
 #include <stdexcept>
+#include <variant>
 
 namespace core::db {
 
@@ -74,7 +76,9 @@ core::model::Money readMoney(
 void deleteById(const QString& sql, const QUuid& id)
 {
     if (id.isNull()) {
-        throw std::invalid_argument("ID must not be null");
+        throw std::invalid_argument(
+            "ID must not be null"
+            );
     }
 
     auto connection = QSqlDatabase::database();
@@ -115,7 +119,8 @@ Database::Database(const QString& filePath)
     }
 
     try {
-        auto connection = QSqlDatabase::addDatabase(QStringLiteral("QSQLITE"));
+        auto connection =
+            QSqlDatabase::addDatabase(QStringLiteral("QSQLITE"));
 
         connection.setDatabaseName(filePath);
 
@@ -129,7 +134,9 @@ Database::Database(const QString& filePath)
 
         createTables();
     } catch (...) {
-        QSqlDatabase::removeDatabase(QSqlDatabase::defaultConnectionName());
+        QSqlDatabase::removeDatabase(
+            QSqlDatabase::defaultConnectionName()
+            );
 
         throw;
     }
@@ -137,32 +144,38 @@ Database::Database(const QString& filePath)
 
 Database::~Database()
 {
-    QSqlDatabase::removeDatabase(QSqlDatabase::defaultConnectionName());
+    QSqlDatabase::removeDatabase(
+        QSqlDatabase::defaultConnectionName()
+        );
 }
 
 void Database::createTables()
 {
-    auto connection = QSqlDatabase::database();
-    QSqlQuery query{connection};
-
-    const bool accountsCreated = query.exec(QStringLiteral(R"(
+    executeSql(QStringLiteral(R"(
         CREATE TABLE IF NOT EXISTS accounts (
             id TEXT PRIMARY KEY NOT NULL,
             name TEXT NOT NULL,
             type INTEGER NOT NULL CHECK (type IN (0, 1, 2)),
             currency_code TEXT NOT NULL,
-            opening_balance_minor INTEGER NOT NULL CHECK (typeof(opening_balance_minor) = 'integer'),
-            archived INTEGER NOT NULL CHECK (archived IN (0, 1))
+
+            opening_balance_minor INTEGER NOT NULL
+                CHECK (
+                    typeof(opening_balance_minor) = 'integer'
+                ),
+
+            credit_limit_minor INTEGER NOT NULL DEFAULT 0
+                CHECK (
+                    typeof(credit_limit_minor) = 'integer'
+                    AND credit_limit_minor >= 0
+                    AND (type = 2 OR credit_limit_minor = 0)
+                ),
+
+            archived INTEGER NOT NULL
+                CHECK (archived IN (0, 1))
         )
     )"));
 
-    if (!accountsCreated) {
-        throw std::runtime_error(
-            query.lastError().text().toStdString()
-            );
-    }
-
-    const bool categoriesCreated = query.exec(QStringLiteral(R"(
+    executeSql(QStringLiteral(R"(
         CREATE TABLE IF NOT EXISTS categories (
             id TEXT PRIMARY KEY NOT NULL,
             name TEXT NOT NULL,
@@ -171,13 +184,6 @@ void Database::createTables()
         )
     )"));
 
-    if (!categoriesCreated) {
-        throw std::runtime_error(
-            query.lastError().text().toStdString()
-            );
-    }
-
-    // загрузка истории в порядке записи
     executeSql(QStringLiteral(R"(
         CREATE TABLE IF NOT EXISTS operations (
             sequence INTEGER PRIMARY KEY,
@@ -236,9 +242,8 @@ void Database::createTables()
     )"));
 }
 
-// ============================================================ ACCOUNTS ============================================================
-
-void Database::saveAccount(const core::model::Account& account)
+void Database::saveAccount(
+    const core::model::Account& account)
 {
     auto connection = QSqlDatabase::database();
     QSqlQuery query{connection};
@@ -250,6 +255,7 @@ void Database::saveAccount(const core::model::Account& account)
             type,
             currency_code,
             opening_balance_minor,
+            credit_limit_minor,
             archived
         )
         VALUES (
@@ -258,6 +264,7 @@ void Database::saveAccount(const core::model::Account& account)
             :type,
             :currency_code,
             :opening_balance_minor,
+            :credit_limit_minor,
             :archived
         )
         ON CONFLICT(id) DO UPDATE SET
@@ -265,6 +272,7 @@ void Database::saveAccount(const core::model::Account& account)
             type = excluded.type,
             currency_code = excluded.currency_code,
             opening_balance_minor = excluded.opening_balance_minor,
+            credit_limit_minor = excluded.credit_limit_minor,
             archived = excluded.archived
     )"));
 
@@ -273,8 +281,6 @@ void Database::saveAccount(const core::model::Account& account)
             query.lastError().text().toStdString()
             );
     }
-
-    const auto currencyCode = account.currency().code();
 
     query.bindValue(
         QStringLiteral(":id"),
@@ -293,15 +299,17 @@ void Database::saveAccount(const core::model::Account& account)
 
     query.bindValue(
         QStringLiteral(":currency_code"),
-        QString::fromLatin1(
-            currencyCode.data(),
-            static_cast<qsizetype>(currencyCode.size())
-            )
+        toCurrencyCode(account.currency())
         );
 
     query.bindValue(
         QStringLiteral(":opening_balance_minor"),
         account.openingBalance().minorUnits()
+        );
+
+    query.bindValue(
+        QStringLiteral(":credit_limit_minor"),
+        account.creditLimit().minorUnits()
         );
 
     query.bindValue(
@@ -316,80 +324,8 @@ void Database::saveAccount(const core::model::Account& account)
     }
 }
 
-std::vector<core::model::Account> Database::loadAccounts() const
-{
-    auto connection = QSqlDatabase::database();
-    QSqlQuery query{connection};
-
-    const bool success = query.exec(QStringLiteral(R"(
-        SELECT
-            id,
-            name,
-            type,
-            currency_code,
-            opening_balance_minor,
-            archived
-        FROM accounts
-        ORDER BY id
-    )"));
-
-    if (!success) {
-        throw std::runtime_error(
-            query.lastError().text().toStdString()
-            );
-    }
-
-    std::vector<core::model::Account> accounts;
-
-    while (query.next()) {
-        const qint64 type = readInteger(
-            query,
-            QStringLiteral("type")
-            );
-
-        if (type < 0 || type > 2) {
-            throw std::runtime_error(
-                "Unknown account type in database"
-                );
-        }
-
-        accounts.emplace_back(
-            QUuid{query.value(QStringLiteral("id")).toString()},
-
-            query.value(QStringLiteral("name")).toString(),
-
-            static_cast<core::model::AccountType>(type),
-
-            readMoney(
-                query,
-                QStringLiteral("opening_balance_minor"),
-                QStringLiteral("currency_code")
-                ),
-
-            query.value(QStringLiteral("archived")).toBool()
-            );
-    }
-
-    if (query.lastError().isValid()) {
-        throw std::runtime_error(
-            query.lastError().text().toStdString()
-            );
-    }
-
-    return accounts;
-}
-
-void Database::removeAccount(const QUuid& id)
-{
-    deleteById(
-        QStringLiteral("DELETE FROM accounts WHERE id = :id"),
-        id
-        );
-}
-
-// ============================================================ CATEGORIES ============================================================
-
-void Database::saveCategory(const core::model::Category& category)
+void Database::saveCategory(
+    const core::model::Category& category)
 {
     auto connection = QSqlDatabase::database();
     QSqlQuery query{connection};
@@ -445,71 +381,6 @@ void Database::saveCategory(const core::model::Category& category)
             );
     }
 }
-
-std::vector<core::model::Category> Database::loadCategories() const
-{
-    auto connection = QSqlDatabase::database();
-    QSqlQuery query{connection};
-
-    const bool success = query.exec(QStringLiteral(R"(
-        SELECT
-            id,
-            name,
-            type,
-            archived
-        FROM categories
-        ORDER BY id
-    )"));
-
-    if (!success) {
-        throw std::runtime_error(
-            query.lastError().text().toStdString()
-            );
-    }
-
-    std::vector<core::model::Category> categories;
-
-    while (query.next()) {
-        const qint64 type = readInteger(
-            query,
-            QStringLiteral("type")
-            );
-
-        if (type < 0 || type > 1) {
-            throw std::runtime_error(
-                "Unknown category type in database"
-                );
-        }
-
-        categories.emplace_back(
-            QUuid{query.value(QStringLiteral("id")).toString()},
-
-            query.value(QStringLiteral("name")).toString(),
-
-            static_cast<core::model::CategoryType>(type),
-
-            query.value(QStringLiteral("archived")).toBool()
-            );
-    }
-
-    if (query.lastError().isValid()) {
-        throw std::runtime_error(
-            query.lastError().text().toStdString()
-            );
-    }
-
-    return categories;
-}
-
-void Database::removeCategory(const QUuid& id)
-{
-    deleteById(
-        QStringLiteral("DELETE FROM categories WHERE id = :id"),
-        id
-        );
-}
-
-// ============================================================ OPERATIONS ============================================================
 
 void Database::saveOperation(
     const core::model::Operation& operation)
@@ -587,8 +458,15 @@ void Database::saveOperation(
         QMetaType::fromType<qint64>()
     };
 
-    query.bindValue(QStringLiteral(":category_id"), nullText);
-    query.bindValue(QStringLiteral(":to_account_id"), nullText);
+    query.bindValue(
+        QStringLiteral(":category_id"),
+        nullText
+        );
+
+    query.bindValue(
+        QStringLiteral(":to_account_id"),
+        nullText
+        );
 
     query.bindValue(
         QStringLiteral(":received_amount_minor"),
@@ -706,6 +584,137 @@ void Database::saveOperation(
     }
 }
 
+std::vector<core::model::Account>
+Database::loadAccounts() const
+{
+    auto connection = QSqlDatabase::database();
+    QSqlQuery query{connection};
+
+    const bool success = query.exec(QStringLiteral(R"(
+        SELECT
+            id,
+            name,
+            type,
+            currency_code,
+            opening_balance_minor,
+            credit_limit_minor,
+            archived
+        FROM accounts
+        ORDER BY id
+    )"));
+
+    if (!success) {
+        throw std::runtime_error(
+            query.lastError().text().toStdString()
+            );
+    }
+
+    std::vector<core::model::Account> accounts;
+
+    while (query.next()) {
+        const qint64 type = readInteger(
+            query,
+            QStringLiteral("type")
+            );
+
+        if (type < 0 || type > 2) {
+            throw std::runtime_error(
+                "Unknown account type in database"
+                );
+        }
+
+        accounts.emplace_back(
+            QUuid{
+                query.value(QStringLiteral("id")).toString()
+            },
+
+            query.value(QStringLiteral("name")).toString(),
+
+            static_cast<core::model::AccountType>(type),
+
+            readMoney(
+                query,
+                QStringLiteral("opening_balance_minor"),
+                QStringLiteral("currency_code")
+                ),
+
+            readMoney(
+                query,
+                QStringLiteral("credit_limit_minor"),
+                QStringLiteral("currency_code")
+                ),
+
+            query.value(QStringLiteral("archived")).toBool()
+            );
+    }
+
+    if (query.lastError().isValid()) {
+        throw std::runtime_error(
+            query.lastError().text().toStdString()
+            );
+    }
+
+    return accounts;
+}
+
+std::vector<core::model::Category>
+Database::loadCategories() const
+{
+    auto connection = QSqlDatabase::database();
+    QSqlQuery query{connection};
+
+    const bool success = query.exec(QStringLiteral(R"(
+        SELECT
+            id,
+            name,
+            type,
+            archived
+        FROM categories
+        ORDER BY id
+    )"));
+
+    if (!success) {
+        throw std::runtime_error(
+            query.lastError().text().toStdString()
+            );
+    }
+
+    std::vector<core::model::Category> categories;
+
+    while (query.next()) {
+        const qint64 type = readInteger(
+            query,
+            QStringLiteral("type")
+            );
+
+        if (type < 0 || type > 1) {
+            throw std::runtime_error(
+                "Unknown category type in database"
+                );
+        }
+
+        categories.emplace_back(
+            QUuid{
+                query.value(QStringLiteral("id")).toString()
+            },
+
+            query.value(QStringLiteral("name")).toString(),
+
+            static_cast<core::model::CategoryType>(type),
+
+            query.value(QStringLiteral("archived")).toBool()
+            );
+    }
+
+    if (query.lastError().isValid()) {
+        throw std::runtime_error(
+            query.lastError().text().toStdString()
+            );
+    }
+
+    return categories;
+}
+
 std::vector<core::model::Operation>
 Database::loadOperations() const
 {
@@ -772,7 +781,7 @@ Database::loadOperations() const
                 query.value(QStringLiteral("category_id")).toString()
             };
 
-            operations.emplace_back(
+            operations.push_back(Operation(
                 id,
                 date,
                 Operation::Income{
@@ -780,7 +789,7 @@ Database::loadOperations() const
                     categoryId,
                     amount
                 }
-                );
+                ));
 
             break;
         }
@@ -790,7 +799,7 @@ Database::loadOperations() const
                 query.value(QStringLiteral("category_id")).toString()
             };
 
-            operations.emplace_back(
+            operations.push_back(Operation(
                 id,
                 date,
                 Operation::Expense{
@@ -798,14 +807,15 @@ Database::loadOperations() const
                     categoryId,
                     amount
                 }
-                );
+                ));
 
             break;
         }
 
         case 2: {
             const QUuid toAccountId{
-                query.value(QStringLiteral("to_account_id")).toString()
+                query.value(QStringLiteral("to_account_id"))
+                .toString()
             };
 
             const auto receivedAmount = readMoney(
@@ -829,7 +839,7 @@ Database::loadOperations() const
                     )
                 );
 
-            operations.emplace_back(
+            operations.push_back(Operation(
                 id,
                 date,
                 Operation::Transfer{
@@ -839,7 +849,7 @@ Database::loadOperations() const
                     receivedAmount,
                     rate
                 }
-                );
+                ));
 
             break;
         }
@@ -858,6 +868,22 @@ Database::loadOperations() const
     }
 
     return operations;
+}
+
+void Database::removeAccount(const QUuid& id)
+{
+    deleteById(
+        QStringLiteral("DELETE FROM accounts WHERE id = :id"),
+        id
+        );
+}
+
+void Database::removeCategory(const QUuid& id)
+{
+    deleteById(
+        QStringLiteral("DELETE FROM categories WHERE id = :id"),
+        id
+        );
 }
 
 void Database::removeOperation(const QUuid& id)

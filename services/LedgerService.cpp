@@ -149,12 +149,13 @@ void LedgerService::createAccount(
     const QString& name,
     core::model::AccountType type,
     const QString& currencyCode,
-    qint64 openingBalanceMinor)
+    qint64 openingBalanceMinor,
+    qint64 creditLimitMinor)
 {
     executeCommand(
         QStringLiteral("createAccount"),
-        [name, type, currencyCode, openingBalanceMinor](
-            State& state)
+        [name, type, currencyCode,
+         openingBalanceMinor, creditLimitMinor](State& state)
         {
             AccountService service{
                 state.database,
@@ -165,7 +166,8 @@ void LedgerService::createAccount(
                 name,
                 type,
                 currencyCode,
-                openingBalanceMinor
+                openingBalanceMinor,
+                creditLimitMinor
                 );
         }
         );

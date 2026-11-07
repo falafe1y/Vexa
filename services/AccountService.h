@@ -31,7 +31,8 @@ public:
         const QString& name,
         core::model::AccountType type,
         const QString& currencyCode,
-        qint64 openingBalanceMinor
+        qint64 openingBalanceMinor,
+        qint64 creditLimitMinor = 0
     );
 
 private:

@@ -193,10 +193,33 @@ Money Ledger::balance(const QUuid& accountId) const
     return current;
 }
 
+Money Ledger::availableBalance(
+    const QUuid& accountId) const
+{
+    const auto& account = requireAccount(accountId);
+    const auto current = balance(accountId);
+
+    if (account.type() == AccountType::CreditCard) {
+        return account.creditLimit() + current;
+    }
+
+    return current;
+}
+
 Money Ledger::debt(const QUuid& accountId) const
 {
+    const auto& account = requireAccount(accountId);
+
+    const auto zero = Money::fromMinorUnits(
+        0,
+        account.currency()
+        );
+
+    if (account.type() != AccountType::CreditCard) {
+        return zero;
+    }
+
     const auto current = balance(accountId);
-    const auto zero = Money::fromMinorUnits(0, current.currency());
 
     if (current.minorUnits() < 0) {
         return zero - current;

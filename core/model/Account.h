@@ -18,11 +18,20 @@ enum class AccountType
 class Account final
 {
 public:
-    Account(QUuid id,
-            const QString& name,
-            AccountType type,
-            Money openingBalance,
-            bool archived = false);
+    Account(
+        QUuid id,
+        const QString& name,
+        AccountType type,
+        Money openingBalance,
+        bool archived = false);
+
+    Account(
+        QUuid id,
+        const QString& name,
+        AccountType type,
+        Money openingBalance,
+        Money creditLimit,
+        bool archived = false);
 
     [[nodiscard]] QUuid id() const noexcept
     {
@@ -44,6 +53,11 @@ public:
         return openingBalance_;
     }
 
+    [[nodiscard]] Money creditLimit() const noexcept
+    {
+        return creditLimit_;
+    }
+
     [[nodiscard]] Currency currency() const noexcept
     {
         return openingBalance_.currency();
@@ -60,11 +74,13 @@ public:
         archived_ = true;
     }
 
+
 private:
     QUuid id_;
     QString name_;
     AccountType type_;
     Money openingBalance_;
+    Money creditLimit_;
     bool archived_;
 };
 

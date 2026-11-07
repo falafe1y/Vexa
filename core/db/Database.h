@@ -5,6 +5,8 @@
 #include "Operation.h"
 
 #include <QString>
+#include <QUuid>
+
 #include <vector>
 
 namespace core::db {
