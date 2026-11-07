@@ -4,7 +4,7 @@ project(Vexa VERSION 0.0.1 LANGUAGES CXX)
 
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
-find_package(Qt6 REQUIRED COMPONENTS Quick)
+find_package(Qt6 REQUIRED COMPONENTS Quick Sql)
 
 qt_standard_project_setup(REQUIRES 6.10)
 
@@ -14,6 +14,7 @@ if (EXISTS "${CMAKE_CURRENT_LIST_DIR}/importedcontent/CMakeLists.txt")
 endif()
 
 add_subdirectory(core/model)
+add_subdirectory(core/db)
 
 qt_add_executable(Vexa
     main.cpp
@@ -40,6 +41,7 @@ target_link_libraries(Vexa
     PRIVATE
     Qt6::Quick
     core_model
+    core_db
 )
 
 install(TARGETS Vexa

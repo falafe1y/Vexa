@@ -10,6 +10,7 @@ namespace core::model {
 
 namespace {
 
+// проверка корректности операции
 Money applyToBalance(Money current,
                      const QUuid& accountId,
                      const Operation::Details& details)
