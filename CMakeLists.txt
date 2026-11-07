@@ -15,6 +15,7 @@ endif()
 
 add_subdirectory(core/model)
 add_subdirectory(core/db)
+add_subdirectory(services)
 
 qt_add_executable(Vexa
     main.cpp
@@ -42,6 +43,7 @@ target_link_libraries(Vexa
     Qt6::Quick
     core_model
     core_db
+    services
 )
 
 install(TARGETS Vexa

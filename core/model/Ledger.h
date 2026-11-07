@@ -28,6 +28,21 @@ public:
     [[nodiscard]] Money debt(const QUuid& accountId) const;
     [[nodiscard]] Money totalBalance(Currency targetCurrency) const;
 
+    [[nodiscard]] qint64 accountCount() const noexcept
+    {
+        return static_cast<qint64>(accounts_.size());
+    }
+
+    [[nodiscard]] qint64 categoryCount() const noexcept
+    {
+        return static_cast<qint64>(categories_.size());
+    }
+
+    [[nodiscard]] qint64 operationCount() const noexcept
+    {
+        return static_cast<qint64>(operations_.size());
+    }
+
 private:
     [[nodiscard]] const Account& requireAccount(const QUuid& accountId) const;
 
