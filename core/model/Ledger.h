@@ -15,6 +15,11 @@ namespace core::model {
 class Ledger final
 {
 public:
+    [[nodiscard]] static Ledger fromStoredData(
+                                            const std::vector<Account>& accounts,
+                                            const std::vector<Category>& categories,
+                                            const std::vector<Operation>& operations
+                                            );
     void addAccount(const Account& account);
     void addCategory(const Category& category);
     void addOperation(const Operation& operation);
@@ -26,7 +31,7 @@ public:
 private:
     [[nodiscard]] const Account& requireAccount(const QUuid& accountId) const;
 
-    void checkCategory(const QUuid& categoryId, CategoryType expectedType);
+    void checkCategory(const QUuid& categoryId, CategoryType expectedType, bool allowArchived = false) const;
     void checkAccountChange(const QUuid& accountId, const Operation::Details& details) const;
 
     QHash<QUuid, Account> accounts_;

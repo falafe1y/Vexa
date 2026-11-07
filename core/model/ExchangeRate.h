@@ -7,6 +7,7 @@ namespace core::model {
 class ExchangeRate final
 {
 public:
+    // текущий курс на данный момент
     [[nodiscard]] static ExchangeRate fixed(Currency from, Currency to);
 
     [[nodiscard]] Money convert(Money amount) const;
@@ -20,6 +21,12 @@ public:
     {
         return denominator_;
     }
+
+    // пользовательский курс, не учитывающий настоящий
+    [[nodiscard]] static ExchangeRate customRatio(Currency from,
+                                                Currency to,
+                                                qint64 numerator,
+                                                qint64 denominator);
 
 private:
     ExchangeRate(Currency from,

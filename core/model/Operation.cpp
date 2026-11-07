@@ -2,6 +2,7 @@
 
 #include <stdexcept>
 #include <utility>
+#include <utility>
 
 namespace core::model {
 
@@ -47,6 +48,72 @@ Operation::Operation(QUuid id, QDate date, Details details)
     if (!date_.isValid()) {
         throw std::invalid_argument("Operation date must be valid");
     }
+}
+
+Operation Operation::fromStoredData(QUuid id, QDate date, Details details)
+{
+    const auto validateEntry = [](
+                                   const QUuid& accountId,
+                                   const QUuid& categoryId,
+                                   Money amount)
+    {
+        if (accountId.isNull() || categoryId.isNull()) {
+            throw std::invalid_argument(
+                "Operation account and category IDs must not be null"
+                );
+        }
+
+        if (amount.minorUnits() <= 0) {
+            throw std::invalid_argument(
+                "Operation amount must be positive"
+                );
+        }
+    };
+
+    if (const auto* income = std::get_if<Income>(&details)) {
+        validateEntry(
+            income->accountId,
+            income->categoryId,
+            income->amount
+            );
+    } else if (const auto* expense = std::get_if<Expense>(&details)) {
+        validateEntry(
+            expense->accountId,
+            expense->categoryId,
+            expense->amount
+            );
+    } else {
+        const auto& transfer = std::get<Transfer>(details);
+
+        if (transfer.fromAccountId.isNull() ||
+            transfer.toAccountId.isNull()) {
+            throw std::invalid_argument(
+                "Transfer account IDs must not be null"
+                );
+        }
+
+        if (transfer.fromAccountId == transfer.toAccountId) {
+            throw std::invalid_argument(
+                "Transfer accounts must be different"
+                );
+        }
+
+        if (transfer.sentAmount.minorUnits() <= 0 ||
+            transfer.receivedAmount.minorUnits() <= 0) {
+            throw std::invalid_argument(
+                "Transfer amounts must be positive"
+                );
+        }
+
+        if (transfer.rate.convert(transfer.sentAmount) !=
+            transfer.receivedAmount) {
+            throw std::invalid_argument(
+                "Transfer amounts do not match the stored exchange rate"
+                );
+        }
+    }
+
+    return Operation{id, date, std::move(details)};
 }
 
 Operation Operation::income(QUuid id,

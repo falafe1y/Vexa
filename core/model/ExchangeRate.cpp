@@ -89,4 +89,28 @@ Money ExchangeRate::convert(Money amount) const
            + Money::fromMinorUnits(fractional, to_);
 }
 
+ExchangeRate ExchangeRate::customRatio(Currency from, Currency to, qint64 numerator, qint64 denominator)
+{
+    if (numerator <= 0 || denominator <= 0) {
+        throw std::invalid_argument(
+            "Exchange rate numerator and denominator must be positive"
+            );
+    }
+
+    if (from == to && numerator != denominator) {
+        throw std::invalid_argument(
+            "Exchange rate for the same currency must be one"
+            );
+    }
+
+    const qint64 divisor = std::gcd(numerator, denominator);
+
+    return ExchangeRate{
+        from,
+        to,
+        numerator / divisor,
+        denominator / divisor
+    };
+}
+
 } // namespace core::model

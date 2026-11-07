@@ -2,6 +2,7 @@
 
 #include "Account.h"
 #include "Category.h"
+#include "Operation.h"
 
 #include <QString>
 #include <vector>
@@ -18,10 +19,21 @@ public:
     Database& operator=(const Database&) = delete;
 
     void saveAccount(const core::model::Account& account);
-    [[nodiscard]] std::vector<core::model::Account> loadAccounts() const;
-
     void saveCategory(const core::model::Category& category);
-    [[nodiscard]] std::vector<core::model::Category> loadCategories() const;
+    void saveOperation(const core::model::Operation& operation);
+
+    [[nodiscard]]
+    std::vector<core::model::Account> loadAccounts() const;
+
+    [[nodiscard]]
+    std::vector<core::model::Category> loadCategories() const;
+
+    [[nodiscard]]
+    std::vector<core::model::Operation> loadOperations() const;
+
+    void removeAccount(const QUuid& id);
+    void removeCategory(const QUuid& id);
+    void removeOperation(const QUuid& id);
 
 private:
     void createTables();

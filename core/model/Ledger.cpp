@@ -5,6 +5,7 @@
 #include <variant>
 #include <map>
 #include <string_view>
+#include <QSet>
 
 namespace core::model {
 
@@ -37,6 +38,106 @@ Money applyToBalance(Money current,
 }
 
 } // namespace
+
+Ledger Ledger::fromStoredData(
+    const std::vector<Account>& accounts,
+    const std::vector<Category>& categories,
+    const std::vector<Operation>& operations)
+{
+    Ledger ledger;
+
+    for (const auto& account : accounts) {
+        ledger.addAccount(account);
+    }
+
+    for (const auto& category : categories) {
+        ledger.addCategory(category);
+    }
+
+    const auto checkAccountCurrency = [&ledger](
+                                          const QUuid& accountId,
+                                          Money amount)
+    {
+        // проверка на существование указанного счета
+        const auto& account = ledger.requireAccount(accountId);
+
+        // проверка валюты
+        if (account.currency() != amount.currency()) {
+            throw std::invalid_argument(
+                "Operation currency does not match the account"
+                );
+        }
+    };
+
+    // запоминаем уже встреченные операции по их ID
+    QSet<QUuid> operationIds;
+
+    for (const auto& operation : operations) {
+        if (operationIds.contains(operation.id())) {
+            throw std::invalid_argument(
+                "Operation ID already exists"
+                );
+        }
+
+        operationIds.insert(operation.id());
+
+        const auto& details = operation.details();
+
+        if (const auto* income =
+            std::get_if<Operation::Income>(&details)) {
+
+            ledger.checkCategory(
+                income->categoryId,
+                CategoryType::Income,
+                true
+                );
+
+            checkAccountCurrency(
+                income->accountId,
+                income->amount
+                );
+
+        } else if (const auto* expense =
+                   std::get_if<Operation::Expense>(&details)) {
+
+            ledger.checkCategory(
+                expense->categoryId,
+                CategoryType::Expense,
+                true
+                );
+
+            checkAccountCurrency(
+                expense->accountId,
+                expense->amount
+                );
+
+        } else {
+            const auto& transfer =
+                std::get<Operation::Transfer>(details);
+
+            checkAccountCurrency(
+                transfer.fromAccountId,
+                transfer.sentAmount
+                );
+
+            checkAccountCurrency(
+                transfer.toAccountId,
+                transfer.receivedAmount
+                );
+        }
+    }
+
+    // сохранение проверенного журнала
+    ledger.operations_ = operations;
+
+    // проверка, что история позволяет рассчитать остатки
+    // без ошибок валют и переполнения
+    for (const auto& account : ledger.accounts_) {
+        (void)ledger.balance(account.id());
+    }
+
+    return ledger;
+}
 
 void Ledger::addAccount(const Account& account)
 {
@@ -140,21 +241,30 @@ const Account& Ledger::requireAccount(const QUuid& accountId) const
     return account.value();
 }
 
-void Ledger::checkCategory(const QUuid& categoryId, CategoryType expectedType)
+void Ledger::checkCategory(const QUuid& categoryId, CategoryType expectedType, bool allowArchived) const
 {
-    const auto category = categories_.constFind(categoryId);
+    const auto position = categories_.constFind(categoryId);
 
-    if (category == categories_.constEnd()) {
-        throw std::invalid_argument("Category does not exist in the ledger");
+    if (position == categories_.constEnd()) {
+        throw std::invalid_argument(
+            "Category does not exist in the ledger"
+            );
     }
 
-    if (category.value().isArchived() || category.value().type() != expectedType) {
-        throw std::invalid_argument("Operation requires an active category of the correct type");
+    const auto& category = position.value();
+
+    if (category.type() != expectedType) {
+        throw std::invalid_argument(
+            "Category type does not match the operation"
+            );
+    }
+
+    if (!allowArchived && category.isArchived()) {
+        throw std::invalid_argument("Category is archived");
     }
 }
 
-void Ledger::checkAccountChange(const QUuid& accountId,
-                                const Operation::Details& details) const
+void Ledger::checkAccountChange(const QUuid& accountId, const Operation::Details& details) const
 {
     if (requireAccount(accountId).isArchived()) {
         throw std::invalid_argument("Account is archived");
