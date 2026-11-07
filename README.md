@@ -21,3 +21,8 @@ core/db:
 
 services:
 - LedgerService - связывает БД и журнал из ядра
+- AccountService - создает счет
+- CategoryService - создает категорию
+- OperationService - создает операцию
+- ArchiveService - архивация или физическое удаление сущности из БД
+
