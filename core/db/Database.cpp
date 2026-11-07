@@ -45,7 +45,7 @@ void Database::createTables()
     auto connection = QSqlDatabase::database();
     QSqlQuery query{connection};
 
-    const bool success = query.exec(QStringLiteral(R"(
+    const bool accountsCreated = query.exec(QStringLiteral(R"(
         CREATE TABLE IF NOT EXISTS accounts (
             id TEXT PRIMARY KEY NOT NULL,
             name TEXT NOT NULL,
@@ -56,7 +56,22 @@ void Database::createTables()
         )
     )"));
 
-    if (!success) {
+    if (!accountsCreated) {
+        throw std::runtime_error(
+            query.lastError().text().toStdString()
+            );
+    }
+
+    const bool categoriesCreated = query.exec(QStringLiteral(R"(
+        CREATE TABLE IF NOT EXISTS categories (
+            id TEXT PRIMARY KEY NOT NULL,
+            name TEXT NOT NULL,
+            type INTEGER NOT NULL CHECK (type IN (0, 1)),
+            archived INTEGER NOT NULL CHECK (archived IN (0, 1))
+        )
+    )"));
+
+    if (!categoriesCreated) {
         throw std::runtime_error(
             query.lastError().text().toStdString()
             );
@@ -213,6 +228,114 @@ std::vector<core::model::Account> Database::loadAccounts() const
     }
 
     return accounts;
+}
+
+void Database::saveCategory(const core::model::Category& category)
+{
+    auto connection = QSqlDatabase::database();
+    QSqlQuery query{connection};
+
+    const bool prepared = query.prepare(QStringLiteral(R"(
+        INSERT INTO categories (
+            id,
+            name,
+            type,
+            archived
+        )
+        VALUES (
+            :id,
+            :name,
+            :type,
+            :archived
+        )
+        ON CONFLICT(id) DO UPDATE SET
+            name = excluded.name,
+            type = excluded.type,
+            archived = excluded.archived
+    )"));
+
+    if (!prepared) {
+        throw std::runtime_error(
+            query.lastError().text().toStdString()
+            );
+    }
+
+    query.bindValue(
+        QStringLiteral(":id"),
+        category.id().toString(QUuid::WithoutBraces)
+        );
+
+    query.bindValue(
+        QStringLiteral(":name"),
+        category.name()
+        );
+
+    query.bindValue(
+        QStringLiteral(":type"),
+        static_cast<int>(category.type())
+        );
+
+    query.bindValue(
+        QStringLiteral(":archived"),
+        category.isArchived() ? 1 : 0
+        );
+
+    if (!query.exec()) {
+        throw std::runtime_error(
+            query.lastError().text().toStdString()
+            );
+    }
+}
+
+std::vector<core::model::Category> Database::loadCategories() const
+{
+    auto connection = QSqlDatabase::database();
+    QSqlQuery query{connection};
+
+    const bool success = query.exec(QStringLiteral(R"(
+        SELECT
+            id,
+            name,
+            type,
+            archived
+        FROM categories
+        ORDER BY id
+    )"));
+
+    if (!success) {
+        throw std::runtime_error(
+            query.lastError().text().toStdString()
+            );
+    }
+
+    std::vector<core::model::Category> categories;
+
+    while (query.next()) {
+        const QUuid id{query.value(0).toString()};
+        const QString name = query.value(1).toString();
+
+        const auto type =
+            static_cast<core::model::CategoryType>(
+                query.value(2).toInt()
+                );
+
+        const bool archived = query.value(3).toBool();
+
+        categories.emplace_back(
+            id,
+            name,
+            type,
+            archived
+            );
+    }
+
+    if (query.lastError().isValid()) {
+        throw std::runtime_error(
+            query.lastError().text().toStdString()
+            );
+    }
+
+    return categories;
 }
 
 } // namespace core::db

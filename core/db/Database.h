@@ -1,6 +1,7 @@
 #pragma once
 
 #include "Account.h"
+#include "Category.h"
 
 #include <QString>
 #include <vector>
@@ -18,6 +19,9 @@ public:
 
     void saveAccount(const core::model::Account& account);
     [[nodiscard]] std::vector<core::model::Account> loadAccounts() const;
+
+    void saveCategory(const core::model::Category& category);
+    [[nodiscard]] std::vector<core::model::Category> loadCategories() const;
 
 private:
     void createTables();

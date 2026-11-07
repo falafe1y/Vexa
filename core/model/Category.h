@@ -7,8 +7,8 @@ namespace core::model {
 
 enum class CategoryType
 {
-    Income,
-    Expense
+    Income = 0,
+    Expense = 1
 };
 
 // запрет на наследование
