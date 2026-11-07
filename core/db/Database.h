@@ -1,6 +1,9 @@
 #pragma once
 
+#include "Account.h"
+
 #include <QString>
+#include <vector>
 
 namespace core::db {
 
@@ -12,6 +15,12 @@ public:
 
     Database(const Database&) = delete;
     Database& operator=(const Database&) = delete;
+
+    void saveAccount(const core::model::Account& account);
+    [[nodiscard]] std::vector<core::model::Account> loadAccounts() const;
+
+private:
+    void createTables();
 };
 
 } // namespace core::db

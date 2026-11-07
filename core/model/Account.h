@@ -9,9 +9,9 @@ namespace core::model {
 
 enum class AccountType
 {
-    Cash,
-    DebitCard,
-    CreditCard
+    Cash = 0,
+    DebitCard = 1,
+    CreditCard = 2
 };
 
 // запрет на наследование

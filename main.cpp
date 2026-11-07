@@ -9,6 +9,8 @@
 #include <exception>
 #include <QGuiApplication>
 #include <QQmlApplicationEngine>
+#include <QTemporaryDir>
+#include <stdexcept>
 
 using namespace core::model;
 
@@ -17,16 +19,63 @@ int main(int argc, char *argv[])
     QGuiApplication app(argc, argv);
 
     try {
-        const auto filePath = QDir::current().filePath(
-            QStringLiteral("vexa-mvp-test-database.sqlite3")
-            );
+        QTemporaryDir directory;
+
+        if (!directory.isValid()) {
+            throw std::runtime_error(
+                "Cannot create temporary database directory"
+                );
+        }
+
+        const QString filePath =
+            directory.filePath(QStringLiteral("accounts-test.sqlite3"));
+
+        const auto rub = Currency::fromCode("RUB");
+
+        const Account original{
+            QUuid::createUuid(),
+            QStringLiteral("Наличные"),
+            AccountType::Cash,
+            Money::fromMinorUnits(100'000, rub)
+        };
 
         {
             core::db::Database database{filePath};
-            qDebug() << "База открыта:" << filePath;
+
+            database.saveAccount(original);
+
+            // Повторное сохранение не должно создавать второй счет.
+            database.saveAccount(original);
         }
 
-        qDebug() << "Соединение закрыто";
+        // Первое соединение уже закрыто. Открываем файл заново.
+        {
+            core::db::Database database{filePath};
+
+            const auto accounts = database.loadAccounts();
+
+            if (accounts.size() != 1) {
+                throw std::runtime_error("Unexpected account count");
+            }
+
+            const auto& restored = accounts.front();
+
+            if (restored.id() != original.id() ||
+                restored.name() != original.name() ||
+                restored.type() != original.type() ||
+                restored.openingBalance() != original.openingBalance() ||
+                restored.isArchived() != original.isArchived()) {
+                throw std::runtime_error(
+                    "Restored account differs from original"
+                    );
+            }
+
+            qDebug() << "Счет восстановлен:"
+                     << restored.name()
+                     << restored.openingBalance().minorUnits();
+
+            qDebug() << "Проверка сохранения пройдена";
+        }
     } catch (const std::exception& error) {
         qCritical() << "Ошибка БД:" << error.what();
         return 1;
