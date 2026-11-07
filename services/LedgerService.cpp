@@ -3,6 +3,9 @@
 #include "Currency.h"
 #include "Database.h"
 #include "Ledger.h"
+#include "AccountService.h"
+#include "CategoryService.h"
+#include "OperationService.h"
 
 #include <QMetaObject>
 
@@ -133,6 +136,156 @@ void LedgerService::requestTotalBalance(
                     );
             } catch (const std::exception& error) {
                 emit failed(
+                    QString::fromUtf8(error.what())
+                    );
+            }
+        },
+        Qt::QueuedConnection
+        );
+}
+
+void LedgerService::createAccount(
+    const QString& name,
+    core::model::AccountType type,
+    const QString& currencyCode,
+    qint64 openingBalanceMinor)
+{
+    executeCommand(
+        QStringLiteral("createAccount"),
+        [name, type, currencyCode, openingBalanceMinor](
+            State& state)
+        {
+            AccountService service{
+                state.database,
+                state.ledger
+            };
+
+            return service.create(
+                name,
+                type,
+                currencyCode,
+                openingBalanceMinor
+                );
+        }
+        );
+}
+
+void LedgerService::createCategory(
+    const QString& name,
+    core::model::CategoryType type)
+{
+    executeCommand(
+        QStringLiteral("createCategory"),
+        [name, type](State& state) {
+            CategoryService service{
+                state.database,
+                state.ledger
+            };
+
+            return service.create(name, type);
+        }
+        );
+}
+
+void LedgerService::addIncome(
+    const QUuid& accountId,
+    const QUuid& categoryId,
+    qint64 amountMinor,
+    QDate date)
+{
+    executeCommand(
+        QStringLiteral("income"),
+        [accountId, categoryId, amountMinor, date](
+            State& state)
+        {
+            OperationService service{
+                state.database,
+                state.ledger
+            };
+
+            return service.income(
+                accountId,
+                categoryId,
+                amountMinor,
+                date
+                );
+        }
+        );
+}
+
+void LedgerService::addExpense(
+    const QUuid& accountId,
+    const QUuid& categoryId,
+    qint64 amountMinor,
+    QDate date)
+{
+    executeCommand(
+        QStringLiteral("expense"),
+        [accountId, categoryId, amountMinor, date](
+            State& state)
+        {
+            OperationService service{
+                state.database,
+                state.ledger
+            };
+
+            return service.expense(
+                accountId,
+                categoryId,
+                amountMinor,
+                date
+                );
+        }
+        );
+}
+
+void LedgerService::transfer(
+    const QUuid& fromAccountId,
+    const QUuid& toAccountId,
+    qint64 sentAmountMinor,
+    QDate date)
+{
+    executeCommand(
+        QStringLiteral("transfer"),
+        [fromAccountId, toAccountId, sentAmountMinor, date](
+            State& state)
+        {
+            OperationService service{
+                state.database,
+                state.ledger
+            };
+
+            return service.transfer(
+                fromAccountId,
+                toAccountId,
+                sentAmountMinor,
+                date
+                );
+        }
+        );
+}
+
+void LedgerService::executeCommand(
+    const QString& commandName,
+    std::function<QUuid(State&)> action)
+{
+    QMetaObject::invokeMethod(
+        worker_,
+        [this, commandName, action = std::move(action)] {
+            try {
+                if (!state_) {
+                    throw std::logic_error(
+                        "Database is not open"
+                        );
+                }
+
+                const QUuid id = action(*state_);
+
+                emit commandSucceeded(commandName, id);
+                emit changed();
+            } catch (const std::exception& error) {
+                emit commandFailed(
+                    commandName,
                     QString::fromUtf8(error.what())
                     );
             }

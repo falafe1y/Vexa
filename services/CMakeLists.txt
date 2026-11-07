@@ -1,4 +1,13 @@
 add_library(services STATIC
+    AccountService.cpp
+    AccountService.h
+
+    CategoryService.cpp
+    CategoryService.h
+
+    OperationService.cpp
+    OperationService.h
+
     LedgerService.cpp
     LedgerService.h
 )
@@ -12,7 +21,7 @@ target_include_directories(services
 target_link_libraries(services
     PUBLIC
         Qt6::Core
-    PRIVATE
         core_model
+    PRIVATE
         core_db
 )

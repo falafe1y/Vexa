@@ -132,7 +132,7 @@ Ledger Ledger::fromStoredData(
 
     // проверка, что история позволяет рассчитать остатки
     // без ошибок валют и переполнения
-    for (const auto& account : ledger.accounts_) {
+    for (const auto& account : std::as_const(ledger.accounts_)) {
         (void)ledger.balance(account.id());
     }
 
@@ -228,6 +228,26 @@ Money Ledger::totalBalance(Currency targetCurrency) const
     }
 
     return total;
+}
+
+const Category& Ledger::category(const QUuid& id) const
+{
+    const auto position = categories_.constFind(id);
+
+    if (position == categories_.constEnd()) {
+        throw std::invalid_argument(
+            "Category does not exist in the ledger"
+            );
+    }
+
+    return position.value();
+}
+
+void Ledger::swap(Ledger& other) noexcept
+{
+    accounts_.swap(other.accounts_);
+    categories_.swap(other.categories_);
+    operations_.swap(other.operations_);
 }
 
 const Account& Ledger::requireAccount(const QUuid& accountId) const

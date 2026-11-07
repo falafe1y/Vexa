@@ -43,6 +43,16 @@ public:
         return static_cast<qint64>(operations_.size());
     }
 
+    [[nodiscard]] const Account& account(const QUuid& id) const
+    {
+        return requireAccount(id);
+    }
+
+    [[nodiscard]] const Category& category(const QUuid& id) const;
+
+    //
+    void swap(Ledger& other) noexcept;
+
 private:
     [[nodiscard]] const Account& requireAccount(const QUuid& accountId) const;
 
