@@ -8,6 +8,9 @@ add_library(services STATIC
     OperationService.cpp
     OperationService.h
 
+    ArchiveService.cpp
+    ArchiveService.h
+
     LedgerService.cpp
     LedgerService.h
 )

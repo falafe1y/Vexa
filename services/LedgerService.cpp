@@ -6,6 +6,7 @@
 #include "AccountService.h"
 #include "CategoryService.h"
 #include "OperationService.h"
+#include "ArchiveService.h"
 
 #include <QMetaObject>
 
@@ -261,6 +262,52 @@ void LedgerService::transfer(
                 sentAmountMinor,
                 date
                 );
+        }
+        );
+}
+
+void LedgerService::removeAccount(const QUuid& id)
+{
+    executeCommand(
+        QStringLiteral("removeAccount"),
+        [this, id](State& state) {
+            ArchiveService service{
+                state.database,
+                state.ledger
+            };
+
+            const auto result = service.removeAccount(id);
+
+            emit removalCompleted(
+                QStringLiteral("account"),
+                id,
+                result == ArchiveService::Result::Archived
+                );
+
+            return id;
+        }
+        );
+}
+
+void LedgerService::removeCategory(const QUuid& id)
+{
+    executeCommand(
+        QStringLiteral("removeCategory"),
+        [this, id](State& state) {
+            ArchiveService service{
+                state.database,
+                state.ledger
+            };
+
+            const auto result = service.removeCategory(id);
+
+            emit removalCompleted(
+                QStringLiteral("category"),
+                id,
+                result == ArchiveService::Result::Archived
+                );
+
+            return id;
         }
         );
 }

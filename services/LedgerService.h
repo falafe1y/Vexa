@@ -60,6 +60,9 @@ public:
         QDate date
         );
 
+    void removeAccount(const QUuid& id);
+    void removeCategory(const QUuid& id);
+
 signals:
     void loaded(
         qint64 accountCount,
@@ -80,6 +83,12 @@ signals:
     void commandFailed(
         const QString& commandName,
         const QString& message
+        );
+
+    void removalCompleted(
+        const QString& entityType,
+        const QUuid& id,
+        bool archived   // true - архивация, false - удаление из БД
         );
 
     void changed();

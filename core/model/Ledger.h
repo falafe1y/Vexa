@@ -50,6 +50,15 @@ public:
 
     [[nodiscard]] const Category& category(const QUuid& id) const;
 
+    [[nodiscard]] bool isAccountUsed(const QUuid& id) const;
+    [[nodiscard]] bool isCategoryUsed(const QUuid& id) const;
+
+    void archiveAccount(const QUuid& id);
+    void archiveCategory(const QUuid& id);
+
+    void removeAccount(const QUuid& id);
+    void removeCategory(const QUuid& id);
+
     //
     void swap(Ledger& other) noexcept;
 

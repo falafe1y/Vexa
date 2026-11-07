@@ -1,5 +1,17 @@
 #include "LedgerService.h"
+#include "AccountService.h"
+#include "ArchiveService.h"
+#include "CategoryService.h"
+#include "OperationService.h"
+#include "Currency.h"
+#include "Database.h"
+#include "Ledger.h"
 
+#include <QDate>
+#include <QTemporaryDir>
+#include <exception>
+#include <stdexcept>
+#include <vector>
 #include <QCoreApplication>
 #include <QDebug>
 #include <QDir>
@@ -8,6 +20,243 @@
 #include <QStandardPaths>
 #include <QTemporaryDir>
 #include <memory>
+
+void checkArchiving()
+{
+    using namespace core::model;
+
+    const auto require = [](bool condition, const char* message) {
+        if (!condition) {
+            throw std::runtime_error(message);
+        }
+    };
+
+    QTemporaryDir directory;
+
+    require(
+        directory.isValid(),
+        "Cannot create archive test directory"
+        );
+
+    const QString filePath = directory.filePath(
+        QStringLiteral("archive-test.sqlite3")
+        );
+
+    const auto rub = Currency::fromCode("RUB");
+
+    QUuid cashId;
+    QUuid dollarId;
+    QUuid salaryId;
+    QUuid groceriesId;
+
+    std::vector<QUuid> operationIds;
+
+    qint64 totalBefore = 0;
+    qint64 cashBefore = 0;
+    qint64 dollarsBefore = 0;
+
+    {
+        core::db::Database database{filePath};
+
+        auto ledger = Ledger::fromStoredData(
+            database.loadAccounts(),
+            database.loadCategories(),
+            database.loadOperations()
+            );
+
+        services::AccountService accounts{database, ledger};
+        services::CategoryService categories{database, ledger};
+        services::OperationService operations{database, ledger};
+        services::ArchiveService archive{database, ledger};
+
+        cashId = accounts.create(
+            QStringLiteral("Наличные"),
+            AccountType::Cash,
+            QStringLiteral("RUB"),
+            100'000
+            );
+
+        dollarId = accounts.create(
+            QStringLiteral("Долларовая карта"),
+            AccountType::DebitCard,
+            QStringLiteral("USD"),
+            10'000
+            );
+
+        const QUuid unusedAccountId = accounts.create(
+            QStringLiteral("Неиспользуемый счет"),
+            AccountType::Cash,
+            QStringLiteral("RUB"),
+            0
+            );
+
+        salaryId = categories.create(
+            QStringLiteral("Зарплата"),
+            CategoryType::Income
+            );
+
+        groceriesId = categories.create(
+            QStringLiteral("Продукты"),
+            CategoryType::Expense
+            );
+
+        const QUuid unusedCategoryId = categories.create(
+            QStringLiteral("Неиспользуемая категория"),
+            CategoryType::Expense
+            );
+
+        const auto date = QDate::currentDate();
+
+        operationIds.push_back(operations.income(
+            cashId,
+            salaryId,
+            20'000,
+            date
+            ));
+
+        operationIds.push_back(operations.expense(
+            cashId,
+            groceriesId,
+            25'000,
+            date
+            ));
+
+        operationIds.push_back(operations.transfer(
+            dollarId,
+            cashId,
+            1'000,
+            date
+            ));
+
+        totalBefore = ledger.totalBalance(rub).minorUnits();
+        cashBefore = ledger.balance(cashId).minorUnits();
+        dollarsBefore = ledger.balance(dollarId).minorUnits();
+
+        using Result = services::ArchiveService::Result;
+
+        // Проверяем оба счета перевода.
+        require(
+            archive.removeAccount(dollarId) == Result::Archived,
+            "Transfer sender must be archived"
+            );
+
+        require(
+            archive.removeAccount(cashId) == Result::Archived,
+            "Transfer recipient must be archived"
+            );
+
+        require(
+            archive.removeCategory(salaryId) == Result::Archived,
+            "Used income category must be archived"
+            );
+
+        require(
+            archive.removeCategory(groceriesId) == Result::Archived,
+            "Used expense category must be archived"
+            );
+
+        require(
+            archive.removeAccount(unusedAccountId) == Result::Deleted,
+            "Unused account must be deleted"
+            );
+
+        require(
+            archive.removeCategory(unusedCategoryId) == Result::Deleted,
+            "Unused category must be deleted"
+            );
+
+        require(
+            ledger.accountCount() == 2 &&
+                ledger.categoryCount() == 2 &&
+                ledger.operationCount() == 3,
+            "Archiving changed unexpected records"
+            );
+
+        require(
+            ledger.totalBalance(rub).minorUnits() == totalBefore &&
+                ledger.balance(cashId).minorUnits() == cashBefore &&
+                ledger.balance(dollarId).minorUnits() == dollarsBefore,
+            "Archiving changed balances"
+            );
+    }
+
+    // Соединение закрыто. Проверяем сохраненные изменения.
+    {
+        core::db::Database database{filePath};
+
+        const auto storedOperations = database.loadOperations();
+
+        auto ledger = Ledger::fromStoredData(
+            database.loadAccounts(),
+            database.loadCategories(),
+            storedOperations
+            );
+
+        require(
+            ledger.accountCount() == 2 &&
+                ledger.categoryCount() == 2 &&
+                ledger.operationCount() == 3,
+            "Unexpected record counts after reopening database"
+            );
+
+        require(
+            ledger.account(cashId).isArchived() &&
+                ledger.account(dollarId).isArchived(),
+            "Account archive flags were not saved"
+            );
+
+        require(
+            ledger.category(salaryId).isArchived() &&
+                ledger.category(groceriesId).isArchived(),
+            "Category archive flags were not saved"
+            );
+
+        for (std::size_t i = 0; i < operationIds.size(); ++i) {
+            require(
+                storedOperations[i].id() == operationIds[i],
+                "History changed after archiving"
+                );
+        }
+
+        require(
+            ledger.totalBalance(rub).minorUnits() == totalBefore &&
+                ledger.balance(cashId).minorUnits() == cashBefore &&
+                ledger.balance(dollarId).minorUnits() == dollarsBefore,
+            "Balances changed after reopening database"
+            );
+
+        services::OperationService operations{database, ledger};
+
+        bool rejected = false;
+
+        try {
+            (void)operations.expense(
+                cashId,
+                groceriesId,
+                100,
+                QDate::currentDate()
+                );
+        } catch (const std::invalid_argument&) {
+            rejected = true;
+        }
+
+        require(
+            rejected,
+            "Archived entities accepted a new operation"
+            );
+
+        require(
+            ledger.operationCount() == 3 &&
+                database.loadOperations().size() == 3,
+            "Rejected operation changed history"
+            );
+
+        qDebug() << "Используемые счета и категории архивированы";
+        qDebug() << "Неиспользуемые счета и категории удалены";
+        qDebug() << "История и остатки сохранены после открытия БД";
+        qDebug() << "Проверка архивирования пройдена";
+    }
+}
 
 int main(int argc, char* argv[])
 {
@@ -44,6 +293,15 @@ int main(int argc, char* argv[])
     const QString databasePath = testDirectory.filePath(
         QStringLiteral("commands-test.sqlite3")
         );
+
+    try {
+        checkArchiving();
+    } catch (const std::exception& error) {
+        qCritical() << "Ошибка проверки архивирования:"
+                    << error.what();
+
+        return 1;
+    }
 
     services::LedgerService service;
 

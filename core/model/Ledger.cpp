@@ -243,6 +243,110 @@ const Category& Ledger::category(const QUuid& id) const
     return position.value();
 }
 
+bool Ledger::isAccountUsed(const QUuid& id) const
+{
+    // Проверяем, что счет существует.
+    (void)account(id);
+
+    for (const auto& operation : operations_) {
+        const auto& details = operation.details();
+
+        if (const auto* income =
+            std::get_if<Operation::Income>(&details)) {
+            if (income->accountId == id) {
+                return true;
+            }
+        } else if (const auto* expense =
+                   std::get_if<Operation::Expense>(&details)) {
+            if (expense->accountId == id) {
+                return true;
+            }
+        } else {
+            const auto& transfer =
+                std::get<Operation::Transfer>(details);
+
+            if (transfer.fromAccountId == id ||
+                transfer.toAccountId == id) {
+                return true;
+            }
+        }
+    }
+
+    return false;
+}
+
+bool Ledger::isCategoryUsed(const QUuid& id) const
+{
+    // Проверяем, что категория существует.
+    (void)category(id);
+
+    for (const auto& operation : operations_) {
+        const auto& details = operation.details();
+
+        if (const auto* income =
+            std::get_if<Operation::Income>(&details)) {
+            if (income->categoryId == id) {
+                return true;
+            }
+        } else if (const auto* expense =
+                   std::get_if<Operation::Expense>(&details)) {
+            if (expense->categoryId == id) {
+                return true;
+            }
+        }
+    }
+
+    return false;
+}
+
+void Ledger::archiveAccount(const QUuid& id)
+{
+    auto position = accounts_.find(id);
+
+    if (position == accounts_.end()) {
+        throw std::invalid_argument(
+            "Account does not exist in the ledger"
+            );
+    }
+
+    position.value().archive();
+}
+
+void Ledger::archiveCategory(const QUuid& id)
+{
+    auto position = categories_.find(id);
+
+    if (position == categories_.end()) {
+        throw std::invalid_argument(
+            "Category does not exist in the ledger"
+            );
+    }
+
+    position.value().archive();
+}
+
+void Ledger::removeAccount(const QUuid& id)
+{
+    if (isAccountUsed(id)) {
+        throw std::invalid_argument(
+            "Used account must be archived"
+            );
+    }
+
+    accounts_.remove(id);
+}
+
+void Ledger::removeCategory(const QUuid& id)
+{
+    if (isCategoryUsed(id)) {
+        throw std::invalid_argument(
+            "Used category must be archived"
+            );
+    }
+
+    categories_.remove(id);
+}
+
 void Ledger::swap(Ledger& other) noexcept
 {
     accounts_.swap(other.accounts_);
