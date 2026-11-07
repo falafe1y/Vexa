@@ -38,15 +38,19 @@ QString toCurrencyCode(core::model::Currency currency)
         );
 }
 
-qint64 readInteger(const QSqlQuery& query, int column)
+qint64 readInteger(
+    const QSqlQuery& query,
+    const QString& columnName)
 {
     bool valid = false;
 
-    const qint64 value = query.value(column).toLongLong(&valid);
+    const qint64 value =
+        query.value(columnName).toLongLong(&valid);
 
     if (!valid) {
         throw std::runtime_error(
-            "Invalid integer value in database"
+            "Invalid integer in column: "
+            + columnName.toStdString()
             );
     }
 
@@ -55,8 +59,8 @@ qint64 readInteger(const QSqlQuery& query, int column)
 
 core::model::Money readMoney(
     const QSqlQuery& query,
-    int amountColumn,
-    int currencyColumn)
+    const QString& amountColumn,
+    const QString& currencyColumn)
 {
     const auto code =
         query.value(currencyColumn).toString().toStdString();
@@ -338,42 +342,31 @@ std::vector<core::model::Account> Database::loadAccounts() const
     std::vector<core::model::Account> accounts;
 
     while (query.next()) {
-        const QUuid id{query.value(0).toString()};
-        const QString name = query.value(1).toString();
+        const qint64 type = readInteger(
+            query,
+            QStringLiteral("type")
+            );
 
-        const auto type =
-            static_cast<core::model::AccountType>(
-                query.value(2).toInt()
-                );
-
-        const auto currencyCode =
-            query.value(3).toString().toStdString();
-
-        const auto currency =
-            core::model::Currency::fromCode(currencyCode);
-
-        bool amountValid = false;
-
-        const qint64 openingBalanceMinor =
-            query.value(4).toLongLong(&amountValid);
-
-        if (!amountValid) {
+        if (type < 0 || type > 2) {
             throw std::runtime_error(
-                "Invalid account opening balance in database"
+                "Unknown account type in database"
                 );
         }
 
-        const bool archived = query.value(5).toBool();
-
         accounts.emplace_back(
-            id,
-            name,
-            type,
-            core::model::Money::fromMinorUnits(
-                openingBalanceMinor,
-                currency
+            QUuid{query.value(QStringLiteral("id")).toString()},
+
+            query.value(QStringLiteral("name")).toString(),
+
+            static_cast<core::model::AccountType>(type),
+
+            readMoney(
+                query,
+                QStringLiteral("opening_balance_minor"),
+                QStringLiteral("currency_code")
                 ),
-            archived
+
+            query.value(QStringLiteral("archived")).toBool()
             );
     }
 
@@ -477,21 +470,25 @@ std::vector<core::model::Category> Database::loadCategories() const
     std::vector<core::model::Category> categories;
 
     while (query.next()) {
-        const QUuid id{query.value(0).toString()};
-        const QString name = query.value(1).toString();
+        const qint64 type = readInteger(
+            query,
+            QStringLiteral("type")
+            );
 
-        const auto type =
-            static_cast<core::model::CategoryType>(
-                query.value(2).toInt()
+        if (type < 0 || type > 1) {
+            throw std::runtime_error(
+                "Unknown category type in database"
                 );
-
-        const bool archived = query.value(3).toBool();
+        }
 
         categories.emplace_back(
-            id,
-            name,
-            type,
-            archived
+            QUuid{query.value(QStringLiteral("id")).toString()},
+
+            query.value(QStringLiteral("name")).toString(),
+
+            static_cast<core::model::CategoryType>(type),
+
+            query.value(QStringLiteral("archived")).toBool()
             );
     }
 
@@ -745,19 +742,37 @@ Database::loadOperations() const
     std::vector<Operation> operations;
 
     while (query.next()) {
-        const QUuid id{query.value(0).toString()};
-        const QDate date = QDate::fromString(query.value(1).toString(), Qt::ISODate);
-        const qint64 type = readInteger(query, 2);
-        const QUuid accountId{query.value(3).toString()};
-        const auto amount = readMoney(query, 5, 6);
+        const QUuid id{
+            query.value(QStringLiteral("id")).toString()
+        };
+
+        const QDate date = QDate::fromString(
+            query.value(QStringLiteral("date")).toString(),
+            Qt::ISODate
+            );
+
+        const qint64 type = readInteger(
+            query,
+            QStringLiteral("type")
+            );
+
+        const QUuid accountId{
+            query.value(QStringLiteral("account_id")).toString()
+        };
+
+        const auto amount = readMoney(
+            query,
+            QStringLiteral("amount_minor"),
+            QStringLiteral("currency_code")
+            );
 
         switch (type) {
         case 0: {
             const QUuid categoryId{
-                query.value(4).toString()
+                query.value(QStringLiteral("category_id")).toString()
             };
 
-            operations.push_back(Operation::fromStoredData(
+            operations.emplace_back(
                 id,
                 date,
                 Operation::Income{
@@ -765,17 +780,17 @@ Database::loadOperations() const
                     categoryId,
                     amount
                 }
-                ));
+                );
 
             break;
         }
 
         case 1: {
             const QUuid categoryId{
-                query.value(4).toString()
+                query.value(QStringLiteral("category_id")).toString()
             };
 
-            operations.push_back(Operation::fromStoredData(
+            operations.emplace_back(
                 id,
                 date,
                 Operation::Expense{
@@ -783,27 +798,38 @@ Database::loadOperations() const
                     categoryId,
                     amount
                 }
-                ));
+                );
 
             break;
         }
 
         case 2: {
             const QUuid toAccountId{
-                query.value(7).toString()
+                query.value(QStringLiteral("to_account_id")).toString()
             };
 
-            const auto receivedAmount =
-                readMoney(query, 8, 9);
+            const auto receivedAmount = readMoney(
+                query,
+                QStringLiteral("received_amount_minor"),
+                QStringLiteral("received_currency_code")
+                );
 
             const auto rate = ExchangeRate::customRatio(
                 amount.currency(),
                 receivedAmount.currency(),
-                readInteger(query, 10),
-                readInteger(query, 11)
+
+                readInteger(
+                    query,
+                    QStringLiteral("rate_numerator")
+                    ),
+
+                readInteger(
+                    query,
+                    QStringLiteral("rate_denominator")
+                    )
                 );
 
-            operations.push_back(Operation::fromStoredData(
+            operations.emplace_back(
                 id,
                 date,
                 Operation::Transfer{
@@ -813,7 +839,7 @@ Database::loadOperations() const
                     receivedAmount,
                     rate
                 }
-                ));
+                );
 
             break;
         }

@@ -90,7 +90,7 @@ int main(int argc, char* argv[])
             ExchangeRate::customRatio(usd, rub, 85, 1);
 
         const std::vector<Operation> originalOperations{
-            Operation::fromStoredData(
+            Operation(
                 QUuid::createUuid(),
                 date,
                 Operation::Transfer{
@@ -316,7 +316,7 @@ int main(int argc, char* argv[])
             bool archivedAccountRejected = false;
 
             try {
-                ledger.addOperation(Operation::fromStoredData(
+                ledger.addOperation(Operation(
                     QUuid::createUuid(),
                     date,
                     Operation::Income{
@@ -337,7 +337,7 @@ int main(int argc, char* argv[])
             bool archivedCategoryRejected = false;
 
             try {
-                ledger.addOperation(Operation::fromStoredData(
+                ledger.addOperation(Operation(
                     QUuid::createUuid(),
                     date,
                     Operation::Expense{

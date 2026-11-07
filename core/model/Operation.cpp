@@ -2,7 +2,6 @@
 
 #include <stdexcept>
 #include <utility>
-#include <utility>
 
 namespace core::model {
 
@@ -36,22 +35,26 @@ void validateEntry(const Account& account,
 
 } // namespace
 
-Operation::Operation(QUuid id, QDate date, Details details)
+Operation::Operation(
+    QUuid id,
+    QDate date,
+    Details details)
     : id_(id),
     date_(date),
     details_(std::move(details))
 {
     if (id_.isNull()) {
-        throw std::invalid_argument("Operation ID must not be null");
+        throw std::invalid_argument(
+            "Operation ID must not be null"
+            );
     }
 
     if (!date_.isValid()) {
-        throw std::invalid_argument("Operation date must be valid");
+        throw std::invalid_argument(
+            "Operation date must be valid"
+            );
     }
-}
 
-Operation Operation::fromStoredData(QUuid id, QDate date, Details details)
-{
     const auto validateEntry = [](
                                    const QUuid& accountId,
                                    const QUuid& categoryId,
@@ -70,20 +73,21 @@ Operation Operation::fromStoredData(QUuid id, QDate date, Details details)
         }
     };
 
-    if (const auto* income = std::get_if<Income>(&details)) {
+    if (const auto* income = std::get_if<Income>(&details_)) {
         validateEntry(
             income->accountId,
             income->categoryId,
             income->amount
             );
-    } else if (const auto* expense = std::get_if<Expense>(&details)) {
+    } else if (const auto* expense =
+               std::get_if<Expense>(&details_)) {
         validateEntry(
             expense->accountId,
             expense->categoryId,
             expense->amount
             );
     } else {
-        const auto& transfer = std::get<Transfer>(details);
+        const auto& transfer = std::get<Transfer>(details_);
 
         if (transfer.fromAccountId.isNull() ||
             transfer.toAccountId.isNull()) {
@@ -108,12 +112,10 @@ Operation Operation::fromStoredData(QUuid id, QDate date, Details details)
         if (transfer.rate.convert(transfer.sentAmount) !=
             transfer.receivedAmount) {
             throw std::invalid_argument(
-                "Transfer amounts do not match the stored exchange rate"
+                "Transfer amounts do not match the exchange rate"
                 );
         }
     }
-
-    return Operation{id, date, std::move(details)};
 }
 
 Operation Operation::income(QUuid id,

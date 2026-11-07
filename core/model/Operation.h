@@ -40,6 +40,8 @@ public:
 
     using Details = std::variant<Income, Expense, Transfer>;
 
+    Operation(QUuid id, QDate date, Details details);
+
     [[nodiscard]] static Operation fromStoredData(QUuid id, QDate date, Details details);
 
     [[nodiscard]] static Operation income(QUuid id,
@@ -76,8 +78,6 @@ public:
     }
 
 private:
-    Operation(QUuid id, QDate date, Details details);
-
     QUuid id_;
     QDate date_;
     Details details_;
