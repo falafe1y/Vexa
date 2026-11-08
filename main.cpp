@@ -2,13 +2,16 @@
 #include "CategoryService.h"
 #include "LedgerService.h"
 #include "OperationService.h"
-
 #include "Currency.h"
 #include "Database.h"
 #include "Ledger.h"
 #include "Money.h"
 #include "Operation.h"
+#include "ArchiveService.h"
+#include "ExchangeRate.h"
+#include "LedgerReadService.h"
 
+#include <vector>
 #include <QCoreApplication>
 #include <QDate>
 #include <QDebug>
@@ -17,12 +20,308 @@
 #include <QQmlApplicationEngine>
 #include <QStandardPaths>
 #include <QTemporaryDir>
-
 #include <exception>
 #include <limits>
 #include <stdexcept>
 
 namespace {
+
+void checkHistory()
+{
+    using namespace core::model;
+
+    const auto require = [](bool condition, const char* message) {
+        if (!condition) {
+            throw std::runtime_error(message);
+        }
+    };
+
+    QTemporaryDir directory;
+
+    require(
+        directory.isValid(),
+        "Cannot create history test directory"
+        );
+
+    const QString filePath = directory.filePath(
+        QStringLiteral("history-test.sqlite3")
+        );
+
+    const auto rub = Currency::fromCode("RUB");
+    const auto usd = Currency::fromCode("USD");
+
+    std::vector<QUuid> expectedIds;
+
+    {
+        core::db::Database database{filePath};
+
+        auto ledger = Ledger::fromStoredData(
+            database.loadAccounts(),
+            database.loadCategories(),
+            database.loadOperations()
+            );
+
+        services::AccountService accounts{database, ledger};
+        services::CategoryService categories{database, ledger};
+        services::OperationService operations{database, ledger};
+        services::ArchiveService archive{database, ledger};
+
+        const QUuid cashId = accounts.create(
+            QStringLiteral("Наличные"),
+            AccountType::Cash,
+            QStringLiteral("RUB"),
+            100'000
+            );
+
+        const QUuid dollarId = accounts.create(
+            QStringLiteral("Долларовая карта"),
+            AccountType::DebitCard,
+            QStringLiteral("USD"),
+            10'000
+            );
+
+        const QUuid salaryId = categories.create(
+            QStringLiteral("Зарплата"),
+            CategoryType::Income
+            );
+
+        const QUuid groceriesId = categories.create(
+            QStringLiteral("Продукты"),
+            CategoryType::Expense
+            );
+
+        const QUuid incomeId = operations.income(
+            cashId,
+            salaryId,
+            10'000,
+            QDate{2026, 11, 1}
+            );
+
+        const QUuid firstExpenseId = operations.expense(
+            cashId,
+            groceriesId,
+            5'000,
+            QDate{2026, 11, 3}
+            );
+
+        // Исторический перевод по курсу 85, а не текущему 90.
+        const auto rate =
+            ExchangeRate::customRatio(usd, rub, 85, 1);
+
+        const Operation transfer{
+            QUuid::createUuid(),
+            QDate{2026, 11, 2},
+            Operation::Transfer{
+                dollarId,
+                cashId,
+                Money::fromMinorUnits(1'000, usd),
+                Money::fromMinorUnits(85'000, rub),
+                rate
+            }
+        };
+
+        {
+            auto candidate = ledger;
+            candidate.addOperation(transfer);
+
+            database.saveOperation(transfer);
+
+            ledger.swap(candidate);
+        }
+
+        const QUuid lastExpenseId = operations.expense(
+            cashId,
+            groceriesId,
+            2'000,
+            QDate{2026, 11, 3}
+            );
+
+        expectedIds = {
+            lastExpenseId,
+            firstExpenseId,
+            transfer.id(),
+            incomeId
+        };
+
+        using Result = services::ArchiveService::Result;
+
+        require(
+            archive.removeAccount(cashId) == Result::Archived &&
+                archive.removeAccount(dollarId) == Result::Archived &&
+                archive.removeCategory(salaryId) == Result::Archived &&
+                archive.removeCategory(groceriesId) == Result::Archived,
+            "Test entities were not archived"
+            );
+
+        services::LedgerReadService reader{ledger};
+
+        const auto first = reader.operations(0, 3);
+        const auto second = reader.operations(first.nextOffset, 3);
+
+        require(
+            first.items.size() == 3 &&
+                first.offset == 0 &&
+                first.nextOffset == 3 &&
+                first.totalCount == 4 &&
+                first.hasMore,
+            "Incorrect first history page"
+            );
+
+        require(
+            second.items.size() == 1 &&
+                second.offset == 3 &&
+                second.nextOffset == 4 &&
+                second.totalCount == 4 &&
+                !second.hasMore,
+            "Incorrect final history page"
+            );
+
+        std::vector<QUuid> actualIds;
+
+        for (const auto& item : first.items) {
+            actualIds.push_back(item.id);
+        }
+
+        for (const auto& item : second.items) {
+            actualIds.push_back(item.id);
+        }
+
+        require(
+            actualIds == expectedIds,
+            "Incorrect history order, missing or duplicate records"
+            );
+
+        const auto& expense = first.items[0];
+
+        require(
+            expense.type == services::OperationType::Expense &&
+                expense.amountMinor == 2'000 &&
+                expense.accountName == QStringLiteral("Наличные") &&
+                expense.categoryName == QStringLiteral("Продукты"),
+            "Incorrect expense data"
+            );
+
+        const auto& transferData = first.items[2];
+
+        require(
+            transferData.type == services::OperationType::Transfer &&
+                transferData.accountId == dollarId &&
+                transferData.toAccountId == cashId &&
+                transferData.accountName ==
+                    QStringLiteral("Долларовая карта") &&
+                transferData.toAccountName ==
+                    QStringLiteral("Наличные") &&
+                transferData.amountMinor == 1'000 &&
+                transferData.currencyCode == QStringLiteral("USD") &&
+                transferData.receivedAmountMinor == 85'000 &&
+                transferData.receivedCurrencyCode ==
+                    QStringLiteral("RUB") &&
+                transferData.categoryId.isNull(),
+            "Incorrect stored transfer data"
+            );
+
+        const auto& income = second.items[0];
+
+        require(
+            income.type == services::OperationType::Income &&
+                income.amountMinor == 10'000 &&
+                income.categoryName == QStringLiteral("Зарплата"),
+            "Incorrect income data"
+            );
+
+        const auto end = reader.operations(
+            std::numeric_limits<qint64>::max(),
+            3
+            );
+
+        require(
+            end.items.empty() &&
+                end.offset == 4 &&
+                end.nextOffset == 4 &&
+                !end.hasMore,
+            "Incorrect page beyond the end of history"
+            );
+
+        bool invalidOffsetRejected = false;
+
+        try {
+            (void)reader.operations(-1, 3);
+        } catch (const std::invalid_argument&) {
+            invalidOffsetRejected = true;
+        }
+
+        require(
+            invalidOffsetRejected,
+            "Negative history offset was accepted"
+            );
+
+        bool invalidLimitRejected = false;
+
+        try {
+            (void)reader.operations(0, 0);
+        } catch (const std::invalid_argument&) {
+            invalidLimitRejected = true;
+        }
+
+        require(
+            invalidLimitRejected,
+            "Zero history limit was accepted"
+            );
+
+        Ledger emptyLedger;
+
+        const auto emptyPage =
+            services::LedgerReadService{emptyLedger}
+                .operations(0, 3);
+
+        require(
+            emptyPage.items.empty() &&
+                emptyPage.totalCount == 0 &&
+                emptyPage.nextOffset == 0 &&
+                !emptyPage.hasMore,
+            "Incorrect empty history page"
+            );
+
+        qDebug() << "Первая порция:" << first.items.size();
+        qDebug() << "Вторая порция:" << second.items.size();
+        qDebug() << "История архивных счетов и категорий доступна";
+        qDebug() << "Сохраненные суммы перевода не изменились";
+    }
+
+    {
+        core::db::Database database{filePath};
+
+        const auto ledger = Ledger::fromStoredData(
+            database.loadAccounts(),
+            database.loadCategories(),
+            database.loadOperations()
+            );
+
+        const auto page =
+            services::LedgerReadService{ledger}
+                .operations(0, 10);
+
+        std::vector<QUuid> actualIds;
+
+        for (const auto& item : page.items) {
+            actualIds.push_back(item.id);
+        }
+
+        require(
+            actualIds == expectedIds,
+            "History order changed after reopening database"
+            );
+
+        require(
+            page.items[2].receivedAmountMinor == 85'000,
+            "Historical transfer amount changed after reopening"
+            );
+
+        qDebug() << "Порядок сохранен после повторного открытия БД";
+    }
+
+    qDebug() << "Проверка истории пройдена";
+}
 
 void checkOperationRemoval()
 {
@@ -333,6 +632,17 @@ int main(int argc, char* argv[])
         }
     }
 
+    if (app.arguments().contains(
+            QStringLiteral("--check-history"))) {
+        try {
+            checkHistory();
+            return 0;
+        } catch (const std::exception& error) {
+            qCritical() << "Ошибка проверки:" << error.what();
+            return 1;
+        }
+    }
+
     const QString dataDirectory =
         QStandardPaths::writableLocation(
             QStandardPaths::AppDataLocation
@@ -373,6 +683,7 @@ int main(int argc, char* argv[])
             service.requestAccounts();
             service.requestCategories();
             service.requestTotalBalance(QStringLiteral("RUB"));
+            service.requestOperations(0, 50);
         },
         Qt::QueuedConnection
         );
@@ -482,6 +793,50 @@ int main(int argc, char* argv[])
             qWarning() << "Ошибка получения данных:"
                        << requestName
                        << message;
+        },
+        Qt::QueuedConnection
+        );
+
+    QObject::connect(
+        &service,
+        &services::LedgerService::operationsReady,
+        &app,
+        [&service](const services::OperationPage& page) {
+            if (page.resetRequired) {
+                qDebug() << "Журнал изменился, история начата заново";
+            }
+
+            qDebug() << "История:"
+                     << "смещение" << page.offset
+                     << "получено" << page.items.size()
+                     << "всего" << page.totalCount;
+
+            for (const auto& operation : page.items) {
+                qDebug() << operation.date.toString(Qt::ISODate)
+                << "Тип:" << static_cast<int>(operation.type)
+                << "Счет:" << operation.accountName
+                << "Сумма:" << operation.amountMinor
+                << operation.currencyCode
+                << "Категория:" << operation.categoryName;
+
+                if (operation.type ==
+                    services::OperationType::Transfer) {
+                    qDebug() << "Получатель:"
+                             << operation.toAccountName
+                             << "Получено:"
+                             << operation.receivedAmountMinor
+                             << operation.receivedCurrencyCode;
+                }
+            }
+
+            // Для консольной проверки последовательно читаем все порции.
+            if (page.hasMore) {
+                service.requestOperations(
+                    page.nextOffset,
+                    page.limit,
+                    page.version
+                    );
+            }
         },
         Qt::QueuedConnection
         );

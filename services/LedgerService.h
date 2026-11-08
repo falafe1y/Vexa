@@ -43,6 +43,11 @@ public:
 
     void requestAccounts();
     void requestCategories();
+    void requestOperations(
+            qint64 offset = 0,
+            qint64 limit = 50,
+            const QUuid& version = QUuid{}
+        );
 
     void addIncome(
         const QUuid& accountId,
@@ -76,6 +81,10 @@ signals:
 
     void categoriesReady(
         const services::CategoryList& categories
+        );
+
+    void operationsReady(
+        const services::OperationPage& page
         );
 
     void requestFailed(

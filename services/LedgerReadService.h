@@ -4,6 +4,7 @@
 
 namespace core::model {
 class Ledger;
+class Operation;
 }
 
 namespace services {
@@ -23,8 +24,17 @@ public:
     [[nodiscard]]
     CategoryList categories() const;
 
+    [[nodiscard]] OperationPage operations(
+        qint64 offset,
+        qint64 limit
+        ) const;
+
 private:
     const core::model::Ledger& ledger_;
+
+    [[nodiscard]] OperationData makeOperationData(
+        const core::model::Operation& operation
+        ) const;
 };
 
 } // namespace services

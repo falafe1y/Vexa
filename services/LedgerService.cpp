@@ -21,6 +21,7 @@ struct LedgerService::State
 {
     core::db::Database database;
     core::model::Ledger ledger;
+    QUuid historyVersion = QUuid::createUuid();
 
     explicit State(const QString& filePath)
         : database{filePath},
@@ -41,6 +42,7 @@ LedgerService::LedgerService(QObject* parent)
 {
     qRegisterMetaType<AccountList>("services::AccountList");
     qRegisterMetaType<CategoryList>("services::CategoryList");
+    qRegisterMetaType<OperationPage>("services::OperationPage");
 
     databaseThread_.setObjectName(
         QStringLiteral("VexaDatabase")
@@ -205,6 +207,33 @@ void LedgerService::requestCategories()
             const auto result = reader.categories();
 
             emit categoriesReady(result);
+        }
+        );
+}
+
+void LedgerService::requestOperations(
+    qint64 offset,
+    qint64 limit,
+    const QUuid& version)
+{
+    executeRequest(
+        QStringLiteral("operations"),
+        [this, offset, limit, version](const State& state) {
+            LedgerReadService reader{state.ledger};
+
+            const bool resetRequired =
+                offset > 0 &&
+                version != state.historyVersion;
+
+            auto page = reader.operations(
+                resetRequired ? 0 : offset,
+                limit
+                );
+
+            page.version = state.historyVersion;
+            page.resetRequired = resetRequired;
+
+            emit operationsReady(page);
         }
         );
 }
@@ -388,7 +417,12 @@ void LedgerService::executeCommand(
                         );
                 }
 
+                const QUuid nextVersion =
+                    QUuid::createUuid();
+
                 const QUuid id = action(*state_);
+
+                state_->historyVersion = nextVersion;
 
                 emit commandSucceeded(commandName, id);
                 emit changed();

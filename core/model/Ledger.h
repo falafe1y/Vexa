@@ -6,8 +6,8 @@
 
 #include <QHash>
 #include <QUuid>
-
 #include <vector>
+#include <cstddef>
 
 namespace core::model {
 
@@ -45,6 +45,12 @@ public:
     [[nodiscard]] qint64 operationCount() const noexcept
     {
         return static_cast<qint64>(operations_.size());
+    }
+
+    // вернуть операцию по ее позиции в журнале
+    [[nodiscard]] const Operation& operationAt(std::size_t index) const
+    {
+        return operations_.at(index);
     }
 
     [[nodiscard]] const Account& account(const QUuid& id) const
