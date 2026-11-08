@@ -1,5 +1,4 @@
 import QtQuick
-import "ui/desktop" as Desktop
+import UI
 
-Desktop.MainView {
-}
+MainView {}

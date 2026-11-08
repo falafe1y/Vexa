@@ -1,447 +1,223 @@
 #include "LedgerInterface.h"
 
 #include "Currency.h"
+#include "LedgerPresentation.h"
 
-#include <QVariantMap>
+#include <QDate>
 
-#include <utility>
+#include <exception>
 
 namespace interfaces {
 
-namespace {
-
-// Форматируем целое число минимальных единиц без double.
-// Например: 12345, 2, "RUB" -> "123,45 RUB".
-QString formatMoney(
-    qint64 minorUnits,
-    int decimalPlaces,
-    const QString& currencyCode)
+LedgerInterface::LedgerInterface(services::LedgerService& service,
+                                 services::SettingsService& settings,
+                                 QObject* parent)
+    : QObject(parent), service_(service), settings_(settings),
+      totalCurrencyCode_(settings.baseCurrencyCode())
 {
-    QString digits = QString::number(minorUnits);
+    totalDecimalPlaces_ = core::model::Currency::fromCode(
+        totalCurrencyCode_.toStdString()).decimalPlaces();
+    totalBalanceText_ = presentation::money(0, totalDecimalPlaces_, totalCurrencyCode_);
 
-    const bool negative = digits.startsWith(QLatin1Char('-'));
+    connect(this, &LedgerInterface::commandStateChanged,
+            this, &LedgerInterface::availabilityChanged);
+    connect(this, &LedgerInterface::readyChanged,
+            this, &LedgerInterface::availabilityChanged);
 
-    if (negative) {
-        digits.remove(0, 1);
-    }
-
-    if (decimalPlaces > 0) {
-        while (digits.size() <= decimalPlaces) {
-            digits.prepend(QLatin1Char('0'));
-        }
-
-        digits.insert(
-            digits.size() - decimalPlaces,
-            QLatin1Char(',')
-        );
-    }
-
-    if (negative) {
-        digits.prepend(QLatin1Char('-'));
-    }
-
-    return digits + QLatin1Char(' ') + currencyCode;
-}
-
-QString idToString(const QUuid& id)
-{
-    return id.toString(QUuid::WithoutBraces);
-}
-
-QVariantMap makeAccountRow(const services::AccountData& account)
-{
-    const auto moneyText = [&account](qint64 amount) {
-        return formatMoney(
-            amount,
-            account.decimalPlaces,
-            account.currencyCode
-        );
-    };
-
-    return QVariantMap{
-        {"id", idToString(account.id)},
-        {"name", account.name},
-        {"type", static_cast<int>(account.type)},
-        {"currencyCode", account.currencyCode},
-
-        {"isCreditCard",
-         account.type == core::model::AccountType::CreditCard},
-
-        {"balanceText", moneyText(account.balanceMinor)},
-        {"creditLimitText", moneyText(account.creditLimitMinor)},
-        {"debtText", moneyText(account.debtMinor)},
-
-        {"availableBalanceText",
-         moneyText(account.availableBalanceMinor)}
-    };
-}
-
-QVariantMap makeCategoryRow(const services::CategoryData& category)
-{
-    const bool income =
-        category.type == core::model::CategoryType::Income;
-
-    return QVariantMap{
-        {"id", idToString(category.id)},
-        {"name", category.name},
-        {"type", static_cast<int>(category.type)},
-
-        {"typeText",
-         income ? QStringLiteral("Доход")
-                : QStringLiteral("Расход")}
-    };
-}
-
-QVariantMap makeOperationRow(const services::OperationData& operation)
-{
-    QString typeText;
-
-    switch (operation.type) {
-    case services::OperationType::Income:
-        typeText = QStringLiteral("Доход");
-        break;
-
-    case services::OperationType::Expense:
-        typeText = QStringLiteral("Расход");
-        break;
-
-    case services::OperationType::Transfer:
-        typeText = QStringLiteral("Перевод");
-        break;
-    }
-
-    const bool transfer =
-        operation.type == services::OperationType::Transfer;
-
-    QString receivedAmountText;
-
-    if (transfer) {
-        receivedAmountText = formatMoney(
-            operation.receivedAmountMinor,
-            operation.receivedDecimalPlaces,
-            operation.receivedCurrencyCode
-        );
-    }
-
-    return QVariantMap{
-        {"id", idToString(operation.id)},
-
-        {"dateText", operation.date.toString(
-            QStringLiteral("dd.MM.yyyy")
-        )},
-
-        {"type", static_cast<int>(operation.type)},
-        {"typeText", typeText},
-        {"isTransfer", transfer},
-
-        {"accountId", idToString(operation.accountId)},
-        {"accountName", operation.accountName},
-
-        {"categoryId", idToString(operation.categoryId)},
-        {"categoryName", operation.categoryName},
-
-        {"amountText", formatMoney(
-            operation.amountMinor,
-            operation.decimalPlaces,
-            operation.currencyCode
-        )},
-
-        {"toAccountId", idToString(operation.toAccountId)},
-        {"toAccountName", operation.toAccountName},
-
-        {"receivedAmountText", receivedAmountText}
-    };
-}
-
-} // namespace
-
-LedgerInterface::LedgerInterface(
-    services::LedgerService& service,
-    QString totalCurrencyCode,
-    QObject* parent)
-    : QObject(parent),
-      service_(service),
-      totalCurrencyCode_(std::move(totalCurrencyCode))
-{
-    const auto currency = core::model::Currency::fromCode(
-        totalCurrencyCode_.toStdString()
-    );
-
-    totalDecimalPlaces_ = currency.decimalPlaces();
-
-    totalBalanceText_ = formatMoney(
-        0,
-        totalDecimalPlaces_,
-        totalCurrencyCode_
-    );
-
-    connect(
-        &service_,
-        &services::LedgerService::loaded,
-        this,
+    connect(&service_, &services::LedgerService::loaded, this,
         [this](qint64, qint64, qint64) {
             ready_ = true;
             emit readyChanged();
-
             refresh();
-        },
-        Qt::QueuedConnection
-    );
+        }, Qt::QueuedConnection);
 
-    connect(
-        &service_,
-        &services::LedgerService::changed,
-        this,
-        [this]() {
-            refresh();
-        },
-        Qt::QueuedConnection
-    );
+    connect(&service_, &services::LedgerService::changed,
+            this, &LedgerInterface::refresh, Qt::QueuedConnection);
 
-    connect(
-        &service_,
-        &services::LedgerService::accountsReady,
-        this,
+    connect(&service_, &services::LedgerService::accountsReady, this,
         [this](const services::AccountList& accounts) {
-            QVariantList items;
-
-            items.reserve(
-                static_cast<qsizetype>(accounts.size())
-                );
-
+            QVariantList rows;
+            rows.reserve(static_cast<qsizetype>(accounts.size()));
             accountDecimalPlaces_.clear();
-
             for (const auto& account : accounts) {
-                accountDecimalPlaces_.insert(
-                    account.id,
-                    account.decimalPlaces
-                    );
-
-                items.push_back(makeAccountRow(account));
+                accountDecimalPlaces_.insert(account.id, account.decimalPlaces);
+                rows.push_back(presentation::accountRow(account));
             }
+            accounts_.setRows(rows);
+            emit accountsChanged();
+            emit availabilityChanged();
+        }, Qt::QueuedConnection);
 
-            emit accountsReceived(items);
-        },
-        Qt::QueuedConnection
-    );
-
-    connect(
-        &service_,
-        &services::LedgerService::categoriesReady,
-        this,
+    connect(&service_, &services::LedgerService::categoriesReady, this,
         [this](const services::CategoryList& categories) {
-            QVariantList items;
-
-            items.reserve(
-                static_cast<qsizetype>(categories.size())
-            );
-
+            QVariantList all, income, expense;
             for (const auto& category : categories) {
-                items.push_back(makeCategoryRow(category));
+                const auto row = presentation::categoryRow(category);
+                all.push_back(row);
+                if (category.type == core::model::CategoryType::Income) income.push_back(row);
+                else expense.push_back(row);
             }
+            categories_.setRows(all);
+            incomeCategories_.setRows(income);
+            expenseCategories_.setRows(expense);
+        }, Qt::QueuedConnection);
 
-            emit categoriesReceived(items);
-        },
-        Qt::QueuedConnection
-    );
-
-    connect(
-        &service_,
-        &services::LedgerService::totalBalanceReady,
-        this,
-        [this](qint64 minorUnits, const QString& currencyCode) {
-            if (currencyCode != totalCurrencyCode_) {
-                return;
+    connect(&service_, &services::LedgerService::totalBalanceReady, this,
+        [this](qint64 amount, const QString& currencyCode) {
+            if (currencyCode != totalCurrencyCode_) return;
+            const auto text = presentation::money(amount, totalDecimalPlaces_, currencyCode);
+            if (text != totalBalanceText_) {
+                totalBalanceText_ = text;
+                emit totalBalanceChanged();
             }
+        }, Qt::QueuedConnection);
 
-            const auto text = formatMoney(
-                minorUnits,
-                totalDecimalPlaces_,
-                currencyCode
-            );
-
-            if (text == totalBalanceText_) {
-                return;
-            }
-
-            totalBalanceText_ = text;
-
-            emit totalBalanceChanged();
-        },
-        Qt::QueuedConnection
-    );
-
-    connect(
-        &service_,
-        &services::LedgerService::operationsReady,
-        this,
+    connect(&service_, &services::LedgerService::operationsReady, this,
         [this](const services::OperationPage& page) {
-            if (!historyLoading_) {
-                return;
-            }
-
+            if (!historyLoading_) return;
             historyLoading_ = false;
-
-            // Пока ожидали ответ, журнал изменился.
-            // Старый ответ не передаём в QML.
             if (historyReloadPending_) {
                 historyReloadPending_ = false;
                 reloadHistory();
                 return;
             }
 
-            QVariantList items;
-
-            items.reserve(
-                static_cast<qsizetype>(page.items.size())
-            );
-
+            QVariantList rows;
+            rows.reserve(static_cast<qsizetype>(page.items.size()));
             for (const auto& operation : page.items) {
-                items.push_back(makeOperationRow(operation));
+                rows.push_back(presentation::operationRow(operation));
             }
 
-            const bool replace =
-                historyReplace_ || page.resetRequired;
+            if (historyReplace_ || page.resetRequired) history_.setRows(rows);
+            else history_.appendRows(rows);
 
             historyNextOffset_ = page.nextOffset;
             historyVersion_ = page.version;
+            historyTotalCount_ = page.totalCount;
             historyHasMore_ = page.hasMore;
             historyReplace_ = false;
-
-            emit historyReceived(items, replace);
             emit historyStateChanged();
-        },
-        Qt::QueuedConnection
-    );
+        }, Qt::QueuedConnection);
 
-    connect(
-        &service_,
-        &services::LedgerService::requestFailed,
-        this,
-        [this](const QString& requestName,
-               const QString& message) {
-            if (requestName == QStringLiteral("operations")) {
+    connect(&service_, &services::LedgerService::requestFailed, this,
+        [this](const QString& request, const QString& message) {
+            if (request == QStringLiteral("operations")) {
                 historyLoading_ = false;
-
                 if (historyReloadPending_) {
                     historyReloadPending_ = false;
                     reloadHistory();
-                } else {
-                    emit historyStateChanged();
-                }
+                } else emit historyStateChanged();
             }
-
             emit errorOccurred(message);
-        },
-        Qt::QueuedConnection
-    );
+        }, Qt::QueuedConnection);
 
-    connect(
-        &service_,
-        &services::LedgerService::commandSucceeded,
-        this,
-        [this](const QString& commandName, const QUuid& id) {
-            if (!commandPending_
-                || pendingCommand_ != commandName) {
-                return;
-            }
-
+    connect(&service_, &services::LedgerService::commandSucceeded, this,
+        [this](const QString& command, const QUuid& id) {
+            if (!commandPending_ || pendingCommand_ != command) return;
             commandPending_ = false;
             pendingCommand_.clear();
-
             emit commandStateChanged();
+            emit commandFinished(command, id.toString(QUuid::WithoutBraces));
+        }, Qt::QueuedConnection);
 
-            emit commandFinished(
-                commandName,
-                id.toString(QUuid::WithoutBraces)
-                );
-        },
-        Qt::QueuedConnection
-    );
-
-    connect(
-        &service_,
-        &services::LedgerService::commandFailed,
-        this,
-        [this](const QString& commandName,
-               const QString& message) {
-            if (commandPending_
-                && pendingCommand_ == commandName) {
+    connect(&service_, &services::LedgerService::commandFailed, this,
+        [this](const QString& command, const QString& message) {
+            if (commandPending_ && pendingCommand_ == command) {
                 commandPending_ = false;
                 pendingCommand_.clear();
-
                 emit commandStateChanged();
             }
-
             emit errorOccurred(message);
-        },
-        Qt::QueuedConnection
-    );
+        }, Qt::QueuedConnection);
 
-    connect(
-        &service_,
-        &services::LedgerService::failed,
-        this,
-        [this](const QString& message) {
-            emit errorOccurred(message);
-        },
-        Qt::QueuedConnection
-    );
+    connect(&service_, &services::LedgerService::failed, this,
+        [this](const QString& message) { emit errorOccurred(message); }, Qt::QueuedConnection);
+}
+
+bool LedgerInterface::canAddOperation() const noexcept
+{
+    return ready_ && !commandPending_ && accounts_.count() > 0;
+}
+
+bool LedgerInterface::canTransfer() const noexcept
+{
+    return ready_ && !commandPending_ && accounts_.count() > 1;
+}
+
+QString LedgerInterface::accountsCaption() const
+{
+    return presentation::accountsCaption(accounts_.count());
+}
+
+QString LedgerInterface::historyCaption() const
+{
+    if (historyLoading_ && history_.count() == 0) return QStringLiteral("Загрузка истории…");
+    if (historyTotalCount_ == 0) return QStringLiteral("Операций пока нет");
+    return QStringLiteral("Показано %1 из %2 операций").arg(history_.count()).arg(historyTotalCount_);
+}
+
+QString LedgerInterface::baseCurrencyCode() const { return settings_.baseCurrencyCode(); }
+QStringList LedgerInterface::currencyCodes() const { return {"RUB", "USD", "EUR", "CNY"}; }
+int LedgerInterface::baseCurrencyIndex() const
+{
+    return static_cast<int>(currencyCodes().indexOf(settings_.baseCurrencyCode()));
+}
+
+QString LedgerInterface::currentDateText() const
+{
+    return QDate::currentDate().toString(Qt::ISODate);
+}
+
+bool LedgerInterface::setBaseCurrencyCode(const QString& code)
+{
+    try {
+        settings_.setBaseCurrencyCode(code);
+        totalCurrencyCode_ = settings_.baseCurrencyCode();
+        totalDecimalPlaces_ = core::model::Currency::fromCode(
+            totalCurrencyCode_.toStdString()).decimalPlaces();
+        emit baseCurrencyChanged();
+        if (ready_) service_.requestTotalBalance(totalCurrencyCode_);
+        return true;
+    } catch (const std::exception& error) {
+        emit baseCurrencyChanged();
+        emit errorOccurred(QString::fromUtf8(error.what()));
+        return false;
+    }
 }
 
 void LedgerInterface::refresh()
 {
-    if (!ready_) {
-        return;
-    }
-
+    if (!ready_) return;
     service_.requestAccounts();
     service_.requestCategories();
     service_.requestTotalBalance(totalCurrencyCode_);
-
     reloadHistory();
 }
 
 void LedgerInterface::reloadHistory()
 {
-    if (!ready_) {
-        return;
-    }
-
-    // Не отправляем второй запрос истории параллельно первому.
+    if (!ready_) return;
     if (historyLoading_) {
         historyReloadPending_ = true;
         return;
     }
-
     historyNextOffset_ = 0;
     historyVersion_ = QUuid{};
-
     historyHasMore_ = true;
     historyReplace_ = true;
-
     requestHistoryPage();
 }
 
 void LedgerInterface::loadMoreHistory()
 {
-    if (!ready_ || historyLoading_ || !historyHasMore_) {
-        return;
-    }
-
-    requestHistoryPage();
+    if (ready_ && !historyLoading_ && historyHasMore_) requestHistoryPage();
 }
 
 void LedgerInterface::requestHistoryPage()
 {
     historyLoading_ = true;
     emit historyStateChanged();
-
-    service_.requestOperations(
-        historyNextOffset_,
-        historyPageSize_,
-        historyVersion_
-    );
+    service_.requestOperations(historyNextOffset_, historyPageSize_, historyVersion_);
 }
 
 } // namespace interfaces

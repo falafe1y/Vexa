@@ -18,6 +18,9 @@ add_library(services STATIC
 
     LedgerService.cpp
     LedgerService.h
+
+    SettingsService.h
+    SettingsService.cpp
 )
 
 target_compile_features(services PUBLIC cxx_std_20)

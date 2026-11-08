@@ -23,14 +23,37 @@ qt_add_executable(Vexa
     main.cpp
 )
 
+set_source_files_properties(
+    ui/desktop/common/DesktopTheme.qml
+    PROPERTIES QT_QML_SINGLETON_TYPE TRUE
+)
+
 qt_add_qml_module(Vexa
     URI UI
     QML_FILES
-    Main.qml
-    ui/desktop/MainView.qml
-    ui/desktop/AccountDialog.qml
-    ui/desktop/CategoryDialog.qml
-    ui/desktop/OperationDialog.qml
+        Main.qml
+        ui/desktop/MainView.qml
+        ui/desktop/common/ActionButton.qml
+        ui/desktop/common/DesktopTheme.qml
+        ui/desktop/common/DialogActions.qml
+        ui/desktop/common/EditorialText.qml
+        ui/desktop/common/FormDialog.qml
+        ui/desktop/common/FormError.qml
+        ui/desktop/common/InputField.qml
+        ui/desktop/common/PageHeading.qml
+        ui/desktop/common/SelectField.qml
+        ui/desktop/dashboard/AccountCard.qml
+        ui/desktop/dashboard/AccountsSection.qml
+        ui/desktop/dashboard/AssetSummary.qml
+        ui/desktop/dialogs/AccountDialog.qml
+        ui/desktop/dialogs/CategoryDialog.qml
+        ui/desktop/dialogs/OperationDialog.qml
+        ui/desktop/dialogs/RemovalDialog.qml
+        ui/desktop/history/HistoryRow.qml
+        ui/desktop/navigation/Sidebar.qml
+        ui/desktop/pages/CategoriesPage.qml
+        ui/desktop/pages/DashboardPage.qml
+        ui/desktop/pages/SettingsPage.qml
 )
 
 # Qt for iOS sets MACOSX_BUNDLE_GUI_IDENTIFIER automatically since Qt 6.1.
