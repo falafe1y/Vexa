@@ -370,6 +370,9 @@ int main(int argc, char* argv[])
             service.requestTotalBalance(
                 QStringLiteral("RUB")
                 );
+            service.requestAccounts();
+            service.requestCategories();
+            service.requestTotalBalance(QStringLiteral("RUB"));
         },
         Qt::QueuedConnection
         );
@@ -436,6 +439,52 @@ int main(int argc, char* argv[])
     engine.loadFromModule("UI", "Main");
 
     qDebug() << "Файл БД:" << databasePath;
+
+    QObject::connect(
+        &service,
+        &services::LedgerService::accountsReady,
+        &app,
+        [](const services::AccountList& accounts) {
+            qDebug() << "Получено счетов:" << accounts.size();
+
+            for (const auto& account : accounts) {
+                qDebug() << "Счет:" << account.name
+                         << "Валюта:" << account.currencyCode
+                         << "Остаток:" << account.balanceMinor
+                         << "Лимит:" << account.creditLimitMinor
+                         << "Долг:" << account.debtMinor
+                         << "Доступно:" << account.availableBalanceMinor;
+            }
+        },
+        Qt::QueuedConnection
+        );
+
+    QObject::connect(
+        &service,
+        &services::LedgerService::categoriesReady,
+        &app,
+        [](const services::CategoryList& categories) {
+            qDebug() << "Получено категорий:" << categories.size();
+
+            for (const auto& category : categories) {
+                qDebug() << "Категория:" << category.name
+                         << "Тип:" << static_cast<int>(category.type);
+            }
+        },
+        Qt::QueuedConnection
+        );
+
+    QObject::connect(
+        &service,
+        &services::LedgerService::requestFailed,
+        &app,
+        [](const QString& requestName, const QString& message) {
+            qWarning() << "Ошибка получения данных:"
+                       << requestName
+                       << message;
+        },
+        Qt::QueuedConnection
+        );
 
     service.open(databasePath);
 

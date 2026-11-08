@@ -1,4 +1,5 @@
 #include "LedgerService.h"
+#include "LedgerReadService.h"
 
 #include "Currency.h"
 #include "Database.h"
@@ -38,6 +39,9 @@ LedgerService::LedgerService(QObject* parent)
     : QObject(parent),
     worker_(new QObject)
 {
+    qRegisterMetaType<AccountList>("services::AccountList");
+    qRegisterMetaType<CategoryList>("services::CategoryList");
+
     databaseThread_.setObjectName(
         QStringLiteral("VexaDatabase")
         );
@@ -113,35 +117,22 @@ void LedgerService::open(const QString& filePath)
 void LedgerService::requestTotalBalance(
     const QString& currencyCode)
 {
-    QMetaObject::invokeMethod(
-        worker_,
-        [this, currencyCode] {
-            try {
-                if (!state_) {
-                    throw std::logic_error(
-                        "Database is not open"
-                        );
-                }
-
-                const auto currency =
-                    core::model::Currency::fromCode(
-                        currencyCode.toStdString()
-                        );
-
-                const auto total =
-                    state_->ledger.totalBalance(currency);
-
-                emit totalBalanceReady(
-                    total.minorUnits(),
-                    currencyCode
+    executeRequest(
+        QStringLiteral("totalBalance"),
+        [this, currencyCode](const State& state) {
+            const auto currency =
+                core::model::Currency::fromCode(
+                    currencyCode.toStdString()
                     );
-            } catch (const std::exception& error) {
-                emit failed(
-                    QString::fromUtf8(error.what())
-                    );
-            }
-        },
-        Qt::QueuedConnection
+
+            const auto total =
+                state.ledger.totalBalance(currency);
+
+            emit totalBalanceReady(
+                total.minorUnits(),
+                currencyCode
+                );
+        }
         );
 }
 
@@ -186,6 +177,34 @@ void LedgerService::createCategory(
             };
 
             return service.create(name, type);
+        }
+        );
+}
+
+void LedgerService::requestAccounts()
+{
+    executeRequest(
+        QStringLiteral("accounts"),
+        [this](const State& state) {
+            LedgerReadService reader{state.ledger};
+
+            const auto result = reader.accounts();
+
+            emit accountsReady(result);
+        }
+        );
+}
+
+void LedgerService::requestCategories()
+{
+    executeRequest(
+        QStringLiteral("categories"),
+        [this](const State& state) {
+            LedgerReadService reader{state.ledger};
+
+            const auto result = reader.categories();
+
+            emit categoriesReady(result);
         }
         );
 }
@@ -326,6 +345,32 @@ void LedgerService::removeOperation(const QUuid& id)
 
             return service.remove(id);
         }
+        );
+}
+
+void LedgerService::executeRequest(
+    const QString& requestName,
+    std::function<void(const State&)> action)
+{
+    QMetaObject::invokeMethod(
+        worker_,
+        [this, requestName, action = std::move(action)] {
+            try {
+                if (!state_) {
+                    throw std::logic_error(
+                        "Database is not open"
+                        );
+                }
+
+                action(*state_);
+            } catch (const std::exception& error) {
+                emit requestFailed(
+                    requestName,
+                    QString::fromUtf8(error.what())
+                    );
+            }
+        },
+        Qt::QueuedConnection
         );
 }
 

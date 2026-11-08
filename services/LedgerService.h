@@ -2,6 +2,7 @@
 
 #include "Account.h"
 #include "Category.h"
+#include "ReadData.h"
 
 #include <QDate>
 #include <QObject>
@@ -40,6 +41,9 @@ public:
         core::model::CategoryType type
         );
 
+    void requestAccounts();
+    void requestCategories();
+
     void addIncome(
         const QUuid& accountId,
         const QUuid& categoryId,
@@ -66,6 +70,19 @@ public:
     void removeOperation(const QUuid& id);
 
 signals:
+    void accountsReady(
+        const services::AccountList& accounts
+        );
+
+    void categoriesReady(
+        const services::CategoryList& categories
+        );
+
+    void requestFailed(
+        const QString& requestName,
+        const QString& message
+        );
+
     void loaded(
         qint64 accountCount,
         qint64 categoryCount,
@@ -99,6 +116,11 @@ signals:
 
 private:
     struct State;
+
+    void executeRequest(
+        const QString& requestName,
+        std::function<void(const State&)> action
+        );
 
     void executeCommand(
         const QString& commandName,

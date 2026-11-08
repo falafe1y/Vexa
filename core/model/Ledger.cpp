@@ -184,6 +184,36 @@ void Ledger::addOperation(const Operation& operation)
     operations_.push_back(operation);
 }
 
+std::vector<Account> Ledger::accounts() const
+{
+    std::vector<Account> result;
+
+    result.reserve(
+        static_cast<std::size_t>(accounts_.size())
+        );
+
+    for (const auto& account : accounts_) {
+        result.push_back(account);
+    }
+
+    return result;
+}
+
+std::vector<Category> Ledger::categories() const
+{
+    std::vector<Category> result;
+
+    result.reserve(
+        static_cast<std::size_t>(categories_.size())
+        );
+
+    for (const auto& category : categories_) {
+        result.push_back(category);
+    }
+
+    return result;
+}
+
 Money Ledger::balance(const QUuid& accountId) const
 {
     Money current = requireAccount(accountId).openingBalance();

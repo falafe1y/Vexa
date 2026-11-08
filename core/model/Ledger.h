@@ -24,6 +24,9 @@ public:
     void addCategory(const Category& category);
     void addOperation(const Operation& operation);
 
+    [[nodiscard]] std::vector<Account> accounts() const;
+    [[nodiscard]] std::vector<Category> categories() const;
+
     [[nodiscard]] Money balance(const QUuid& accountId) const;
     [[nodiscard]] Money availableBalance(const QUuid& accountId) const;
     [[nodiscard]] Money debt(const QUuid& accountId) const;

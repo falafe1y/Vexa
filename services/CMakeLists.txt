@@ -2,14 +2,19 @@ add_library(services STATIC
     AccountService.cpp
     AccountService.h
 
+    ArchiveService.cpp
+    ArchiveService.h
+
     CategoryService.cpp
     CategoryService.h
 
     OperationService.cpp
     OperationService.h
 
-    ArchiveService.cpp
-    ArchiveService.h
+    LedgerReadService.cpp
+    LedgerReadService.h
+
+    ReadData.h
 
     LedgerService.cpp
     LedgerService.h
