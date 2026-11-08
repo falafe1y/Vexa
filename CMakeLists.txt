@@ -27,6 +27,10 @@ qt_add_qml_module(Vexa
     URI UI
     QML_FILES
     Main.qml
+    ui/desktop/MainView.qml
+    ui/desktop/AccountDialog.qml
+    ui/desktop/CategoryDialog.qml
+    ui/desktop/OperationDialog.qml
 )
 
 # Qt for iOS sets MACOSX_BUNDLE_GUI_IDENTIFIER automatically since Qt 6.1.

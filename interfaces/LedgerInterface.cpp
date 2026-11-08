@@ -207,9 +207,16 @@ LedgerInterface::LedgerInterface(
 
             items.reserve(
                 static_cast<qsizetype>(accounts.size())
-            );
+                );
+
+            accountDecimalPlaces_.clear();
 
             for (const auto& account : accounts) {
+                accountDecimalPlaces_.insert(
+                    account.id,
+                    account.decimalPlaces
+                    );
+
                 items.push_back(makeAccountRow(account));
             }
 
@@ -331,9 +338,41 @@ LedgerInterface::LedgerInterface(
 
     connect(
         &service_,
+        &services::LedgerService::commandSucceeded,
+        this,
+        [this](const QString& commandName, const QUuid& id) {
+            if (!commandPending_
+                || pendingCommand_ != commandName) {
+                return;
+            }
+
+            commandPending_ = false;
+            pendingCommand_.clear();
+
+            emit commandStateChanged();
+
+            emit commandFinished(
+                commandName,
+                id.toString(QUuid::WithoutBraces)
+                );
+        },
+        Qt::QueuedConnection
+    );
+
+    connect(
+        &service_,
         &services::LedgerService::commandFailed,
         this,
-        [this](const QString&, const QString& message) {
+        [this](const QString& commandName,
+               const QString& message) {
+            if (commandPending_
+                && pendingCommand_ == commandName) {
+                commandPending_ = false;
+                pendingCommand_.clear();
+
+                emit commandStateChanged();
+            }
+
             emit errorOccurred(message);
         },
         Qt::QueuedConnection

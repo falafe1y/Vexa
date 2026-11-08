@@ -1,6 +1,7 @@
 add_library(interfaces STATIC
     LedgerInterface.h
     LedgerInterface.cpp
+    LedgerInterfaceCommands.cpp
 )
 
 target_include_directories(interfaces
