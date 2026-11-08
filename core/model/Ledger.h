@@ -59,6 +59,7 @@ public:
 
     void removeAccount(const QUuid& id);
     void removeCategory(const QUuid& id);
+    void removeOperation(const QUuid& id);
 
     //
     void swap(Ledger& other) noexcept;

@@ -70,6 +70,19 @@ QUuid OperationService::transfer(
     ));
 }
 
+QUuid OperationService::remove(const QUuid& id)
+{
+    auto candidate = ledger_;
+
+    candidate.removeOperation(id);
+
+    database_.removeOperation(id);
+
+    ledger_.swap(candidate);
+
+    return id;
+}
+
 QUuid OperationService::save(
     const core::model::Operation& operation)
 {

@@ -314,6 +314,21 @@ void LedgerService::removeCategory(const QUuid& id)
         );
 }
 
+void LedgerService::removeOperation(const QUuid& id)
+{
+    executeCommand(
+        QStringLiteral("removeOperation"),
+        [id](State& state) {
+            OperationService service{
+                state.database,
+                state.ledger
+            };
+
+            return service.remove(id);
+        }
+        );
+}
+
 void LedgerService::executeCommand(
     const QString& commandName,
     std::function<QUuid(State&)> action)

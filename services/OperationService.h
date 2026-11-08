@@ -47,6 +47,8 @@ public:
         QDate date
     );
 
+    [[nodiscard]] QUuid remove(const QUuid& id);
+
 private:
     [[nodiscard]] QUuid save(const core::model::Operation& operation);
 

@@ -6,6 +6,8 @@
 #include <map>
 #include <string_view>
 #include <QSet>
+#include <algorithm>
+#include <utility>
 
 namespace core::model {
 
@@ -368,6 +370,35 @@ void Ledger::removeCategory(const QUuid& id)
     }
 
     categories_.remove(id);
+}
+
+void Ledger::removeOperation(const QUuid& id)
+{
+    auto candidate = *this;
+
+    const auto position = std::find_if(
+        candidate.operations_.begin(),
+        candidate.operations_.end(),
+        [id](const Operation& operation) {
+            return operation.id() == id;
+        }
+        );
+
+    if (position == candidate.operations_.end()) {
+        throw std::invalid_argument(
+            "Operation does not exist in the ledger"
+            );
+    }
+
+    candidate.operations_.erase(position);
+
+    // Проверяем оставшуюся историю до изменения рабочего журнала
+    for (const auto& account :
+         std::as_const(candidate.accounts_)) {
+        (void)candidate.balance(account.id());
+    }
+
+    swap(candidate);
 }
 
 void Ledger::swap(Ledger& other) noexcept
