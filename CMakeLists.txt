@@ -2,6 +2,16 @@ cmake_minimum_required(VERSION 3.16)
 
 project(Vexa VERSION 0.0.1 LANGUAGES CXX)
 
+if(WIN32)
+    enable_language(RC)
+
+    configure_file(
+        "${CMAKE_CURRENT_SOURCE_DIR}/cmake/version.rc.in"
+        "${CMAKE_CURRENT_BINARY_DIR}/version.rc"
+        @ONLY
+    )
+endif()
+
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
@@ -98,3 +108,9 @@ install(TARGETS Vexa
     LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
     RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
 )
+
+if(WIN32)
+    target_sources(Vexa PRIVATE
+        "${CMAKE_CURRENT_BINARY_DIR}/version.rc"
+    )
+endif()
