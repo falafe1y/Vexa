@@ -42,18 +42,18 @@ qt_add_qml_module(Vexa
         ui/desktop/common/InputField.qml
         ui/desktop/common/PageHeading.qml
         ui/desktop/common/SelectField.qml
-        ui/desktop/dashboard/AccountCard.qml
-        ui/desktop/dashboard/AccountsSection.qml
-        ui/desktop/dashboard/AssetSummary.qml
+        ui/desktop/pages/dashboard/AccountCard.qml
+        ui/desktop/pages/dashboard/AccountsSection.qml
+        ui/desktop/pages/dashboard/AssetSummary.qml
         ui/desktop/dialogs/AccountDialog.qml
         ui/desktop/dialogs/CategoryDialog.qml
         ui/desktop/dialogs/OperationDialog.qml
         ui/desktop/dialogs/RemovalDialog.qml
-        ui/desktop/history/HistoryRow.qml
+        ui/desktop/pages/dashboard/HistoryRow.qml
         ui/desktop/navigation/Sidebar.qml
-        ui/desktop/pages/CategoriesPage.qml
-        ui/desktop/pages/DashboardPage.qml
-        ui/desktop/pages/SettingsPage.qml
+        ui/desktop/pages/categories/CategoriesPage.qml
+        ui/desktop/pages/dashboard/DashboardPage.qml
+        ui/desktop/pages/settings/SettingsPage.qml
 )
 
 # Exactly the editorial font files used by Vexa-original. Qt ships them with the app.
