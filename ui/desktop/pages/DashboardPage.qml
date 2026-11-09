@@ -3,7 +3,9 @@ import QtQuick.Controls
 import QtQuick.Layouts
 import UI
 
-Item {
+// Pure QML presentation: all money and operation fields are provided by LedgerInterface.
+// Unavailable reports never derive monetary totals from other displayed values.
+Flickable {
     id: page
     required property var ledger
     signal createAccountRequested()
@@ -11,123 +13,375 @@ Item {
     signal removeAccountRequested(string recordId, string description)
     signal removeOperationRequested(string recordId, string description)
 
-    ListView {
-        id: history
-        anchors.fill: parent
-        anchors.margins: 24
-        clip: true
-        model: page.ledger.historyModel
-        reuseItems: true
-        boundsBehavior: Flickable.StopAtBounds
-        headerPositioning: ListView.InlineHeader
-        ScrollBar.vertical: ScrollBar { policy: ScrollBar.AsNeeded }
+    readonly property bool narrow: width <= 650
+    readonly property bool small: width <= 950 && !narrow
+    readonly property bool medium: width <= 1300
+    readonly property bool compact: height <= 1000 && !narrow
+    readonly property int pad: narrow ? 20 : small ? 24 : medium ? 32 : 48
+    readonly property int inset: small ? 16 : 24
+    readonly property int topInset: compact ? 16 : 24
+    readonly property int mainWidth: width - pad * 2
+    readonly property int leftWidth: narrow ? mainWidth : Math.round(mainWidth * (small ? .58 : .59596) / 4) * 4
 
-        header: Column {
-            width: history.width
-            spacing: 24
+    clip: true
+    contentWidth: width
+    contentHeight: paper.height + 96
+    boundsBehavior: Flickable.StopAtBounds
+    flickableDirection: Flickable.VerticalFlick
+    ScrollBar.vertical: ScrollBar { policy: ScrollBar.AlwaysOff }
 
-            PageHeading {
-                width: parent.width
-                caption: "ЛИЧНЫЙ УЧЁТ / ОБЗОР"
-                title: "Мои финансы."
+    component Rule: Rectangle { height: 1; color: DesktopTheme.ink }
+    component Mono: EditorialText { font.family: DesktopTheme.mono; font.pixelSize: 12; color: DesktopTheme.muted }
+    component Serif: EditorialText { font.family: DesktopTheme.serif; font.pixelSize: page.small ? 32 : 36; font.letterSpacing: -.5 }
+    component DevelopmentPanel: Rectangle {
+        property string symbol: "○"
+        property string caption: ""
+        color: "#eee8dc"
+        radius: 8
+        border.width: 1
+        border.color: DesktopTheme.line
+        opacity: 0.78
+        Column {
+            anchors.centerIn: parent
+            width: parent.width - 24
+            spacing: 6
+            EditorialText {
+                width: parent.width; height: 40
+                text: symbol
+                color: DesktopTheme.muted
+                font.family: DesktopTheme.sans; font.pixelSize: 34
+                horizontalAlignment: Text.AlignHCenter
             }
-            AssetSummary {
-                width: parent.width
-                height: 154
-                totalText: page.ledger.totalBalanceText
-                accountsCaption: page.ledger.accountsCaption
+            EditorialText {
+                width: parent.width; height: 40
+                text: "В разработке"
+                font.family: "Gelasio"; font.italic: true; font.pixelSize: 28
+                color: DesktopTheme.muted
+                horizontalAlignment: Text.AlignHCenter
             }
-            AccountsSection {
-                width: parent.width
-                ledger: page.ledger
-                onCreateRequested: page.createAccountRequested()
-                onRemoveRequested: (recordId, description) =>
-                    page.removeAccountRequested(recordId, description)
+            Mono {
+                width: parent.width; height: 24
+                text: caption
+                font.pixelSize: 11
+                horizontalAlignment: Text.AlignHCenter
             }
-            Rectangle {
-                width: parent.width
-                height: 1
-                color: DesktopTheme.ink
+        }
+    }
+    component Heading: Item {
+        property string number: ""
+        property string title: ""
+        property string note: ""
+        property string action: ""
+        signal activated()
+        height: 32
+        Mono { width: page.small ? 24 : 32; height: parent.height; text: parent.number; color: DesktopTheme.accent }
+        EditorialText {
+            x: page.small ? 24 : 32
+            height: parent.height
+            width: Math.max(0, parent.width - x - (headerAction.visible ? headerAction.width + 8 : headerNote.visible ? headerNote.width + 8 : 0))
+            text: parent.title; font.bold: true
+            font.pixelSize: page.small ? 13 : page.medium && !page.narrow ? 15 : 16
+        }
+        ActionButton {
+            id: headerAction
+            visible: text.length > 0
+            anchors.right: parent.right
+            text: parent.action
+            outlined: false
+            implicitHeight: 32
+            onClicked: parent.activated()
+        }
+        Mono { id: headerNote; visible: text.length > 0; anchors.right: parent.right; height: 32; text: parent.note }
+    }
+
+    Item {
+        id: paper
+        x: page.pad; y: 24; width: page.mainWidth
+        height: historyFooter.y + historyFooter.height
+
+        Item {
+            id: masthead
+            width: parent.width
+            height: page.narrow ? 196 : page.compact ? 104 : 128
+            Serif {
+                y: page.narrow ? 12 : masthead.height - height - 8
+                width: page.narrow ? parent.width : Math.max(0, controls.x - 16)
+                height: page.narrow ? 64 : page.compact ? 88 : 96
+                text: "Мои финансы."
+                font.italic: true; font.letterSpacing: -2
+                font.pixelSize: page.narrow ? 52 : page.small ? 56 : page.compact ? 72 : page.medium ? 64 : 80
+                fontSizeMode: Text.Fit; minimumPixelSize: 28
             }
-            RowLayout {
-                width: parent.width
-                EditorialText {
-                    Layout.fillWidth: true
-                    text: "02. / РЕЕСТР ОПЕРАЦИЙ"
-                    font.family: DesktopTheme.mono
-                    font.pixelSize: 12
-                    font.bold: true
+            Item {
+                id: controls
+                anchors.right: parent.right
+                y: page.narrow ? 92 : masthead.height - height - 8
+                height: 80
+                width: page.narrow ? parent.width : page.small ? 440 : page.medium ? 496 : 560
+                Item {
+                    id: periodPlaceholder
+                    x: 0
+                    width: controls.width - currencyBox.width - 16
+                    height: 72
+                    anchors.bottom: parent.bottom
+                    Mono { height: 24; text: "ПЕРИОД" }
+                    EditorialText {
+                        y: 24; height: 32; text: "Всё время"
+                        color: DesktopTheme.muted; font.pixelSize: 16
+                    }
+                    Mono {
+                        y: 48; height: 20; width: parent.width
+                        text: "В разработке"; font.pixelSize: 10
+                    }
+                    Rectangle {
+                        y: 70; height: 1; width: parent.width
+                        color: DesktopTheme.line
+                    }
                 }
-                ActionButton {
-                    text: "+ ОПЕРАЦИЯ"
-                    enabled: page.ledger.canAddOperation
-                    onClicked: operationMenu.open()
-                    Menu {
-                        id: operationMenu
-                        y: parent.height
-                        MenuItem {
-                            text: "Доход"
-                            onTriggered: page.operationRequested(0)
-                        }
-                        MenuItem {
-                            text: "Расход"
-                            onTriggered: page.operationRequested(1)
-                        }
-                        MenuItem {
-                            text: "Перевод"
-                            enabled: page.ledger.canTransfer
-                            onTriggered: page.operationRequested(2)
-                        }
+                Item {
+                    id: currencyBox
+                    anchors.right: parent.right; anchors.bottom: parent.bottom
+                    width: page.small ? 96 : page.medium ? 128 : 160
+                    height: 72
+                    Mono { height: 24; text: "ВАЛЮТА" }
+                    ComboBox {
+                        id: currencySelector
+                        y: 24; width: parent.width; height: 48
+                        model: page.ledger.currencyCodes
+                        currentIndex: page.ledger.baseCurrencyIndex
+                        enabled: page.ledger.ready && !page.ledger.commandPending
+                        onActivated: index => page.ledger.setBaseCurrencyCode(page.ledger.currencyCodes[index])
+                        font.family: DesktopTheme.sans; font.bold: true; font.pixelSize: 16
                     }
                 }
             }
-            HistoryRow {
-                width: parent.width
-                heading: true
-                dateText: "ДАТА"
-                typeText: "ТИП"
-                accountText: "СЧЁТ"
-                categoryText: "КАТЕГОРИЯ"
-                primaryAmountText: "СУММА"
+            Rule { y: parent.height; width: parent.width }
+        }
+
+        AssetSummary {
+            id: summary
+
+            y: masthead.height
+            width: parent.width
+
+            height: implicitHeight
+
+            totalText: page.ledger.totalBalanceText
+            accountsCaption: page.ledger.accountsCaption
+
+            narrow: page.narrow
+            small: page.small
+            medium: page.medium
+            compact: page.compact
+        }
+
+        Item {
+            id: firstRow
+            y: summary.y + summary.height; width: parent.width
+            height: page.narrow ? 544 : page.compact ? 240 : 264
+            Rule { y: parent.height - 1; width: parent.width }
+            Item {
+                id: accountsPanel
+                width: page.leftWidth - (page.narrow ? 0 : page.inset)
+                height: page.narrow ? 280 : parent.height
+                Heading {
+                    id: accountsHead
+                    y: page.topInset; width: parent.width
+                    number: "01."; title: "СЧЕТА / ФИАТ"
+                    action: "+ ДОБАВИТЬ СЧЁТ"
+                    onActivated: page.createAccountRequested()
+                }
+                ListView {
+                    id: accountList
+                    y: accountsHead.y + accountsHead.height + 8
+                    width: parent.width; height: page.compact ? 152 : 168
+                    clip: true; reuseItems: true
+                    model: page.ledger.accountsModel
+                    boundsBehavior: Flickable.StopAtBounds
+                    ScrollBar.vertical: ScrollBar { policy: ScrollBar.AlwaysOff }
+                    delegate: Item {
+                        id: accountRow
+                        required property var model
+                        required property int index
+                        width: accountList.width; height: 56
+                        Mono {
+                            x: 0; height: parent.height; width: page.small ? 20 : 32
+                            text: (accountRow.index + 1).toString().padStart(2, "0")
+                        }
+                        EditorialText {
+                            x: page.small ? 28 : 48; y: 4
+                            width: Math.max(0, accountAmount.x - x - 8); height: 24
+                            text: accountRow.model.name
+                            font.bold: true; font.pixelSize: page.small ? 14 : 16
+                        }
+                        EditorialText {
+                            x: page.small ? 28 : 48; y: 28
+                            width: Math.max(0, accountAmount.x - x - 8); height: 20
+                            text: accountRow.model.typeText
+                            color: DesktopTheme.muted; font.pixelSize: page.small ? 12 : 14
+                        }
+                        Serif {
+                            id: accountAmount
+                            anchors.right: removeButton.left; anchors.rightMargin: 8
+                            y: 0; width: Math.min(190, accountRow.width * .36); height: 56
+                            text: accountRow.model.primaryText
+                            font.pixelSize: page.small ? 22 : page.medium ? 24 : 28
+                            horizontalAlignment: Text.AlignRight
+                            fontSizeMode: Text.Fit; minimumPixelSize: 14
+                        }
+                        ActionButton {
+                            id: removeButton
+                            anchors.right: parent.right; anchors.verticalCenter: parent.verticalCenter
+                            implicitWidth: 30; implicitHeight: 30
+                            text: "×"; danger: true; outlined: false
+                            visible: accountHover.hovered
+                            enabled: !page.ledger.commandPending
+                            onClicked: page.removeAccountRequested(accountRow.model.id, accountRow.model.name)
+                        }
+                        HoverHandler { id: accountHover }
+                        Rectangle { anchors.bottom: parent.bottom; width: parent.width; height: 1; color: DesktopTheme.line }
+                    }
+                }
+                Mono { visible: accountList.count === 0; y: accountList.y; width: parent.width; height: accountList.height; text: "Счетов пока нет. Добавьте первый счёт."; horizontalAlignment: Text.AlignHCenter }
+            }
+            Item {
+                id: horizon
+                x: page.narrow ? 0 : page.leftWidth
+                y: page.narrow ? accountsPanel.height : 0
+                width: parent.width - x
+                height: page.narrow ? 264 : parent.height
+                Rectangle { visible: !page.narrow; width: 1; height: parent.height; color: DesktopTheme.ink }
+                Rule { visible: page.narrow; width: parent.width }
+                Item {
+                    x: page.narrow ? 0 : page.inset; y: page.topInset
+                    width: parent.width - x; height: parent.height - y
+                    Heading { width: parent.width; number: "02."; title: "НА ГОРИЗОНТЕ" }
+                    DevelopmentPanel {
+                        y: 48; width: parent.width
+                        height: Math.max(130, parent.height - 64)
+                        symbol: "▢"
+                        caption: "Плановые операции скоро появятся"
+                    }
+                }
             }
         }
 
-        delegate: HistoryRow {
-            required property var model
-            width: history.width
-            recordId: model.id
-            dateText: model.dateText
-            typeText: model.typeText
-            operationType: model.type
-            accountText: model.accountText
-            secondaryAccountText: model.secondaryAccountText
-            categoryText: model.categoryText
-            primaryAmountText: model.primaryAmountText
-            secondaryAmountText: model.secondaryAmountText
-            descriptionText: model.descriptionText
-            busy: page.ledger.commandPending
-            onRemoveRequested: (recordId, description) =>
-                page.removeOperationRequested(recordId, description)
+        Item {
+            id: analyticsPanel
+            y: firstRow.y + firstRow.height; width: parent.width
+            height: page.narrow ? 528 : page.compact ? 224 : 264
+            Rule { y: parent.height - 1; width: parent.width }
+            Item {
+                width: page.leftWidth - (page.narrow ? 0 : page.inset)
+                y: page.topInset; height: page.narrow ? 264 : analyticsPanel.height - y
+                Heading { width: parent.width; number: "03."; title: "ИСТОРИЯ КАПИТАЛА" }
+                DevelopmentPanel {
+                    y: 48; width: parent.width
+                    height: page.compact ? 152 : 168
+                    symbol: "▥"
+                    caption: "Динамика капитала скоро появится"
+                }
+            }
+            Item {
+                x: page.narrow ? 0 : page.leftWidth
+                y: page.narrow ? 264 : 0
+                width: parent.width - x; height: page.narrow ? 264 : parent.height
+                Rectangle { visible: !page.narrow; width: 1; height: parent.height; color: DesktopTheme.ink }
+                Rule { visible: page.narrow; width: parent.width }
+                Item {
+                    x: page.narrow ? 0 : page.inset; y: page.topInset
+                    width: parent.width - x; height: parent.height - y
+                    Heading { width: parent.width; number: "04."; title: "АНАТОМИЯ РАСХОДОВ" }
+                    DevelopmentPanel {
+                        y: 48; width: parent.width
+                        height: page.compact ? 152 : 168
+                        symbol: "◉"
+                        caption: "Структура расходов скоро появится"
+                    }
+                }
+            }
         }
 
-        footer: Item {
-            width: history.width
-            height: 100
-            RowLayout {
-                anchors.fill: parent
-                EditorialText {
-                    Layout.fillWidth: true
-                    text: page.ledger.historyCaption
-                    color: DesktopTheme.muted
-                    font.family: DesktopTheme.mono
-                    font.pixelSize: 11
+        Item {
+            id: historyToolbar
+            y: analyticsPanel.y + analyticsPanel.height
+            width: parent.width; height: page.narrow ? 104 : 56
+            Heading {
+                y: page.narrow ? 8 : 12
+                width: page.narrow ? parent.width : Math.max(0, searchField.x - 16)
+                number: "05."; title: "РЕЕСТР ОПЕРАЦИЙ"
+            }
+            TextField {
+                id: searchField
+                x: page.narrow ? 0 : newOperation.x - width - 16
+                y: page.narrow ? 52 : 8
+                width: page.narrow ? Math.max(0, newOperation.x - 16) : page.small ? 184 : 224
+                height: 40
+                enabled: false
+                placeholderText: "Поиск · В разработке"
+                color: DesktopTheme.muted
+                placeholderTextColor: DesktopTheme.muted
+                font.family: DesktopTheme.sans; font.pixelSize: 14
+                background: Item { Rectangle { anchors.bottom: parent.bottom; width: parent.width; height: 1; color: DesktopTheme.line } }
+            }
+            ActionButton {
+                id: newOperation
+                anchors.right: parent.right
+                y: page.narrow ? 56 : 12
+                implicitWidth: page.small ? 160 : page.medium ? 176 : 192
+                text: "+ НОВАЯ ОПЕРАЦИЯ"
+                enabled: page.ledger.canAddOperation
+                onClicked: operationMenu.open()
+                Menu {
+                    id: operationMenu
+                    y: parent.height
+                    MenuItem { text: "Доход"; onTriggered: page.operationRequested(0) }
+                    MenuItem { text: "Расход"; onTriggered: page.operationRequested(1) }
+                    MenuItem { text: "Перевод"; enabled: page.ledger.canTransfer; onTriggered: page.operationRequested(2) }
                 }
-                ActionButton {
-                    visible: page.ledger.historyHasMore || page.ledger.historyLoading
-                    text: page.ledger.historyLoading ? "ЗАГРУЗКА…" : "ПОКАЗАТЬ ЕЩЁ"
-                    enabled: !page.ledger.historyLoading && page.ledger.historyHasMore
-                    onClicked: page.ledger.loadMoreHistory()
-                }
+            }
+        }
+        HistoryRow {
+            id: historyHead
+            y: historyToolbar.y + historyToolbar.height
+            width: parent.width
+            heading: true
+            dateText: "ДАТА"; typeText: "ТИП"; accountText: "СЧЁТ"; categoryText: "КАТЕГОРИЯ"; primaryAmountText: "СУММА"
+        }
+        ListView {
+            id: history
+            y: historyHead.y + historyHead.height
+            width: parent.width
+            height: contentHeight
+            interactive: false
+            clip: false
+            model: page.ledger.historyModel
+            reuseItems: true
+            delegate: HistoryRow {
+                required property var model
+                width: history.width
+                recordId: model.id
+                dateText: model.dateText; typeText: model.typeText; operationType: model.type
+                accountText: model.accountText; secondaryAccountText: model.secondaryAccountText
+                categoryText: model.categoryText
+                primaryAmountText: model.primaryAmountText; secondaryAmountText: model.secondaryAmountText
+                descriptionText: model.descriptionText
+                busy: page.ledger.commandPending
+                onRemoveRequested: (recordId, description) => page.removeOperationRequested(recordId, description)
+            }
+        }
+        Item {
+            id: historyFooter
+            y: history.y + history.height
+            width: parent.width; height: 64
+            Mono { height: parent.height; width: parent.width - moreButton.width; text: page.ledger.historyCaption }
+            ActionButton {
+                id: moreButton
+                anchors.right: parent.right; anchors.verticalCenter: parent.verticalCenter
+                visible: page.ledger.historyHasMore || page.ledger.historyLoading
+                text: page.ledger.historyLoading ? "ЗАГРУЗКА…" : "ПОКАЗАТЬ ЕЩЁ"
+                enabled: !page.ledger.historyLoading && page.ledger.historyHasMore
+                onClicked: page.ledger.loadMoreHistory()
             }
         }
     }

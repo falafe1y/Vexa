@@ -10,7 +10,7 @@ QtObject {
     readonly property color line: "#bbb5a8"
     readonly property color accent: "#b84932"
     readonly property color income: "#2e5947"
-    readonly property string sans: Qt.platform.os === "windows" ? "Arial" : "DejaVu Sans"
-    readonly property string serif: Qt.platform.os === "windows" ? "Georgia" : "DejaVu Serif"
-    readonly property string mono: Qt.platform.os === "windows" ? "Consolas" : "DejaVu Sans Mono"
+    readonly property string sans: "Arimo"
+    readonly property string serif: "PT Serif"
+    readonly property string mono: "Cousine"
 }

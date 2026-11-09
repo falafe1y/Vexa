@@ -5,6 +5,7 @@
 #include <QDebug>
 #include <QDir>
 #include <QGuiApplication>
+#include <QFontDatabase>
 #include <QQmlApplicationEngine>
 #include <QStandardPaths>
 #include <QVariant>
@@ -16,6 +17,16 @@ int main(int argc, char* argv[])
     QGuiApplication app(argc, argv);
     QCoreApplication::setOrganizationName(QStringLiteral("Vexa"));
     QCoreApplication::setApplicationName(QStringLiteral("Vexa"));
+
+    // Presentation-only fonts; no legacy services, controllers or JS.
+    const QDir editorialFonts(QStringLiteral(":/fonts/editorial"));
+    for (const QString& name : editorialFonts.entryList(
+             {QStringLiteral("*.ttf")}, QDir::Files)) {
+        if (QFontDatabase::addApplicationFont(editorialFonts.filePath(name)) < 0) {
+            qCritical() << "Не удалось загрузить шрифт:" << name;
+            return 1;
+        }
+    }
 
     try {
         const auto directory = QStandardPaths::writableLocation(

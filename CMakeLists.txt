@@ -56,6 +56,23 @@ qt_add_qml_module(Vexa
         ui/desktop/pages/SettingsPage.qml
 )
 
+# Exactly the editorial font files used by Vexa-original. Qt ships them with the app.
+qt_add_resources(Vexa "editorial_fonts"
+    PREFIX "/fonts/editorial"
+    BASE "assets/fonts/editorial"
+    FILES
+        assets/fonts/editorial/Arimo-400-normal.ttf
+        assets/fonts/editorial/Arimo-700-normal.ttf
+        assets/fonts/editorial/Cousine-400-normal.ttf
+        assets/fonts/editorial/Cousine-700-normal.ttf
+        assets/fonts/editorial/Gelasio-400-italic.ttf
+        assets/fonts/editorial/Gelasio-700-italic.ttf
+        assets/fonts/editorial/PTSerif-400-normal.ttf
+        assets/fonts/editorial/PTSerif-400-italic.ttf
+        assets/fonts/editorial/PTSerif-700-normal.ttf
+        assets/fonts/editorial/PTSerif-700-italic.ttf
+)
+
 # Qt for iOS sets MACOSX_BUNDLE_GUI_IDENTIFIER automatically since Qt 6.1.
 # If you are developing for iOS or macOS you should consider setting an
 # explicit, fixed bundle identifier manually though.

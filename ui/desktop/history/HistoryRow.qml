@@ -1,9 +1,8 @@
 import QtQuick
 import QtQuick.Controls
-import QtQuick.Layouts
 import UI
 
-Rectangle {
+Item {
     id: row
     property bool heading: false
     property string recordId: ""
@@ -19,103 +18,49 @@ Rectangle {
     property bool busy: false
     signal removeRequested(string recordId, string description)
 
-    implicitHeight: heading ? 40 : 76
-    color: heading ? DesktopTheme.soft : "transparent"
+    implicitHeight: heading ? 40 : 56
+    height: implicitHeight
+    Rectangle { anchors.fill: parent; color: row.heading ? DesktopTheme.soft : "transparent" }
+    Rectangle { width: parent.width; height: 1; color: row.heading ? DesktopTheme.ink : DesktopTheme.line; anchors.bottom: parent.bottom }
+    Rectangle { visible: row.heading; width: parent.width; height: 1; color: DesktopTheme.ink }
 
-    Rectangle {
-        anchors.bottom: parent.bottom
-        height: 1
-        width: parent.width
-        color: row.heading ? DesktopTheme.ink : DesktopTheme.line
+    // Column widths match the original editorial dashboard grid.
+    readonly property var fractions: width <= 800 ? [.15, .13, .24, .20, 0, .28]
+                                                 : [.10101, .09596, .14647, .12626, .37879, .15151]
+    component Cell: EditorialText {
+        property real fraction: 0
+        property bool numeric: false
+        width: row.width * fraction
+        height: row.height
+        rightPadding: 8
+        font.family: row.heading ? DesktopTheme.mono : DesktopTheme.sans
+        font.pixelSize: row.heading ? 12 : row.width <= 800 ? 12 : 14
+        horizontalAlignment: numeric ? Text.AlignRight : Text.AlignLeft
     }
-
-    RowLayout {
+    Row {
         anchors.fill: parent
-        anchors.leftMargin: 10
-        anchors.rightMargin: 10
-        spacing: 10
-
-        EditorialText {
-            Layout.preferredWidth: 78
-            text: row.dateText
-            font.family: DesktopTheme.mono
-            font.pixelSize: row.heading ? 10 : 11
-        }
-        EditorialText {
-            Layout.preferredWidth: 60
-            text: row.typeText
-            font.pixelSize: row.heading ? 10 : 12
-            font.family: row.heading ? DesktopTheme.mono : DesktopTheme.sans
-        }
-        ColumnLayout {
-            Layout.fillWidth: true
-            Layout.preferredWidth: 180
-            Layout.minimumWidth: 100
-            spacing: 4
-            EditorialText {
-                Layout.fillWidth: true
-                text: row.accountText
-                font.pixelSize: row.heading ? 10 : 12
-                font.family: row.heading ? DesktopTheme.mono : DesktopTheme.sans
-            }
-            EditorialText {
-                Layout.fillWidth: true
-                visible: text.length > 0
-                text: row.secondaryAccountText
-                color: DesktopTheme.muted
-                font.pixelSize: 11
-            }
-        }
-        EditorialText {
-            Layout.fillWidth: true
-            Layout.preferredWidth: 130
-            Layout.minimumWidth: 72
-            text: row.categoryText
-            font.pixelSize: row.heading ? 10 : 12
-            font.family: row.heading ? DesktopTheme.mono : DesktopTheme.sans
-        }
-        ColumnLayout {
-            Layout.preferredWidth: 144
-            spacing: 4
-            EditorialText {
-                Layout.fillWidth: true
-                text: row.primaryAmountText
-                horizontalAlignment: Text.AlignRight
-                font.family: row.heading ? DesktopTheme.mono : DesktopTheme.sans
-                font.pixelSize: row.heading ? 10 : 13
-                fontSizeMode: Text.Fit
-                minimumPixelSize: 10
-                color: row.heading ? DesktopTheme.ink
-                       : row.operationType === 0 ? DesktopTheme.income : DesktopTheme.accent
-            }
-            EditorialText {
-                Layout.fillWidth: true
-                visible: text.length > 0
-                text: row.secondaryAmountText
-                horizontalAlignment: Text.AlignRight
-                font.pixelSize: 12
-                fontSizeMode: Text.Fit
-                minimumPixelSize: 10
-                color: DesktopTheme.income
-            }
-        }
-        Item {
-            Layout.preferredWidth: 28
-            Layout.preferredHeight: 28
-            ActionButton {
-                anchors.fill: parent
-                visible: !row.heading
-                enabled: !row.busy
-                text: "×"
-                outlined: false
-                leftPadding: 0
-                rightPadding: 0
-                danger: true
-                Accessible.name: "Удалить операцию"
-                ToolTip.visible: hovered
-                ToolTip.text: "Удалить операцию"
-                onClicked: row.removeRequested(row.recordId, row.descriptionText)
-            }
+        spacing: 0
+        Cell { fraction: row.fractions[0]; text: row.dateText; font.family: DesktopTheme.mono }
+        Cell { fraction: row.fractions[1]; text: row.typeText; font.family: DesktopTheme.mono; color: row.heading ? DesktopTheme.ink : DesktopTheme.muted }
+        Cell { fraction: row.fractions[2]; text: row.accountText }
+        Cell { fraction: row.fractions[3]; text: row.categoryText }
+        Cell { fraction: row.fractions[4]; text: row.heading ? "ОПИСАНИЕ" : row.descriptionText; visible: fraction > 0 }
+        Cell {
+            fraction: row.fractions[5]; numeric: true
+            text: row.primaryAmountText
+            font.bold: !row.heading
+            color: row.heading ? DesktopTheme.ink : row.operationType === 0 ? DesktopTheme.income : DesktopTheme.accent
         }
     }
+    // Actual removal remains accessible, without a legacy selection/sort subsystem.
+    ActionButton {
+        visible: !row.heading && hover.hovered
+        anchors.right: parent.right; anchors.verticalCenter: parent.verticalCenter
+        implicitWidth: 26; implicitHeight: 26
+        outlined: false; danger: true
+        text: "×"
+        enabled: !row.busy
+        onClicked: row.removeRequested(row.recordId, row.descriptionText)
+    }
+    HoverHandler { id: hover }
 }

@@ -8,17 +8,15 @@ ApplicationWindow {
     required property var ledger
     property string errorText: ""
 
-    width: 1280
-    height: 900
-    minimumWidth: 900
-    minimumHeight: 700
-    maximumWidth: 1920
-    maximumHeight: 1080
+    width: 1600
+    height: 960
+    minimumWidth: 800
+    minimumHeight: 600
     visible: true
     title: "Vexa"
     color: DesktopTheme.paper
     font.family: DesktopTheme.sans
-    font.pixelSize: 14
+    font.pixelSize: 16
     palette.window: DesktopTheme.paper
     palette.base: DesktopTheme.sidebar
     palette.text: DesktopTheme.ink
@@ -43,7 +41,7 @@ ApplicationWindow {
         spacing: 0
 
         Sidebar {
-            Layout.preferredWidth: window.width < 1200 ? 176 : 216
+            Layout.preferredWidth: window.width <= 850 ? 72 : window.width <= 1150 ? 184 : window.width <= 1500 ? 208 : 240
             Layout.fillHeight: true
             currentPage: pages.currentIndex
             onPageRequested: page => pages.currentIndex = page
@@ -53,34 +51,6 @@ ApplicationWindow {
             Layout.fillWidth: true
             Layout.fillHeight: true
             spacing: 0
-
-            Rectangle {
-                Layout.fillWidth: true
-                Layout.preferredHeight: 40
-                color: DesktopTheme.paper
-                RowLayout {
-                    anchors.fill: parent
-                    anchors.leftMargin: 24
-                    anchors.rightMargin: 24
-                    EditorialText {
-                        Layout.fillWidth: true
-                        text: window.ledger.ready ? "ЛОКАЛЬНЫЙ УЧЁТ" : "ОТКРЫВАЕМ БАЗУ…"
-                        color: DesktopTheme.muted
-                        font.family: DesktopTheme.mono
-                        font.pixelSize: 10
-                    }
-                    ActionButton {
-                        text: "ОБНОВИТЬ"
-                        implicitHeight: 30
-                        outlined: false
-                        enabled: window.ledger.ready && !window.ledger.commandPending
-                        onClicked: {
-                            window.errorText = ""
-                            window.ledger.refresh()
-                        }
-                    }
-                }
-            }
 
             Rectangle {
                 Layout.fillWidth: true
