@@ -5,13 +5,14 @@
 #define VexaName "Vexa"
 #define VexaExeName "Vexa.exe"
 #define VexaVersion GetStringFileInfo("for_release\PORTABLE\Vexa.exe", "ProductVersion")
+#define VexaPublisher GetStringFileInfo("for_release\PORTABLE\Vexa.exe", "CompanyName")
 
 [Setup]
 AppId=Vexa
 AppName={#VexaName}
 AppVersion={#VexaVersion}
 AppVerName={#VexaName} {#VexaVersion}
-AppPublisher=Vexa
+AppPublisher={#VexaPublisher}
 DefaultDirName={localappdata}\Programs\Vexa
 UsePreviousAppDir=yes
 DefaultGroupName=Vexa

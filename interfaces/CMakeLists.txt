@@ -6,7 +6,9 @@ add_library(interfaces STATIC
     LedgerPresentation.cpp
     ReadListModel.h
     ReadListModel.cpp
+    UpdateInterface.h
+    UpdateInterface.cpp
 )
 
 target_include_directories(interfaces PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}")
-target_link_libraries(interfaces PUBLIC Qt6::Core services PRIVATE core_model)
+target_link_libraries(interfaces PUBLIC Qt6::Core services PRIVATE Qt6::Gui PRIVATE core_model)

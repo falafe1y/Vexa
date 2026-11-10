@@ -1,6 +1,8 @@
 cmake_minimum_required(VERSION 3.16)
 
-project(Vexa VERSION 0.0.1 LANGUAGES CXX)
+project(Vexa VERSION 0.0.2 LANGUAGES CXX)
+
+set(VEXA_PUBLISHER "Vishnevsky")
 
 if(WIN32)
     enable_language(RC)
@@ -15,7 +17,7 @@ endif()
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
-find_package(Qt6 REQUIRED COMPONENTS Quick Sql)
+find_package(Qt6 REQUIRED COMPONENTS Quick Sql Network)
 
 qt_standard_project_setup(REQUIRES 6.10)
 
@@ -93,6 +95,8 @@ set_target_properties(Vexa PROPERTIES
     MACOSX_BUNDLE TRUE
     WIN32_EXECUTABLE TRUE
 )
+
+target_compile_definitions(Vexa PRIVATE "VEXA_VERSION=\"${PROJECT_VERSION}\"")
 
 target_link_libraries(Vexa
     PRIVATE

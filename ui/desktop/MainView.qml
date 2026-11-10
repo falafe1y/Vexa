@@ -6,6 +6,7 @@ import UI
 ApplicationWindow {
     id: window
     required property var ledger
+    required property var updates
     property string errorText: ""
 
     width: 1600
@@ -97,7 +98,7 @@ ApplicationWindow {
                     onRemoveRequested: (recordId, description) =>
                         removalDialog.ask("removeCategory", recordId, description)
                 }
-                SettingsPage { ledger: window.ledger }
+                SettingsPage { ledger: window.ledger; updates: window.updates }
             }
         }
     }

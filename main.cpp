@@ -1,6 +1,8 @@
 #include "LedgerInterface.h"
 #include "LedgerService.h"
 #include "SettingsService.h"
+#include "UpdateService.h"
+#include "UpdateInterface.h"
 
 #include <QDebug>
 #include <QDir>
@@ -17,6 +19,7 @@ int main(int argc, char* argv[])
     QGuiApplication app(argc, argv);
     QCoreApplication::setOrganizationName(QStringLiteral("Vexa"));
     QCoreApplication::setApplicationName(QStringLiteral("Vexa"));
+    QCoreApplication::setApplicationVersion(QStringLiteral(VEXA_VERSION));
 
     // Presentation-only fonts; no legacy services, controllers or JS.
     const QDir editorialFonts(QStringLiteral(":/fonts/editorial"));
@@ -42,6 +45,8 @@ int main(int argc, char* argv[])
         services::LedgerService service;
         services::SettingsService settings;
         interfaces::LedgerInterface ledgerInterface{service, settings};
+        services::UpdateService updateService;
+        interfaces::UpdateInterface updateInterface{updateService};
 
         QQmlApplicationEngine engine;
         QObject::connect(&engine, &QQmlApplicationEngine::objectCreationFailed,
@@ -49,7 +54,9 @@ int main(int argc, char* argv[])
 
         engine.setInitialProperties({
             {QStringLiteral("ledger"),
-             QVariant::fromValue(static_cast<QObject*>(&ledgerInterface))}
+             QVariant::fromValue(static_cast<QObject*>(&ledgerInterface))},
+            {QStringLiteral("updates"),
+             QVariant::fromValue(static_cast<QObject*>(&updateInterface))}
         });
         engine.loadFromModule("UI", "Main");
 
@@ -57,6 +64,7 @@ int main(int argc, char* argv[])
 
         qDebug() << "Файл БД:" << filePath;
         service.open(filePath);
+        updateService.checkForUpdates();
         return app.exec();
     } catch (const std::exception& error) {
         qCritical() << "Ошибка запуска:" << error.what();

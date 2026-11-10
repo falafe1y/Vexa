@@ -21,6 +21,9 @@ add_library(services STATIC
 
     SettingsService.h
     SettingsService.cpp
+
+    UpdateService.h
+    UpdateService.cpp
 )
 
 target_compile_features(services PUBLIC cxx_std_20)
@@ -32,6 +35,7 @@ target_include_directories(services
 target_link_libraries(services
     PUBLIC
         Qt6::Core
+        Qt6::Network
         core_model
     PRIVATE
         core_db

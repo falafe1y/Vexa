@@ -14,8 +14,8 @@ BEGIN
     BEGIN
         BLOCK "040904B0"
         BEGIN
-            VALUE "CompanyName", "Vishnevsky Software\0"
-            VALUE "FileDescription", "Vexa - Financial Tracking System\0"
+            VALUE "CompanyName", "@VEXA_PUBLISHER@\0"
+            VALUE "FileDescription", "Vexa\0"
             VALUE "FileVersion", "@PROJECT_VERSION@\0"
             VALUE "InternalName", "Vexa\0"
             VALUE "OriginalFilename", "Vexa.exe\0"
