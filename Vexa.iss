@@ -1,32 +1,37 @@
-; Vexa Windows installer (Inno Setup 6/7).
-; Build: ISCC.exe installer\Vexa.iss
-; Input: installer\stage\Vexa.exe + all Qt runtime files (windeployqt).
-; Inno only packages a prebuilt application; it does not build Qt itself.
 
-#define VexaVersion GetFileVersionString("PORTABLE\Vexa.exe")
+; Vexa Installer
+; Version is read directly from Vexa.exe
+
 #define VexaName "Vexa"
 #define VexaExeName "Vexa.exe"
+#define VexaVersion GetStringFileInfo("for_release\PORTABLE\Vexa.exe", "ProductVersion")
 
 [Setup]
 AppId=Vexa
 AppName={#VexaName}
 AppVersion={#VexaVersion}
 AppVerName={#VexaName} {#VexaVersion}
-AppPublisher=Vishnevsky Software
+AppPublisher=Vexa
 DefaultDirName={localappdata}\Programs\Vexa
 UsePreviousAppDir=yes
 DefaultGroupName=Vexa
 DisableProgramGroupPage=yes
 PrivilegesRequired=lowest
 ArchitecturesAllowed=x64compatible
-OutputDir=output
+OutputDir=for_release
 OutputBaseFilename=Vexa-Setup-{#VexaVersion}-win64
 Compression=lzma2
 SolidCompression=yes
 WizardStyle=modern
 UninstallDisplayName=Vexa
+
+; Request graceful shutdown of running applications
 CloseApplications=yes
+
+; Do not forcibly terminate applications
 RestartApplications=no
+
+; Prevent simultaneous Vexa installer instances
 SetupMutex=Vexa_MoneyTracker_Setup
 
 [Languages]
@@ -36,9 +41,9 @@ Name: "russian"; MessagesFile: "compiler:Languages\Russian.isl"
 Name: "desktopicon"; Description: "Создать ярлык на рабочем столе"; GroupDescription: "Дополнительные действия:"; Flags: unchecked
 
 [Files]
-; Only application binaries and Qt runtime.
-; User databases, backups and settings must not be stored here.
-Source: "PORTABLE\*"; DestDir: "{app}"; Flags: recursesubdirs createallsubdirs replacesameversion
+; Install application and its dependencies
+; Never include user database or backups here
+Source: "for_release\PORTABLE\*"; DestDir: "{app}"; Flags: recursesubdirs createallsubdirs replacesameversion
 
 [Icons]
 Name: "{autoprograms}\Vexa"; Filename: "{app}\{#VexaExeName}"; WorkingDir: "{app}"

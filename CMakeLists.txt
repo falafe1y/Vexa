@@ -103,6 +103,13 @@ target_link_libraries(Vexa
     interfaces
 )
 
+if(WIN32 AND MINGW)
+    target_link_options(Vexa PRIVATE
+        -static-libgcc
+        -static-libstdc++
+    )
+endif()
+
 install(TARGETS Vexa
     BUNDLE DESTINATION .
     LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
