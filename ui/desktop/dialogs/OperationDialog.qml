@@ -39,7 +39,7 @@ FormDialog {
         width: dialog.availableWidth
         enabled: !dialog.ledger.commandPending
         spacing: 10
-        EditorialText { text: dialog.isTransfer ? "Счёт отправителя" : "Счёт" }
+        EditorialText { text: dialog.isTransfer ? "Счет отправителя" : "Счет" }
         SelectField {
             id: accountBox
             Layout.fillWidth: true
@@ -47,7 +47,7 @@ FormDialog {
             textRole: "name"
             valueRole: "id"
         }
-        EditorialText { visible: dialog.isTransfer; text: "Счёт получателя" }
+        EditorialText { visible: dialog.isTransfer; text: "Счет получателя" }
         SelectField {
             id: receiverBox
             Layout.fillWidth: true
@@ -76,7 +76,7 @@ FormDialog {
             font.pixelSize: 12
         }
         EditorialText {
-            text: dialog.isTransfer ? "Сумма списания в валюте отправителя" : "Сумма в валюте счёта"
+            text: dialog.isTransfer ? "Сумма списания в валюте отправителя" : "Сумма в валюте счета"
         }
         InputField {
             id: amountField

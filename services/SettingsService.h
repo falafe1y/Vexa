@@ -1,6 +1,7 @@
 #pragma once
 
 #include <QString>
+#include <QSettings>
 
 namespace services {
 
@@ -14,6 +15,7 @@ public:
 
 private:
     QString baseCurrencyCode_;
+    QSettings settings_;
 };
 
 } // namespace services

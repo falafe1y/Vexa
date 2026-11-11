@@ -64,8 +64,8 @@ QString accountsCaption(int count)
     QString word = QStringLiteral("счетов");
 
     if (lastHundred < 11 || lastHundred > 14) {
-        if (lastDigit == 1) word = QStringLiteral("счёт");
-        else if (lastDigit >= 2 && lastDigit <= 4) word = QStringLiteral("счёта");
+        if (lastDigit == 1) word = QStringLiteral("счет");
+        else if (lastDigit >= 2 && lastDigit <= 4) word = QStringLiteral("счета");
     }
 
     return QString::number(count) + QLatin1Char(' ') + word;
@@ -134,7 +134,7 @@ QVariantMap operationRow(const services::OperationData& operation)
         {"categoryText", transfer ? QStringLiteral("—") : operation.categoryName},
         {"primaryAmountText", primary},
         {"secondaryAmountText", secondary},
-        {"descriptionText", date + QStringLiteral(" · ") + primary}
+        {"descriptionText", QString{}}
     };
 }
 

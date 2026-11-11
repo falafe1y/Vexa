@@ -84,7 +84,7 @@ bool LedgerInterface::executeUiCommand(const QString& command,
                                      const std::function<void()>& action)
 {
     if (!ready_) {
-        emit errorOccurred(QStringLiteral("База ещё не загружена"));
+        emit errorOccurred(QStringLiteral("База еще не загружена"));
         return false;
     }
     if (commandPending_) {
@@ -112,7 +112,7 @@ qint64 LedgerInterface::readAccountAmount(const QString& accountId,
     const auto id = readId(accountId);
     const auto it = accountDecimalPlaces_.constFind(id);
     if (it == accountDecimalPlaces_.cend()) {
-        throw std::invalid_argument("Счёт недоступен. Обновите список счетов");
+        throw std::invalid_argument("Счет недоступен. Обновите список счетов");
     }
     const auto result = readMinorUnits(amount, it.value());
     if (result <= 0) throw std::invalid_argument("Сумма операции должна быть больше нуля");
@@ -123,7 +123,7 @@ bool LedgerInterface::createAccount(const QString& name, int type,
     const QString& currencyCode, const QString& openingBalance, const QString& creditLimit)
 {
     return executeUiCommand(QStringLiteral("createAccount"), [&] {
-        if (type < 0 || type > 2) throw std::invalid_argument("Неверный тип счёта");
+        if (type < 0 || type > 2) throw std::invalid_argument("Неверный тип счета");
         const auto currency = core::model::Currency::fromCode(currencyCode.toStdString());
         const auto opening = readMinorUnits(openingBalance, currency.decimalPlaces());
         const auto limit = readMinorUnits(creditLimit, currency.decimalPlaces());

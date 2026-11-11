@@ -33,24 +33,17 @@ Basic.Dialog {
 
     header: ColumnLayout {
         spacing: 10
+
         EditorialText {
             Layout.fillWidth: true
-            Layout.leftMargin: 24
-            Layout.rightMargin: 24
-            Layout.topMargin: 22
-            text: "VEXA / УЧЁТ"
-            color: DesktopTheme.muted
-            font.family: DesktopTheme.mono
-            font.pixelSize: 11
-        }
-        EditorialText {
-            Layout.fillWidth: true
+            Layout.topMargin: 24
             Layout.leftMargin: 24
             Layout.rightMargin: 24
             text: dialog.title
             font.family: DesktopTheme.serif
             font.pixelSize: 30
         }
+
         Rectangle {
             Layout.fillWidth: true
             Layout.leftMargin: 24

@@ -9,6 +9,7 @@
 #include <QGuiApplication>
 #include <QFontDatabase>
 #include <QQmlApplicationEngine>
+#include <QQmlContext>
 #include <QStandardPaths>
 #include <QVariant>
 
@@ -17,7 +18,7 @@
 int main(int argc, char* argv[])
 {
     QGuiApplication app(argc, argv);
-    QCoreApplication::setOrganizationName(QStringLiteral("Vexa"));
+    // QCoreApplication::setOrganizationName(QStringLiteral("Vexa"));
     QCoreApplication::setApplicationName(QStringLiteral("Vexa"));
     QCoreApplication::setApplicationVersion(QStringLiteral(VEXA_VERSION));
 
@@ -51,6 +52,11 @@ int main(int argc, char* argv[])
         QQmlApplicationEngine engine;
         QObject::connect(&engine, &QQmlApplicationEngine::objectCreationFailed,
             &app, [] { QCoreApplication::exit(-1); }, Qt::QueuedConnection);
+
+        engine.rootContext()->setContextProperty(
+            QStringLiteral("appVersion"),
+            QCoreApplication::applicationVersion()
+        );
 
         engine.setInitialProperties({
             {QStringLiteral("ledger"),

@@ -4,6 +4,7 @@ import UI
 
 Rectangle {
     id: sidebar
+    required property var updates
     property int currentPage: 0
     signal pageRequested(int page)
     readonly property bool rail: width <= 72
@@ -20,6 +21,7 @@ Rectangle {
         x: sidebar.pad; y: sidebar.topPad
         width: parent.width - sidebar.pad * 2
         height: sidebar.rail ? 80 : sidebar.shortWindow ? 96 : 104
+
         EditorialText {
             width: parent.width; height: sidebar.rail ? 40 : 64
             text: "Vexa."
@@ -28,7 +30,14 @@ Rectangle {
             font.letterSpacing: sidebar.rail ? -1 : -2
             fontSizeMode: Text.Fit; minimumPixelSize: sidebar.rail ? 16 : 30
         }
-        Rectangle { y: sidebar.rail ? 64 : 80; width: parent.width; height: 1; color: DesktopTheme.ink }
+
+        Rectangle {
+            x: -sidebar.pad
+            y: sidebar.rail ? 64 : 80
+            width: sidebar.width
+            height: 1
+            color: DesktopTheme.ink
+        }
     }
     Column {
         id: navigation
@@ -42,8 +51,10 @@ Rectangle {
                 required property string modelData
                 readonly property bool available: index < 2
                 readonly property bool selected: available && sidebar.currentPage === index
-                width: navigation.width; height: sidebar.shortWindow ? 44 : 48
-                padding: 0; hoverEnabled: available
+                width: navigation.width
+                height: sidebar.shortWindow ? 44 : 48
+                padding: 0
+                hoverEnabled: available
                 enabled: available
                 Accessible.name: modelData + (available ? "" : ", в разработке")
                 contentItem: Item {
@@ -70,7 +81,13 @@ Rectangle {
                     }
                 }
                 background: Item {
-                    Rectangle { visible: nav.selected; anchors.bottom: parent.bottom; width: parent.width; height: 1; color: DesktopTheme.ink }
+                    Rectangle {
+                        visible: nav.selected
+                        anchors.bottom: parent.bottom
+                        width: parent.width
+                        height: 1
+                        color: DesktopTheme.line
+                    }
                 }
                 onClicked: sidebar.pageRequested(index)
             }
@@ -80,22 +97,48 @@ Rectangle {
         x: sidebar.pad; width: parent.width - sidebar.pad * 2
         anchors.bottom: parent.bottom; anchors.bottomMargin: sidebar.topPad
         spacing: 16
+
         Rectangle {
-            visible: !sidebar.rail && !sidebar.shortWindow && sidebar.height >= 860
-            width: parent.width; height: 128
-            color: "transparent"; border.color: DesktopTheme.ink
+            id: updateCard
+
+            visible: pageUpdatesAvailable
+                     && !sidebar.rail
+                     && !sidebar.shortWindow
+                     && sidebar.height >= 860
+
+            readonly property bool pageUpdatesAvailable: sidebar.updates.updateAvailable
+
+            width: parent.width
+            height: 128
+
+            color: "transparent"
+            border.width: 1
+            border.color: DesktopTheme.ink
+
             EditorialText {
-                x: 16; y: 16; width: parent.width - 32; height: 40
-                text: "Keep count."; font.family: "Gelasio"; font.italic: true; font.pixelSize: 27
-                fontSizeMode: Text.Fit; minimumPixelSize: 18
+                x: 16
+                y: 16
+                width: parent.width - 32
+                height: 40
+                text: "Обновиться"
+                font.family: "Gelasio"
+                font.italic: true
+                font.pixelSize: 27
+                fontSizeMode: Text.Fit
+                minimumPixelSize: 18
             }
-            EditorialText {
-                x: 16; y: 64; width: parent.width - 32; height: 48
-                text: "Для тех, кто уважает свои деньги"
-                font.family: DesktopTheme.mono; font.pixelSize: 12
-                wrapMode: Text.WordWrap; elide: Text.ElideNone
+
+            ActionButton {
+                x: 16
+                y: 72
+                implicitWidth: parent.width - 32
+                implicitHeight: 36
+                text: "ПОЛУЧИТЬ ОБНОВЛЕНИЕ"
+                enabled: sidebar.updates.updateAvailable
+                onClicked: sidebar.updates.openReleasePage()
             }
         }
+
         Basic.Button {
             id: settings
             width: parent.width; height: 40; padding: 0
@@ -114,15 +157,43 @@ Rectangle {
                 }
             }
             background: Item {
-                Rectangle { visible: sidebar.currentPage === 2; anchors.bottom: parent.bottom; width: parent.width; height: 1; color: DesktopTheme.ink }
+                Rectangle {
+                    visible: sidebar.currentPage === 2
+                    anchors.bottom: parent.bottom
+                    width: parent.width
+                    height: 1
+                    color: DesktopTheme.line
+                }
             }
             onClicked: sidebar.pageRequested(2)
         }
         Item {
-            width: parent.width; height: 48; visible: !sidebar.rail
-            Rectangle { width: parent.width; height: 1; color: DesktopTheme.ink }
-            EditorialText { height: parent.height; text: "VEXA"; font.family: DesktopTheme.mono; font.pixelSize: 12 }
-            EditorialText { anchors.right: parent.right; height: parent.height; text: "© 2026"; font.family: DesktopTheme.mono; font.pixelSize: 12 }
+            width: parent.width
+            height: 48
+            visible: !sidebar.rail
+
+            Rectangle {
+                x: -sidebar.pad
+                width: sidebar.width
+                height: 1
+                color: DesktopTheme.ink
+            }
+
+            EditorialText {
+                anchors.left: parent.left
+                height: parent.height
+                text: "VEXA"
+                font.family: DesktopTheme.mono
+                font.pixelSize: 12
+            }
+
+            EditorialText {
+                anchors.right: parent.right
+                height: parent.height
+                text: "v" + appVersion
+                font.family: DesktopTheme.mono
+                font.pixelSize: 12
+            }
         }
     }
 }

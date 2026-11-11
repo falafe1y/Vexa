@@ -7,7 +7,7 @@ FormDialog {
     id: dialog
     required property var ledger
     property string errorText: ""
-    title: "Новый счёт."
+    title: "Новый счет."
     closePolicy: ledger.commandPending ? Popup.NoAutoClose : Popup.CloseOnEscape
 
     onOpened: {
@@ -40,7 +40,8 @@ FormDialog {
             Layout.fillWidth: true
             placeholderText: "Например, Наличные"
         }
-        EditorialText { text: "Тип счёта" }
+
+        EditorialText { text: "Тип счета" }
         SelectField {
             id: typeBox
             Layout.fillWidth: true
@@ -58,6 +59,7 @@ FormDialog {
             Layout.fillWidth: true
             model: dialog.ledger.currencyCodes
         }
+
         EditorialText { text: "Начальный остаток" }
         InputField {
             id: openingField

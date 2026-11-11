@@ -19,7 +19,7 @@ ColumnLayout {
             font.bold: true
         }
         ActionButton {
-            text: "+ ДОБАВИТЬ СЧЁТ"
+            text: "+ ДОБАВИТЬ СЧЕТ"
             outlined: false
             enabled: section.ledger.ready && !section.ledger.commandPending
             onClicked: section.createRequested()
@@ -29,7 +29,7 @@ ColumnLayout {
     EditorialText {
         Layout.fillWidth: true
         visible: section.ledger.accountsModel.count === 0
-        text: "Пока здесь пусто. Добавьте первый счёт."
+        text: "Пока здесь пусто. Добавьте первый счет."
         color: DesktopTheme.muted
     }
 

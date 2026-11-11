@@ -153,7 +153,7 @@ QString LedgerInterface::historyCaption() const
 {
     if (historyLoading_ && history_.count() == 0) return QStringLiteral("Загрузка истории…");
     if (historyTotalCount_ == 0) return QStringLiteral("Операций пока нет");
-    return QStringLiteral("Показано %1 из %2 операций").arg(history_.count()).arg(historyTotalCount_);
+    return QStringLiteral("");
 }
 
 QString LedgerInterface::baseCurrencyCode() const { return settings_.baseCurrencyCode(); }

@@ -1,18 +1,26 @@
 #include "SettingsService.h"
-
 #include "Currency.h"
 
-#include <QSettings>
+#include <QDir>
+#include <QStandardPaths>
 
 #include <stdexcept>
 
 namespace services {
 
 SettingsService::SettingsService()
+    : settings_(
+        QDir(
+            QStandardPaths::writableLocation(
+                QStandardPaths::AppDataLocation
+            )
+        ).filePath(QStringLiteral("settings.ini")),
+        QSettings::IniFormat
+    )
 {
-    QSettings settings;
-    const auto stored = settings.value(
-        QStringLiteral("finance/baseCurrency"), QStringLiteral("RUB")
+    const auto stored = settings_.value(
+        QStringLiteral("finance/baseCurrency"),
+        QStringLiteral("RUB")
     ).toString();
 
     try {
@@ -36,11 +44,10 @@ void SettingsService::setBaseCurrencyCode(const QString& code)
         return;
     }
 
-    QSettings settings;
-    settings.setValue(QStringLiteral("finance/baseCurrency"), code);
-    settings.sync();
+    settings_.setValue(QStringLiteral("finance/baseCurrency"), code);
+    settings_.sync();
 
-    if (settings.status() != QSettings::NoError) {
+    if (settings_.status() != QSettings::NoError) {
         throw std::runtime_error("Не удалось сохранить настройки");
     }
 

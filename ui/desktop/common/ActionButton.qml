@@ -4,7 +4,7 @@ import UI
 
 Basic.Button {
     id: control
-    property bool outlined: true
+    property bool outlined: false
     property bool danger: false
     implicitHeight: 40
     implicitWidth: label.implicitWidth + 28
@@ -20,15 +20,12 @@ Basic.Button {
         font.pixelSize: 12
         font.bold: true
         horizontalAlignment: Text.AlignHCenter
-        color: control.outlined && control.hovered
-               ? DesktopTheme.paper
-               : control.danger ? DesktopTheme.accent : DesktopTheme.ink
+        color: control.hovered && control.enabled ? DesktopTheme.accent : DesktopTheme.ink
     }
 
     background: Rectangle {
-        color: control.outlined && control.hovered
-               ? DesktopTheme.ink : "transparent"
-        border.width: control.outlined || control.activeFocus ? 1 : 0
-        border.color: control.activeFocus ? DesktopTheme.accent : DesktopTheme.ink
+        color: "transparent"
+        border.width: 1
+        border.color: DesktopTheme.ink
     }
 }

@@ -126,7 +126,7 @@ Flickable {
                     anchors.bottom: parent.bottom
                     Mono { height: 24; text: "ПЕРИОД" }
                     EditorialText {
-                        y: 24; height: 32; text: "Всё время"
+                        y: 24; height: 32; text: "Все время"
                         color: DesktopTheme.muted; font.pixelSize: 16
                     }
                     Mono {
@@ -140,18 +140,93 @@ Flickable {
                 }
                 Item {
                     id: currencyBox
-                    anchors.right: parent.right; anchors.bottom: parent.bottom
-                    width: page.small ? 96 : page.medium ? 128 : 160
+                    anchors.right: parent.right
+                    anchors.bottom: parent.bottom
+                    width: 72
                     height: 72
-                    Mono { height: 24; text: "ВАЛЮТА" }
+                    Mono {
+                        height: 24
+                        text: "ВАЛЮТА"
+                    }
                     ComboBox {
                         id: currencySelector
-                        y: 24; width: parent.width; height: 48
+                        y: 24
+                        width: parent.width
+                        height: 48
+                        hoverEnabled: true
                         model: page.ledger.currencyCodes
                         currentIndex: page.ledger.baseCurrencyIndex
                         enabled: page.ledger.ready && !page.ledger.commandPending
                         onActivated: index => page.ledger.setBaseCurrencyCode(page.ledger.currencyCodes[index])
-                        font.family: DesktopTheme.sans; font.bold: true; font.pixelSize: 16
+                        font.family: DesktopTheme.sans
+                        font.bold: true
+                        font.pixelSize: 16
+
+                        background: Rectangle {
+                            color: DesktopTheme.paper
+                            border.width: 1
+                            border.color: DesktopTheme.line
+                        }
+
+                        // закрытый список
+                        contentItem: Text {
+                            text: currencySelector.displayText
+                            font: currencySelector.font
+                            color: currencySelector.hovered ? DesktopTheme.accent : DesktopTheme.ink
+                            horizontalAlignment: Text.AlignHCenter
+                            verticalAlignment: Text.AlignVCenter
+                            // leftPadding: 6
+                        }
+
+                        // элементы раскрытого списка
+                        delegate: ItemDelegate {
+                            id: currencyDelegate
+
+                            required property int index
+                            required property var modelData
+
+                            width: currencySelector.width
+                            height: 30
+
+                            hoverEnabled: true
+
+                            contentItem: Text {
+                                text: currencyDelegate.modelData
+
+                                font.family: DesktopTheme.sans
+                                font.pixelSize: 16
+                                font.bold: currencySelector.currentIndex === currencyDelegate.index
+
+                                color: currencyDelegate.hovered ? DesktopTheme.accent : DesktopTheme.ink
+
+                                horizontalAlignment: Text.AlignHCenter
+                                verticalAlignment: Text.AlignVCenter
+                            }
+
+                            background: Rectangle {
+                                color: DesktopTheme.paper
+                            }
+                        }
+
+                        // Раскрытый список
+                        popup: Popup {
+                            y: currencySelector.height - 1
+                            width: currencySelector.width
+                            padding: 1
+
+                            background: Rectangle {
+                                color: DesktopTheme.paper
+                                border.width: 1
+                                border.color: DesktopTheme.line
+                            }
+
+                            contentItem: ListView {
+                                implicitHeight: contentHeight
+                                model: currencySelector.delegateModel
+                                currentIndex: currencySelector.highlightedIndex
+                                clip: true
+                            }
+                        }
                     }
                 }
             }
@@ -188,7 +263,7 @@ Flickable {
                     id: accountsHead
                     y: page.topInset; width: parent.width
                     number: "01."; title: "СЧЕТА / ФИАТ"
-                    action: "+ ДОБАВИТЬ СЧЁТ"
+                    action: "+ ДОБАВИТЬ СЧЕТ"
                     onActivated: page.createAccountRequested()
                 }
                 ListView {
@@ -242,7 +317,7 @@ Flickable {
                         Rectangle { anchors.bottom: parent.bottom; width: parent.width; height: 1; color: DesktopTheme.line }
                     }
                 }
-                Mono { visible: accountList.count === 0; y: accountList.y; width: parent.width; height: accountList.height; text: "Счетов пока нет. Добавьте первый счёт."; horizontalAlignment: Text.AlignHCenter }
+                Mono { visible: accountList.count === 0; y: accountList.y; width: parent.width; height: accountList.height; text: "Счетов пока нет. Добавьте первый счет."; horizontalAlignment: Text.AlignHCenter }
             }
             Item {
                 id: horizon
@@ -313,8 +388,11 @@ Flickable {
             }
             TextField {
                 id: searchField
+                verticalAlignment: TextInput.AlignVCenter
+                topPadding: 0
+                bottomPadding: 0
                 x: page.narrow ? 0 : newOperation.x - width - 16
-                y: page.narrow ? 52 : 8
+                anchors.verticalCenter: parent.verticalCenter
                 width: page.narrow ? Math.max(0, newOperation.x - 16) : page.small ? 184 : 224
                 height: 40
                 enabled: false
@@ -326,9 +404,10 @@ Flickable {
             }
             ActionButton {
                 id: newOperation
+                anchors.verticalCenter: parent.verticalCenter
                 anchors.right: parent.right
                 y: page.narrow ? 56 : 12
-                implicitWidth: page.small ? 160 : page.medium ? 176 : 192
+                implicitWidth: 160
                 text: "+ НОВАЯ ОПЕРАЦИЯ"
                 enabled: page.ledger.canAddOperation
                 onClicked: operationMenu.open()
@@ -346,7 +425,7 @@ Flickable {
             y: historyToolbar.y + historyToolbar.height
             width: parent.width
             heading: true
-            dateText: "ДАТА"; typeText: "ТИП"; accountText: "СЧЁТ"; categoryText: "КАТЕГОРИЯ"; primaryAmountText: "СУММА"
+            dateText: "ДАТА"; typeText: "ТИП"; accountText: "СЧЕТ"; categoryText: "КАТЕГОРИЯ"; primaryAmountText: "СУММА"
         }
         ListView {
             id: history
@@ -379,7 +458,7 @@ Flickable {
                 id: moreButton
                 anchors.right: parent.right; anchors.verticalCenter: parent.verticalCenter
                 visible: page.ledger.historyHasMore || page.ledger.historyLoading
-                text: page.ledger.historyLoading ? "ЗАГРУЗКА…" : "ПОКАЗАТЬ ЕЩЁ"
+                text: page.ledger.historyLoading ? "ЗАГРУЗКА…" : "ПОКАЗАТЬ ЕЩЕ"
                 enabled: !page.ledger.historyLoading && page.ledger.historyHasMore
                 onClicked: page.ledger.loadMoreHistory()
             }

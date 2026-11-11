@@ -24,7 +24,7 @@ Item {
             spacing: 24
             PageHeading {
                 width: parent.width
-                caption: "ЛИЧНЫЙ УЧЁТ / СПРАВОЧНИК"
+                caption: "ЛИЧНЫЙ УЧЕТ / СПРАВОЧНИК"
                 title: "Категории."
             }
             RowLayout {

@@ -43,9 +43,9 @@ Rectangle {
                 text: "×"
                 outlined: false
                 enabled: !card.busy
-                Accessible.name: "Убрать счёт"
+                Accessible.name: "Убрать счет"
                 ToolTip.visible: hovered
-                ToolTip.text: "Убрать счёт"
+                ToolTip.text: "Убрать счет"
                 onClicked: card.removeRequested(card.recordId, card.nameText)
             }
         }
