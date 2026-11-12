@@ -2,6 +2,7 @@ import QtQuick
 import QtQuick.Controls
 import QtQuick.Layouts
 import UI
+import QtQuick.Controls.Basic as Basic
 
 // Pure QML presentation: all money and operation fields are provided by LedgerInterface.
 // Unavailable reports never derive monetary totals from other displayed values.

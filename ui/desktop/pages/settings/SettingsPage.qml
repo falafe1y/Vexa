@@ -9,12 +9,10 @@ Flickable {
 
     required property var ledger
     required property var updates
-
     readonly property bool narrow: width <= 650
     readonly property bool small: width <= 950 && !narrow
     readonly property bool medium: width <= 1300
     readonly property bool compact: height <= 1000 && !narrow
-
     readonly property int pad: narrow ? 20 : small ? 24 : medium ? 32 : 48
     readonly property int mainWidth: width - pad * 2
 

@@ -44,6 +44,29 @@ int main(int argc, char* argv[])
         const auto filePath = QDir{directory}.filePath(QStringLiteral("vexa.sqlite3"));
 
         services::LedgerService service;
+
+        // ВРЕМЕННО
+        QObject::connect(
+            &service,
+            &services::LedgerService::loaded,
+            &app,
+            [](qint64 accounts, qint64 categories, qint64 operations) {
+                qDebug() << "БД успешно загружена:"
+                         << accounts << "счетов,"
+                         << categories << "категорий,"
+                         << operations << "операций";
+            }
+            );
+
+        QObject::connect(
+            &service,
+            &services::LedgerService::failed,
+            &app,
+            [](const QString& message) {
+                qCritical() << "Ошибка открытия БД:" << message;
+            }
+            );
+
         services::SettingsService settings;
         interfaces::LedgerInterface ledgerInterface{service, settings};
         services::UpdateService updateService;
