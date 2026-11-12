@@ -54,6 +54,7 @@ qt_add_qml_module(Vexa
         ui/desktop/common/InputField.qml
         ui/desktop/common/PageHeading.qml
         ui/desktop/common/SelectField.qml
+        ui/desktop/common/BaseCurrencySelector.qml
         ui/desktop/common/PopupMenu.qml
         ui/desktop/common/PopupMenuItem.qml
         ui/desktop/pages/dashboard/AccountCard.qml

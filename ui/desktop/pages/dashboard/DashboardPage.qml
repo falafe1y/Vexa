@@ -119,12 +119,13 @@ Flickable {
                 y: page.narrow ? 92 : masthead.height - height - 8
                 height: 80
                 width: page.narrow ? parent.width : page.small ? 440 : page.medium ? 496 : 560
+
                 Item {
                     id: periodPlaceholder
                     x: 0
                     width: controls.width - currencyBox.width - 16
                     height: 72
-                    anchors.bottom: parent.bottom
+                    anchors.verticalCenter: parent.verticalCenter
                     Mono { height: 24; text: "ПЕРИОД" }
                     EditorialText {
                         y: 24; height: 32; text: "Все время"
@@ -139,96 +140,14 @@ Flickable {
                         color: DesktopTheme.line
                     }
                 }
-                Item {
+
+                BaseCurrencySelector {
                     id: currencyBox
                     anchors.right: parent.right
-                    anchors.bottom: parent.bottom
+                    anchors.verticalCenter: parent.verticalCenter
                     width: 72
                     height: 72
-                    Mono {
-                        height: 24
-                        text: "ВАЛЮТА"
-                    }
-                    ComboBox {
-                        id: currencySelector
-                        y: 24
-                        width: parent.width
-                        height: 48
-                        hoverEnabled: true
-                        model: page.ledger.currencyCodes
-                        currentIndex: page.ledger.baseCurrencyIndex
-                        enabled: page.ledger.ready && !page.ledger.commandPending
-                        onActivated: index => page.ledger.setBaseCurrencyCode(page.ledger.currencyCodes[index])
-                        font.family: DesktopTheme.sans
-                        font.bold: true
-                        font.pixelSize: 16
-
-                        background: Rectangle {
-                            color: DesktopTheme.paper
-                            border.width: 1
-                            border.color: DesktopTheme.line
-                        }
-
-                        // закрытый список
-                        contentItem: Text {
-                            text: currencySelector.displayText
-                            font: currencySelector.font
-                            color: currencySelector.hovered ? DesktopTheme.accent : DesktopTheme.ink
-                            horizontalAlignment: Text.AlignHCenter
-                            verticalAlignment: Text.AlignVCenter
-                            // leftPadding: 6
-                        }
-
-                        // элементы раскрытого списка
-                        delegate: ItemDelegate {
-                            id: currencyDelegate
-
-                            required property int index
-                            required property var modelData
-
-                            width: currencySelector.width
-                            height: 30
-
-                            hoverEnabled: true
-
-                            contentItem: Text {
-                                text: currencyDelegate.modelData
-
-                                font.family: DesktopTheme.sans
-                                font.pixelSize: 16
-                                font.bold: currencySelector.currentIndex === currencyDelegate.index
-
-                                color: currencyDelegate.hovered ? DesktopTheme.accent : DesktopTheme.ink
-
-                                horizontalAlignment: Text.AlignHCenter
-                                verticalAlignment: Text.AlignVCenter
-                            }
-
-                            background: Rectangle {
-                                color: DesktopTheme.paper
-                            }
-                        }
-
-                        // Раскрытый список
-                        popup: Popup {
-                            y: currencySelector.height - 1
-                            width: currencySelector.width
-                            padding: 1
-
-                            background: Rectangle {
-                                color: DesktopTheme.paper
-                                border.width: 1
-                                border.color: DesktopTheme.line
-                            }
-
-                            contentItem: ListView {
-                                implicitHeight: contentHeight
-                                model: currencySelector.delegateModel
-                                currentIndex: currencySelector.highlightedIndex
-                                clip: true
-                            }
-                        }
-                    }
+                    ledger: page.ledger
                 }
             }
             Rule { y: parent.height; width: parent.width }
