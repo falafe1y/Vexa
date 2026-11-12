@@ -78,11 +78,10 @@ FormDialog {
         EditorialText {
             text: dialog.isTransfer ? "Сумма списания в валюте отправителя" : "Сумма в валюте счета"
         }
-        InputField {
+        AmountField {
             id: amountField
             Layout.fillWidth: true
             placeholderText: "Например, 1500,50"
-            inputMethodHints: Qt.ImhFormattedNumbersOnly
         }
         EditorialText {
             Layout.fillWidth: true
@@ -112,13 +111,13 @@ FormDialog {
             dialog.errorText = ""
             if (dialog.operationType === 0) {
                 dialog.ledger.addIncome(accountBox.currentValue, categoryBox.currentValue,
-                    amountField.text, dateField.text)
+                    amountField.normalizedText, dateField.text)
             } else if (dialog.operationType === 1) {
                 dialog.ledger.addExpense(accountBox.currentValue, categoryBox.currentValue,
-                    amountField.text, dateField.text)
+                    amountField.normalizedText, dateField.text)
             } else {
                 dialog.ledger.transfer(accountBox.currentValue, receiverBox.currentValue,
-                    amountField.text, dateField.text)
+                    amountField.normalizedText, dateField.text)
             }
         }
     }

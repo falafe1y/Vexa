@@ -60,17 +60,20 @@ FormDialog {
             model: dialog.ledger.currencyCodes
         }
 
-        EditorialText { text: "Начальный остаток" }
-        InputField {
+        EditorialText {
+            text: typeBox.currentValue === 2
+                ? "Доступный остаток по кредитке"
+                : "Начальный остаток"
+        }
+        AmountField {
             id: openingField
             Layout.fillWidth: true
             placeholderText: "0,00"
-            inputMethodHints: Qt.ImhFormattedNumbersOnly
         }
         EditorialText {
             Layout.fillWidth: true
             visible: typeBox.currentValue === 2
-            text: "Уже есть долг 60 000? Укажите остаток -60000."
+            text: "Укажите доступную сумму, а не долг. Например, лимит 100000 и доступно 80000 означают долг 20000."
             color: DesktopTheme.muted
             font.pixelSize: 12
             wrapMode: Text.WordWrap
@@ -79,12 +82,11 @@ FormDialog {
             visible: typeBox.currentValue === 2
             text: "Кредитный лимит"
         }
-        InputField {
+        AmountField {
             id: limitField
             Layout.fillWidth: true
             visible: typeBox.currentValue === 2
-            placeholderText: "Например, 90000"
-            inputMethodHints: Qt.ImhFormattedNumbersOnly
+            placeholderText: "Например, 100000"
         }
         FormError { Layout.fillWidth: true; message: dialog.errorText }
     }
@@ -96,8 +98,8 @@ FormDialog {
         onSubmitted: {
             dialog.errorText = ""
             dialog.ledger.createAccount(nameField.text, typeBox.currentValue,
-                currencyBox.currentText, openingField.text,
-                typeBox.currentValue === 2 ? limitField.text : "0")
+                currencyBox.currentText, openingField.normalizedText,
+                typeBox.currentValue === 2 ? limitField.normalizedText : "0")
         }
     }
 }

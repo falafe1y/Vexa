@@ -43,6 +43,8 @@ qint64 readMinorUnits(const QString& input, int decimals)
     auto text = input.trimmed();
     if (text.isEmpty()) throw std::invalid_argument("Введите сумму");
     text.replace(QLatin1Char(','), QLatin1Char('.'));
+    // Незавершённый ввод «150,» трактуем как целое число 150.
+    if (text.endsWith(QLatin1Char('.'))) text.chop(1);
 
     bool negative = false;
     if (text.startsWith(QLatin1Char('-')) || text.startsWith(QLatin1Char('+'))) {
@@ -128,8 +130,22 @@ bool LedgerInterface::createAccount(const QString& name, int type,
         const auto opening = readMinorUnits(openingBalance, currency.decimalPlaces());
         const auto limit = readMinorUnits(creditLimit, currency.decimalPlaces());
         if (limit < 0) throw std::invalid_argument("Кредитный лимит не может быть отрицательным");
+
+        qint64 initialBalance = opening;
+        if (type == static_cast<int>(core::model::AccountType::CreditCard)) {
+            if (opening < 0 || opening > limit) {
+                throw std::invalid_argument(
+                    "Доступный остаток кредитки должен быть от 0 до кредитного лимита");
+            }
+            // Ядро хранит долг как отрицательный баланс, а на форме
+            // пользователь вводит доступную сумму по кредитке.
+            initialBalance = opening - limit;
+        } else if (opening < 0) {
+            throw std::invalid_argument("Начальный остаток не может быть отрицательным");
+        }
+
         service_.createAccount(name, static_cast<core::model::AccountType>(type),
-                               currencyCode, opening, limit);
+                               currencyCode, initialBalance, limit);
     });
 }
 

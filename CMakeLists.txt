@@ -46,6 +46,7 @@ qt_add_qml_module(Vexa
         Main.qml
         ui/desktop/MainView.qml
         ui/desktop/common/ActionButton.qml
+        ui/desktop/common/AmountField.qml
         ui/desktop/common/DesktopTheme.qml
         ui/desktop/common/DialogActions.qml
         ui/desktop/common/EditorialText.qml
