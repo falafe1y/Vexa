@@ -412,12 +412,25 @@ Flickable {
                 text: "+ НОВАЯ ОПЕРАЦИЯ"
                 enabled: page.ledger.canAddOperation
                 onClicked: operationMenu.open()
-                Menu {
+                PopupMenu {
                     id: operationMenu
-                    y: parent.height
-                    MenuItem { text: "Доход"; onTriggered: page.operationRequested(0) }
-                    MenuItem { text: "Расход"; onTriggered: page.operationRequested(1) }
-                    MenuItem { text: "Перевод"; enabled: page.ledger.canTransfer; onTriggered: page.operationRequested(2) }
+                    x: parent.width - width
+                    y: parent.height - 1
+                    width: Math.max(parent.width, 192)
+
+                    PopupMenuItem {
+                        text: "Доход"
+                        onTriggered: page.operationRequested(0)
+                    }
+                    PopupMenuItem {
+                        text: "Расход"
+                        onTriggered: page.operationRequested(1)
+                    }
+                    PopupMenuItem {
+                        text: "Перевод"
+                        enabled: page.ledger.canTransfer
+                        onTriggered: page.operationRequested(2)
+                    }
                 }
             }
         }

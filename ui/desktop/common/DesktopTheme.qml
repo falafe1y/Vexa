@@ -12,5 +12,8 @@ QtObject {
     readonly property color income: "#2e5947"
     readonly property string sans: "Arimo"
     readonly property string serif: "PT Serif"
+    readonly property int menuItemHeight: 40
+    readonly property int menuPadding: 1
+    readonly property int menuTextPadding: 12
     readonly property string mono: "Cousine"
 }
