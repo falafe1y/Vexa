@@ -58,6 +58,7 @@ qt_add_qml_module(Vexa
         ui/desktop/common/BaseCurrencySelector.qml
         ui/desktop/common/PopupMenu.qml
         ui/desktop/common/PopupMenuItem.qml
+        ui/desktop/common/ContextActionMenu.qml
         ui/desktop/pages/dashboard/AccountCard.qml
         ui/desktop/pages/dashboard/AccountsSection.qml
         ui/desktop/pages/dashboard/AssetSummary.qml

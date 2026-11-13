@@ -22,6 +22,18 @@ Rectangle {
     border.color: DesktopTheme.line
     border.width: 1
 
+    TapHandler {
+        acceptedButtons: Qt.RightButton
+        enabled: !card.busy
+        onTapped: (point, button) =>
+            accountContextMenu.openAt(point.position.x, point.position.y)
+    }
+    ContextActionMenu {
+        id: accountContextMenu
+        removeEnabled: !card.busy
+        onRemoveRequested: card.removeRequested(card.recordId, card.nameText)
+    }
+
     ColumnLayout {
         anchors.fill: parent
         anchors.margins: 18

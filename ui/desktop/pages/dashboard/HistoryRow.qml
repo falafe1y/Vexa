@@ -63,4 +63,15 @@ Item {
         onClicked: row.removeRequested(row.recordId, row.descriptionText)
     }
     HoverHandler { id: hover }
+    TapHandler {
+        acceptedButtons: Qt.RightButton
+        enabled: !row.heading && !row.busy
+        onTapped: (point, button) =>
+            operationContextMenu.openAt(point.position.x, point.position.y)
+    }
+    ContextActionMenu {
+        id: operationContextMenu
+        removeEnabled: !row.busy && !row.heading
+        onRemoveRequested: row.removeRequested(row.recordId, row.descriptionText)
+    }
 }

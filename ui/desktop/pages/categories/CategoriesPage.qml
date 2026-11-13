@@ -174,6 +174,20 @@ Flickable {
                             )
                         }
 
+                        TapHandler {
+                            acceptedButtons: Qt.RightButton
+                            enabled: !page.ledger.commandPending
+                            onTapped: (point, button) =>
+                                incomeContextMenu.openAt(point.position.x, point.position.y)
+                        }
+
+                        ContextActionMenu {
+                            id: incomeContextMenu
+                            removeEnabled: !page.ledger.commandPending
+                            onRemoveRequested: page.removeRequested(
+                                incomeRow.model.id, incomeRow.model.name)
+                        }
+
                         Rectangle {
                             anchors.bottom: parent.bottom
                             width: parent.width
@@ -254,6 +268,20 @@ Flickable {
                                 expenseRow.model.id,
                                 expenseRow.model.name
                             )
+                        }
+
+                        TapHandler {
+                            acceptedButtons: Qt.RightButton
+                            enabled: !page.ledger.commandPending
+                            onTapped: (point, button) =>
+                                expenseContextMenu.openAt(point.position.x, point.position.y)
+                        }
+
+                        ContextActionMenu {
+                            id: expenseContextMenu
+                            removeEnabled: !page.ledger.commandPending
+                            onRemoveRequested: page.removeRequested(
+                                expenseRow.model.id, expenseRow.model.name)
                         }
 
                         Rectangle {

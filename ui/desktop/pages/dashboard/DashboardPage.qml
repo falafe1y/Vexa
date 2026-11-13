@@ -234,6 +234,18 @@ Flickable {
                             onClicked: page.removeAccountRequested(accountRow.model.id, accountRow.model.name)
                         }
                         HoverHandler { id: accountHover }
+                        TapHandler {
+                            acceptedButtons: Qt.RightButton
+                            enabled: !page.ledger.commandPending
+                            onTapped: (point, button) =>
+                                accountContextMenu.openAt(point.position.x, point.position.y)
+                        }
+                        ContextActionMenu {
+                            id: accountContextMenu
+                            removeEnabled: !page.ledger.commandPending
+                            onRemoveRequested: page.removeAccountRequested(
+                                accountRow.model.id, accountRow.model.name)
+                        }
                         Rectangle { anchors.bottom: parent.bottom; width: parent.width; height: 1; color: DesktopTheme.line }
                     }
                 }
