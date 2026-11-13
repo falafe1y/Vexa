@@ -137,6 +137,7 @@ OperationData LedgerReadService::makeOperationData(
 
     data.id = operation.id();
     data.date = operation.date();
+    data.description = operation.description();
 
     const auto fillAccountAndAmount =
         [this, &data](const QUuid& accountId, Money amount) {

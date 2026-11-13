@@ -207,12 +207,12 @@ void LedgerService::updateCategory(const QUuid& id, const QString& name,
 
 void LedgerService::updateOperation(const QUuid& id, int type,
     const QUuid& accountId, const QUuid& secondaryId,
-    qint64 amountMinor, QDate date)
+    qint64 amountMinor, QDate date, const QString& description)
 {
     executeCommand(QStringLiteral("updateOperation"),
-        [id, type, accountId, secondaryId, amountMinor, date](State& state) {
+        [id, type, accountId, secondaryId, amountMinor, date, description](State& state) {
             OperationService service{state.database, state.ledger};
-            return service.update(id, type, accountId, secondaryId, amountMinor, date);
+            return service.update(id, type, accountId, secondaryId, amountMinor, date, description);
         });
 }
 
@@ -275,11 +275,12 @@ void LedgerService::addIncome(
     const QUuid& accountId,
     const QUuid& categoryId,
     qint64 amountMinor,
-    QDate date)
+    QDate date,
+    const QString& description)
 {
     executeCommand(
         QStringLiteral("income"),
-        [accountId, categoryId, amountMinor, date](
+        [accountId, categoryId, amountMinor, date, description](
             State& state)
         {
             OperationService service{
@@ -291,7 +292,8 @@ void LedgerService::addIncome(
                 accountId,
                 categoryId,
                 amountMinor,
-                date
+                date,
+                description
                 );
         }
         );
@@ -301,11 +303,12 @@ void LedgerService::addExpense(
     const QUuid& accountId,
     const QUuid& categoryId,
     qint64 amountMinor,
-    QDate date)
+    QDate date,
+    const QString& description)
 {
     executeCommand(
         QStringLiteral("expense"),
-        [accountId, categoryId, amountMinor, date](
+        [accountId, categoryId, amountMinor, date, description](
             State& state)
         {
             OperationService service{
@@ -317,7 +320,8 @@ void LedgerService::addExpense(
                 accountId,
                 categoryId,
                 amountMinor,
-                date
+                date,
+                description
                 );
         }
         );
@@ -327,11 +331,12 @@ void LedgerService::transfer(
     const QUuid& fromAccountId,
     const QUuid& toAccountId,
     qint64 sentAmountMinor,
-    QDate date)
+    QDate date,
+    const QString& description)
 {
     executeCommand(
         QStringLiteral("transfer"),
-        [fromAccountId, toAccountId, sentAmountMinor, date](
+        [fromAccountId, toAccountId, sentAmountMinor, date, description](
             State& state)
         {
             OperationService service{
@@ -343,7 +348,8 @@ void LedgerService::transfer(
                 fromAccountId,
                 toAccountId,
                 sentAmountMinor,
-                date
+                date,
+                description
                 );
         }
         );

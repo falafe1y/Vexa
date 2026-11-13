@@ -186,39 +186,43 @@ bool LedgerInterface::updateCategory(const QString& id, const QString& name, int
 
 bool LedgerInterface::updateOperation(const QString& id, int type,
     const QString& accountId, const QString& secondaryId,
-    const QString& amount, const QString& date)
+    const QString& amount, const QString& date,
+    const QString& description)
 {
     return executeUiCommand(QStringLiteral("updateOperation"), [&] {
         if (type < 0 || type > 2) throw std::invalid_argument("Invalid operation type");
         service_.updateOperation(readId(id), type, readId(accountId),
-            readId(secondaryId), readAccountAmount(accountId, amount), readDate(date));
+            readId(secondaryId), readAccountAmount(accountId, amount), readDate(date), description);
     });
 }
 
 bool LedgerInterface::addIncome(const QString& accountId, const QString& categoryId,
-                                const QString& amount, const QString& date)
+                                const QString& amount, const QString& date,
+                                const QString& description)
 {
     return executeUiCommand(QStringLiteral("income"), [&] {
         service_.addIncome(readId(accountId), readId(categoryId),
-                           readAccountAmount(accountId, amount), readDate(date));
+                           readAccountAmount(accountId, amount), readDate(date), description);
     });
 }
 
 bool LedgerInterface::addExpense(const QString& accountId, const QString& categoryId,
-                                 const QString& amount, const QString& date)
+                                 const QString& amount, const QString& date,
+                                 const QString& description)
 {
     return executeUiCommand(QStringLiteral("expense"), [&] {
         service_.addExpense(readId(accountId), readId(categoryId),
-                            readAccountAmount(accountId, amount), readDate(date));
+                            readAccountAmount(accountId, amount), readDate(date), description);
     });
 }
 
 bool LedgerInterface::transfer(const QString& fromId, const QString& toId,
-                               const QString& amount, const QString& date)
+                               const QString& amount, const QString& date,
+                               const QString& description)
 {
     return executeUiCommand(QStringLiteral("transfer"), [&] {
         service_.transfer(readId(fromId), readId(toId),
-                          readAccountAmount(fromId, amount), readDate(date));
+                          readAccountAmount(fromId, amount), readDate(date), description);
     });
 }
 

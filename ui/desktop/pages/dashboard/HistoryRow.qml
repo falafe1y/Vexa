@@ -72,7 +72,8 @@ Item {
             accountId: row.accountId,
             secondaryId: row.secondaryId,
             amountInput: row.amountInput,
-            dateIso: row.dateIso
+            dateIso: row.dateIso,
+            descriptionText: row.descriptionText
         })
         removeEnabled: !row.busy && !row.heading
         onRemoveRequested: row.removeRequested(row.recordId, row.descriptionText)

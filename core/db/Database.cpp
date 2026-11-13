@@ -189,6 +189,7 @@ void Database::createTables()
             sequence INTEGER PRIMARY KEY,
             id TEXT NOT NULL UNIQUE,
             date TEXT NOT NULL,
+            description TEXT NOT NULL DEFAULT '',
 
             type INTEGER NOT NULL CHECK (type IN (0, 1, 2)),
 
@@ -240,6 +241,36 @@ void Database::createTables()
             )
         )
     )"));
+
+    // Проверка и изменение схемы выполняются под одной блокировкой записи.
+    executeSql(QStringLiteral("BEGIN IMMEDIATE"));
+    try {
+        QSqlQuery columns{QSqlDatabase::database()};
+        if (!columns.exec(QStringLiteral("PRAGMA table_info(operations)"))) {
+            throw std::runtime_error(columns.lastError().text().toStdString());
+        }
+
+        bool hasDescription = false;
+        while (columns.next()) {
+            if (columns.value(1).toString() == QStringLiteral("description")) {
+                hasDescription = true;
+                break;
+            }
+        }
+        if (columns.lastError().isValid()) {
+            throw std::runtime_error(columns.lastError().text().toStdString());
+        }
+        columns.finish();
+
+        if (!hasDescription) {
+            executeSql(QStringLiteral(
+                "ALTER TABLE operations ADD COLUMN description TEXT NOT NULL DEFAULT ''"));
+        }
+        executeSql(QStringLiteral("COMMIT"));
+    } catch (...) {
+        QSqlDatabase::database().rollback();
+        throw;
+    }
 }
 
 void Database::saveAccount(
@@ -395,6 +426,7 @@ void Database::saveOperation(
         INSERT INTO operations (
             id,
             date,
+            description,
             type,
             account_id,
             category_id,
@@ -409,6 +441,7 @@ void Database::saveOperation(
         VALUES (
             :id,
             :date,
+            COALESCE(:description, ''),
             :type,
             :account_id,
             :category_id,
@@ -422,6 +455,7 @@ void Database::saveOperation(
         )
         ON CONFLICT(id) DO UPDATE SET
             date = excluded.date,
+            description = excluded.description,
             type = excluded.type,
             account_id = excluded.account_id,
             category_id = excluded.category_id,
@@ -449,6 +483,8 @@ void Database::saveOperation(
         QStringLiteral(":date"),
         operation.date().toString(Qt::ISODate)
         );
+
+    query.bindValue(QStringLiteral(":description"), operation.description());
 
     const QVariant nullText{
         QMetaType::fromType<QString>()
@@ -728,6 +764,7 @@ Database::loadOperations() const
         SELECT
             id,
             date,
+            description,
             type,
             account_id,
             category_id,
@@ -775,6 +812,8 @@ Database::loadOperations() const
             QStringLiteral("currency_code")
             );
 
+        const auto description = query.value(QStringLiteral("description")).toString();
+
         switch (type) {
         case 0: {
             const QUuid categoryId{
@@ -788,7 +827,8 @@ Database::loadOperations() const
                     accountId,
                     categoryId,
                     amount
-                }
+                },
+                description
                 ));
 
             break;
@@ -806,7 +846,8 @@ Database::loadOperations() const
                     accountId,
                     categoryId,
                     amount
-                }
+                },
+                description
                 ));
 
             break;
@@ -848,7 +889,8 @@ Database::loadOperations() const
                     amount,
                     receivedAmount,
                     rate
-                }
+                },
+                description
                 ));
 
             break;

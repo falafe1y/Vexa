@@ -10,8 +10,8 @@ ApplicationWindow {
 
     width: 1600
     height: 960
-    minimumWidth: 800
-    minimumHeight: 600
+    minimumWidth: 1050
+    minimumHeight: 650
     visible: true
     title: "Vexa"
     color: DesktopTheme.paper

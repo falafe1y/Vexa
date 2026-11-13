@@ -154,7 +154,7 @@ QVariantMap operationRow(const services::OperationData& operation)
         {"categoryText", transfer ? QStringLiteral("—") : operation.categoryName},
         {"primaryAmountText", primary},
         {"secondaryAmountText", secondary},
-        {"descriptionText", QString{}}
+        {"descriptionText", operation.description}
     };
 }
 

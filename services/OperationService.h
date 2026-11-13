@@ -1,6 +1,7 @@
 #pragma once
 
 #include <QDate>
+#include <QString>
 #include <QUuid>
 #include <QtTypes>
 
@@ -30,26 +31,29 @@ public:
         const QUuid& accountId,
         const QUuid& categoryId,
         qint64 amountMinor,
-        QDate date
+        QDate date,
+        const QString& description
     );
 
     [[nodiscard]] QUuid expense(
         const QUuid& accountId,
         const QUuid& categoryId,
         qint64 amountMinor,
-        QDate date
+        QDate date,
+        const QString& description
     );
 
     [[nodiscard]] QUuid transfer(
         const QUuid& fromAccountId,
         const QUuid& toAccountId,
         qint64 sentAmountMinor,
-        QDate date
+        QDate date,
+        const QString& description
     );
 
     [[nodiscard]] QUuid update(const QUuid& id, int type,
         const QUuid& accountId, const QUuid& secondaryId,
-        qint64 amountMinor, QDate date);
+        qint64 amountMinor, QDate date, const QString& description);
 
     [[nodiscard]] QUuid remove(const QUuid& id);
 

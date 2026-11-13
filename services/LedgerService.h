@@ -48,7 +48,7 @@ public:
         core::model::CategoryType type);
     void updateOperation(const QUuid& id, int type,
         const QUuid& accountId, const QUuid& secondaryId,
-        qint64 amountMinor, QDate date);
+        qint64 amountMinor, QDate date, const QString& description);
 
     void requestAccounts();
     void requestCategories();
@@ -62,21 +62,24 @@ public:
         const QUuid& accountId,
         const QUuid& categoryId,
         qint64 amountMinor,
-        QDate date
+        QDate date,
+        const QString& description
         );
 
     void addExpense(
         const QUuid& accountId,
         const QUuid& categoryId,
         qint64 amountMinor,
-        QDate date
+        QDate date,
+        const QString& description
         );
 
     void transfer(
         const QUuid& fromAccountId,
         const QUuid& toAccountId,
         qint64 sentAmountMinor,
-        QDate date
+        QDate date,
+        const QString& description
         );
 
     void removeAccount(const QUuid& id);

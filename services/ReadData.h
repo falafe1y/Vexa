@@ -73,6 +73,8 @@ struct OperationData
     qint64 receivedAmountMinor = 0;
     QString receivedCurrencyCode;
     int receivedDecimalPlaces = 0;
+
+    QString description;
 };
 
 using AccountList = std::vector<AccountData>;

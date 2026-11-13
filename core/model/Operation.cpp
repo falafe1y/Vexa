@@ -38,10 +38,12 @@ void validateEntry(const Account& account,
 Operation::Operation(
     QUuid id,
     QDate date,
-    Details details)
+    Details details,
+    QString description)
     : id_(id),
     date_(date),
-    details_(std::move(details))
+    details_(std::move(details)),
+    description_(std::move(description))
 {
     if (id_.isNull()) {
         throw std::invalid_argument(
@@ -122,29 +124,32 @@ Operation Operation::income(QUuid id,
                             QDate date,
                             const Account& account,
                             const Category& category,
-                            Money amount)
+                            Money amount,
+                            QString description)
 {
     validateEntry(account, category, amount, CategoryType::Income);
 
-    return Operation{id, date, Income{account.id(), category.id(), amount}};
+    return Operation{id, date, Income{account.id(), category.id(), amount}, description};
 }
 
 Operation Operation::expense(QUuid id,
                              QDate date,
                              const Account& account,
                              const Category& category,
-                             Money amount)
+                             Money amount,
+                             QString description)
 {
     validateEntry(account, category, amount, CategoryType::Expense);
 
-    return Operation{id, date, Expense{account.id(), category.id(), amount}};
+    return Operation{id, date, Expense{account.id(), category.id(), amount}, description};
 }
 
 Operation Operation::transfer(QUuid id,
                               QDate date,
                               const Account& from,
                               const Account& to,
-                              Money amount)
+                              Money amount,
+                              QString description)
 {
     if (from.id() == to.id()) {
         throw std::invalid_argument("Transfer requires two different accounts");
@@ -169,11 +174,7 @@ Operation Operation::transfer(QUuid id,
         throw std::invalid_argument("Transfer amount rounds to zero");
     }
 
-    return Operation{
-        id,
-        date,
-        Transfer{from.id(), to.id(), amount, receivedAmount, rate}
-    };
+    return Operation{id, date, Transfer{from.id(), to.id(), amount, receivedAmount, rate}, description};
 }
 
 } // namespace core::model

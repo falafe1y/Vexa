@@ -20,6 +20,7 @@ FormDialog {
         operationType = type
         errorText = ""
         amountField.text = ""
+        descriptionField.text = ""
         dateField.text = ledger.currentDateText()
         accountBox.currentIndex = accountBox.count > 0 ? 0 : -1
         receiverBox.currentIndex = receiverBox.count > 1 ? 1 : -1
@@ -38,6 +39,7 @@ FormDialog {
             categoryBox.currentIndex = categoryBox.indexOfValue(data.secondaryId)
         amountField.text = data.amountInput
         dateField.text = data.dateIso
+        descriptionField.text = data.descriptionText
         open()
     }
 
@@ -110,6 +112,11 @@ FormDialog {
             color: DesktopTheme.muted
             wrapMode: Text.WordWrap
         }
+        EditorialText { text: "Описание" }
+        InputField {
+            id: descriptionField
+            Layout.fillWidth: true
+        }
         EditorialText { text: "Дата" }
         InputField {
             id: dateField
@@ -132,16 +139,16 @@ FormDialog {
                 dialog.ledger.updateOperation(dialog.editData.id, dialog.operationType,
                     accountBox.currentValue,
                     dialog.isTransfer ? receiverBox.currentValue : categoryBox.currentValue,
-                    amountField.normalizedText, dateField.text)
+                    amountField.normalizedText, dateField.text, descriptionField.text)
             } else if (dialog.operationType === 0) {
                 dialog.ledger.addIncome(accountBox.currentValue, categoryBox.currentValue,
-                    amountField.normalizedText, dateField.text)
+                    amountField.normalizedText, dateField.text, descriptionField.text)
             } else if (dialog.operationType === 1) {
                 dialog.ledger.addExpense(accountBox.currentValue, categoryBox.currentValue,
-                    amountField.normalizedText, dateField.text)
+                    amountField.normalizedText, dateField.text, descriptionField.text)
             } else {
                 dialog.ledger.transfer(accountBox.currentValue, receiverBox.currentValue,
-                    amountField.normalizedText, dateField.text)
+                    amountField.normalizedText, dateField.text, descriptionField.text)
             }
         }
     }

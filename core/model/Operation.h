@@ -6,6 +6,7 @@
 #include "ExchangeRate.h"
 
 #include <QDate>
+#include <QString>
 #include <QUuid>
 
 #include <variant>
@@ -40,7 +41,7 @@ public:
 
     using Details = std::variant<Income, Expense, Transfer>;
 
-    Operation(QUuid id, QDate date, Details details);
+    Operation(QUuid id, QDate date, Details details, QString description = {});
 
     [[nodiscard]] static Operation fromStoredData(QUuid id, QDate date, Details details);
 
@@ -48,19 +49,22 @@ public:
                                           QDate date,
                                           const Account& account,
                                           const Category& category,
-                                          Money amount);
+                                          Money amount,
+                                          QString description = {});
 
     [[nodiscard]] static Operation expense(QUuid id,
                                            QDate date,
                                            const Account& account,
                                            const Category& category,
-                                           Money amount);
+                                           Money amount,
+                                           QString description = {});
 
     [[nodiscard]] static Operation transfer(QUuid id,
                                             QDate date,
                                             const Account& from,
                                             const Account& to,
-                                            Money amount);
+                                            Money amount,
+                                            QString description = {});
 
     [[nodiscard]] QUuid id() const noexcept
     {
@@ -77,10 +81,16 @@ public:
         return details_;
     }
 
+    [[nodiscard]] const QString& description() const noexcept
+    {
+        return description_;
+    }
+
 private:
     QUuid id_;
     QDate date_;
     Details details_;
+    QString description_;
 };
 
 } // namespace core::model

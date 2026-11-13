@@ -74,13 +74,13 @@ public:
     Q_INVOKABLE bool updateCategory(const QString& id, const QString& name, int type);
     Q_INVOKABLE bool updateOperation(const QString& id, int type,
         const QString& accountId, const QString& secondaryId,
-        const QString& amount, const QString& date);
+        const QString& amount, const QString& date, const QString& description);
     Q_INVOKABLE bool addIncome(const QString& accountId, const QString& categoryId,
-        const QString& amount, const QString& date);
+        const QString& amount, const QString& date, const QString& description);
     Q_INVOKABLE bool addExpense(const QString& accountId, const QString& categoryId,
-        const QString& amount, const QString& date);
+        const QString& amount, const QString& date, const QString& description);
     Q_INVOKABLE bool transfer(const QString& fromAccountId, const QString& toAccountId,
-        const QString& amount, const QString& date);
+        const QString& amount, const QString& date, const QString& description);
     Q_INVOKABLE bool removeAccount(const QString& id);
     Q_INVOKABLE bool removeCategory(const QString& id);
     Q_INVOKABLE bool removeOperation(const QString& id);
