@@ -1,7 +1,3 @@
-
-; Vexa Installer
-; Version is read directly from Vexa.exe
-
 #define VexaName "Vexa"
 #define VexaExeName "Vexa.exe"
 #define VexaVersion GetStringFileInfo("for_release\PORTABLE\Vexa.exe", "ProductVersion")
@@ -14,7 +10,8 @@ AppVersion={#VexaVersion}
 AppVerName={#VexaName} {#VexaVersion}
 AppPublisher={#VexaPublisher}
 DefaultDirName={localappdata}\Programs\Vexa
-UsePreviousAppDir=yes
+UsePreviousAppDir=no
+DisableDirPage=no
 DefaultGroupName=Vexa
 DisableProgramGroupPage=yes
 PrivilegesRequired=lowest
