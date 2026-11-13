@@ -25,3 +25,8 @@ Local-Free: система работает без интернета, без р
 - [Архитектура проекта](/ARCHITECTURE.md)
 
 ## Скриншоты
+<img width="1919" height="995" alt="image" src="https://github.com/user-attachments/assets/4d169bbb-774a-43ab-8b20-d3fa0d334ae3" />
+<img width="1919" height="1003" alt="image" src="https://github.com/user-attachments/assets/65da4ff3-5dab-4f34-a175-22eaaaf42ba7" />
+<img width="1919" height="1003" alt="image" src="https://github.com/user-attachments/assets/8953665c-7511-43f8-8abf-848fc773686b" />
+<img width="1919" height="1002" alt="image" src="https://github.com/user-attachments/assets/20a7f8ff-0787-4503-9376-56fe0a1216df" />
+<img width="1919" height="1004" alt="image" src="https://github.com/user-attachments/assets/dadee6b1-97a9-4940-bfec-aaa7a7f97b7d" />
