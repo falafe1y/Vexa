@@ -7,7 +7,6 @@ Item {
     property bool heading: false
     property string recordId: ""
     property string dateText: ""
-    property string dateIso: ""
     property string accountId: ""
     property string secondaryId: ""
     property string amountInput: ""
@@ -72,7 +71,7 @@ Item {
             accountId: row.accountId,
             secondaryId: row.secondaryId,
             amountInput: row.amountInput,
-            dateIso: row.dateIso,
+            dateText: row.dateText,
             descriptionText: row.descriptionText
         })
         removeEnabled: !row.busy && !row.heading

@@ -1,5 +1,6 @@
 #include "LedgerInterface.h"
 #include "Currency.h"
+#include "LedgerPresentation.h"
 
 #include <QDate>
 #include <QStringList>
@@ -22,9 +23,10 @@ QUuid readId(const QString& text)
 QDate readDate(const QString& input)
 {
     const auto text = input.trimmed();
-    const auto date = QDate::fromString(text, Qt::ISODate);
-    if (!date.isValid() || date.toString(Qt::ISODate) != text) {
-        throw std::invalid_argument("Укажите дату в формате ГГГГ-ММ-ДД");
+    const auto& format = presentation::operationDateFormat;
+    const auto date = QDate::fromString(text, format);
+    if (!date.isValid() || date.toString(format) != text) {
+        throw std::invalid_argument("Укажите дату в формате ДД.ММ.ГГГГ");
     }
     return date;
 }

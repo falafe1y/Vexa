@@ -7,6 +7,8 @@
 
 namespace interfaces::presentation {
 
+inline const auto operationDateFormat = QStringLiteral("dd.MM.yyyy");
+
 QString money(qint64 minor, int decimals, const QString& currencyCode);
 QString accountsCaption(int count);
 QVariantMap accountRow(const services::AccountData& account);

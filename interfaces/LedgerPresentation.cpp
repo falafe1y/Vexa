@@ -137,12 +137,9 @@ QVariantMap operationRow(const services::OperationData& operation)
         );
     }
 
-    const auto date = operation.date.toString(QStringLiteral("dd.MM.yyyy"));
-
     return {
         {"id", idText(operation.id)},
-        {"dateText", date},
-        {"dateIso", operation.date.toString(Qt::ISODate)},
+        {"dateText", operation.date.toString(operationDateFormat)},
         {"accountId", idText(operation.accountId)},
         {"secondaryId", idText(transfer ? operation.toAccountId : operation.categoryId)},
         {"amountInput", editableAmount(operation.amountMinor, operation.decimalPlaces)},

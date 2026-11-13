@@ -38,7 +38,7 @@ FormDialog {
         else
             categoryBox.currentIndex = categoryBox.indexOfValue(data.secondaryId)
         amountField.text = data.amountInput
-        dateField.text = data.dateIso
+        dateField.text = data.dateText
         descriptionField.text = data.descriptionText
         open()
     }
@@ -112,16 +112,19 @@ FormDialog {
             color: DesktopTheme.muted
             wrapMode: Text.WordWrap
         }
-        EditorialText { text: "Описание" }
+        EditorialText { text: "Описание (необязательно, до 50 символов)" }
         InputField {
             id: descriptionField
             Layout.fillWidth: true
+            validator: RegularExpressionValidator {
+                regularExpression: /^[\s\S]{0,50}$/
+            }
         }
         EditorialText { text: "Дата" }
         InputField {
             id: dateField
             Layout.fillWidth: true
-            placeholderText: "ГГГГ-ММ-ДД"
+            placeholderText: "ДД.ММ.ГГГГ"
         }
         FormError { Layout.fillWidth: true; message: dialog.errorText }
     }

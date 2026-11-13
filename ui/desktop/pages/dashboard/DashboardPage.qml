@@ -387,7 +387,7 @@ Flickable {
                 required property var model
                 width: history.width
                 recordId: model.id
-                dateText: model.dateText; dateIso: model.dateIso
+                dateText: model.dateText
                 accountId: model.accountId; secondaryId: model.secondaryId
                 amountInput: model.amountInput
                 typeText: model.typeText; operationType: model.type

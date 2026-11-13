@@ -7,6 +7,16 @@
 #include <stdexcept>
 
 namespace services {
+namespace {
+
+void validateDescription(const QString& description)
+{
+    if (description.toUcs4().size() > 50) {
+        throw std::invalid_argument("Описание должно содержать не больше 50 символов");
+    }
+}
+
+} // namespace
 
 QUuid OperationService::income(
     const QUuid& accountId,
@@ -93,6 +103,7 @@ QUuid OperationService::update(const QUuid& id, int type,
         throw std::invalid_argument("Invalid operation type");
     }();
 
+    validateDescription(description);
     ledger_.validateOperationUpdate(updated);
     database_.saveOperation(updated);
     ledger_.applyOperationUpdate(updated);
@@ -115,6 +126,8 @@ QUuid OperationService::remove(const QUuid& id)
 QUuid OperationService::save(
     const core::model::Operation& operation)
 {
+    validateDescription(operation.description());
+
     auto candidate = ledger_;
 
     // Проверка связей, архивных состояний и расчета остатков.

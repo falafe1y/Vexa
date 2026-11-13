@@ -165,7 +165,7 @@ int LedgerInterface::baseCurrencyIndex() const
 
 QString LedgerInterface::currentDateText() const
 {
-    return QDate::currentDate().toString(Qt::ISODate);
+    return QDate::currentDate().toString(presentation::operationDateFormat);
 }
 
 bool LedgerInterface::setBaseCurrencyCode(const QString& code)

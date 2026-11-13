@@ -125,7 +125,7 @@ private:
     ReadListModel categories_{{"id", "name", "type", "typeText"}, this};
     ReadListModel incomeCategories_{{"id", "name", "type", "typeText"}, this};
     ReadListModel expenseCategories_{{"id", "name", "type", "typeText"}, this};
-    ReadListModel history_{{"id", "dateText", "dateIso", "accountId", "secondaryId", "amountInput", "type", "typeText", "accountText",
+    ReadListModel history_{{"id", "dateText", "accountId", "secondaryId", "amountInput", "type", "typeText", "accountText",
         "secondaryAccountText", "categoryText", "primaryAmountText",
         "secondaryAmountText", "descriptionText"}, this};
 };
