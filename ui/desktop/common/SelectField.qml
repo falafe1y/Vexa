@@ -47,13 +47,14 @@ Basic.ComboBox {
     delegate: Basic.ItemDelegate {
         id: option
         required property int index
+        required property var model
 
         width: control.popupWidth - 2 * control.popup.padding
         height: DesktopTheme.menuItemHeight
         hoverEnabled: true
 
         contentItem: Text {
-            text: control.textAt(option.index)
+            text: option.model[control.textRole]
             font.family: control.font.family
             font.pixelSize: control.font.pixelSize
             font.bold: control.currentIndex === option.index

@@ -112,7 +112,7 @@ FormDialog {
             color: DesktopTheme.muted
             wrapMode: Text.WordWrap
         }
-        EditorialText { text: "Описание (необязательно, до 50 символов)" }
+        EditorialText { text: "Описание" }
         InputField {
             id: descriptionField
             Layout.fillWidth: true

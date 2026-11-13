@@ -374,6 +374,10 @@ Money Ledger::totalBalance(Currency targetCurrency) const
     std::map<std::string_view, Money> subtotals;
 
     for (const auto& account : accounts_) {
+        if (account.isArchived()) {
+            continue;
+        }
+
         const auto current = balance(account.id());
         const auto [position, inserted] =
             subtotals.try_emplace(current.currency().code(), current);
