@@ -148,8 +148,8 @@ Flickable {
 
                         EditorialText {
                             anchors.left: parent.left
-                            anchors.right: removeIncome.left
-                            anchors.rightMargin: 12
+                            anchors.right: parent.right
+                            anchors.rightMargin: 0
                             height: parent.height
 
                             text: incomeRow.model.name
@@ -157,23 +157,6 @@ Flickable {
                             elide: Text.ElideRight
                         }
 
-                        ActionButton {
-                            id: removeIncome
-
-                            anchors.right: parent.right
-                            anchors.verticalCenter: parent.verticalCenter
-
-                            text: "УБРАТЬ"
-                            danger: true
-                            outlined: false
-
-                            enabled: !page.ledger.commandPending
-
-                            onClicked: page.removeRequested(
-                                incomeRow.model.id,
-                                incomeRow.model.name
-                            )
-                        }
 
                         TapHandler {
                             acceptedButtons: Qt.RightButton
@@ -250,8 +233,8 @@ Flickable {
 
                         EditorialText {
                             anchors.left: parent.left
-                            anchors.right: removeExpense.left
-                            anchors.rightMargin: 12
+                            anchors.right: parent.right
+                            anchors.rightMargin: 0
                             height: parent.height
 
                             text: expenseRow.model.name
@@ -259,23 +242,6 @@ Flickable {
                             elide: Text.ElideRight
                         }
 
-                        ActionButton {
-                            id: removeExpense
-
-                            anchors.right: parent.right
-                            anchors.verticalCenter: parent.verticalCenter
-
-                            text: "УБРАТЬ"
-                            danger: true
-                            outlined: false
-
-                            enabled: !page.ledger.commandPending
-
-                            onClicked: page.removeRequested(
-                                expenseRow.model.id,
-                                expenseRow.model.name
-                            )
-                        }
 
                         TapHandler {
                             acceptedButtons: Qt.RightButton

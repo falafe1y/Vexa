@@ -57,17 +57,6 @@ Item {
             color: row.heading ? DesktopTheme.ink : row.operationType === 0 ? DesktopTheme.income : DesktopTheme.accent
         }
     }
-    // Actual removal remains accessible, without a legacy selection/sort subsystem.
-    ActionButton {
-        visible: !row.heading && hover.hovered
-        anchors.right: parent.right; anchors.verticalCenter: parent.verticalCenter
-        implicitWidth: 26; implicitHeight: 26
-        outlined: false; danger: true
-        text: "×"
-        enabled: !row.busy
-        onClicked: row.removeRequested(row.recordId, row.descriptionText)
-    }
-    HoverHandler { id: hover }
     TapHandler {
         acceptedButtons: Qt.RightButton
         enabled: !row.heading && !row.busy

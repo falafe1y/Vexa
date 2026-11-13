@@ -20,13 +20,21 @@ PopupMenu {
     }
 
     PopupMenuItem {
-        text: "РЕДАКТИРОВАТЬ"
+        text: "Редактировать"
         enabled: menu.editEnabled
         onTriggered: menu.editRequested()
     }
 
+    Rectangle {
+        anchors.left: parent.left
+        anchors.right: parent.right
+        anchors.margins: 8
+        height: 1
+        color: DesktopTheme.line
+    }
+
     PopupMenuItem {
-        text: "УДАЛИТЬ"
+        text: "Удалить"
         enabled: menu.removeEnabled
         hoverColor: DesktopTheme.accent
         onTriggered: menu.removeRequested()

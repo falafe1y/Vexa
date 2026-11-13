@@ -219,23 +219,14 @@ Flickable {
                         }
                         Serif {
                             id: accountAmount
-                            anchors.right: removeButton.left; anchors.rightMargin: 8
+                            anchors.right: parent.right
+                            anchors.rightMargin: 4
                             y: 0; width: Math.min(190, accountRow.width * .36); height: 56
                             text: accountRow.model.primaryText
                             font.pixelSize: page.small ? 22 : page.medium ? 24 : 28
                             horizontalAlignment: Text.AlignRight
                             fontSizeMode: Text.Fit; minimumPixelSize: 14
                         }
-                        ActionButton {
-                            id: removeButton
-                            anchors.right: parent.right; anchors.verticalCenter: parent.verticalCenter
-                            implicitWidth: 30; implicitHeight: 30
-                            text: "×"; danger: true; outlined: false
-                            visible: accountHover.hovered
-                            enabled: !page.ledger.commandPending
-                            onClicked: page.removeAccountRequested(accountRow.model.id, accountRow.model.name)
-                        }
-                        HoverHandler { id: accountHover }
                         TapHandler {
                             acceptedButtons: Qt.RightButton
                             enabled: !page.ledger.commandPending
@@ -309,7 +300,7 @@ Flickable {
                 Item {
                     x: page.narrow ? 0 : page.inset; y: page.topInset
                     width: parent.width - x; height: parent.height - y
-                    Heading { width: parent.width; number: "04."; title: "АНАТОМИЯ РАСХОДОВ" }
+                    Heading { width: parent.width; number: "04."; title: "СТРУКТУРА РАСХОДОВ" }
                     DevelopmentPanel {
                         y: 48; width: parent.width
                         height: page.compact ? 152 : 168

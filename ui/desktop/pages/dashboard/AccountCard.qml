@@ -60,19 +60,6 @@ Rectangle {
                 font.bold: true
                 font.pixelSize: 16
             }
-            ActionButton {
-                implicitWidth: 28
-                implicitHeight: 28
-                leftPadding: 0
-                rightPadding: 0
-                text: "×"
-                outlined: false
-                enabled: !card.busy
-                Accessible.name: "Убрать счет"
-                ToolTip.visible: hovered
-                ToolTip.text: "Убрать счет"
-                onClicked: card.removeRequested(card.recordId, card.nameText)
-            }
         }
         EditorialText {
             Layout.fillWidth: true
