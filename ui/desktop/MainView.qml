@@ -57,7 +57,9 @@ ApplicationWindow {
                 DashboardPage {
                     ledger: window.ledger
                     onCreateAccountRequested: accountDialog.open()
+                    onEditAccountRequested: data => accountDialog.openForEdit(data)
                     onOperationRequested: type => operationDialog.openFor(type)
+                    onEditOperationRequested: data => operationDialog.openForEdit(data)
                     onRemoveAccountRequested: (recordId, description) =>
                         removalDialog.ask("removeAccount", recordId, description)
                     onRemoveOperationRequested: (recordId, description) =>
@@ -67,6 +69,7 @@ ApplicationWindow {
                 CategoriesPage {
                     ledger: window.ledger
                     onCreateRequested: categoryDialog.open()
+                    onEditRequested: data => categoryDialog.openForEdit(data)
                     onRemoveRequested: (recordId, description) =>
                         removalDialog.ask("removeCategory", recordId, description)
                 }

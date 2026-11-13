@@ -31,6 +31,9 @@ public:
         core::model::CategoryType type
     );
 
+    [[nodiscard]] QUuid update(const QUuid& id, const QString& name,
+        core::model::CategoryType type);
+
 private:
     core::db::Database& database_;
     core::model::Ledger& ledger_;

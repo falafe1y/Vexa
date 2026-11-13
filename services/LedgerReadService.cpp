@@ -46,6 +46,7 @@ AccountList LedgerReadService::accounts() const
         data.currencyCode = toCurrencyCode(account.currency());
         data.decimalPlaces = account.currency().decimalPlaces();
 
+        data.openingBalanceMinor = account.openingBalance().minorUnits();
         data.balanceMinor =
             ledger_.balance(account.id()).minorUnits();
 

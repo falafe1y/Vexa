@@ -6,7 +6,9 @@ PopupMenu {
     id: menu
 
     property bool removeEnabled: true
+    property bool editEnabled: true
     signal removeRequested()
+    signal editRequested()
 
     width: 176
 
@@ -15,6 +17,12 @@ PopupMenu {
         menu.x = Math.round(localX)
         menu.y = Math.round(localY)
         menu.open()
+    }
+
+    PopupMenuItem {
+        text: "РЕДАКТИРОВАТЬ"
+        enabled: menu.editEnabled
+        onTriggered: menu.editRequested()
     }
 
     PopupMenuItem {

@@ -21,8 +21,14 @@ public:
                                             const std::vector<Operation>& operations
                                             );
     void addAccount(const Account& account);
+    void validateAccountUpdate(const Account& replacement) const;
+    void applyAccountUpdate(const Account& replacement);
     void addCategory(const Category& category);
+    void validateCategoryUpdate(const Category& replacement) const;
+    void applyCategoryUpdate(const Category& replacement);
     void addOperation(const Operation& operation);
+    void validateOperationUpdate(const Operation& replacement) const;
+    void applyOperationUpdate(const Operation& replacement);
 
     [[nodiscard]] std::vector<Account> accounts() const;
     [[nodiscard]] std::vector<Category> categories() const;

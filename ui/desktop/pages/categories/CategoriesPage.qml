@@ -7,6 +7,7 @@ Flickable {
     id: page
     required property var ledger
     signal createRequested()
+    signal editRequested(var data)
     signal removeRequested(string recordId, string description)
     readonly property bool narrow: width <= 650
     readonly property bool small: width <= 950 && !narrow
@@ -183,6 +184,12 @@ Flickable {
 
                         ContextActionMenu {
                             id: incomeContextMenu
+                            editEnabled: !page.ledger.commandPending
+                            onEditRequested: page.editRequested({
+                                id: incomeRow.model.id,
+                                name: incomeRow.model.name,
+                                type: incomeRow.model.type
+                            })
                             removeEnabled: !page.ledger.commandPending
                             onRemoveRequested: page.removeRequested(
                                 incomeRow.model.id, incomeRow.model.name)
@@ -279,6 +286,12 @@ Flickable {
 
                         ContextActionMenu {
                             id: expenseContextMenu
+                            editEnabled: !page.ledger.commandPending
+                            onEditRequested: page.editRequested({
+                                id: expenseRow.model.id,
+                                name: expenseRow.model.name,
+                                type: expenseRow.model.type
+                            })
                             removeEnabled: !page.ledger.commandPending
                             onRemoveRequested: page.removeRequested(
                                 expenseRow.model.id, expenseRow.model.name)

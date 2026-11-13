@@ -24,6 +24,7 @@ struct AccountData
     QString currencyCode;
     int decimalPlaces = 0;
 
+    qint64 openingBalanceMinor = 0;
     qint64 balanceMinor = 0;
     qint64 creditLimitMinor = 0;
     qint64 debtMinor = 0;

@@ -7,23 +7,32 @@ FormDialog {
     id: dialog
     required property var ledger
     property string errorText: ""
-    title: "Новый счет."
+    property var editData: null
+    title: editData ? "Редактировать счёт." : "Новый счёт."
+    onClosed: editData = null
+
+    function openForEdit(data) {
+        editData = data
+        open()
+    }
     closePolicy: ledger.commandPending ? Popup.NoAutoClose : Popup.CloseOnEscape
 
     onOpened: {
         errorText = ""
-        nameField.text = ""
-        typeBox.currentIndex = 0
-        currencyBox.currentIndex = ledger.baseCurrencyIndex
-        openingField.text = "0"
-        limitField.text = "0"
+        nameField.text = editData ? editData.name : ""
+        typeBox.currentIndex = editData ? typeBox.indexOfValue(editData.type) : 0
+        currencyBox.currentIndex = editData
+            ? ledger.currencyCodes.indexOf(editData.currencyCode)
+            : ledger.baseCurrencyIndex
+        openingField.text = editData ? editData.openingInput : "0"
+        limitField.text = editData ? editData.limitInput : "0"
         nameField.forceActiveFocus()
     }
 
     Connections {
         target: dialog.ledger
         function onCommandFinished(commandName, id) {
-            if (dialog.visible && commandName === "createAccount") dialog.close()
+            if (dialog.visible && (commandName === "createAccount" || commandName === "updateAccount")) dialog.close()
         }
         function onErrorOccurred(message) {
             if (dialog.visible) dialog.errorText = message
@@ -93,13 +102,20 @@ FormDialog {
 
     footer: DialogActions {
         busy: dialog.ledger.commandPending
-        submitText: "СОЗДАТЬ"
+        submitText: dialog.editData ? "СОХРАНИТЬ" : "СОЗДАТЬ"
         onCancelled: dialog.close()
         onSubmitted: {
             dialog.errorText = ""
-            dialog.ledger.createAccount(nameField.text, typeBox.currentValue,
-                currencyBox.currentText, openingField.normalizedText,
-                typeBox.currentValue === 2 ? limitField.normalizedText : "0")
+            if (dialog.editData) {
+                dialog.ledger.updateAccount(dialog.editData.id, nameField.text,
+                    typeBox.currentValue, currencyBox.currentText,
+                    openingField.normalizedText,
+                    typeBox.currentValue === 2 ? limitField.normalizedText : "0")
+            } else {
+                dialog.ledger.createAccount(nameField.text, typeBox.currentValue,
+                    currencyBox.currentText, openingField.normalizedText,
+                    typeBox.currentValue === 2 ? limitField.normalizedText : "0")
+            }
         }
     }
 }

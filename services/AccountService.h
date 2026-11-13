@@ -35,6 +35,10 @@ public:
         qint64 creditLimitMinor = 0
     );
 
+    [[nodiscard]] QUuid update(const QUuid& id, const QString& name,
+        core::model::AccountType type, const QString& currencyCode,
+        qint64 openingBalanceMinor, qint64 creditLimitMinor);
+
 private:
     core::db::Database& database_;
     core::model::Ledger& ledger_;

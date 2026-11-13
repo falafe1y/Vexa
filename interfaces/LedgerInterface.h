@@ -68,6 +68,13 @@ public:
         const QString& currencyCode, const QString& openingBalance,
         const QString& creditLimit);
     Q_INVOKABLE bool createCategory(const QString& name, int type);
+    Q_INVOKABLE bool updateAccount(const QString& id, const QString& name,
+        int type, const QString& currencyCode, const QString& openingBalance,
+        const QString& creditLimit);
+    Q_INVOKABLE bool updateCategory(const QString& id, const QString& name, int type);
+    Q_INVOKABLE bool updateOperation(const QString& id, int type,
+        const QString& accountId, const QString& secondaryId,
+        const QString& amount, const QString& date);
     Q_INVOKABLE bool addIncome(const QString& accountId, const QString& categoryId,
         const QString& amount, const QString& date);
     Q_INVOKABLE bool addExpense(const QString& accountId, const QString& categoryId,
@@ -113,12 +120,12 @@ private:
     QString pendingCommand_;
     QHash<QUuid, int> accountDecimalPlaces_;
 
-    ReadListModel accounts_{{"id", "name", "typeText", "currencyCode", "isCreditCard",
+    ReadListModel accounts_{{"id", "name", "type", "typeText", "currencyCode", "openingInput", "limitInput", "isCreditCard",
         "primaryLabel", "primaryText", "balanceText", "creditLimitText", "debtText"}, this};
     ReadListModel categories_{{"id", "name", "type", "typeText"}, this};
     ReadListModel incomeCategories_{{"id", "name", "type", "typeText"}, this};
     ReadListModel expenseCategories_{{"id", "name", "type", "typeText"}, this};
-    ReadListModel history_{{"id", "dateText", "type", "typeText", "accountText",
+    ReadListModel history_{{"id", "dateText", "dateIso", "accountId", "secondaryId", "amountInput", "type", "typeText", "accountText",
         "secondaryAccountText", "categoryText", "primaryAmountText",
         "secondaryAmountText", "descriptionText"}, this};
 };

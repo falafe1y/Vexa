@@ -57,6 +57,17 @@ QString money(qint64 minor, int decimals, const QString& currencyCode)
     return digits + QChar(0x00a0) + symbol(currencyCode);
 }
 
+QString editableAmount(qint64 minor, int decimals)
+{
+    QString digits = QString::number(minor);
+    const bool negative = digits.startsWith(QLatin1Char('-'));
+    if (negative) digits.remove(0, 1);
+    while (digits.size() <= decimals) digits.prepend(QLatin1Char('0'));
+    if (decimals > 0) digits.insert(digits.size() - decimals, QLatin1Char(','));
+    if (negative) digits.prepend(QLatin1Char('-'));
+    return digits;
+}
+
 QString accountsCaption(int count)
 {
     const int lastHundred = count % 100;
@@ -82,6 +93,11 @@ QVariantMap accountRow(const services::AccountData& account)
         {"id", idText(account.id)},
         {"name", account.name},
         {"typeText", accountTypeText(account.type)},
+        {"type", static_cast<int>(account.type)},
+        {"openingInput", editableAmount(credit
+            ? account.availableBalanceMinor - account.balanceMinor + account.openingBalanceMinor
+            : account.openingBalanceMinor, account.decimalPlaces)},
+        {"limitInput", editableAmount(account.creditLimitMinor, account.decimalPlaces)},
         {"currencyCode", account.currencyCode},
         {"isCreditCard", credit},
         {"primaryLabel", credit ? QStringLiteral("ДОСТУПНО") : QStringLiteral("ОСТАТОК")},
@@ -126,6 +142,10 @@ QVariantMap operationRow(const services::OperationData& operation)
     return {
         {"id", idText(operation.id)},
         {"dateText", date},
+        {"dateIso", operation.date.toString(Qt::ISODate)},
+        {"accountId", idText(operation.accountId)},
+        {"secondaryId", idText(transfer ? operation.toAccountId : operation.categoryId)},
+        {"amountInput", editableAmount(operation.amountMinor, operation.decimalPlaces)},
         {"type", static_cast<int>(operation.type)},
         {"typeText", transfer ? QStringLiteral("Перевод")
                              : income ? QStringLiteral("Доход") : QStringLiteral("Расход")},

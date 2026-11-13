@@ -4,6 +4,7 @@
 #include "Ledger.h"
 #include "Money.h"
 #include "Operation.h"
+#include <stdexcept>
 
 namespace services {
 
@@ -68,6 +69,28 @@ QUuid OperationService::transfer(
             from.currency()
         )
     ));
+}
+
+QUuid OperationService::update(const QUuid& id, int type,
+    const QUuid& accountId, const QUuid& secondaryId,
+    qint64 amountMinor, QDate date)
+{
+    const auto& account = ledger_.account(accountId);
+    const auto amount = core::model::Money::fromMinorUnits(amountMinor, account.currency());
+    core::model::Operation updated = [&]() {
+        if (type == 0) return core::model::Operation::income(
+            id, date, account, ledger_.category(secondaryId), amount);
+        if (type == 1) return core::model::Operation::expense(
+            id, date, account, ledger_.category(secondaryId), amount);
+        if (type == 2) return core::model::Operation::transfer(
+            id, date, account, ledger_.account(secondaryId), amount);
+        throw std::invalid_argument("Invalid operation type");
+    }();
+
+    ledger_.validateOperationUpdate(updated);
+    database_.saveOperation(updated);
+    ledger_.applyOperationUpdate(updated);
+    return id;
 }
 
 QUuid OperationService::remove(const QUuid& id)

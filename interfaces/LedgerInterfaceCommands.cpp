@@ -157,6 +157,44 @@ bool LedgerInterface::createCategory(const QString& name, int type)
     });
 }
 
+bool LedgerInterface::updateAccount(const QString& id, const QString& name,
+    int type, const QString& currencyCode, const QString& openingBalance,
+    const QString& creditLimit)
+{
+    return executeUiCommand(QStringLiteral("updateAccount"), [&] {
+        if (type < 0 || type > 2) throw std::invalid_argument("Invalid account type");
+        const auto currency = core::model::Currency::fromCode(currencyCode.toStdString());
+        const auto opening = readMinorUnits(openingBalance, currency.decimalPlaces());
+        const auto limit = readMinorUnits(creditLimit, currency.decimalPlaces());
+        if (opening < 0 || limit < 0) throw std::invalid_argument("Amount cannot be negative");
+        if (type == 2 && opening > limit)
+            throw std::invalid_argument("Available balance exceeds credit limit");
+        const qint64 initial = type == 2 ? opening - limit : opening;
+        service_.updateAccount(readId(id), name,
+            static_cast<core::model::AccountType>(type), currencyCode, initial, limit);
+    });
+}
+
+bool LedgerInterface::updateCategory(const QString& id, const QString& name, int type)
+{
+    return executeUiCommand(QStringLiteral("updateCategory"), [&] {
+        if (type < 0 || type > 1) throw std::invalid_argument("Invalid category type");
+        service_.updateCategory(readId(id), name,
+            static_cast<core::model::CategoryType>(type));
+    });
+}
+
+bool LedgerInterface::updateOperation(const QString& id, int type,
+    const QString& accountId, const QString& secondaryId,
+    const QString& amount, const QString& date)
+{
+    return executeUiCommand(QStringLiteral("updateOperation"), [&] {
+        if (type < 0 || type > 2) throw std::invalid_argument("Invalid operation type");
+        service_.updateOperation(readId(id), type, readId(accountId),
+            readId(secondaryId), readAccountAmount(accountId, amount), readDate(date));
+    });
+}
+
 bool LedgerInterface::addIncome(const QString& accountId, const QString& categoryId,
                                 const QString& amount, const QString& date)
 {

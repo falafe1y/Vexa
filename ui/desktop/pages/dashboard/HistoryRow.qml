@@ -7,6 +7,10 @@ Item {
     property bool heading: false
     property string recordId: ""
     property string dateText: ""
+    property string dateIso: ""
+    property string accountId: ""
+    property string secondaryId: ""
+    property string amountInput: ""
     property string typeText: ""
     property int operationType: 0
     property string accountText: ""
@@ -17,6 +21,7 @@ Item {
     property string descriptionText: ""
     property bool busy: false
     signal removeRequested(string recordId, string description)
+    signal editRequested(var data)
 
     implicitHeight: heading ? 40 : 56
     height: implicitHeight
@@ -71,6 +76,15 @@ Item {
     }
     ContextActionMenu {
         id: operationContextMenu
+        editEnabled: !row.busy && !row.heading
+        onEditRequested: row.editRequested({
+            id: row.recordId,
+            type: row.operationType,
+            accountId: row.accountId,
+            secondaryId: row.secondaryId,
+            amountInput: row.amountInput,
+            dateIso: row.dateIso
+        })
         removeEnabled: !row.busy && !row.heading
         onRemoveRequested: row.removeRequested(row.recordId, row.descriptionText)
     }

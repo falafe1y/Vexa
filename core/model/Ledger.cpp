@@ -141,6 +141,115 @@ Ledger Ledger::fromStoredData(
     return ledger;
 }
 
+// Валидация не изменяет журнал. После успешной записи в БД сервис
+// вызывает apply*Update в том же рабочем потоке.
+void Ledger::validateAccountUpdate(const Account& replacement) const
+{
+    const auto& original = requireAccount(replacement.id());
+    if (original.isArchived() || replacement.isArchived() != original.isArchived()) {
+        throw std::invalid_argument("Archived records cannot be edited");
+    }
+
+    if (replacement.currency() != original.currency() && isAccountUsed(replacement.id())) {
+        throw std::invalid_argument("Cannot change currency of an account used in operations");
+    }
+
+    // Проверяем расчёт баланса с новым начальным остатком, не меняя счёт.
+    auto current = replacement.openingBalance();
+    for (const auto& operation : operations_) {
+        current = applyToBalance(current, replacement.id(), operation.details());
+    }
+}
+
+void Ledger::applyAccountUpdate(const Account& replacement)
+{
+    // Наличие ID и корректность данных уже проверены до записи в БД.
+    auto position = accounts_.find(replacement.id());
+    Q_ASSERT(position != accounts_.end());
+    position.value() = replacement;
+}
+
+void Ledger::validateCategoryUpdate(const Category& replacement) const
+{
+    const auto& original = category(replacement.id());
+    if (original.isArchived() || replacement.isArchived() != original.isArchived()) {
+        throw std::invalid_argument("Archived records cannot be edited");
+    }
+    if (original.type() != replacement.type() && isCategoryUsed(replacement.id())) {
+        throw std::invalid_argument("Cannot change type of a category used in operations");
+    }
+}
+
+void Ledger::applyCategoryUpdate(const Category& replacement)
+{
+    auto position = categories_.find(replacement.id());
+    Q_ASSERT(position != categories_.end());
+    position.value() = replacement;
+}
+
+void Ledger::validateOperationUpdate(const Operation& replacement) const
+{
+    const auto position = std::find_if(operations_.cbegin(), operations_.cend(),
+        [&](const Operation& item) { return item.id() == replacement.id(); });
+    if (position == operations_.cend()) {
+        throw std::invalid_argument("Operation not found");
+    }
+
+    const auto checkCurrency = [this](const QUuid& id, Money amount) {
+        if (requireAccount(id).currency() != amount.currency()) {
+            throw std::invalid_argument("Operation currency does not match the account");
+        }
+    };
+
+    // Ссылки и валюты нового варианта должны оставаться допустимыми.
+    const auto& details = replacement.details();
+    if (const auto* income = std::get_if<Operation::Income>(&details)) {
+        checkCategory(income->categoryId, CategoryType::Income, true);
+        checkCurrency(income->accountId, income->amount);
+    } else if (const auto* expense = std::get_if<Operation::Expense>(&details)) {
+        checkCategory(expense->categoryId, CategoryType::Expense, true);
+        checkCurrency(expense->accountId, expense->amount);
+    } else {
+        const auto& transfer = std::get<Operation::Transfer>(details);
+        checkCurrency(transfer.fromAccountId, transfer.sentAmount);
+        checkCurrency(transfer.toAccountId, transfer.receivedAmount);
+    }
+
+    // Пересчитываем только затронутые счета: исходные и новые ссылки.
+    QSet<QUuid> affectedAccounts;
+    const auto collectAccounts = [&affectedAccounts](const Operation::Details& entry) {
+        if (const auto* income = std::get_if<Operation::Income>(&entry)) {
+            affectedAccounts.insert(income->accountId);
+        } else if (const auto* expense = std::get_if<Operation::Expense>(&entry)) {
+            affectedAccounts.insert(expense->accountId);
+        } else {
+            const auto& transfer = std::get<Operation::Transfer>(entry);
+            affectedAccounts.insert(transfer.fromAccountId);
+            affectedAccounts.insert(transfer.toAccountId);
+        }
+    };
+    collectAccounts(position->details());
+    collectAccounts(replacement.details());
+
+    // Подменяем операцию только при расчёте; сам журнал не меняем.
+    for (const auto& accountId : affectedAccounts) {
+        auto current = requireAccount(accountId).openingBalance();
+        for (const auto& operation : operations_) {
+            const auto& entry = operation.id() == replacement.id()
+                ? replacement : operation;
+            current = applyToBalance(current, accountId, entry.details());
+        }
+    }
+}
+
+void Ledger::applyOperationUpdate(const Operation& replacement)
+{
+    auto position = std::find_if(operations_.begin(), operations_.end(),
+        [&](const Operation& item) { return item.id() == replacement.id(); });
+    Q_ASSERT(position != operations_.end());
+    *position = replacement;
+}
+
 void Ledger::addAccount(const Account& account)
 {
     if (accounts_.contains(account.id())) {

@@ -10,6 +10,8 @@ Flickable {
     id: page
     required property var ledger
     signal createAccountRequested()
+    signal editAccountRequested(var data)
+    signal editOperationRequested(var data)
     signal operationRequested(int type)
     signal removeAccountRequested(string recordId, string description)
     signal removeOperationRequested(string recordId, string description)
@@ -242,6 +244,15 @@ Flickable {
                         }
                         ContextActionMenu {
                             id: accountContextMenu
+                            editEnabled: !page.ledger.commandPending
+                            onEditRequested: page.editAccountRequested({
+                                id: accountRow.model.id,
+                                name: accountRow.model.name,
+                                type: accountRow.model.type,
+                                currencyCode: accountRow.model.currencyCode,
+                                openingInput: accountRow.model.openingInput,
+                                limitInput: accountRow.model.limitInput
+                            })
                             removeEnabled: !page.ledger.commandPending
                             onRemoveRequested: page.removeAccountRequested(
                                 accountRow.model.id, accountRow.model.name)
@@ -385,13 +396,17 @@ Flickable {
                 required property var model
                 width: history.width
                 recordId: model.id
-                dateText: model.dateText; typeText: model.typeText; operationType: model.type
+                dateText: model.dateText; dateIso: model.dateIso
+                accountId: model.accountId; secondaryId: model.secondaryId
+                amountInput: model.amountInput
+                typeText: model.typeText; operationType: model.type
                 accountText: model.accountText; secondaryAccountText: model.secondaryAccountText
                 categoryText: model.categoryText
                 primaryAmountText: model.primaryAmountText; secondaryAmountText: model.secondaryAmountText
                 descriptionText: model.descriptionText
                 busy: page.ledger.commandPending
                 onRemoveRequested: (recordId, description) => page.removeOperationRequested(recordId, description)
+                onEditRequested: data => page.editOperationRequested(data)
             }
         }
         Item {

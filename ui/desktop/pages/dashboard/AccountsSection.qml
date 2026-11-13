@@ -6,6 +6,7 @@ ColumnLayout {
     id: section
     required property var ledger
     signal createRequested()
+    signal editRequested(var data)
     signal removeRequested(string recordId, string description)
     spacing: 16
 
@@ -46,6 +47,9 @@ ColumnLayout {
                 Layout.fillWidth: true
                 Layout.minimumWidth: 240
                 Layout.preferredWidth: 300
+                accountType: model.type
+                openingInput: model.openingInput
+                limitInput: model.limitInput
                 recordId: model.id
                 nameText: model.name
                 typeText: model.typeText
@@ -58,6 +62,7 @@ ColumnLayout {
                 busy: section.ledger.commandPending
                 onRemoveRequested: (recordId, description) =>
                     section.removeRequested(recordId, description)
+                onEditRequested: data => section.editRequested(data)
             }
         }
     }

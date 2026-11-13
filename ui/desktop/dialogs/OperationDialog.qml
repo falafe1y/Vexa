@@ -8,11 +8,15 @@ FormDialog {
     required property var ledger
     property int operationType: 0
     property string errorText: ""
+    property var editData: null
+    onClosed: editData = null
     readonly property bool isTransfer: operationType === 2
-    title: operationType === 0 ? "Доход." : operationType === 1 ? "Расход." : "Перевод."
+    title: (editData ? "Редактировать: " : "") +
+        (operationType === 0 ? "Доход." : operationType === 1 ? "Расход." : "Перевод.")
     closePolicy: ledger.commandPending ? Popup.NoAutoClose : Popup.CloseOnEscape
 
     function openFor(type) {
+        editData = null
         operationType = type
         errorText = ""
         amountField.text = ""
@@ -23,12 +27,27 @@ FormDialog {
         open()
     }
 
+    function openForEdit(data) {
+        editData = data
+        operationType = data.type
+        errorText = ""
+        accountBox.currentIndex = accountBox.indexOfValue(data.accountId)
+        if (data.type === 2)
+            receiverBox.currentIndex = receiverBox.indexOfValue(data.secondaryId)
+        else
+            categoryBox.currentIndex = categoryBox.indexOfValue(data.secondaryId)
+        amountField.text = data.amountInput
+        dateField.text = data.dateIso
+        open()
+    }
+
     Connections {
         target: dialog.ledger
         function onCommandFinished(commandName, id) {
             if (dialog.visible && (commandName === "income"
                                   || commandName === "expense"
-                                  || commandName === "transfer")) dialog.close()
+                                  || commandName === "transfer"
+                                  || commandName === "updateOperation")) dialog.close()
         }
         function onErrorOccurred(message) {
             if (dialog.visible) dialog.errorText = message
@@ -102,14 +121,19 @@ FormDialog {
 
     footer: DialogActions {
         busy: dialog.ledger.commandPending
-        submitText: "ДОБАВИТЬ"
+        submitText: dialog.editData ? "СОХРАНИТЬ" : "ДОБАВИТЬ"
         canSubmit: accountBox.currentIndex >= 0
                    && (dialog.isTransfer ? receiverBox.currentIndex >= 0
                                          : categoryBox.currentIndex >= 0)
         onCancelled: dialog.close()
         onSubmitted: {
             dialog.errorText = ""
-            if (dialog.operationType === 0) {
+            if (dialog.editData) {
+                dialog.ledger.updateOperation(dialog.editData.id, dialog.operationType,
+                    accountBox.currentValue,
+                    dialog.isTransfer ? receiverBox.currentValue : categoryBox.currentValue,
+                    amountField.normalizedText, dateField.text)
+            } else if (dialog.operationType === 0) {
                 dialog.ledger.addIncome(accountBox.currentValue, categoryBox.currentValue,
                     amountField.normalizedText, dateField.text)
             } else if (dialog.operationType === 1) {

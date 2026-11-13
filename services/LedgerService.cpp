@@ -183,6 +183,39 @@ void LedgerService::createCategory(
         );
 }
 
+void LedgerService::updateAccount(const QUuid& id, const QString& name,
+    core::model::AccountType type, const QString& currencyCode,
+    qint64 openingBalanceMinor, qint64 creditLimitMinor)
+{
+    executeCommand(QStringLiteral("updateAccount"),
+        [id, name, type, currencyCode, openingBalanceMinor, creditLimitMinor](State& state) {
+            AccountService service{state.database, state.ledger};
+            return service.update(id, name, type, currencyCode,
+                openingBalanceMinor, creditLimitMinor);
+        });
+}
+
+void LedgerService::updateCategory(const QUuid& id, const QString& name,
+    core::model::CategoryType type)
+{
+    executeCommand(QStringLiteral("updateCategory"),
+        [id, name, type](State& state) {
+            CategoryService service{state.database, state.ledger};
+            return service.update(id, name, type);
+        });
+}
+
+void LedgerService::updateOperation(const QUuid& id, int type,
+    const QUuid& accountId, const QUuid& secondaryId,
+    qint64 amountMinor, QDate date)
+{
+    executeCommand(QStringLiteral("updateOperation"),
+        [id, type, accountId, secondaryId, amountMinor, date](State& state) {
+            OperationService service{state.database, state.ledger};
+            return service.update(id, type, accountId, secondaryId, amountMinor, date);
+        });
+}
+
 void LedgerService::requestAccounts()
 {
     executeRequest(

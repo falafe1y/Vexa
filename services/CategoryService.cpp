@@ -25,4 +25,15 @@ QUuid CategoryService::create(
     return category.id();
 }
 
+QUuid CategoryService::update(const QUuid& id, const QString& name,
+    core::model::CategoryType type)
+{
+    const auto& old = ledger_.category(id);
+    const core::model::Category updated{id, name, type, old.isArchived()};
+    ledger_.validateCategoryUpdate(updated);
+    database_.saveCategory(updated);
+    ledger_.applyCategoryUpdate(updated);
+    return id;
+}
+
 } // namespace services

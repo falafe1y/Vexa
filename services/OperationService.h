@@ -47,6 +47,10 @@ public:
         QDate date
     );
 
+    [[nodiscard]] QUuid update(const QUuid& id, int type,
+        const QUuid& accountId, const QUuid& secondaryId,
+        qint64 amountMinor, QDate date);
+
     [[nodiscard]] QUuid remove(const QUuid& id);
 
 private:

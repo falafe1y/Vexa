@@ -7,20 +7,27 @@ FormDialog {
     id: dialog
     required property var ledger
     property string errorText: ""
-    title: "Новая категория."
+    property var editData: null
+    title: editData ? "Редактировать категорию." : "Новая категория."
+    onClosed: editData = null
+
+    function openForEdit(data) {
+        editData = data
+        open()
+    }
     closePolicy: ledger.commandPending ? Popup.NoAutoClose : Popup.CloseOnEscape
 
     onOpened: {
         errorText = ""
-        nameField.text = ""
-        typeBox.currentIndex = 0
+        nameField.text = editData ? editData.name : ""
+        typeBox.currentIndex = editData ? typeBox.indexOfValue(editData.type) : 0
         nameField.forceActiveFocus()
     }
 
     Connections {
         target: dialog.ledger
         function onCommandFinished(commandName, id) {
-            if (dialog.visible && commandName === "createCategory") dialog.close()
+            if (dialog.visible && (commandName === "createCategory" || commandName === "updateCategory")) dialog.close()
         }
         function onErrorOccurred(message) {
             if (dialog.visible) dialog.errorText = message
@@ -50,11 +57,14 @@ FormDialog {
 
     footer: DialogActions {
         busy: dialog.ledger.commandPending
-        submitText: "СОЗДАТЬ"
+        submitText: dialog.editData ? "СОХРАНИТЬ" : "СОЗДАТЬ"
         onCancelled: dialog.close()
         onSubmitted: {
             dialog.errorText = ""
-            dialog.ledger.createCategory(nameField.text, typeBox.currentValue)
+            if (dialog.editData)
+                dialog.ledger.updateCategory(dialog.editData.id, nameField.text, typeBox.currentValue)
+            else
+                dialog.ledger.createCategory(nameField.text, typeBox.currentValue)
         }
     }
 }

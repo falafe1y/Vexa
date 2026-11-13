@@ -16,6 +16,10 @@ Rectangle {
     property string limitText: ""
     property bool busy: false
     signal removeRequested(string recordId, string description)
+    signal editRequested(var data)
+    property int accountType: 0
+    property string openingInput: ""
+    property string limitInput: ""
 
     implicitHeight: 212
     color: DesktopTheme.sidebar
@@ -30,6 +34,15 @@ Rectangle {
     }
     ContextActionMenu {
         id: accountContextMenu
+        editEnabled: !card.busy
+        onEditRequested: card.editRequested({
+            id: card.recordId,
+            name: card.nameText,
+            type: card.accountType,
+            currencyCode: card.currencyCode,
+            openingInput: card.openingInput,
+            limitInput: card.limitInput
+        })
         removeEnabled: !card.busy
         onRemoveRequested: card.removeRequested(card.recordId, card.nameText)
     }

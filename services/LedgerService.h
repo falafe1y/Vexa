@@ -41,6 +41,15 @@ public:
         core::model::CategoryType type
         );
 
+    void updateAccount(const QUuid& id, const QString& name,
+        core::model::AccountType type, const QString& currencyCode,
+        qint64 openingBalanceMinor, qint64 creditLimitMinor);
+    void updateCategory(const QUuid& id, const QString& name,
+        core::model::CategoryType type);
+    void updateOperation(const QUuid& id, int type,
+        const QUuid& accountId, const QUuid& secondaryId,
+        qint64 amountMinor, QDate date);
+
     void requestAccounts();
     void requestCategories();
     void requestOperations(
