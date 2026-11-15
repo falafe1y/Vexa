@@ -35,9 +35,10 @@ qt_add_executable(Vexa
     main.cpp
 )
 
-option(VEXA_MOBILE_UI "Use the phone interface in a desktop build" OFF)
+option(VEXA_MOBILE_UI "Force the phone interface" OFF)
+option(VEXA_TABLET_UI "Force the tablet interface" OFF)
 
-if(ANDROID OR IOS OR VEXA_MOBILE_UI)
+if(ANDROID OR IOS OR VEXA_MOBILE_UI OR VEXA_TABLET_UI)
     set(vexa_ui_dir ui/mobile)
     set(vexa_ui_prefix Mobile)
     set(vexa_ui_theme MobileTheme)
@@ -51,6 +52,29 @@ else()
     set(vexa_ui_entry_files ${vexa_ui_entry_type}.qml ${vexa_ui_dir}/MainView.qml)
 endif()
 
+if(VEXA_TABLET_UI OR ((ANDROID OR IOS) AND NOT VEXA_MOBILE_UI))
+    set(vexa_tablet_files
+        ui/tablet/TabletMainView.qml
+        ui/tablet/common/TabletPageHeader.qml
+        ui/tablet/common/TabletSectionHeading.qml
+        ui/tablet/common/TabletRowActions.qml
+        ui/tablet/navigation/TabletSidebar.qml
+        ui/tablet/pages/categories/TabletCategoriesPage.qml
+        ui/tablet/pages/dashboard/TabletAccountCard.qml
+        ui/tablet/pages/dashboard/TabletAccountsSection.qml
+        ui/tablet/pages/dashboard/TabletAssetSummary.qml
+        ui/tablet/pages/dashboard/TabletDashboardPage.qml
+        ui/tablet/pages/dashboard/TabletHistoryRow.qml
+        ui/tablet/pages/dashboard/TabletOperationButton.qml
+        ui/tablet/pages/settings/TabletSettingsPage.qml
+    )
+    if(VEXA_TABLET_UI)
+        set(vexa_ui_entry_type TabletMainView)
+    else()
+        target_compile_definitions(Vexa PRIVATE VEXA_AUTO_TABLET_UI)
+    endif()
+endif()
+
 set_source_files_properties(
     ${vexa_ui_dir}/common/${vexa_ui_theme}.qml
     PROPERTIES QT_QML_SINGLETON_TYPE TRUE
@@ -60,6 +84,7 @@ qt_add_qml_module(Vexa
     URI UI
     QML_FILES
         ${vexa_ui_entry_files}
+        ${vexa_tablet_files}
         ${vexa_ui_dir}/common/${vexa_ui_prefix}ActionButton.qml
         ${vexa_ui_dir}/common/${vexa_ui_prefix}AmountField.qml
         ${vexa_ui_dir}/common/${vexa_ui_theme}.qml

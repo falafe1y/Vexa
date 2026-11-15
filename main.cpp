@@ -13,6 +13,12 @@
 #include <QStandardPaths>
 #include <QVariant>
 
+#ifdef VEXA_AUTO_TABLET_UI
+#include <QScreen>
+
+#include <algorithm>
+#endif
+
 #include <exception>
 
 int main(int argc, char* argv[])
@@ -87,7 +93,16 @@ int main(int argc, char* argv[])
             {QStringLiteral("updates"),
              QVariant::fromValue(static_cast<QObject*>(&updateInterface))}
         });
-        engine.loadFromModule("UI", QStringLiteral(VEXA_UI_ENTRY_TYPE));
+        QString entryType = QStringLiteral(VEXA_UI_ENTRY_TYPE);
+#ifdef VEXA_AUTO_TABLET_UI
+        if (const auto* screen = QGuiApplication::primaryScreen()) {
+            const auto size = screen->size();
+            constexpr int tabletMinimumSide = 600;
+            if (std::min(size.width(), size.height()) >= tabletMinimumSide)
+                entryType = QStringLiteral("TabletMainView");
+        }
+#endif
+        engine.loadFromModule("UI", entryType);
 
         if (engine.rootObjects().isEmpty()) return 1;
 

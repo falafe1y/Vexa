@@ -6,6 +6,8 @@ Basic.Dialog {
 
     property alias body: fields.data
     property string errorText: ""
+    property real maximumWidth: Infinity
+    property bool centered: false
 
     readonly property int inset: 8
     readonly property real usableHeight: {
@@ -18,10 +20,10 @@ Basic.Dialog {
         return Math.max(0, Math.min(parent.height, keyboardTop))
     }
 
-    width: parent ? Math.max(0, parent.width - 2 * inset) : 0
+    width: parent ? Math.min(maximumWidth, Math.max(0, parent.width - 2 * inset)) : 0
     height: Math.min(implicitHeight, Math.max(0, usableHeight - 2 * inset))
-    x: inset
-    y: Math.max(inset, usableHeight - height - inset)
+    x: centered && parent ? (parent.width - width) / 2 : inset
+    y: Math.max(inset, centered ? (usableHeight - height) / 2 : usableHeight - height - inset)
     bottomPadding: 8
     topPadding: 0
     leftPadding: MobileTheme.pagePadding
