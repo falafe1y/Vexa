@@ -35,6 +35,11 @@ qt_add_executable(Vexa
     main.cpp
 )
 
+if(ANDROID)
+    include("D:/Qt/android_openssl/android_openssl.cmake")
+    add_android_openssl_libraries(Vexa)
+endif()
+
 option(VEXA_MOBILE_UI "Force the phone interface" OFF)
 option(VEXA_TABLET_UI "Force the tablet interface" OFF)
 
