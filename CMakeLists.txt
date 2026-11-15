@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.16)
 
-project(Vexa VERSION 0.1.0 LANGUAGES CXX)
+project(Vexa VERSION 0.1.1 LANGUAGES CXX)
 
 set(VEXA_PUBLISHER "Vishnevsky")
 
@@ -154,6 +154,7 @@ target_compile_definitions(Vexa PRIVATE
 target_link_libraries(Vexa
     PRIVATE
     Qt6::Quick
+    Qt6::Sql
     core_model
     core_db
     services
