@@ -74,19 +74,27 @@ void UpdateService::checkForUpdates()
             return;
         }
 
-        bool hasWindowsInstaller = false;
+#if defined(Q_OS_ANDROID)
+        const QString expectedAsset = QStringLiteral("Vexa-%1-android.apk").arg(version);
+#elif defined(Q_OS_WIN)
         const QString expectedAsset = QStringLiteral("Vexa-Setup-%1-win64.exe").arg(version);
-        for (const auto& asset : release.value(QStringLiteral("assets")).toArray()) {
-            if (asset.toObject().value(QStringLiteral("name")).toString() == expectedAsset &&
-                !asset.toObject().value(QStringLiteral("browser_download_url")).toString().isEmpty()) {
-                hasWindowsInstaller = true;
+#else
+        const QString expectedAsset;
+#endif
+
+        bool hasPlatformAsset = false;
+        for (const auto& value : release.value(QStringLiteral("assets")).toArray()) {
+            const auto asset = value.toObject();
+            if (!expectedAsset.isEmpty() &&
+                asset.value(QStringLiteral("name")).toString() == expectedAsset &&
+                !asset.value(QStringLiteral("browser_download_url")).toString().isEmpty()) {
+                hasPlatformAsset = true;
                 break;
             }
         }
 
         latestVersion_ = version;
-        updateAvailable_ = hasWindowsInstaller &&
-            QVersionNumber::compare(availableVersion, installedVersion) > 0;
+        updateAvailable_ = hasPlatformAsset && QVersionNumber::compare(availableVersion, installedVersion) > 0;
         errorMessage_.clear();
         emit stateChanged();
     });

@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.16)
 
-project(Vexa VERSION 0.0.4 LANGUAGES CXX)
+project(Vexa VERSION 0.1.0 LANGUAGES CXX)
 
 set(VEXA_PUBLISHER "Vishnevsky")
 
