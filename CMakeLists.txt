@@ -35,42 +35,57 @@ qt_add_executable(Vexa
     main.cpp
 )
 
+option(VEXA_MOBILE_UI "Use the phone interface in a desktop build" OFF)
+
+if(ANDROID OR IOS OR VEXA_MOBILE_UI)
+    set(vexa_ui_dir ui/mobile)
+    set(vexa_ui_prefix Mobile)
+    set(vexa_ui_theme MobileTheme)
+    set(vexa_ui_entry_type MobileMainView)
+    set(vexa_ui_entry_files ${vexa_ui_dir}/${vexa_ui_entry_type}.qml)
+else()
+    set(vexa_ui_dir ui/desktop)
+    set(vexa_ui_prefix "")
+    set(vexa_ui_theme DesktopTheme)
+    set(vexa_ui_entry_type Main)
+    set(vexa_ui_entry_files ${vexa_ui_entry_type}.qml ${vexa_ui_dir}/MainView.qml)
+endif()
+
 set_source_files_properties(
-    ui/desktop/common/DesktopTheme.qml
+    ${vexa_ui_dir}/common/${vexa_ui_theme}.qml
     PROPERTIES QT_QML_SINGLETON_TYPE TRUE
 )
 
 qt_add_qml_module(Vexa
     URI UI
     QML_FILES
-        Main.qml
-        ui/desktop/MainView.qml
-        ui/desktop/common/ActionButton.qml
-        ui/desktop/common/AmountField.qml
-        ui/desktop/common/DesktopTheme.qml
-        ui/desktop/common/DialogActions.qml
-        ui/desktop/common/EditorialText.qml
-        ui/desktop/common/FormDialog.qml
-        ui/desktop/common/FormError.qml
-        ui/desktop/common/InputField.qml
-        ui/desktop/common/PageHeading.qml
-        ui/desktop/common/SelectField.qml
-        ui/desktop/common/BaseCurrencySelector.qml
-        ui/desktop/common/PopupMenu.qml
-        ui/desktop/common/PopupMenuItem.qml
-        ui/desktop/common/ContextActionMenu.qml
-        ui/desktop/pages/dashboard/AccountCard.qml
-        ui/desktop/pages/dashboard/AccountsSection.qml
-        ui/desktop/pages/dashboard/AssetSummary.qml
-        ui/desktop/dialogs/AccountDialog.qml
-        ui/desktop/dialogs/CategoryDialog.qml
-        ui/desktop/dialogs/OperationDialog.qml
-        ui/desktop/dialogs/RemovalDialog.qml
-        ui/desktop/pages/dashboard/HistoryRow.qml
-        ui/desktop/navigation/Sidebar.qml
-        ui/desktop/pages/categories/CategoriesPage.qml
-        ui/desktop/pages/dashboard/DashboardPage.qml
-        ui/desktop/pages/settings/SettingsPage.qml
+        ${vexa_ui_entry_files}
+        ${vexa_ui_dir}/common/${vexa_ui_prefix}ActionButton.qml
+        ${vexa_ui_dir}/common/${vexa_ui_prefix}AmountField.qml
+        ${vexa_ui_dir}/common/${vexa_ui_theme}.qml
+        ${vexa_ui_dir}/common/${vexa_ui_prefix}DialogActions.qml
+        ${vexa_ui_dir}/common/${vexa_ui_prefix}EditorialText.qml
+        ${vexa_ui_dir}/common/${vexa_ui_prefix}FormDialog.qml
+        ${vexa_ui_dir}/common/${vexa_ui_prefix}FormError.qml
+        ${vexa_ui_dir}/common/${vexa_ui_prefix}InputField.qml
+        ${vexa_ui_dir}/common/${vexa_ui_prefix}PageHeading.qml
+        ${vexa_ui_dir}/common/${vexa_ui_prefix}SelectField.qml
+        ${vexa_ui_dir}/common/${vexa_ui_prefix}BaseCurrencySelector.qml
+        ${vexa_ui_dir}/common/${vexa_ui_prefix}PopupMenu.qml
+        ${vexa_ui_dir}/common/${vexa_ui_prefix}PopupMenuItem.qml
+        ${vexa_ui_dir}/common/${vexa_ui_prefix}ContextActionMenu.qml
+        ${vexa_ui_dir}/pages/dashboard/${vexa_ui_prefix}AccountCard.qml
+        ${vexa_ui_dir}/pages/dashboard/${vexa_ui_prefix}AccountsSection.qml
+        ${vexa_ui_dir}/pages/dashboard/${vexa_ui_prefix}AssetSummary.qml
+        ${vexa_ui_dir}/dialogs/${vexa_ui_prefix}AccountDialog.qml
+        ${vexa_ui_dir}/dialogs/${vexa_ui_prefix}CategoryDialog.qml
+        ${vexa_ui_dir}/dialogs/${vexa_ui_prefix}OperationDialog.qml
+        ${vexa_ui_dir}/dialogs/${vexa_ui_prefix}RemovalDialog.qml
+        ${vexa_ui_dir}/pages/dashboard/${vexa_ui_prefix}HistoryRow.qml
+        ${vexa_ui_dir}/navigation/${vexa_ui_prefix}Sidebar.qml
+        ${vexa_ui_dir}/pages/categories/${vexa_ui_prefix}CategoriesPage.qml
+        ${vexa_ui_dir}/pages/dashboard/${vexa_ui_prefix}DashboardPage.qml
+        ${vexa_ui_dir}/pages/settings/${vexa_ui_prefix}SettingsPage.qml
 )
 
 # Exactly the editorial font files used by Vexa-original. Qt ships them with the app.
@@ -101,7 +116,10 @@ set_target_properties(Vexa PROPERTIES
     WIN32_EXECUTABLE TRUE
 )
 
-target_compile_definitions(Vexa PRIVATE "VEXA_VERSION=\"${PROJECT_VERSION}\"")
+target_compile_definitions(Vexa PRIVATE
+    "VEXA_VERSION=\"${PROJECT_VERSION}\""
+    "VEXA_UI_ENTRY_TYPE=\"${vexa_ui_entry_type}\""
+)
 
 target_link_libraries(Vexa
     PRIVATE

@@ -87,7 +87,7 @@ int main(int argc, char* argv[])
             {QStringLiteral("updates"),
              QVariant::fromValue(static_cast<QObject*>(&updateInterface))}
         });
-        engine.loadFromModule("UI", "Main");
+        engine.loadFromModule("UI", QStringLiteral(VEXA_UI_ENTRY_TYPE));
 
         if (engine.rootObjects().isEmpty()) return 1;
 
