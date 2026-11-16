@@ -75,7 +75,11 @@ ColumnLayout {
                 delegate: Shape {
                     id: sector
 
-                    required property color sectorColor
+                    required property int index
+                    required property bool isOther
+                    readonly property color sectorColor: sector.isOther
+                        ? section.theme.expenseOtherColor
+                        : section.theme.expenseCategoryColors[sector.index]
                     required property real startAngle
                     required property real sweepAngle
 
@@ -122,7 +126,11 @@ ColumnLayout {
                     required property string name
                     required property string amountText
                     required property string shareText
-                    required property color sectorColor
+                    required property int index
+                    required property bool isOther
+                    readonly property color sectorColor: entry.isOther
+                        ? section.theme.expenseOtherColor
+                        : section.theme.expenseCategoryColors[entry.index]
 
                     Layout.fillWidth: true
                     Layout.minimumWidth: 0

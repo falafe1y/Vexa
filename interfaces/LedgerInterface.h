@@ -143,7 +143,7 @@ private:
         "secondaryAccountText", "categoryText", "primaryAmountText",
         "secondaryAmountText", "descriptionText"}, this};
     ReadListModel expenseSummary_{{"id", "name", "amountText", "shareText",
-        "sectorColor", "startAngle", "sweepAngle"}, this};
+        "isOther", "startAngle", "sweepAngle"}, this};
 };
 
 } // namespace interfaces

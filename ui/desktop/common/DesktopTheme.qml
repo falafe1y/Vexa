@@ -10,6 +10,16 @@ QtObject {
     readonly property color line: "#bbb5a8"
     readonly property color accent: "#b84932"
     readonly property color income: "#2e5947"
+    readonly property list<color> expenseCategoryColors: [
+        "#D67B50",
+        "#E3895A",
+        "#EB9766",
+        "#F0A675",
+        "#F5B487",
+        "#F8C29B",
+        "#FBD0AE"
+    ]
+    readonly property color expenseOtherColor: muted
     readonly property string sans: "Arimo"
     readonly property string serif: "PT Serif"
     readonly property int menuItemHeight: 40

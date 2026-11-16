@@ -1,9 +1,6 @@
 #include "LedgerPresentation.h"
 
-#include <QColor>
 #include <QLocale>
-
-#include <cmath>
 
 namespace interfaces::presentation {
 
@@ -166,7 +163,6 @@ QVariantList expenseSummaryRows(const services::ExpenseSummary& summary,
     QVariantList rows;
     rows.reserve(static_cast<qsizetype>(summary.categories.size()));
     const QLocale locale(QLocale::Russian, QLocale::Russia);
-    constexpr double hueStep = 0.381966;
     long double cumulativeWeight = 0;
 
     for (const auto& category : summary.categories) {
@@ -180,15 +176,12 @@ QVariantList expenseSummaryRows(const services::ExpenseSummary& summary,
             : money(category.amountMinor, decimals, currencyCode);
 
         const bool other = category.id.isNull();
-        const auto color = other
-            ? QColor(QStringLiteral("#59616a"))
-            : QColor::fromHslF(std::fmod(0.04 + rows.size() * hueStep, 1.0), 0.53, 0.43);
         rows.push_back(QVariantMap{
             {"id", idText(category.id)},
             {"name", other ? QStringLiteral("Прочее") : category.name},
             {"amountText", amountText},
             {"shareText", shareText},
-            {"sectorColor", color},
+            {"isOther", other},
             {"startAngle", static_cast<double>(360 * cumulativeWeight / summary.totalWeight - 90)},
             {"sweepAngle", static_cast<double>(360 * share)}
         });

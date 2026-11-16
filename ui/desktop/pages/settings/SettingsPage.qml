@@ -34,7 +34,6 @@ Flickable {
         width: page.mainWidth
         height: masthead.height + 24 + content.implicitHeight
 
-        // Шапка — геометрия как на Dashboard
         Item {
             id: masthead
 
