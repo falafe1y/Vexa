@@ -8,7 +8,7 @@ Basic.Dialog {
     id: dialog
     property alias body: bodyScroll.contentData
     parent: Overlay.overlay
-    width: Math.min(480, parent.width - 48)
+    width: Math.min(400, parent.width - 48)
     x: (parent.width - width) / 2
     y: (parent.height - height) / 2
     modal: true

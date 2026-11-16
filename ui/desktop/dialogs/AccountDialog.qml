@@ -25,8 +25,8 @@ FormDialog {
         currencyBox.currentIndex = editData
             ? ledger.currencyCodes.indexOf(editData.currencyCode)
             : ledger.baseCurrencyIndex
-        openingField.text = editData ? editData.openingInput : "0"
-        limitField.text = editData ? editData.limitInput : "0"
+        openingField.text = editData ? editData.openingInput : ""
+        limitField.text = editData ? editData.limitInput : ""
         includeDebtCheck.checked = editData?.includeDebtInTotal ?? true
         nameField.forceActiveFocus()
     }
@@ -45,16 +45,19 @@ FormDialog {
         width: dialog.availableWidth
         enabled: !dialog.ledger.commandPending
         spacing: 8
-        EditorialText { text: "Название" }
         InputField {
             id: nameField
+            underlined: true
             Layout.fillWidth: true
-            placeholderText: "Например, Наличные"
+            placeholderText: "Название счёта"
+            Accessible.name: placeholderText
         }
 
-        EditorialText { text: "Тип счета" }
         SelectField {
             id: typeBox
+            underlined: true
+            fieldLabel: "Тип счета"
+            Accessible.name: "Тип счёта"
             Layout.fillWidth: true
             textRole: "text"
             valueRole: "value"
@@ -64,40 +67,31 @@ FormDialog {
                 {text: "Кредитная карта", value: 2}
             ]
         }
-        EditorialText { text: "Валюта" }
         SelectField {
             id: currencyBox
+            underlined: true
+            fieldLabel: "Валюта"
+            Accessible.name: "Валюта"
             Layout.fillWidth: true
             model: dialog.ledger.currencyCodes
         }
 
-        EditorialText {
-            text: typeBox.currentValue === 2
-                ? "Доступный остаток по кредитке"
-                : "Начальный остаток"
-        }
         AmountField {
             id: openingField
+            underlined: true
             Layout.fillWidth: true
-            placeholderText: "0,00"
-        }
-        EditorialText {
-            Layout.fillWidth: true
-            visible: typeBox.currentValue === 2
-            text: "Укажите доступную сумму, а не долг. Например, лимит 100000 и доступно 80000 означают долг 20000."
-            color: DesktopTheme.muted
-            font.pixelSize: 12
-            wrapMode: Text.WordWrap
-        }
-        EditorialText {
-            visible: typeBox.currentValue === 2
-            text: "Кредитный лимит"
+            placeholderText: typeBox.currentValue === 2
+                ? "Доступный остаток по кредитке"
+                : "Начальный остаток"
+            Accessible.name: placeholderText
         }
         AmountField {
             id: limitField
+            underlined: true
             Layout.fillWidth: true
             visible: typeBox.currentValue === 2
-            placeholderText: "Например, 100000"
+            placeholderText: "Кредитный лимит"
+            Accessible.name: placeholderText
         }
         Basic.CheckBox {
             id: includeDebtCheck
@@ -118,13 +112,13 @@ FormDialog {
             if (dialog.editData) {
                 dialog.ledger.updateAccount(dialog.editData.id, nameField.text,
                     typeBox.currentValue, currencyBox.currentText,
-                    openingField.normalizedText,
-                    typeBox.currentValue === 2 ? limitField.normalizedText : "0",
+                    openingField.normalizedText || "0",
+                    typeBox.currentValue === 2 ? (limitField.normalizedText || "0") : "0",
                     includeDebtCheck.checked)
             } else {
                 dialog.ledger.createAccount(nameField.text, typeBox.currentValue,
-                    currencyBox.currentText, openingField.normalizedText,
-                    typeBox.currentValue === 2 ? limitField.normalizedText : "0",
+                    currencyBox.currentText, openingField.normalizedText || "0",
+                    typeBox.currentValue === 2 ? (limitField.normalizedText || "0") : "0",
                     includeDebtCheck.checked)
             }
         }

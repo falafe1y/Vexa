@@ -60,26 +60,32 @@ FormDialog {
         width: dialog.availableWidth
         enabled: !dialog.ledger.commandPending
         spacing: 10
-        EditorialText { text: dialog.isTransfer ? "Счет отправителя" : "Счет" }
         SelectField {
             id: accountBox
+            underlined: true
+            fieldLabel: dialog.isTransfer ? "Откуда" : "Счёт"
+            Accessible.name: fieldLabel
             Layout.fillWidth: true
             model: dialog.ledger.accountsModel
             textRole: "name"
             valueRole: "id"
         }
-        EditorialText { visible: dialog.isTransfer; text: "Счет получателя" }
         SelectField {
             id: receiverBox
+            underlined: true
+            fieldLabel: "Куда"
+            Accessible.name: fieldLabel
             Layout.fillWidth: true
             visible: dialog.isTransfer
             model: dialog.ledger.accountsModel
             textRole: "name"
             valueRole: "id"
         }
-        EditorialText { visible: !dialog.isTransfer; text: "Категория" }
         SelectField {
             id: categoryBox
+            underlined: true
+            fieldLabel: "Категория"
+            Accessible.name: fieldLabel
             Layout.fillWidth: true
             visible: !dialog.isTransfer
             model: dialog.operationType === 0
@@ -96,13 +102,14 @@ FormDialog {
             color: DesktopTheme.muted
             font.pixelSize: 12
         }
-        EditorialText {
-            text: dialog.isTransfer ? "Сумма списания в валюте отправителя" : "Сумма в валюте счета"
-        }
         AmountField {
             id: amountField
+            underlined: true
+            Accessible.name: placeholderText
             Layout.fillWidth: true
-            placeholderText: "Например, 1500,50"
+            placeholderText: dialog.isTransfer
+                ? "Сумма списания в валюте отправителя"
+                : "Сумма в валюте счёта"
         }
         EditorialText {
             Layout.fillWidth: true
@@ -112,19 +119,22 @@ FormDialog {
             color: DesktopTheme.muted
             wrapMode: Text.WordWrap
         }
-        EditorialText { text: "Описание" }
         InputField {
             id: descriptionField
+            placeholderText: "Описание"
+            underlined: true
+            Accessible.name: placeholderText
             Layout.fillWidth: true
             validator: RegularExpressionValidator {
                 regularExpression: /^[\s\S]{0,50}$/
             }
         }
-        EditorialText { text: "Дата" }
         InputField {
             id: dateField
+            underlined: true
+            Accessible.name: placeholderText
             Layout.fillWidth: true
-            placeholderText: "ДД.ММ.ГГГГ"
+            placeholderText: "Дата"
         }
         FormError { Layout.fillWidth: true; message: dialog.errorText }
     }

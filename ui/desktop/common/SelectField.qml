@@ -12,7 +12,14 @@ Basic.ComboBox {
     property color backgroundColor: DesktopTheme.sidebar
     property color borderColor: DesktopTheme.line
 
-    implicitHeight: 42
+    property bool underlined: false
+    property string fieldLabel: ""
+    readonly property bool underlineFocused: activeFocus || popup.visible
+    readonly property bool labelRaised: underlineFocused || displayText.length > 0
+
+    implicitHeight: underlined ? 36 : 42
+    topPadding: underlined && fieldLabel.length > 0 ? 11 : padding
+    bottomPadding: underlined && fieldLabel.length > 0 ? 4 : padding
     hoverEnabled: true
     font.family: DesktopTheme.sans
     font.pixelSize: 14
@@ -23,25 +30,56 @@ Basic.ComboBox {
         color: control.enabled && control.hovered
             ? control.hoverColor : control.textColor
         verticalAlignment: Text.AlignVCenter
-        leftPadding: DesktopTheme.menuTextPadding
+        leftPadding: control.underlined ? 0 : DesktopTheme.menuTextPadding
         rightPadding: 30
         elide: Text.ElideRight
     }
 
     indicator: Text {
-        text: "⌄"
-        font.pixelSize: 20
-        color: control.enabled && control.hovered
-            ? control.hoverColor : control.textColor
+        text: "▾"
+        font.pixelSize: 12
+        color: control.textColor
+
         anchors.right: parent.right
-        anchors.rightMargin: 12
+        anchors.rightMargin: control.underlined ? 0 : 12
         anchors.verticalCenter: parent.verticalCenter
     }
 
     background: Rectangle {
-        color: control.backgroundColor
-        border.width: 1
+        color: control.underlined ? "transparent" : control.backgroundColor
+        border.width: control.underlined ? 0 : 1
         border.color: control.activeFocus ? control.hoverColor : control.borderColor
+
+        Text {
+            visible: control.underlined && control.fieldLabel.length > 0
+            width: parent.width - 30
+            elide: Text.ElideRight
+            text: control.fieldLabel
+            color: DesktopTheme.muted
+            font.family: control.font.family
+            font.pixelSize: control.font.pixelSize
+            transformOrigin: Item.TopLeft
+
+            y: control.labelRaised ? 0 : (parent.height - height) / 2
+            scale: control.labelRaised ? 0.75 : 1
+
+            Behavior on y {
+                NumberAnimation { duration: 160; easing.type: Easing.OutCubic }
+            }
+            Behavior on scale {
+                NumberAnimation { duration: 160; easing.type: Easing.OutCubic }
+            }
+        }
+
+        Rectangle {
+            anchors.left: parent.left
+            anchors.right: parent.right
+            anchors.bottom: parent.bottom
+            anchors.bottomMargin: 4
+            height: 1
+            visible: control.underlined
+            color: DesktopTheme.ink
+        }
     }
 
     delegate: Basic.ItemDelegate {
