@@ -8,6 +8,7 @@
 #include <QDir>
 #include <QGuiApplication>
 #include <QFontDatabase>
+#include <QIcon>
 #include <QQmlApplicationEngine>
 #include <QQmlContext>
 #include <QStandardPaths>
@@ -27,6 +28,12 @@ int main(int argc, char* argv[])
     // QCoreApplication::setOrganizationName(QStringLiteral("Vexa"));
     QCoreApplication::setApplicationName(QStringLiteral("Vexa"));
     QCoreApplication::setApplicationVersion(QStringLiteral(VEXA_VERSION));
+#if !defined(Q_OS_ANDROID) && !defined(Q_OS_IOS)
+    QGuiApplication::setWindowIcon(QIcon(QStringLiteral(":/icons/vexa.png")));
+#endif
+#if defined(Q_OS_LINUX) && !defined(Q_OS_ANDROID)
+    QGuiApplication::setDesktopFileName(QStringLiteral("vexa"));
+#endif
 
     // Presentation-only fonts; no legacy services, controllers or JS.
     const QDir editorialFonts(QStringLiteral(":/fonts/editorial"));

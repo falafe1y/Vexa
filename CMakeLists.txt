@@ -3,6 +3,7 @@ cmake_minimum_required(VERSION 3.16)
 project(Vexa VERSION 0.1.1 LANGUAGES CXX)
 
 set(VEXA_PUBLISHER "Vishnevsky")
+set(vexa_icon_dir "${CMAKE_CURRENT_SOURCE_DIR}/assets/icons")
 
 if(WIN32)
     enable_language(RC)
@@ -38,6 +39,36 @@ qt_add_executable(Vexa
 if(ANDROID)
     include("D:/Qt/android_openssl/android_openssl.cmake")
     add_android_openssl_libraries(Vexa)
+    set_target_properties(Vexa PROPERTIES
+        QT_ANDROID_PACKAGE_SOURCE_DIR "${vexa_icon_dir}/android"
+        QT_ANDROID_APP_ICON "@mipmap/vexa_launcher"
+    )
+elseif(IOS)
+    set(vexa_ios_icons "${vexa_icon_dir}/ios/Assets.xcassets")
+    target_sources(Vexa PRIVATE "${vexa_ios_icons}")
+    set_source_files_properties("${vexa_ios_icons}" PROPERTIES
+        MACOSX_PACKAGE_LOCATION "Resources"
+    )
+    set_target_properties(Vexa PROPERTIES
+        XCODE_ATTRIBUTE_ASSETCATALOG_COMPILER_APPICON_NAME "AppIcon"
+    )
+elseif(APPLE)
+    set(vexa_macos_icon "${vexa_icon_dir}/macos/Vexa.icns")
+    target_sources(Vexa PRIVATE "${vexa_macos_icon}")
+    set_source_files_properties("${vexa_macos_icon}" PROPERTIES
+        MACOSX_PACKAGE_LOCATION "Resources"
+    )
+    set_target_properties(Vexa PROPERTIES MACOSX_BUNDLE_ICON_FILE "Vexa.icns")
+endif()
+
+if(NOT ANDROID AND NOT IOS)
+    if(WIN32)
+        set(vexa_window_icon "${vexa_icon_dir}/windows/vexa.png")
+    else()
+        set(vexa_window_icon "${vexa_icon_dir}/linux/hicolor/256x256/apps/vexa.png")
+    endif()
+    set_source_files_properties("${vexa_window_icon}" PROPERTIES QT_RESOURCE_ALIAS "vexa.png")
+    qt_add_resources(Vexa "window_icon" PREFIX "/icons" FILES "${vexa_window_icon}")
 endif()
 
 option(VEXA_MOBILE_UI "Force the phone interface" OFF)
@@ -180,5 +211,17 @@ install(TARGETS Vexa
 if(WIN32)
     target_sources(Vexa PRIVATE
         "${CMAKE_CURRENT_BINARY_DIR}/version.rc"
+    )
+    set_source_files_properties("${CMAKE_CURRENT_BINARY_DIR}/version.rc" PROPERTIES
+        OBJECT_DEPENDS "${vexa_icon_dir}/windows/vexa.ico"
+    )
+elseif(CMAKE_SYSTEM_NAME STREQUAL "Linux" AND NOT ANDROID)
+    install(
+        FILES cmake/vexa.desktop
+        DESTINATION "${CMAKE_INSTALL_DATADIR}/applications"
+    )
+    install(
+        DIRECTORY "${vexa_icon_dir}/linux/hicolor/"
+        DESTINATION "${CMAKE_INSTALL_DATADIR}/icons/hicolor"
     )
 endif()

@@ -22,6 +22,8 @@ Compression=lzma2
 SolidCompression=yes
 WizardStyle=modern
 UninstallDisplayName=Vexa
+SetupIconFile=assets\icons\windows\vexa.ico
+UninstallDisplayIcon={app}\{#VexaExeName}
 
 ; Request graceful shutdown of running applications
 CloseApplications=yes
