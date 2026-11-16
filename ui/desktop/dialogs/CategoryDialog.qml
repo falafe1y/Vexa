@@ -37,16 +37,21 @@ FormDialog {
     body: ColumnLayout {
         width: dialog.availableWidth
         enabled: !dialog.ledger.commandPending
-        spacing: 10
-        EditorialText { text: "Название" }
+        spacing: 12
+
         InputField {
             id: nameField
+            underlined: true
+            placeholderText: "Название"
+            Accessible.name: placeholderText
             Layout.fillWidth: true
-            placeholderText: "Например, Продукты"
         }
-        EditorialText { text: "Тип категории" }
+
         SelectField {
             id: typeBox
+            underlined: true
+            fieldLabel: "Тип"
+            Accessible.name: fieldLabel
             Layout.fillWidth: true
             textRole: "text"
             valueRole: "value"

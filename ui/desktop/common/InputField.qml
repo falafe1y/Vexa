@@ -52,7 +52,7 @@ Basic.TextField {
             anchors.bottomMargin: 4
             height: 1
             visible: control.underlined
-            color: DesktopTheme.ink
+            color: DesktopTheme.line
         }
     }
 }

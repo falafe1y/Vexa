@@ -59,7 +59,7 @@ FormDialog {
     body: ColumnLayout {
         width: dialog.availableWidth
         enabled: !dialog.ledger.commandPending
-        spacing: 10
+        spacing: 12
         SelectField {
             id: accountBox
             underlined: true
@@ -111,14 +111,6 @@ FormDialog {
                 ? "Сумма списания в валюте отправителя"
                 : "Сумма в валюте счёта"
         }
-        EditorialText {
-            Layout.fillWidth: true
-            visible: dialog.isTransfer
-            text: "Зачисление рассчитает сервис по фиксированному курсу."
-            font.pixelSize: 12
-            color: DesktopTheme.muted
-            wrapMode: Text.WordWrap
-        }
         InputField {
             id: descriptionField
             placeholderText: "Описание"
@@ -132,9 +124,9 @@ FormDialog {
         InputField {
             id: dateField
             underlined: true
+            placeholderText: "Дата"
             Accessible.name: placeholderText
             Layout.fillWidth: true
-            placeholderText: "Дата"
         }
         FormError { Layout.fillWidth: true; message: dialog.errorText }
     }

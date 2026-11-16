@@ -41,7 +41,6 @@ Basic.ComboBox {
         color: control.textColor
 
         anchors.right: parent.right
-        anchors.rightMargin: control.underlined ? 0 : 12
         anchors.verticalCenter: parent.verticalCenter
     }
 
@@ -78,7 +77,7 @@ Basic.ComboBox {
             anchors.bottomMargin: 4
             height: 1
             visible: control.underlined
-            color: DesktopTheme.ink
+            color: DesktopTheme.line
         }
     }
 
@@ -105,27 +104,47 @@ Basic.ComboBox {
             elide: Text.ElideRight
         }
 
-        background: Rectangle {
-            color: control.backgroundColor
+        background: Item {
+            Rectangle {
+                anchors.left: parent.left
+                anchors.right: parent.right
+                anchors.bottom: parent.bottom
+                height: 1
+                color: DesktopTheme.line
+                visible: option.index < control.count - 1
+            }
         }
     }
 
     popup: Basic.Popup {
+        id: menu
         y: control.height - 1
         width: control.popupWidth
         padding: DesktopTheme.menuPadding
+        margins: 8
+
+        height: Math.min(
+            menuList.contentHeight + menu.topPadding + menu.bottomPadding,
+            240,
+            Math.max(0, control.Window.height - 2 * menu.margins)
+        )
 
         background: Rectangle {
-            color: control.backgroundColor
+            color: DesktopTheme.paper
             border.width: 1
             border.color: control.borderColor
         }
 
         contentItem: ListView {
-            implicitHeight: contentHeight
+            id: menuList
             model: control.delegateModel
             currentIndex: control.highlightedIndex
             clip: true
+            boundsBehavior: Flickable.StopAtBounds
+
+            Basic.ScrollBar.vertical: Basic.ScrollBar {
+                policy: Basic.ScrollBar.AsNeeded
+            }
         }
     }
 }

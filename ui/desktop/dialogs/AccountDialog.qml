@@ -44,7 +44,8 @@ FormDialog {
     body: ColumnLayout {
         width: dialog.availableWidth
         enabled: !dialog.ledger.commandPending
-        spacing: 8
+        spacing: 12
+
         InputField {
             id: nameField
             underlined: true
@@ -53,27 +54,36 @@ FormDialog {
             Accessible.name: placeholderText
         }
 
-        SelectField {
-            id: typeBox
-            underlined: true
-            fieldLabel: "Тип счета"
-            Accessible.name: "Тип счёта"
+        Row {
+            id: row
             Layout.fillWidth: true
-            textRole: "text"
-            valueRole: "value"
-            model: [
-                {text: "Наличные", value: 0},
-                {text: "Дебетовая карта", value: 1},
-                {text: "Кредитная карта", value: 2}
-            ]
-        }
-        SelectField {
-            id: currencyBox
-            underlined: true
-            fieldLabel: "Валюта"
-            Accessible.name: "Валюта"
-            Layout.fillWidth: true
-            model: dialog.ledger.currencyCodes
+            spacing: 12
+
+            readonly property real availableWidth: Math.max(0, width - spacing)
+
+            SelectField {
+                id: typeBox
+                underlined: true
+                fieldLabel: "Тип счета"
+                Accessible.name: "Тип счёта"
+                width: Math.round(row.availableWidth * 2 / 3)
+                textRole: "text"
+                valueRole: "value"
+                model: [
+                    {text: "Наличные", value: 0},
+                    {text: "Дебетовая карта", value: 1},
+                    {text: "Кредитная карта", value: 2}
+                ]
+            }
+
+            SelectField {
+                id: currencyBox
+                underlined: true
+                fieldLabel: "Валюта"
+                Accessible.name: "Валюта"
+                width: row.availableWidth - typeBox.width
+                model: dialog.ledger.currencyCodes
+            }
         }
 
         AmountField {

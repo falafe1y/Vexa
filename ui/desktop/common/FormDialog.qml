@@ -46,8 +46,6 @@ Basic.Dialog {
 
         Rectangle {
             Layout.fillWidth: true
-            Layout.leftMargin: 24
-            Layout.rightMargin: 24
             height: 1
             color: DesktopTheme.ink
         }
