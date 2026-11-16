@@ -29,6 +29,9 @@ public:
         qint64 limit
         ) const;
 
+    [[nodiscard]]
+    ExpenseSummary expenseSummary(core::model::Currency currency) const;
+
 private:
     const core::model::Ledger& ledger_;
 

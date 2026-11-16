@@ -72,6 +72,18 @@ LedgerInterface::LedgerInterface(services::LedgerService& service,
             }
         }, Qt::QueuedConnection);
 
+    connect(&service_, &services::LedgerService::expenseSummaryReady, this,
+        [this](const services::ExpenseSummary& summary, const QString& currencyCode) {
+            if (!finishExpenseSummaryRequest()) return;
+
+            expenseSummaryFailed_ = false;
+            expenseTotalText_ = presentation::money(
+                summary.totalMinor, totalDecimalPlaces_, currencyCode);
+            expenseSummary_.setRows(presentation::expenseSummaryRows(
+                summary, totalDecimalPlaces_, currencyCode));
+            emit expenseSummaryChanged();
+        }, Qt::QueuedConnection);
+
     connect(&service_, &services::LedgerService::operationsReady, this,
         [this](const services::OperationPage& page) {
             if (!historyLoading_) return;
@@ -108,6 +120,15 @@ LedgerInterface::LedgerInterface(services::LedgerService& service,
                     reloadHistory();
                 } else emit historyStateChanged();
             }
+            if (request == QStringLiteral("expenseSummary")) {
+                if (finishExpenseSummaryRequest()) {
+                    expenseSummaryFailed_ = true;
+                    expenseTotalText_.clear();
+                    expenseSummary_.setRows({});
+                    emit expenseSummaryChanged();
+                }
+                return;
+            }
             emit errorOccurred(message);
         }, Qt::QueuedConnection);
 
@@ -131,7 +152,11 @@ LedgerInterface::LedgerInterface(services::LedgerService& service,
         }, Qt::QueuedConnection);
 
     connect(&service_, &services::LedgerService::failed, this,
-        [this](const QString& message) { emit errorOccurred(message); }, Qt::QueuedConnection);
+        [this](const QString& message) {
+            expenseSummaryFailed_ = true;
+            emit expenseSummaryChanged();
+            emit errorOccurred(message);
+        }, Qt::QueuedConnection);
 }
 
 bool LedgerInterface::canAddOperation() const noexcept
@@ -156,6 +181,14 @@ QString LedgerInterface::historyCaption() const
     return QStringLiteral("");
 }
 
+QString LedgerInterface::expenseSummaryCaption() const
+{
+    if (expenseSummaryLoading_) return QStringLiteral("Расчёт расходов…");
+    if (expenseSummaryFailed_) return QStringLiteral("Не удалось рассчитать расходы");
+    if (!ready_) return QStringLiteral("Загрузка расходов…");
+    return QStringLiteral("Расходов пока нет");
+}
+
 QString LedgerInterface::baseCurrencyCode() const { return settings_.baseCurrencyCode(); }
 QStringList LedgerInterface::currencyCodes() const { return {"RUB", "USD", "EUR", "CNY"}; }
 int LedgerInterface::baseCurrencyIndex() const
@@ -176,7 +209,13 @@ bool LedgerInterface::setBaseCurrencyCode(const QString& code)
         totalDecimalPlaces_ = core::model::Currency::fromCode(
             totalCurrencyCode_.toStdString()).decimalPlaces();
         emit baseCurrencyChanged();
-        if (ready_) service_.requestTotalBalance(totalCurrencyCode_);
+        if (ready_) {
+            service_.requestTotalBalance(totalCurrencyCode_);
+            expenseSummary_.setRows({});
+            expenseTotalText_.clear();
+            reloadExpenseSummary();
+            emit expenseSummaryChanged();
+        }
         return true;
     } catch (const std::exception& error) {
         emit baseCurrencyChanged();
@@ -191,7 +230,29 @@ void LedgerInterface::refresh()
     service_.requestAccounts();
     service_.requestCategories();
     service_.requestTotalBalance(totalCurrencyCode_);
+    reloadExpenseSummary();
     reloadHistory();
+}
+
+void LedgerInterface::reloadExpenseSummary()
+{
+    if (expenseSummaryLoading_) {
+        expenseSummaryReloadPending_ = true;
+        return;
+    }
+    expenseSummaryLoading_ = true;
+    service_.requestExpenseSummary(totalCurrencyCode_);
+    emit expenseSummaryChanged();
+}
+
+bool LedgerInterface::finishExpenseSummaryRequest()
+{
+    expenseSummaryLoading_ = false;
+    if (!expenseSummaryReloadPending_) return true;
+
+    expenseSummaryReloadPending_ = false;
+    reloadExpenseSummary();
+    return false;
 }
 
 void LedgerInterface::reloadHistory()

@@ -69,7 +69,7 @@ Rectangle {
         spacing: 2
 
         Repeater {
-            model: ["Обзор", "Категории", "Настройки"]
+            model: ["Обзор", "Категории", "Аналитика", "Настройки"]
 
             delegate: NavButton {
                 id: section
@@ -83,12 +83,12 @@ Rectangle {
                 text: section.modelData
                 selected: sidebar.currentPage === section.index
                 Accessible.role: Accessible.PageTab
-                Accessible.name: section.index === 2 && sidebar.updateAvailable
+                Accessible.name: section.index === 3 && sidebar.updateAvailable
                     ? section.text + ", доступно обновление" : section.text
                 onClicked: sidebar.pageRequested(section.index)
 
                 Rectangle {
-                    visible: section.index === 2 && sidebar.updateAvailable
+                    visible: section.index === 3 && sidebar.updateAvailable
                     anchors.right: parent.right
                     anchors.top: parent.top
                     anchors.margins: 4
@@ -127,7 +127,6 @@ Rectangle {
                 UnavailableSection { text: "Траектория" }
                 UnavailableSection { text: "Бюджеты" }
                 UnavailableSection { text: "Проекты" }
-                UnavailableSection { text: "Аналитика" }
             }
         }
     }

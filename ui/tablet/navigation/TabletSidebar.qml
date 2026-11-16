@@ -127,7 +127,7 @@ Rectangle {
                 }
 
                 Repeater {
-                    model: ["Цели", "Заметки", "Траектория", "Бюджеты", "Проекты", "Аналитика"]
+                    model: ["Цели", "Заметки", "Траектория", "Бюджеты", "Проекты"]
 
                     delegate: RowLayout {
                         id: section
@@ -166,6 +166,13 @@ Rectangle {
                         }
                     }
                 }
+
+                NavigationButton {
+                    Layout.fillWidth: true
+                    pageIndex: 2
+                    marker: "08"
+                    text: "Аналитика"
+                }
             }
         }
 
@@ -178,7 +185,7 @@ Rectangle {
 
         NavigationButton {
             Layout.fillWidth: true
-            pageIndex: 2
+            pageIndex: 3
             marker: "⚙"
             text: "Настройки"
         }

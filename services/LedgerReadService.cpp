@@ -1,9 +1,11 @@
 #include "LedgerReadService.h"
 
+#include "ExchangeRate.h"
 #include "Ledger.h"
 #include "Operation.h"
 
 #include <algorithm>
+#include <map>
 #include <numeric>
 #include <stdexcept>
 #include <variant>
@@ -201,6 +203,88 @@ OperationData LedgerReadService::makeOperationData(
     }
 
     return data;
+}
+
+ExpenseSummary LedgerReadService::expenseSummary(core::model::Currency currency) const
+{
+    using core::model::ExchangeRate;
+    using core::model::Money;
+    using core::model::Operation;
+
+    using CurrencyTotals = std::map<std::string_view, Money>;
+    const auto addAmount = [](CurrencyTotals& totals, Money amount) {
+        const auto [position, inserted] = totals.try_emplace(amount.currency().code(), amount);
+        if (!inserted) position->second = position->second + amount;
+    };
+
+    std::map<QUuid, CurrencyTotals> subtotals;
+    for (qint64 i = 0; i < ledger_.operationCount(); ++i) {
+        const auto& operation = ledger_.operationAt(static_cast<std::size_t>(i));
+        const auto* expense = std::get_if<Operation::Expense>(&operation.details());
+        if (!expense) continue;
+
+        addAmount(subtotals[expense->categoryId], expense->amount);
+    }
+
+    const auto convertTotal = [currency](const CurrencyTotals& amounts) {
+        auto total = Money::fromMinorUnits(0, currency);
+        for (const auto& entry : amounts) {
+            const auto& amount = entry.second;
+            total = total + ExchangeRate::fixed(amount.currency(), currency).convert(amount);
+        }
+        return total.minorUnits();
+    };
+
+    ExpenseSummary summary;
+    summary.categories.reserve(subtotals.size());
+    CurrencyTotals allAmounts;
+
+    for (const auto& [id, amounts] : subtotals) {
+        long double weight = 0;
+        for (const auto& entry : amounts) {
+            const auto& amount = entry.second;
+            addAmount(allAmounts, amount);
+            const auto rate = ExchangeRate::fixed(amount.currency(), currency);
+
+            // Доля учитывает и расходы меньше минимальной единицы базовой валюты.
+            weight += static_cast<long double>(amount.minorUnits())
+                * rate.numerator() / rate.denominator();
+        }
+
+        summary.categories.push_back({id, {}, 0, weight});
+        summary.totalWeight += weight;
+    }
+
+    summary.totalMinor = convertTotal(allAmounts);
+    constexpr std::size_t separateCategoryLimit = 7;
+    auto& categories = summary.categories;
+    const auto otherBegin = categories.begin() + std::min(categories.size(), separateCategoryLimit);
+    std::partial_sort(categories.begin(), otherBegin, categories.end(),
+        [](const ExpenseCategoryData& left, const ExpenseCategoryData& right) {
+            if (left.weight != right.weight) return left.weight > right.weight;
+            return left.id < right.id;
+        });
+
+    for (auto category = categories.begin(); category != otherBegin; ++category) {
+        category->name = ledger_.category(category->id).name();
+        category->amountMinor = convertTotal(subtotals.at(category->id));
+    }
+
+    if (otherBegin != categories.end()) {
+        CurrencyTotals otherAmounts;
+        long double otherWeight = 0;
+        for (auto category = otherBegin; category != categories.end(); ++category) {
+            for (const auto& entry : subtotals.at(category->id)) {
+                addAmount(otherAmounts, entry.second);
+            }
+            otherWeight += category->weight;
+        }
+
+        categories.erase(otherBegin, categories.end());
+        // Пустой ID обозначает сводную строку, которая не соответствует категории журнала.
+        categories.push_back({{}, {}, convertTotal(otherAmounts), otherWeight});
+    }
+    return summary;
 }
 
 OperationPage LedgerReadService::operations(

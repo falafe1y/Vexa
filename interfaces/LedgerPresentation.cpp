@@ -1,5 +1,10 @@
 #include "LedgerPresentation.h"
 
+#include <QColor>
+#include <QLocale>
+
+#include <cmath>
+
 namespace interfaces::presentation {
 
 namespace {
@@ -153,6 +158,44 @@ QVariantMap operationRow(const services::OperationData& operation)
         {"secondaryAmountText", secondary},
         {"descriptionText", operation.description}
     };
+}
+
+QVariantList expenseSummaryRows(const services::ExpenseSummary& summary,
+    int decimals, const QString& currencyCode)
+{
+    QVariantList rows;
+    rows.reserve(static_cast<qsizetype>(summary.categories.size()));
+    const QLocale locale(QLocale::Russian, QLocale::Russia);
+    constexpr double hueStep = 0.381966;
+    long double cumulativeWeight = 0;
+
+    for (const auto& category : summary.categories) {
+        const auto share = category.weight / summary.totalWeight;
+        const auto percent = static_cast<double>(share * 100);
+        const auto shareText = percent < 0.1
+            ? QStringLiteral("< 0,1 %")
+            : locale.toString(percent, 'f', 1) + QStringLiteral(" %");
+        const auto amountText = category.amountMinor == 0
+            ? QStringLiteral("< ") + money(1, decimals, currencyCode)
+            : money(category.amountMinor, decimals, currencyCode);
+
+        const bool other = category.id.isNull();
+        const auto color = other
+            ? QColor(QStringLiteral("#59616a"))
+            : QColor::fromHslF(std::fmod(0.04 + rows.size() * hueStep, 1.0), 0.53, 0.43);
+        rows.push_back(QVariantMap{
+            {"id", idText(category.id)},
+            {"name", other ? QStringLiteral("Прочее") : category.name},
+            {"amountText", amountText},
+            {"shareText", shareText},
+            {"sectorColor", color},
+            {"startAngle", static_cast<double>(360 * cumulativeWeight / summary.totalWeight - 90)},
+            {"sweepAngle", static_cast<double>(360 * share)}
+        });
+        cumulativeWeight += category.weight;
+    }
+
+    return rows;
 }
 
 } // namespace interfaces::presentation

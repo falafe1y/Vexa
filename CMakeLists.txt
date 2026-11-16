@@ -64,6 +64,7 @@ if(VEXA_TABLET_UI OR ((ANDROID OR IOS) AND NOT VEXA_MOBILE_UI))
         ui/tablet/common/TabletSectionHeading.qml
         ui/tablet/common/TabletRowActions.qml
         ui/tablet/navigation/TabletSidebar.qml
+        ui/tablet/pages/analytics/TabletAnalyticsPage.qml
         ui/tablet/pages/categories/TabletCategoriesPage.qml
         ui/tablet/pages/dashboard/TabletAccountCard.qml
         ui/tablet/pages/dashboard/TabletAccountsSection.qml
@@ -90,6 +91,7 @@ qt_add_qml_module(Vexa
     QML_FILES
         ${vexa_ui_entry_files}
         ${vexa_tablet_files}
+        ui/common/ExpenseBreakdown.qml
         ${vexa_ui_dir}/common/${vexa_ui_prefix}ActionButton.qml
         ${vexa_ui_dir}/common/${vexa_ui_prefix}AmountField.qml
         ${vexa_ui_dir}/common/${vexa_ui_theme}.qml
@@ -113,6 +115,7 @@ qt_add_qml_module(Vexa
         ${vexa_ui_dir}/dialogs/${vexa_ui_prefix}RemovalDialog.qml
         ${vexa_ui_dir}/pages/dashboard/${vexa_ui_prefix}HistoryRow.qml
         ${vexa_ui_dir}/navigation/${vexa_ui_prefix}Sidebar.qml
+        ${vexa_ui_dir}/pages/analytics/${vexa_ui_prefix}AnalyticsPage.qml
         ${vexa_ui_dir}/pages/categories/${vexa_ui_prefix}CategoriesPage.qml
         ${vexa_ui_dir}/pages/dashboard/${vexa_ui_prefix}DashboardPage.qml
         ${vexa_ui_dir}/pages/settings/${vexa_ui_prefix}SettingsPage.qml

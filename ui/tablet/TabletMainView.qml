@@ -112,6 +112,11 @@ ApplicationWindow {
                     removalDialog.ask("removeCategory", recordId, description)
             }
 
+            TabletAnalyticsPage {
+                landscape: shell.landscape
+                ledger: window.ledger
+            }
+
             TabletSettingsPage {
                 landscape: shell.landscape
                 ledger: window.ledger

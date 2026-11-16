@@ -74,6 +74,10 @@ ApplicationWindow {
                         removalDialog.ask("removeCategory", recordId, description)
                 }
 
+                AnalyticsPage {
+                    ledger: window.ledger
+                }
+
                 SettingsPage {
                     ledger: window.ledger
                     updates: window.updates

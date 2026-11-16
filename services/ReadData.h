@@ -81,6 +81,21 @@ using AccountList = std::vector<AccountData>;
 using CategoryList = std::vector<CategoryData>;
 using OperationList = std::vector<OperationData>;
 
+struct ExpenseCategoryData
+{
+    QUuid id;
+    QString name;
+    qint64 amountMinor = 0;
+    long double weight = 0;
+};
+
+struct ExpenseSummary
+{
+    std::vector<ExpenseCategoryData> categories;
+    qint64 totalMinor = 0;
+    long double totalWeight = 0;
+};
+
 struct OperationPage
 {
     OperationList items;
@@ -107,3 +122,4 @@ Q_DECLARE_METATYPE(services::CategoryList)
 Q_DECLARE_METATYPE(services::OperationList)
 
 Q_DECLARE_METATYPE(services::OperationPage)
+Q_DECLARE_METATYPE(services::ExpenseSummary)

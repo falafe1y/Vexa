@@ -33,6 +33,9 @@ class LedgerInterface final : public QObject
     Q_PROPERTY(QAbstractItemModel* incomeCategoriesModel READ incomeCategoriesModel CONSTANT)
     Q_PROPERTY(QAbstractItemModel* expenseCategoriesModel READ expenseCategoriesModel CONSTANT)
     Q_PROPERTY(QAbstractItemModel* historyModel READ historyModel CONSTANT)
+    Q_PROPERTY(QAbstractItemModel* expenseSummaryModel READ expenseSummaryModel CONSTANT)
+    Q_PROPERTY(QString expenseTotalText READ expenseTotalText NOTIFY expenseSummaryChanged)
+    Q_PROPERTY(QString expenseSummaryCaption READ expenseSummaryCaption NOTIFY expenseSummaryChanged)
 
 public:
     explicit LedgerInterface(services::LedgerService& service,
@@ -57,6 +60,10 @@ public:
     QAbstractItemModel* incomeCategoriesModel() noexcept { return &incomeCategories_; }
     QAbstractItemModel* expenseCategoriesModel() noexcept { return &expenseCategories_; }
     QAbstractItemModel* historyModel() noexcept { return &history_; }
+
+    QAbstractItemModel* expenseSummaryModel() noexcept { return &expenseSummary_; }
+    const QString& expenseTotalText() const noexcept { return expenseTotalText_; }
+    QString expenseSummaryCaption() const;
 
     Q_INVOKABLE QString currentDateText() const;
     Q_INVOKABLE bool setBaseCurrencyCode(const QString& code);
@@ -88,6 +95,7 @@ public:
 signals:
     void readyChanged();
     void totalBalanceChanged();
+    void expenseSummaryChanged();
     void historyStateChanged();
     void commandStateChanged();
     void availabilityChanged();
@@ -98,6 +106,8 @@ signals:
 
 private:
     void requestHistoryPage();
+    void reloadExpenseSummary();
+    bool finishExpenseSummaryRequest();
     bool executeUiCommand(const QString& name, const std::function<void()>& action);
     qint64 readAccountAmount(const QString& accountId, const QString& amount) const;
 
@@ -119,6 +129,10 @@ private:
     bool commandPending_ = false;
     QString pendingCommand_;
     QHash<QUuid, int> accountDecimalPlaces_;
+    QString expenseTotalText_;
+    bool expenseSummaryLoading_ = false;
+    bool expenseSummaryReloadPending_ = false;
+    bool expenseSummaryFailed_ = false;
 
     ReadListModel accounts_{{"id", "name", "type", "typeText", "currencyCode", "openingInput", "limitInput", "isCreditCard",
         "primaryLabel", "primaryText", "balanceText", "creditLimitText", "debtText"}, this};
@@ -128,6 +142,8 @@ private:
     ReadListModel history_{{"id", "dateText", "accountId", "secondaryId", "amountInput", "type", "typeText", "accountText",
         "secondaryAccountText", "categoryText", "primaryAmountText",
         "secondaryAmountText", "descriptionText"}, this};
+    ReadListModel expenseSummary_{{"id", "name", "amountText", "shareText",
+        "sectorColor", "startAngle", "sweepAngle"}, this};
 };
 
 } // namespace interfaces

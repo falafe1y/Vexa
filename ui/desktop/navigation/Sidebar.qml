@@ -49,8 +49,9 @@ Rectangle {
                 id: nav
                 required property int index
                 required property string modelData
-                readonly property bool available: index < 2
-                readonly property bool selected: available && sidebar.currentPage === index
+                readonly property int pageIndex: index === 7 ? 2 : index
+                readonly property bool available: index < 2 || index === 7
+                readonly property bool selected: available && sidebar.currentPage === pageIndex
                 width: navigation.width
                 height: sidebar.shortWindow ? 44 : 48
                 padding: 0
@@ -89,7 +90,7 @@ Rectangle {
                         color: DesktopTheme.line
                     }
                 }
-                onClicked: sidebar.pageRequested(index)
+                onClicked: sidebar.pageRequested(pageIndex)
             }
         }
     }
@@ -152,20 +153,20 @@ Rectangle {
                 EditorialText {
                     x: 32; width: parent.width - 32; height: parent.height
                     visible: !sidebar.rail; text: "Настройки"; font.pixelSize: 14
-                    font.bold: sidebar.currentPage === 2
+                    font.bold: sidebar.currentPage === 3
                     color: settings.hovered ? DesktopTheme.accent : DesktopTheme.ink
                 }
             }
             background: Item {
                 Rectangle {
-                    visible: sidebar.currentPage === 2
+                    visible: sidebar.currentPage === 3
                     anchors.bottom: parent.bottom
                     width: parent.width
                     height: 1
                     color: DesktopTheme.line
                 }
             }
-            onClicked: sidebar.pageRequested(2)
+            onClicked: sidebar.pageRequested(3)
         }
         Item {
             width: parent.width

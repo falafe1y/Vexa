@@ -43,6 +43,7 @@ LedgerService::LedgerService(QObject* parent)
     qRegisterMetaType<AccountList>("services::AccountList");
     qRegisterMetaType<CategoryList>("services::CategoryList");
     qRegisterMetaType<OperationPage>("services::OperationPage");
+    qRegisterMetaType<ExpenseSummary>("services::ExpenseSummary");
 
     databaseThread_.setObjectName(
         QStringLiteral("VexaDatabase")
@@ -134,6 +135,18 @@ void LedgerService::requestTotalBalance(
                 total.minorUnits(),
                 currencyCode
                 );
+        }
+        );
+}
+
+void LedgerService::requestExpenseSummary(const QString& currencyCode)
+{
+    executeRequest(
+        QStringLiteral("expenseSummary"),
+        [this, currencyCode](const State& state) {
+            const auto currency = core::model::Currency::fromCode(currencyCode.toStdString());
+            const LedgerReadService reader{state.ledger};
+            emit expenseSummaryReady(reader.expenseSummary(currency), currencyCode);
         }
         );
 }

@@ -27,6 +27,7 @@ public:
     void open(const QString& filePath);
 
     void requestTotalBalance(const QString& currencyCode);
+    void requestExpenseSummary(const QString& currencyCode);
 
     void createAccount(
         const QString& name,
@@ -97,6 +98,11 @@ signals:
 
     void operationsReady(
         const services::OperationPage& page
+        );
+
+    void expenseSummaryReady(
+        const services::ExpenseSummary& summary,
+        const QString& currencyCode
         );
 
     void requestFailed(
