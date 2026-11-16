@@ -1,5 +1,6 @@
 import QtQuick
 import QtQuick.Controls
+import QtQuick.Controls.Basic as Basic
 import QtQuick.Layouts
 import UI
 
@@ -26,6 +27,7 @@ FormDialog {
             : ledger.baseCurrencyIndex
         openingField.text = editData ? editData.openingInput : "0"
         limitField.text = editData ? editData.limitInput : "0"
+        includeDebtCheck.checked = editData?.includeDebtInTotal ?? true
         nameField.forceActiveFocus()
     }
 
@@ -97,6 +99,13 @@ FormDialog {
             visible: typeBox.currentValue === 2
             placeholderText: "Например, 100000"
         }
+        Basic.CheckBox {
+            id: includeDebtCheck
+            Layout.fillWidth: true
+            visible: typeBox.currentValue === 2
+            text: "Учитывать долг в общем остатке"
+            font.pixelSize: 14
+        }
         FormError { Layout.fillWidth: true; message: dialog.errorText }
     }
 
@@ -110,11 +119,13 @@ FormDialog {
                 dialog.ledger.updateAccount(dialog.editData.id, nameField.text,
                     typeBox.currentValue, currencyBox.currentText,
                     openingField.normalizedText,
-                    typeBox.currentValue === 2 ? limitField.normalizedText : "0")
+                    typeBox.currentValue === 2 ? limitField.normalizedText : "0",
+                    includeDebtCheck.checked)
             } else {
                 dialog.ledger.createAccount(nameField.text, typeBox.currentValue,
                     currencyBox.currentText, openingField.normalizedText,
-                    typeBox.currentValue === 2 ? limitField.normalizedText : "0")
+                    typeBox.currentValue === 2 ? limitField.normalizedText : "0",
+                    includeDebtCheck.checked)
             }
         }
     }

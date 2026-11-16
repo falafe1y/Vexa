@@ -20,6 +20,7 @@ Rectangle {
     property int accountType: 0
     property string openingInput: ""
     property string limitInput: ""
+    property bool includeDebtInTotal: true
 
     implicitHeight: 212
     color: DesktopTheme.sidebar
@@ -41,7 +42,8 @@ Rectangle {
             type: card.accountType,
             currencyCode: card.currencyCode,
             openingInput: card.openingInput,
-            limitInput: card.limitInput
+            limitInput: card.limitInput,
+            includeDebtInTotal: card.includeDebtInTotal
         })
         removeEnabled: !card.busy
         onRemoveRequested: card.removeRequested(card.recordId, card.nameText)

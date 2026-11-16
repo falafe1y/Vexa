@@ -31,7 +31,8 @@ public:
         AccountType type,
         Money openingBalance,
         Money creditLimit,
-        bool archived = false);
+        bool archived = false,
+        bool includeDebtInTotal = true);
 
     [[nodiscard]] QUuid id() const noexcept
     {
@@ -58,6 +59,11 @@ public:
         return creditLimit_;
     }
 
+    [[nodiscard]] bool includesDebtInTotal() const noexcept
+    {
+        return includeDebtInTotal_;
+    }
+
     [[nodiscard]] Currency currency() const noexcept
     {
         return openingBalance_.currency();
@@ -82,6 +88,7 @@ private:
     Money openingBalance_;
     Money creditLimit_;
     bool archived_;
+    bool includeDebtInTotal_;
 };
 
 } // namespace core::model

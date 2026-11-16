@@ -379,6 +379,10 @@ Money Ledger::totalBalance(Currency targetCurrency) const
         }
 
         const auto current = balance(account.id());
+        if (!account.includesDebtInTotal() && current.minorUnits() < 0) {
+            continue;
+        }
+
         const auto [position, inserted] =
             subtotals.try_emplace(current.currency().code(), current);
 

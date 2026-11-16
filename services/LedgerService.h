@@ -34,7 +34,8 @@ public:
         core::model::AccountType type,
         const QString& currencyCode,
         qint64 openingBalanceMinor,
-        qint64 creditLimitMinor = 0
+        qint64 creditLimitMinor = 0,
+        bool includeDebtInTotal = true
         );
 
     void createCategory(
@@ -44,7 +45,7 @@ public:
 
     void updateAccount(const QUuid& id, const QString& name,
         core::model::AccountType type, const QString& currencyCode,
-        qint64 openingBalanceMinor, qint64 creditLimitMinor);
+        qint64 openingBalanceMinor, qint64 creditLimitMinor, bool includeDebtInTotal = true);
     void updateCategory(const QUuid& id, const QString& name,
         core::model::CategoryType type);
     void updateOperation(const QUuid& id, int type,

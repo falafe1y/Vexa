@@ -124,7 +124,7 @@ qint64 LedgerInterface::readAccountAmount(const QString& accountId,
 }
 
 bool LedgerInterface::createAccount(const QString& name, int type,
-    const QString& currencyCode, const QString& openingBalance, const QString& creditLimit)
+    const QString& currencyCode, const QString& openingBalance, const QString& creditLimit, bool includeDebtInTotal)
 {
     return executeUiCommand(QStringLiteral("createAccount"), [&] {
         if (type < 0 || type > 2) throw std::invalid_argument("Неверный тип счета");
@@ -147,7 +147,7 @@ bool LedgerInterface::createAccount(const QString& name, int type,
         }
 
         service_.createAccount(name, static_cast<core::model::AccountType>(type),
-                               currencyCode, initialBalance, limit);
+                               currencyCode, initialBalance, limit, includeDebtInTotal);
     });
 }
 
@@ -161,7 +161,7 @@ bool LedgerInterface::createCategory(const QString& name, int type)
 
 bool LedgerInterface::updateAccount(const QString& id, const QString& name,
     int type, const QString& currencyCode, const QString& openingBalance,
-    const QString& creditLimit)
+    const QString& creditLimit, bool includeDebtInTotal)
 {
     return executeUiCommand(QStringLiteral("updateAccount"), [&] {
         if (type < 0 || type > 2) throw std::invalid_argument("Invalid account type");
@@ -173,7 +173,7 @@ bool LedgerInterface::updateAccount(const QString& id, const QString& name,
             throw std::invalid_argument("Available balance exceeds credit limit");
         const qint64 initial = type == 2 ? opening - limit : opening;
         service_.updateAccount(readId(id), name,
-            static_cast<core::model::AccountType>(type), currencyCode, initial, limit);
+            static_cast<core::model::AccountType>(type), currencyCode, initial, limit, includeDebtInTotal);
     });
 }
 

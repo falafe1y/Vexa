@@ -12,7 +12,7 @@ QUuid AccountService::create(
     core::model::AccountType type,
     const QString& currencyCode,
     qint64 openingBalanceMinor,
-    qint64 creditLimitMinor)
+    qint64 creditLimitMinor, bool includeDebtInTotal)
 {
     const auto currency =
         core::model::Currency::fromCode(
@@ -32,7 +32,9 @@ QUuid AccountService::create(
         core::model::Money::fromMinorUnits(
             creditLimitMinor,
             currency
-            )
+            ),
+        false,
+        includeDebtInTotal
     };
 
     auto candidate = ledger_;
@@ -47,13 +49,14 @@ QUuid AccountService::create(
 
 QUuid AccountService::update(const QUuid& id, const QString& name,
     core::model::AccountType type, const QString& currencyCode,
-    qint64 openingBalanceMinor, qint64 creditLimitMinor)
+    qint64 openingBalanceMinor, qint64 creditLimitMinor, bool includeDebtInTotal)
 {
     const auto& old = ledger_.account(id);
     const auto currency = core::model::Currency::fromCode(currencyCode.toStdString());
     const core::model::Account updated{id, name, type,
         core::model::Money::fromMinorUnits(openingBalanceMinor, currency),
-        core::model::Money::fromMinorUnits(creditLimitMinor, currency), old.isArchived()};
+        core::model::Money::fromMinorUnits(creditLimitMinor, currency),
+        old.isArchived(), includeDebtInTotal};
     ledger_.validateAccountUpdate(updated);
     database_.saveAccount(updated);
     ledger_.applyAccountUpdate(updated);

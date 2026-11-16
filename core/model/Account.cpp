@@ -27,13 +27,15 @@ Account::Account(
     AccountType type,
     Money openingBalance,
     Money creditLimit,
-    bool archived)
+    bool archived,
+    bool includeDebtInTotal)
     : id_(id),
     name_(name.trimmed()),
     type_(type),
     openingBalance_(openingBalance),
     creditLimit_(creditLimit),
-    archived_(archived)
+    archived_(archived),
+    includeDebtInTotal_(type != AccountType::CreditCard || includeDebtInTotal)
 {
     if (id_.isNull()) {
         throw std::invalid_argument(

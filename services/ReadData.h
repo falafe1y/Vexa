@@ -29,6 +29,7 @@ struct AccountData
     qint64 creditLimitMinor = 0;
     qint64 debtMinor = 0;
     qint64 availableBalanceMinor = 0;
+    bool includeDebtInTotal = true;
 };
 
 struct CategoryData

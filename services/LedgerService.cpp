@@ -156,12 +156,12 @@ void LedgerService::createAccount(
     core::model::AccountType type,
     const QString& currencyCode,
     qint64 openingBalanceMinor,
-    qint64 creditLimitMinor)
+    qint64 creditLimitMinor, bool includeDebtInTotal)
 {
     executeCommand(
         QStringLiteral("createAccount"),
         [name, type, currencyCode,
-         openingBalanceMinor, creditLimitMinor](State& state)
+         openingBalanceMinor, creditLimitMinor, includeDebtInTotal](State& state)
         {
             AccountService service{
                 state.database,
@@ -173,7 +173,8 @@ void LedgerService::createAccount(
                 type,
                 currencyCode,
                 openingBalanceMinor,
-                creditLimitMinor
+                creditLimitMinor,
+                includeDebtInTotal
                 );
         }
         );
@@ -198,13 +199,13 @@ void LedgerService::createCategory(
 
 void LedgerService::updateAccount(const QUuid& id, const QString& name,
     core::model::AccountType type, const QString& currencyCode,
-    qint64 openingBalanceMinor, qint64 creditLimitMinor)
+    qint64 openingBalanceMinor, qint64 creditLimitMinor, bool includeDebtInTotal)
 {
     executeCommand(QStringLiteral("updateAccount"),
-        [id, name, type, currencyCode, openingBalanceMinor, creditLimitMinor](State& state) {
+        [id, name, type, currencyCode, openingBalanceMinor, creditLimitMinor, includeDebtInTotal](State& state) {
             AccountService service{state.database, state.ledger};
             return service.update(id, name, type, currencyCode,
-                openingBalanceMinor, creditLimitMinor);
+                openingBalanceMinor, creditLimitMinor, includeDebtInTotal);
         });
 }
 

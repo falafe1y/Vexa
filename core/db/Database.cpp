@@ -30,6 +30,25 @@ void executeSql(const QString& sql)
     }
 }
 
+bool hasColumn(const QString& tableInfo, const QString& column)
+{
+    QSqlQuery query{QSqlDatabase::database()};
+    if (!query.exec(tableInfo)) {
+        throw std::runtime_error(query.lastError().text().toStdString());
+    }
+
+    while (query.next()) {
+        if (query.value(1).toString() == column) {
+            return true;
+        }
+    }
+
+    if (query.lastError().isValid()) {
+        throw std::runtime_error(query.lastError().text().toStdString());
+    }
+    return false;
+}
+
 QString toCurrencyCode(core::model::Currency currency)
 {
     const auto code = currency.code();
@@ -171,7 +190,10 @@ void Database::createTables()
                 ),
 
             archived INTEGER NOT NULL
-                CHECK (archived IN (0, 1))
+                CHECK (archived IN (0, 1)),
+
+            include_debt_in_total INTEGER NOT NULL DEFAULT 1
+                CHECK (include_debt_in_total IN (0, 1))
         )
     )"));
 
@@ -245,26 +267,16 @@ void Database::createTables()
     // Проверка и изменение схемы выполняются под одной блокировкой записи.
     executeSql(QStringLiteral("BEGIN IMMEDIATE"));
     try {
-        QSqlQuery columns{QSqlDatabase::database()};
-        if (!columns.exec(QStringLiteral("PRAGMA table_info(operations)"))) {
-            throw std::runtime_error(columns.lastError().text().toStdString());
-        }
-
-        bool hasDescription = false;
-        while (columns.next()) {
-            if (columns.value(1).toString() == QStringLiteral("description")) {
-                hasDescription = true;
-                break;
-            }
-        }
-        if (columns.lastError().isValid()) {
-            throw std::runtime_error(columns.lastError().text().toStdString());
-        }
-        columns.finish();
-
-        if (!hasDescription) {
+        if (!hasColumn(QStringLiteral("PRAGMA table_info(operations)"),
+                       QStringLiteral("description"))) {
             executeSql(QStringLiteral(
                 "ALTER TABLE operations ADD COLUMN description TEXT NOT NULL DEFAULT ''"));
+        }
+        if (!hasColumn(QStringLiteral("PRAGMA table_info(accounts)"),
+                       QStringLiteral("include_debt_in_total"))) {
+            executeSql(QStringLiteral(
+                "ALTER TABLE accounts ADD COLUMN include_debt_in_total INTEGER NOT NULL"
+                " DEFAULT 1 CHECK (include_debt_in_total IN (0, 1))"));
         }
         executeSql(QStringLiteral("COMMIT"));
     } catch (...) {
@@ -287,7 +299,8 @@ void Database::saveAccount(
             currency_code,
             opening_balance_minor,
             credit_limit_minor,
-            archived
+            archived,
+            include_debt_in_total
         )
         VALUES (
             :id,
@@ -296,7 +309,8 @@ void Database::saveAccount(
             :currency_code,
             :opening_balance_minor,
             :credit_limit_minor,
-            :archived
+            :archived,
+            :include_debt_in_total
         )
         ON CONFLICT(id) DO UPDATE SET
             name = excluded.name,
@@ -304,7 +318,8 @@ void Database::saveAccount(
             currency_code = excluded.currency_code,
             opening_balance_minor = excluded.opening_balance_minor,
             credit_limit_minor = excluded.credit_limit_minor,
-            archived = excluded.archived
+            archived = excluded.archived,
+            include_debt_in_total = excluded.include_debt_in_total
     )"));
 
     if (!prepared) {
@@ -346,6 +361,11 @@ void Database::saveAccount(
     query.bindValue(
         QStringLiteral(":archived"),
         account.isArchived() ? 1 : 0
+        );
+
+    query.bindValue(
+        QStringLiteral(":include_debt_in_total"),
+        account.includesDebtInTotal() ? 1 : 0
         );
 
     if (!query.exec()) {
@@ -634,7 +654,8 @@ Database::loadAccounts() const
             currency_code,
             opening_balance_minor,
             credit_limit_minor,
-            archived
+            archived,
+            include_debt_in_total
         FROM accounts
         ORDER BY id
     )"));
@@ -680,7 +701,8 @@ Database::loadAccounts() const
                 QStringLiteral("currency_code")
                 ),
 
-            query.value(QStringLiteral("archived")).toBool()
+            query.value(QStringLiteral("archived")).toBool(),
+            query.value(QStringLiteral("include_debt_in_total")).toBool()
             );
     }
 

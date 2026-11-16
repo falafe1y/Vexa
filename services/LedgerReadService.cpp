@@ -61,6 +61,7 @@ AccountList LedgerReadService::accounts() const
         data.availableBalanceMinor =
             ledger_.availableBalance(account.id()).minorUnits();
 
+        data.includeDebtInTotal = account.includesDebtInTotal();
         result.push_back(data);
     }
 

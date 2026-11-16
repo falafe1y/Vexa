@@ -50,6 +50,7 @@ ColumnLayout {
                 accountType: model.type
                 openingInput: model.openingInput
                 limitInput: model.limitInput
+                includeDebtInTotal: model.includeDebtInTotal
                 recordId: model.id
                 nameText: model.name
                 typeText: model.typeText

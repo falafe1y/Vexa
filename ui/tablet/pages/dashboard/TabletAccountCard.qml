@@ -101,7 +101,8 @@ Rectangle {
             type: card.account.type,
             currencyCode: card.account.currencyCode,
             openingInput: card.account.openingInput,
-            limitInput: card.account.limitInput
+            limitInput: card.account.limitInput,
+            includeDebtInTotal: card.account.includeDebtInTotal
         })
         onRemoveRequested: card.removeRequested(card.account.id, card.account.name)
     }

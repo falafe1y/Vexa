@@ -73,11 +73,11 @@ public:
 
     Q_INVOKABLE bool createAccount(const QString& name, int type,
         const QString& currencyCode, const QString& openingBalance,
-        const QString& creditLimit);
+        const QString& creditLimit, bool includeDebtInTotal = true);
     Q_INVOKABLE bool createCategory(const QString& name, int type);
     Q_INVOKABLE bool updateAccount(const QString& id, const QString& name,
         int type, const QString& currencyCode, const QString& openingBalance,
-        const QString& creditLimit);
+        const QString& creditLimit, bool includeDebtInTotal = true);
     Q_INVOKABLE bool updateCategory(const QString& id, const QString& name, int type);
     Q_INVOKABLE bool updateOperation(const QString& id, int type,
         const QString& accountId, const QString& secondaryId,
@@ -135,7 +135,7 @@ private:
     bool expenseSummaryFailed_ = false;
 
     ReadListModel accounts_{{"id", "name", "type", "typeText", "currencyCode", "openingInput", "limitInput", "isCreditCard",
-        "primaryLabel", "primaryText", "balanceText", "creditLimitText", "debtText"}, this};
+        "primaryLabel", "primaryText", "balanceText", "creditLimitText", "debtText", "includeDebtInTotal"}, this};
     ReadListModel categories_{{"id", "name", "type", "typeText"}, this};
     ReadListModel incomeCategories_{{"id", "name", "type", "typeText"}, this};
     ReadListModel expenseCategories_{{"id", "name", "type", "typeText"}, this};

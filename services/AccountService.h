@@ -32,12 +32,13 @@ public:
         core::model::AccountType type,
         const QString& currencyCode,
         qint64 openingBalanceMinor,
-        qint64 creditLimitMinor = 0
+        qint64 creditLimitMinor = 0,
+        bool includeDebtInTotal = true
     );
 
     [[nodiscard]] QUuid update(const QUuid& id, const QString& name,
         core::model::AccountType type, const QString& currencyCode,
-        qint64 openingBalanceMinor, qint64 creditLimitMinor);
+        qint64 openingBalanceMinor, qint64 creditLimitMinor, bool includeDebtInTotal = true);
 
 private:
     core::db::Database& database_;

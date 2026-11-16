@@ -242,7 +242,8 @@ Flickable {
                                 type: accountRow.model.type,
                                 currencyCode: accountRow.model.currencyCode,
                                 openingInput: accountRow.model.openingInput,
-                                limitInput: accountRow.model.limitInput
+                                limitInput: accountRow.model.limitInput,
+                                includeDebtInTotal: accountRow.model.includeDebtInTotal
                             })
                             removeEnabled: !page.ledger.commandPending
                             onRemoveRequested: page.removeAccountRequested(

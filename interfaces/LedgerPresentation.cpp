@@ -102,6 +102,7 @@ QVariantMap accountRow(const services::AccountData& account)
         {"limitInput", editableAmount(account.creditLimitMinor, account.decimalPlaces)},
         {"currencyCode", account.currencyCode},
         {"isCreditCard", credit},
+        {"includeDebtInTotal", account.includeDebtInTotal},
         {"primaryLabel", credit ? QStringLiteral("ДОСТУПНО") : QStringLiteral("ОСТАТОК")},
         {"primaryText", text(credit ? account.availableBalanceMinor : account.balanceMinor)},
         {"balanceText", text(account.balanceMinor)},

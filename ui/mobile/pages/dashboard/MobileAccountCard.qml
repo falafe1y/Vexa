@@ -17,6 +17,7 @@ Rectangle {
     property int accountType: 0
     property string openingInput: ""
     property string limitInput: ""
+    property bool includeDebtInTotal: true
     signal removeRequested(string recordId, string description)
     signal editRequested(var data)
 
@@ -76,7 +77,8 @@ Rectangle {
                         type: card.accountType,
                         currencyCode: card.currencyCode,
                         openingInput: card.openingInput,
-                        limitInput: card.limitInput
+                        limitInput: card.limitInput,
+                        includeDebtInTotal: card.includeDebtInTotal
                     })
                     onRemoveRequested: card.removeRequested(card.recordId, card.nameText)
                 }

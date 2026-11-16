@@ -24,6 +24,7 @@ MobileFormDialog {
             : ledger.baseCurrencyIndex
         openingField.text = editData ? editData.openingInput : "0"
         limitField.text = editData ? editData.limitInput : "0"
+        includeDebtCheck.checked = editData?.includeDebtInTotal ?? true
     }
 
     Connections {
@@ -103,6 +104,14 @@ MobileFormDialog {
             visible: typeBox.currentValue === 2
             placeholderText: "Например, 100000"
         }
+        Basic.CheckBox {
+            id: includeDebtCheck
+            Layout.fillWidth: true
+            visible: typeBox.currentValue === 2
+            text: "Учитывать долг в общем остатке"
+            font.pixelSize: 14
+            Layout.minimumHeight: MobileTheme.touchSize
+        }
     }
 
     footer: MobileDialogActions {
@@ -116,11 +125,13 @@ MobileFormDialog {
                 dialog.ledger.updateAccount(dialog.editData.id, nameField.text,
                     typeBox.currentValue, currencyBox.currentText,
                     openingField.normalizedText,
-                    typeBox.currentValue === 2 ? limitField.normalizedText : "0")
+                    typeBox.currentValue === 2 ? limitField.normalizedText : "0",
+                    includeDebtCheck.checked)
             } else {
                 dialog.ledger.createAccount(nameField.text, typeBox.currentValue,
                     currencyBox.currentText, openingField.normalizedText,
-                    typeBox.currentValue === 2 ? limitField.normalizedText : "0")
+                    typeBox.currentValue === 2 ? limitField.normalizedText : "0",
+                    includeDebtCheck.checked)
             }
         }
     }
