@@ -3,237 +3,97 @@ import QtQuick
 import QtQuick.Controls.Basic as Basic
 import QtQuick.Layouts
 
-Item {
+ColumnLayout {
     id: page
 
     required property var ledger
-    signal createAccountRequested()
-    signal editAccountRequested(var data)
-    signal editOperationRequested(var data)
-    signal operationRequested(int type)
-    signal removeAccountRequested(string recordId, string description)
-    signal removeOperationRequested(string recordId, string description)
 
-    ColumnLayout {
-        anchors.fill: parent
-        spacing: 0
+    signal accountsRequested()
+    signal assetRequested(string name)
+    signal operationActionsRequested(var data)
 
-        ListView {
-            id: history
+    spacing: 17
 
-            Layout.fillWidth: true
-            Layout.fillHeight: true
-            clip: true
-            reuseItems: true
-            boundsBehavior: Flickable.StopAtBounds
-            model: page.ledger.historyModel
+    MobileAssetSummary {
+        Layout.fillWidth: true
+        Layout.topMargin: 13
+        Layout.leftMargin: MobileTheme.pagePadding
+        Layout.rightMargin: MobileTheme.pagePadding
+        totalText: page.ledger.totalBalanceText
+        compact: page.height < 416
 
-            Basic.ScrollIndicator.vertical: Basic.ScrollIndicator {}
+        onAccountsRequested: page.accountsRequested()
+        onAssetRequested: name => page.assetRequested(name)
+    }
 
-            header: ColumnLayout {
-                width: history.width
-                spacing: 16
+    ListView {
+        id: history
 
-                RowLayout {
-                    Layout.fillWidth: true
-                    Layout.topMargin: 14
-                    Layout.leftMargin: MobileTheme.pagePadding
-                    Layout.rightMargin: MobileTheme.pagePadding
-                    spacing: 8
+        Layout.fillWidth: true
+        Layout.fillHeight: true
+        Layout.leftMargin: MobileTheme.pagePadding
+        Layout.rightMargin: MobileTheme.pagePadding
+        clip: true
+        reuseItems: true
+        boundsBehavior: Flickable.StopAtBounds
+        model: page.ledger.historyModel
 
-                    ColumnLayout {
-                        Layout.fillWidth: true
-                        spacing: 4
+        Basic.ScrollIndicator.vertical: Basic.ScrollIndicator {}
 
-                        MobilePageHeading {
-                            Layout.fillWidth: true
-                            text: "Мои финансы."
-                        }
+        section.property: "dateText"
+        section.delegate: MobileEditorialText {
+            required property string section
 
-                        MobileEditorialText {
-                            Layout.fillWidth: true
-                            text: "Всё время · фильтр в разработке"
-                            font.pixelSize: 12
-                            color: MobileTheme.muted
-                            wrapMode: Text.WordWrap
-                        }
-                    }
-
-                    MobileBaseCurrencySelector {
-                        Layout.minimumWidth: 88
-                        Layout.preferredWidth: 88
-                        Layout.maximumWidth: 88
-                        ledger: page.ledger
-                    }
-                }
-
-                MobileAssetSummary {
-                    Layout.fillWidth: true
-                    Layout.leftMargin: MobileTheme.pagePadding
-                    Layout.rightMargin: MobileTheme.pagePadding
-                    totalText: page.ledger.totalBalanceText
-                    accountsCaption: page.ledger.accountsCaption
-                }
-
-                MobileAccountsSection {
-                    Layout.fillWidth: true
-                    Layout.leftMargin: MobileTheme.pagePadding
-                    Layout.rightMargin: MobileTheme.pagePadding
-                    ledger: page.ledger
-                    onCreateRequested: page.createAccountRequested()
-                    onEditRequested: data => page.editAccountRequested(data)
-                    onRemoveRequested: (recordId, description) => page.removeAccountRequested(recordId, description)
-                }
-
-                ColumnLayout {
-                    Layout.fillWidth: true
-                    Layout.leftMargin: MobileTheme.pagePadding
-                    Layout.rightMargin: MobileTheme.pagePadding
-                    spacing: 6
-
-                    MobileEditorialText {
-                        Layout.fillWidth: true
-                        text: "Журнал операций"
-                        font.family: MobileTheme.serif
-                        font.pixelSize: 25
-                    }
-
-                    MobileEditorialText {
-                        Layout.fillWidth: true
-                        text: "Поиск в разработке"
-                        font.pixelSize: 12
-                        color: MobileTheme.muted
-                    }
-
-                    Rectangle {
-                        Layout.fillWidth: true
-                        Layout.preferredHeight: 1
-                        color: MobileTheme.ink
-                    }
-                }
-            }
-
-            delegate: MobileHistoryRow {
-                required property var model
-
-                width: ListView.view.width
-                recordId: model.id
-                dateText: model.dateText
-                accountId: model.accountId
-                secondaryId: model.secondaryId
-                amountInput: model.amountInput
-                typeText: model.typeText
-                operationType: model.type
-                accountText: model.accountText
-                secondaryAccountText: model.secondaryAccountText
-                categoryText: model.categoryText
-                primaryAmountText: model.primaryAmountText
-                secondaryAmountText: model.secondaryAmountText
-                descriptionText: model.descriptionText
-                busy: page.ledger.commandPending
-                onRemoveRequested: (recordId, description) => page.removeOperationRequested(recordId, description)
-                onEditRequested: data => page.editOperationRequested(data)
-            }
-
-            footer: ColumnLayout {
-                width: history.width
-                spacing: 8
-
-                MobileEditorialText {
-                    Layout.fillWidth: true
-                    Layout.topMargin: 8
-                    Layout.leftMargin: MobileTheme.pagePadding
-                    Layout.rightMargin: MobileTheme.pagePadding
-                    visible: text.length > 0
-                    text: page.ledger.historyCaption
-                    color: MobileTheme.muted
-                }
-
-                MobileActionButton {
-                    Layout.fillWidth: true
-                    Layout.topMargin: 8
-                    Layout.leftMargin: MobileTheme.pagePadding
-                    Layout.rightMargin: MobileTheme.pagePadding
-                    visible: page.ledger.historyHasMore || page.ledger.historyLoading
-                    text: page.ledger.historyLoading ? "ЗАГРУЗКА…" : "ПОКАЗАТЬ ЕЩЁ"
-                    enabled: page.ledger.historyHasMore && !page.ledger.historyLoading
-                    onClicked: page.ledger.loadMoreHistory()
-                }
-
-                Rectangle {
-                    Layout.fillWidth: true
-                    Layout.topMargin: 12
-                    Layout.bottomMargin: 16
-                    Layout.leftMargin: MobileTheme.pagePadding
-                    Layout.rightMargin: MobileTheme.pagePadding
-                    Layout.preferredHeight: planned.implicitHeight + 20
-                    radius: 6
-                    color: MobileTheme.soft
-
-                    ColumnLayout {
-                        id: planned
-
-                        anchors.fill: parent
-                        anchors.margins: 10
-                        spacing: 4
-
-                        MobileEditorialText {
-                            Layout.fillWidth: true
-                            text: "В разработке"
-                            font.bold: true
-                        }
-
-                        MobileEditorialText {
-                            Layout.fillWidth: true
-                            text: "Плановые операции, история капитала и структура расходов"
-                            color: MobileTheme.muted
-                            wrapMode: Text.WordWrap
-                        }
-                    }
-                }
-            }
+            width: history.width
+            topPadding: 12
+            bottomPadding: 3
+            text: section.charAt(0) === "0" ? section.slice(1, 2) : section.slice(0, 2)
+            font.family: MobileTheme.mono
+            font.pixelSize: 15
+            Accessible.role: Accessible.Heading
+            Accessible.name: section
         }
 
-        Rectangle {
-            Layout.fillWidth: true
-            Layout.preferredHeight: 1
-            color: MobileTheme.line
+        delegate: MobileHistoryRow {
+            required property var model
+
+            width: ListView.view.width
+            recordId: model.id
+            dateText: model.dateText
+            accountId: model.accountId
+            secondaryId: model.secondaryId
+            amountInput: model.amountInput
+            operationType: model.type
+            accountText: model.accountText
+            secondaryAccountText: model.secondaryAccountText
+            categoryText: model.categoryText
+            primaryAmountText: model.primaryAmountText
+            secondaryAmountText: model.secondaryAmountText
+            descriptionText: model.descriptionText
+            enabled: !page.ledger.commandPending
+            onActionsRequested: data => page.operationActionsRequested(data)
         }
 
-        MobileActionButton {
-            id: addOperation
+        footer: ColumnLayout {
+            width: history.width
+            spacing: 8
 
-            Layout.fillWidth: true
-            Layout.margins: 8
-            Layout.leftMargin: MobileTheme.pagePadding
-            Layout.rightMargin: MobileTheme.pagePadding
-            text: "+ НОВАЯ ОПЕРАЦИЯ"
-            outlined: false
-            enabled: page.ledger.canAddOperation
-            onClicked: operationMenu.open()
+            MobileEditorialText {
+                Layout.fillWidth: true
+                visible: text.length > 0
+                text: page.ledger.historyCaption
+                color: MobileTheme.muted
+            }
 
-            MobilePopupMenu {
-                id: operationMenu
-
-                parent: addOperation
-                width: addOperation.width
-                y: -height - 6
-
-                MobilePopupMenuItem {
-                    text: "Доход"
-                    onTriggered: page.operationRequested(0)
-                }
-
-                MobilePopupMenuItem {
-                    text: "Расход"
-                    onTriggered: page.operationRequested(1)
-                }
-
-                MobilePopupMenuItem {
-                    text: "Перевод"
-                    enabled: page.ledger.canTransfer
-                    onTriggered: page.operationRequested(2)
-                }
+            MobileActionButton {
+                Layout.fillWidth: true
+                Layout.topMargin: 8
+                Layout.bottomMargin: 8
+                visible: page.ledger.historyHasMore || page.ledger.historyLoading && history.count > 0
+                text: page.ledger.historyLoading ? "Загрузка…" : "Показать ещё"
+                cornerRadius: 0
+                enabled: page.ledger.historyHasMore && !page.ledger.historyLoading
+                onClicked: page.ledger.loadMoreHistory()
             }
         }
     }

@@ -4,16 +4,21 @@ import QtQuick.Layouts
 
 MobileFormDialog {
     id: dialog
+
     required property var ledger
     property var editData: null
-    title: editData ? "Редактировать счёт." : "Новый счёт."
+    title: editData ? "Редактировать счёт" : "Новый счёт"
+    busy: ledger.commandPending
     onClosed: editData = null
 
     function openForEdit(data) {
         editData = data
         open()
     }
-    closePolicy: ledger.commandPending ? Basic.Popup.NoAutoClose : Basic.Popup.CloseOnEscape
+    onOpened: {
+        if (sheetStyle)
+            nameField.forceActiveFocus()
+    }
 
     onAboutToShow: {
         errorText = ""
@@ -41,33 +46,60 @@ MobileFormDialog {
         width: parent.width
         enabled: !dialog.ledger.commandPending
         spacing: 8
+
         MobileEditorialText { text: "Название" }
+
         MobileInputField {
             id: nameField
             Layout.fillWidth: true
+            underlined: dialog.sheetStyle
             Accessible.name: "Название"
             placeholderText: "Например, Наличные"
         }
 
-        MobileEditorialText { text: "Тип счёта" }
-        MobileSelectField {
-            id: typeBox
+        GridLayout {
             Layout.fillWidth: true
-            Accessible.name: "Тип счёта"
-            textRole: "text"
-            valueRole: "value"
-            model: [
-                {text: "Наличные", value: 0},
-                {text: "Дебетовая карта", value: 1},
-                {text: "Кредитная карта", value: 2}
-            ]
-        }
-        MobileEditorialText { text: "Валюта" }
-        MobileSelectField {
-            id: currencyBox
-            Layout.fillWidth: true
-            Accessible.name: "Валюта"
-            model: dialog.ledger.currencyCodes
+            columns: dialog.sheetStyle ? 2 : 1
+            columnSpacing: 8
+            rowSpacing: 8
+
+            ColumnLayout {
+                Layout.fillWidth: true
+                Layout.preferredWidth: 1
+                spacing: dialog.sheetStyle ? 4 : 8
+
+                MobileEditorialText { text: "Тип счёта" }
+
+                MobileSelectField {
+                    id: typeBox
+                    Layout.fillWidth: true
+                    underlined: dialog.sheetStyle
+                    Accessible.name: "Тип счёта"
+                    textRole: "text"
+                    valueRole: "value"
+                    model: [
+                        {text: "Наличные", value: 0},
+                        {text: "Дебетовая карта", value: 1},
+                        {text: "Кредитная карта", value: 2}
+                    ]
+                }
+            }
+
+            ColumnLayout {
+                Layout.fillWidth: true
+                Layout.preferredWidth: 1
+                spacing: dialog.sheetStyle ? 4 : 8
+
+                MobileEditorialText { text: "Валюта" }
+
+                MobileSelectField {
+                    id: currencyBox
+                    Layout.fillWidth: true
+                    underlined: dialog.sheetStyle
+                    Accessible.name: "Валюта"
+                    model: dialog.ledger.currencyCodes
+                }
+            }
         }
 
         MobileEditorialText {
@@ -82,12 +114,13 @@ MobileFormDialog {
         MobileAmountField {
             id: openingField
             Layout.fillWidth: true
+            underlined: dialog.sheetStyle
             Accessible.name: openingLabel.text
             placeholderText: "0,00"
         }
         MobileEditorialText {
             Layout.fillWidth: true
-            visible: typeBox.currentValue === 2
+            visible: !dialog.sheetStyle && typeBox.currentValue === 2
             text: "Например, при лимите 100 000 и доступном остатке 80 000 долг составит 20 000."
             color: MobileTheme.muted
             font.pixelSize: 12
@@ -100,6 +133,7 @@ MobileFormDialog {
         MobileAmountField {
             id: limitField
             Layout.fillWidth: true
+            underlined: dialog.sheetStyle
             Accessible.name: "Кредитный лимит"
             visible: typeBox.currentValue === 2
             placeholderText: "Например, 100000"
@@ -109,6 +143,7 @@ MobileFormDialog {
             Layout.fillWidth: true
             visible: typeBox.currentValue === 2
             text: "Учитывать долг в общем остатке"
+            font.family: MobileTheme.sans
             font.pixelSize: 14
             Layout.minimumHeight: MobileTheme.touchSize
         }
@@ -116,8 +151,11 @@ MobileFormDialog {
 
     footer: MobileDialogActions {
         errorText: dialog.errorText
-        busy: dialog.ledger.commandPending
-        submitText: dialog.editData ? "СОХРАНИТЬ" : "СОЗДАТЬ"
+        busy: dialog.busy
+        sheetStyle: dialog.sheetStyle
+        submitColor: dialog.sheetStyle ? MobileTheme.accent : MobileTheme.ink
+        submitText: dialog.sheetStyle ? (dialog.editData ? "Сохранить" : "Добавить счёт")
+            : (dialog.editData ? "СОХРАНИТЬ" : "СОЗДАТЬ")
         onCancelled: dialog.close()
         onSubmitted: {
             dialog.errorText = ""

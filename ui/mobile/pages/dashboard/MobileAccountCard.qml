@@ -1,7 +1,9 @@
+pragma ComponentBehavior: Bound
 import QtQuick
+import QtQuick.Controls.Basic as Basic
 import QtQuick.Layouts
 
-Rectangle {
+Basic.ItemDelegate {
     id: card
 
     property string recordId: ""
@@ -13,7 +15,6 @@ Rectangle {
     property bool credit: false
     property string debtText: ""
     property string limitText: ""
-    property bool busy: false
     property int accountType: 0
     property string openingInput: ""
     property string limitInput: ""
@@ -21,18 +22,13 @@ Rectangle {
     signal removeRequested(string recordId, string description)
     signal editRequested(var data)
 
-    implicitHeight: details.implicitHeight + 20
-    height: implicitHeight
-    radius: 6
-    color: MobileTheme.sidebar
-    border.color: MobileTheme.line
-    border.width: 1
+    padding: 0
+    topPadding: 10
+    bottomPadding: 10
+    implicitHeight: Math.max(54, implicitContentHeight + topPadding + bottomPadding)
+    Accessible.name: nameText + ", " + typeText + ", " + primaryLabel + " " + primaryText
 
-    ColumnLayout {
-        id: details
-
-        anchors.fill: parent
-        anchors.margins: 10
+    contentItem: ColumnLayout {
         spacing: 4
 
         RowLayout {
@@ -41,6 +37,7 @@ Rectangle {
 
             ColumnLayout {
                 Layout.fillWidth: true
+                Layout.preferredWidth: 1.25
                 spacing: 2
 
                 MobileEditorialText {
@@ -58,53 +55,30 @@ Rectangle {
                 }
             }
 
-            MobileActionButton {
-                flat: true
-                text: "⋯"
-                font.pixelSize: 21
-                enabled: !card.busy
-                Accessible.name: "Действия со счётом " + card.nameText
-                onClicked: accountMenu.open()
-
-                MobileContextActionMenu {
-                    id: accountMenu
-
-                    editEnabled: !card.busy
-                    removeEnabled: !card.busy
-                    onEditRequested: card.editRequested({
-                        id: card.recordId,
-                        name: card.nameText,
-                        type: card.accountType,
-                        currencyCode: card.currencyCode,
-                        openingInput: card.openingInput,
-                        limitInput: card.limitInput,
-                        includeDebtInTotal: card.includeDebtInTotal
-                    })
-                    onRemoveRequested: card.removeRequested(card.recordId, card.nameText)
-                }
-            }
-        }
-
-        Item { Layout.fillHeight: true }
-
-        RowLayout {
-            Layout.fillWidth: true
-
-            MobileEditorialText {
-                text: card.primaryLabel
-                font.family: MobileTheme.mono
-                font.pixelSize: 11
-                color: MobileTheme.muted
-            }
-
-            MobileEditorialText {
+            ColumnLayout {
                 Layout.fillWidth: true
-                text: card.primaryText
-                font.family: MobileTheme.serif
-                font.pixelSize: 24
-                fontSizeMode: Text.HorizontalFit
-                minimumPixelSize: 13
-                horizontalAlignment: Text.AlignRight
+                Layout.preferredWidth: 1
+                spacing: 2
+
+                MobileEditorialText {
+                    Layout.fillWidth: true
+                    text: card.primaryText
+                    font.family: MobileTheme.serif
+                    font.pixelSize: 23
+                    fontSizeMode: Text.HorizontalFit
+                    minimumPixelSize: 13
+                    horizontalAlignment: Text.AlignRight
+                }
+
+                MobileEditorialText {
+                    Layout.fillWidth: true
+                    visible: card.credit
+                    text: card.primaryLabel
+                    font.family: MobileTheme.mono
+                    font.pixelSize: 11
+                    color: MobileTheme.muted
+                    horizontalAlignment: Text.AlignRight
+                }
             }
         }
 
@@ -112,7 +86,7 @@ Rectangle {
             Layout.fillWidth: true
             visible: card.credit
             text: "Лимит: " + card.limitText
-            font.pixelSize: 13
+            font.pixelSize: 12
             color: MobileTheme.muted
         }
 
@@ -120,8 +94,39 @@ Rectangle {
             Layout.fillWidth: true
             visible: card.credit
             text: "Долг: " + card.debtText
-            font.pixelSize: 13
+            font.pixelSize: 12
             color: MobileTheme.accent
         }
+    }
+
+    background: Rectangle {
+        color: card.down ? MobileTheme.sidebar : "transparent"
+        border.width: card.visualFocus ? 1 : 0
+        border.color: MobileTheme.accent
+
+        Rectangle {
+            anchors.bottom: parent.bottom
+            width: parent.width
+            height: 1
+            color: MobileTheme.line
+        }
+    }
+
+    onClicked: accountMenu.open()
+    onPressAndHold: accountMenu.open()
+
+    MobileContextActionMenu {
+        id: accountMenu
+
+        onEditRequested: card.editRequested({
+            id: card.recordId,
+            name: card.nameText,
+            type: card.accountType,
+            currencyCode: card.currencyCode,
+            openingInput: card.openingInput,
+            limitInput: card.limitInput,
+            includeDebtInTotal: card.includeDebtInTotal
+        })
+        onRemoveRequested: card.removeRequested(card.recordId, card.nameText)
     }
 }

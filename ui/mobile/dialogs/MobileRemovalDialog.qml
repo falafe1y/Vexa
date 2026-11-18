@@ -1,5 +1,4 @@
 import QtQuick
-import QtQuick.Controls.Basic as Basic
 import QtQuick.Layouts
 
 MobileFormDialog {
@@ -23,9 +22,7 @@ MobileFormDialog {
             ? "Удалить категорию?"
             : "Удалить счёт?"
 
-    closePolicy: ledger.commandPending
-        ? Basic.Popup.NoAutoClose
-        : Basic.Popup.CloseOnEscape
+    busy: ledger.commandPending
 
     function ask(command, recordId, description) {
         dialog.commandName = command
@@ -64,8 +61,9 @@ MobileFormDialog {
 
     footer: MobileDialogActions {
         errorText: dialog.errorText
-        busy: dialog.ledger.commandPending
-        submitText: "УДАЛИТЬ"
+        busy: dialog.busy
+        sheetStyle: dialog.sheetStyle
+        submitText: dialog.sheetStyle ? "Удалить" : "УДАЛИТЬ"
         danger: true
 
         onCancelled: dialog.close()

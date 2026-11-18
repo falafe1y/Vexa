@@ -7,129 +7,139 @@ ColumnLayout {
     id: page
 
     required property var ledger
-    property int currentType: 0
-    signal createRequested(int type)
     signal editRequested(var data)
     signal removeRequested(string recordId, string description)
 
-    spacing: 12
+    spacing: 0
+
+    component CategoryList: ColumnLayout {
+        id: column
+
+        required property string heading
+        required property color headingColor
+        required property var categoriesModel
+
+        Layout.fillWidth: true
+        Layout.fillHeight: true
+        Layout.minimumWidth: 0
+        Layout.preferredWidth: 1
+        spacing: 0
+
+        MobileEditorialText {
+            Layout.fillWidth: true
+            topPadding: 16
+            bottomPadding: 9
+            text: column.heading
+            color: column.headingColor
+            font.family: MobileTheme.mono
+            font.pixelSize: 13
+            Accessible.role: Accessible.Heading
+        }
+
+        Rectangle {
+            Layout.fillWidth: true
+            implicitHeight: 1
+            color: MobileTheme.line
+        }
+
+        ListView {
+            id: categories
+
+            Layout.fillWidth: true
+            Layout.fillHeight: true
+            clip: true
+            reuseItems: true
+            boundsBehavior: Flickable.StopAtBounds
+            model: column.categoriesModel
+
+            Basic.ScrollIndicator.vertical: Basic.ScrollIndicator {}
+
+            delegate: Basic.ItemDelegate {
+                id: category
+
+                required property var model
+
+                width: ListView.view.width
+                implicitHeight: Math.max(44, implicitContentHeight + topPadding + bottomPadding)
+                padding: 0
+                topPadding: 8
+                bottomPadding: 8
+                text: model.name
+                enabled: !page.ledger.commandPending
+
+                contentItem: MobileEditorialText {
+                    text: category.text
+                    font.pixelSize: 16
+                    wrapMode: Text.Wrap
+                    elide: Text.ElideNone
+                }
+
+                background: Rectangle {
+                    color: category.down ? MobileTheme.sidebar : "transparent"
+                    border.width: category.visualFocus ? 1 : 0
+                    border.color: MobileTheme.accent
+
+                    Rectangle {
+                        anchors.bottom: parent.bottom
+                        width: parent.width
+                        height: 1
+                        color: MobileTheme.line
+                    }
+                }
+
+                onClicked: categoryMenu.open()
+                onPressAndHold: categoryMenu.open()
+
+                MobileContextActionMenu {
+                    id: categoryMenu
+
+                    onEditRequested: page.editRequested({
+                        id: category.model.id,
+                        name: category.model.name,
+                        type: category.model.type
+                    })
+                    onRemoveRequested: page.removeRequested(category.model.id, category.model.name)
+                }
+            }
+
+            MobileEditorialText {
+                anchors.top: parent.top
+                anchors.topMargin: 10
+                width: parent.width
+                visible: page.ledger.ready && categories.count === 0
+                text: "Пока нет категорий"
+                color: MobileTheme.muted
+                wrapMode: Text.WordWrap
+            }
+        }
+    }
 
     MobilePageHeading {
         Layout.fillWidth: true
-        Layout.topMargin: 14
+        Layout.topMargin: 13
         Layout.leftMargin: MobileTheme.pagePadding
         Layout.rightMargin: MobileTheme.pagePadding
-        text: "Категории."
+        documentStyle: true
+        text: "Категории"
     }
 
     RowLayout {
         Layout.fillWidth: true
-        Layout.leftMargin: MobileTheme.pagePadding
-        Layout.rightMargin: MobileTheme.pagePadding
-        spacing: 8
-
-        Repeater {
-            model: ["ДОХОДЫ", "РАСХОДЫ"]
-
-            delegate: MobileActionButton {
-                id: typeButton
-
-                required property int index
-                required property string modelData
-
-                Layout.fillWidth: true
-                Layout.preferredWidth: 1
-                text: typeButton.modelData
-                outlined: page.currentType !== typeButton.index
-                Accessible.role: Accessible.PageTab
-                Accessible.selected: page.currentType === typeButton.index
-                onClicked: page.currentType = typeButton.index
-            }
-        }
-    }
-
-    ListView {
-        id: categories
-
-        Layout.fillWidth: true
         Layout.fillHeight: true
         Layout.leftMargin: MobileTheme.pagePadding
         Layout.rightMargin: MobileTheme.pagePadding
-        clip: true
-        reuseItems: true
-        boundsBehavior: Flickable.StopAtBounds
-        model: page.currentType === 0 ? page.ledger.incomeCategoriesModel : page.ledger.expenseCategoriesModel
+        spacing: 14
 
-        Basic.ScrollIndicator.vertical: Basic.ScrollIndicator {}
-
-        delegate: Item {
-            id: category
-
-            required property var model
-
-            width: ListView.view.width
-            height: 56
-
-            RowLayout {
-                anchors.fill: parent
-                spacing: 8
-
-                MobileEditorialText {
-                    Layout.fillWidth: true
-                    text: category.model.name
-                    font.pixelSize: 16
-                }
-
-                MobileActionButton {
-                    flat: true
-                    text: "⋯"
-                    font.pixelSize: 21
-                    enabled: !page.ledger.commandPending
-                    Accessible.name: "Действия с категорией " + category.model.name
-                    onClicked: categoryMenu.open()
-
-                    MobileContextActionMenu {
-                        id: categoryMenu
-
-                        editEnabled: !page.ledger.commandPending
-                        removeEnabled: !page.ledger.commandPending
-                        onEditRequested: page.editRequested({
-                            id: category.model.id,
-                            name: category.model.name,
-                            type: category.model.type
-                        })
-                        onRemoveRequested: page.removeRequested(category.model.id, category.model.name)
-                    }
-                }
-            }
-
-            Rectangle {
-                anchors.bottom: parent.bottom
-                width: parent.width
-                height: 1
-                color: MobileTheme.line
-            }
+        CategoryList {
+            heading: "Расходы"
+            headingColor: MobileTheme.historyExpense
+            categoriesModel: page.ledger.expenseCategoriesModel
         }
 
-        MobileEditorialText {
-            anchors.top: parent.top
-            anchors.topMargin: 10
-            width: parent.width
-            visible: page.ledger.ready && categories.count === 0
-            text: page.currentType === 0 ? "Категорий доходов пока нет." : "Категорий расходов пока нет."
-            color: MobileTheme.muted
-            wrapMode: Text.WordWrap
+        CategoryList {
+            heading: "Доходы"
+            headingColor: MobileTheme.historyIncome
+            categoriesModel: page.ledger.incomeCategoriesModel
         }
-    }
-
-    MobileActionButton {
-        Layout.fillWidth: true
-        Layout.leftMargin: MobileTheme.pagePadding
-        Layout.rightMargin: MobileTheme.pagePadding
-        Layout.bottomMargin: 8
-        text: "+ НОВАЯ КАТЕГОРИЯ"
-        outlined: false
-        enabled: page.ledger.ready && !page.ledger.commandPending
-        onClicked: page.createRequested(page.currentType)
     }
 }

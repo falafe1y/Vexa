@@ -6,6 +6,7 @@ Flickable {
     id: page
 
     required property var ledger
+    signal backRequested()
 
     clip: true
     contentWidth: width
@@ -21,15 +22,17 @@ Flickable {
         width: page.width - 2 * x
         spacing: 16
 
-        MobilePageHeading {
-            Layout.fillWidth: true
-            text: "Аналитика."
+        MobileActionButton {
+            flat: true
+            text: "‹ Ещё"
+            Accessible.name: "Вернуться в раздел «Ещё»"
+            onClicked: page.backRequested()
         }
 
-        Rectangle {
+        MobilePageHeading {
             Layout.fillWidth: true
-            implicitHeight: 1
-            color: MobileTheme.ink
+            documentStyle: true
+            text: "Аналитика"
         }
 
         ExpenseBreakdown {

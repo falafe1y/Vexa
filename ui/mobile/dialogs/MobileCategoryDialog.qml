@@ -1,13 +1,14 @@
 import QtQuick
-import QtQuick.Controls.Basic as Basic
 import QtQuick.Layouts
 
 MobileFormDialog {
     id: dialog
+
     required property var ledger
     property var editData: null
     property int categoryType: 0
-    title: editData ? "Редактировать категорию." : "Новая категория."
+    title: editData ? "Редактировать категорию" : "Новая категория"
+    busy: ledger.commandPending
     onClosed: editData = null
 
     function openFor(type) {
@@ -20,7 +21,10 @@ MobileFormDialog {
         editData = data
         open()
     }
-    closePolicy: ledger.commandPending ? Basic.Popup.NoAutoClose : Basic.Popup.CloseOnEscape
+    onOpened: {
+        if (sheetStyle)
+            nameField.forceActiveFocus()
+    }
 
     onAboutToShow: {
         errorText = ""
@@ -42,17 +46,23 @@ MobileFormDialog {
         width: parent.width
         enabled: !dialog.ledger.commandPending
         spacing: 8
+
         MobileEditorialText { text: "Название" }
+
         MobileInputField {
             id: nameField
             Layout.fillWidth: true
+            underlined: dialog.sheetStyle
             Accessible.name: "Название"
             placeholderText: "Например, Продукты"
         }
+
         MobileEditorialText { text: "Тип категории" }
+
         MobileSelectField {
             id: typeBox
             Layout.fillWidth: true
+            underlined: dialog.sheetStyle
             Accessible.name: "Тип категории"
             textRole: "text"
             valueRole: "value"
@@ -62,8 +72,11 @@ MobileFormDialog {
 
     footer: MobileDialogActions {
         errorText: dialog.errorText
-        busy: dialog.ledger.commandPending
-        submitText: dialog.editData ? "СОХРАНИТЬ" : "СОЗДАТЬ"
+        busy: dialog.busy
+        sheetStyle: dialog.sheetStyle
+        submitColor: dialog.sheetStyle ? MobileTheme.accent : MobileTheme.ink
+        submitText: dialog.sheetStyle ? (dialog.editData ? "Сохранить" : "Добавить категорию")
+            : (dialog.editData ? "СОХРАНИТЬ" : "СОЗДАТЬ")
         onCancelled: dialog.close()
         onSubmitted: {
             dialog.errorText = ""

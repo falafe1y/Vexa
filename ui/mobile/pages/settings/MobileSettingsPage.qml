@@ -6,6 +6,7 @@ Flickable {
     id: page
 
     required property var ledger
+    signal backRequested()
     required property var updates
 
     clip: true
@@ -24,9 +25,17 @@ Flickable {
         width: page.width - 2 * x
         spacing: 16
 
+        MobileActionButton {
+            flat: true
+            text: "‹ Ещё"
+            Accessible.name: "Вернуться в раздел «Ещё»"
+            onClicked: page.backRequested()
+        }
+
         MobilePageHeading {
             Layout.fillWidth: true
-            text: "Настройки."
+            documentStyle: true
+            text: "Настройки"
         }
 
         MobileBaseCurrencySelector {

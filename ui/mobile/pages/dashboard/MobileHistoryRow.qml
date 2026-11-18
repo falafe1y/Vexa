@@ -1,8 +1,9 @@
 pragma ComponentBehavior: Bound
 import QtQuick
+import QtQuick.Controls.Basic as Basic
 import QtQuick.Layouts
 
-Item {
+Basic.ItemDelegate {
     id: row
 
     property string recordId: ""
@@ -10,7 +11,6 @@ Item {
     property string accountId: ""
     property string secondaryId: ""
     property string amountInput: ""
-    property string typeText: ""
     property int operationType: 0
     property string accountText: ""
     property string secondaryAccountText: ""
@@ -18,134 +18,107 @@ Item {
     property string primaryAmountText: ""
     property string secondaryAmountText: ""
     property string descriptionText: ""
-    property bool busy: false
-    signal removeRequested(string recordId, string description)
-    signal editRequested(var data)
 
-    implicitHeight: details.implicitHeight + 12
-    height: implicitHeight
+    readonly property bool transfer: operationType === 2
+    readonly property string summary: transfer
+        ? accountText + " " + secondaryAccountText + " · " + primaryAmountText + " / " + secondaryAmountText
+        : accountText + " · " + categoryText + " · " + primaryAmountText
 
-    component Amount: MobileEditorialText {
-        Layout.fillWidth: true
-        Layout.preferredWidth: details.width * 0.48
-        horizontalAlignment: Text.AlignRight
-        font.family: MobileTheme.mono
-        font.bold: true
-        fontSizeMode: Text.HorizontalFit
-        minimumPixelSize: 11
+    signal actionsRequested(var data)
+
+    padding: 0
+    implicitHeight: details.implicitHeight
+    Accessible.name: dateText + ", " + summary + (descriptionText.length ? ", " + descriptionText : "")
+
+    function requestActions() {
+        actionsRequested({
+            id: recordId,
+            type: operationType,
+            accountId: accountId,
+            secondaryId: secondaryId,
+            amountInput: amountInput,
+            dateText: dateText,
+            descriptionText: descriptionText,
+            summary: summary
+        })
     }
 
-    ColumnLayout {
+    onClicked: requestActions()
+    onPressAndHold: requestActions()
+
+    component HistoryLine: RowLayout {
+        id: line
+
+        required property string account
+        required property string category
+        required property string amount
+        property color amountColor: MobileTheme.ink
+
+        Layout.fillWidth: true
+        Layout.minimumHeight: 34
+        spacing: 4
+
+        MobileEditorialText {
+            Layout.fillWidth: true
+            Layout.preferredWidth: 1.15
+            text: line.account
+            font.pixelSize: 13
+        }
+
+        MobileEditorialText {
+            Layout.fillWidth: true
+            Layout.preferredWidth: 1
+            text: line.category
+            font.pixelSize: 13
+        }
+
+        MobileEditorialText {
+            Layout.preferredWidth: Math.max(76, line.width * 0.28)
+            text: line.amount
+            font.family: MobileTheme.mono
+            font.pixelSize: 13
+            fontSizeMode: Text.HorizontalFit
+            minimumPixelSize: 9
+            color: line.amountColor
+            horizontalAlignment: Text.AlignRight
+        }
+    }
+
+    contentItem: ColumnLayout {
         id: details
 
-        anchors.left: parent.left
-        anchors.right: parent.right
-        anchors.leftMargin: MobileTheme.pagePadding
-        anchors.rightMargin: MobileTheme.pagePadding
-        y: 4
-        spacing: 2
+        spacing: 0
 
-        RowLayout {
-            Layout.fillWidth: true
-            spacing: 8
-
-            MobileEditorialText {
-                text: row.dateText
-                font.family: MobileTheme.mono
-                font.pixelSize: 12
-                color: MobileTheme.muted
-            }
-
-            MobileEditorialText {
-                Layout.fillWidth: true
-                text: row.typeText
-                font.pixelSize: 12
-                color: MobileTheme.muted
-            }
-
-            MobileActionButton {
-                flat: true
-                text: "⋯"
-                font.pixelSize: 21
-                enabled: !row.busy
-                Accessible.name: "Действия с операцией " + row.dateText
-                onClicked: operationMenu.open()
-
-                MobileContextActionMenu {
-                    id: operationMenu
-
-                    editEnabled: !row.busy
-                    removeEnabled: !row.busy
-                    onEditRequested: row.editRequested({
-                        id: row.recordId,
-                        type: row.operationType,
-                        accountId: row.accountId,
-                        secondaryId: row.secondaryId,
-                        amountInput: row.amountInput,
-                        dateText: row.dateText,
-                        descriptionText: row.descriptionText
-                    })
-                    onRemoveRequested: row.removeRequested(row.recordId, row.descriptionText)
-                }
-            }
+        HistoryLine {
+            account: row.accountText
+            category: row.transfer ? "Перевод" : row.categoryText
+            amount: row.primaryAmountText
+            amountColor: row.transfer ? MobileTheme.ink
+                : row.operationType === 0 ? MobileTheme.historyIncome : MobileTheme.historyExpense
         }
 
-        GridLayout {
-            Layout.fillWidth: true
-            columns: 2
-            columnSpacing: 8
-            rowSpacing: 4
-
-            MobileEditorialText {
-                Layout.fillWidth: true
-                Layout.preferredWidth: details.width * 0.52
-                text: row.accountText
-                font.bold: true
-            }
-
-            Amount {
-                text: row.primaryAmountText
-                color: row.operationType === 0 ? MobileTheme.income : MobileTheme.accent
-            }
-
-            MobileEditorialText {
-                Layout.fillWidth: true
-                Layout.preferredWidth: details.width * 0.52
-                text: row.secondaryAccountText
-                visible: row.operationType === 2
-                color: MobileTheme.muted
-            }
-
-            Amount {
-                text: row.secondaryAmountText
-                visible: row.operationType === 2
-                color: MobileTheme.income
-            }
+        HistoryLine {
+            visible: row.transfer
+            account: row.secondaryAccountText
+            category: ""
+            amount: row.secondaryAmountText
         }
 
         MobileEditorialText {
             Layout.fillWidth: true
-            visible: row.operationType !== 2 && text.length > 0
-            text: row.categoryText
-            font.pixelSize: 13
-            color: MobileTheme.muted
-        }
-
-        MobileEditorialText {
-            Layout.fillWidth: true
+            Layout.bottomMargin: 5
             visible: text.length > 0
             text: row.descriptionText
-            font.pixelSize: 13
+            font.pixelSize: 12
+            color: MobileTheme.muted
             wrapMode: Text.Wrap
             elide: Text.ElideNone
         }
     }
 
-    Rectangle {
-        anchors.bottom: parent.bottom
-        anchors.left: details.left
-        anchors.right: details.right
-        height: 1
-        color: MobileTheme.line
+    background: Rectangle {
+        color: row.down ? MobileTheme.sidebar : "transparent"
+        border.width: row.visualFocus ? 1 : 0
+        border.color: MobileTheme.accent
     }
 }

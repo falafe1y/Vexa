@@ -6,9 +6,10 @@ Basic.Button {
 
     property bool outlined: true
     property bool danger: false
+    property real cornerRadius: 6
+    property color actionColor: danger ? MobileTheme.accent : MobileTheme.ink
 
     readonly property bool filled: !flat && !outlined
-    readonly property color actionColor: danger ? MobileTheme.accent : MobileTheme.ink
 
     padding: 10
     implicitHeight: MobileTheme.touchSize
@@ -26,7 +27,7 @@ Basic.Button {
     }
 
     background: Rectangle {
-        radius: 6
+        radius: control.cornerRadius
         color: control.filled
             ? (control.down ? Qt.darker(control.actionColor, 1.25) : control.actionColor)
             : (control.down ? MobileTheme.soft : "transparent")

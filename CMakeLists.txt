@@ -37,7 +37,12 @@ qt_add_executable(Vexa
 )
 
 if(ANDROID)
-    include("D:/Qt/android_openssl/android_openssl.cmake")
+    if(CMAKE_HOST_WIN32)
+        include("D:/Qt/android_openssl/android_openssl.cmake")
+    else()
+        include("/home/kega/Android/Sdk/android_openssl/android_openssl.cmake")
+    endif()
+
     add_android_openssl_libraries(Vexa)
     set_target_properties(Vexa PROPERTIES
         QT_ANDROID_PACKAGE_SOURCE_DIR "${vexa_icon_dir}/android"

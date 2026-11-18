@@ -4,64 +4,41 @@ import QtQuick.Controls.Basic as Basic
 import QtQuick.Layouts
 
 ColumnLayout {
-    id: section
+    id: page
 
     required property var ledger
-    signal createRequested()
     signal editRequested(var data)
     signal removeRequested(string recordId, string description)
 
-    spacing: 8
+    spacing: 0
 
-    RowLayout {
+    MobilePageHeading {
         Layout.fillWidth: true
-        spacing: 8
-
-        MobileEditorialText {
-            Layout.fillWidth: true
-            text: "Счета"
-            font.family: MobileTheme.serif
-            font.pixelSize: 25
-        }
-
-        MobileActionButton {
-            text: "+ СЧЁТ"
-            Accessible.name: "Добавить счёт"
-            enabled: section.ledger.ready && !section.ledger.commandPending
-            onClicked: section.createRequested()
-        }
-    }
-
-    MobileEditorialText {
-        Layout.fillWidth: true
-        visible: section.ledger.ready && accountList.count === 0
-        text: "Счетов пока нет."
-        color: MobileTheme.muted
+        Layout.topMargin: 13
+        Layout.leftMargin: MobileTheme.pagePadding
+        Layout.rightMargin: MobileTheme.pagePadding
+        documentStyle: true
+        text: "Счета"
     }
 
     ListView {
         id: accountList
 
         Layout.fillWidth: true
-        Layout.preferredHeight: 150
-        visible: count > 0
+        Layout.fillHeight: true
+        Layout.leftMargin: MobileTheme.pagePadding
+        Layout.rightMargin: MobileTheme.pagePadding
         clip: true
-        interactive: count > 1
-        orientation: ListView.Horizontal
-        snapMode: ListView.SnapOneItem
-        flickDeceleration: 3000
         reuseItems: true
         boundsBehavior: Flickable.StopAtBounds
-        spacing: 8
-        model: section.ledger.accountsModel
+        model: page.ledger.accountsModel
 
-        Basic.ScrollIndicator.horizontal: Basic.ScrollIndicator {}
+        Basic.ScrollIndicator.vertical: Basic.ScrollIndicator {}
 
         delegate: MobileAccountCard {
             required property var model
 
-            width: ListView.view.width - (ListView.view.count > 1 ? 24 : 0)
-            height: ListView.view.height
+            width: ListView.view.width
             accountType: model.type
             openingInput: model.openingInput
             limitInput: model.limitInput
@@ -75,9 +52,18 @@ ColumnLayout {
             credit: model.isCreditCard
             debtText: model.debtText
             limitText: model.creditLimitText
-            busy: section.ledger.commandPending
-            onRemoveRequested: (recordId, description) => section.removeRequested(recordId, description)
-            onEditRequested: data => section.editRequested(data)
+            enabled: !page.ledger.commandPending
+            onRemoveRequested: (recordId, description) => page.removeRequested(recordId, description)
+            onEditRequested: data => page.editRequested(data)
+        }
+
+        MobileEditorialText {
+            anchors.top: parent.top
+            anchors.topMargin: 12
+            width: parent.width
+            visible: page.ledger.ready && accountList.count === 0
+            text: "Счетов пока нет"
+            color: MobileTheme.muted
         }
     }
 }

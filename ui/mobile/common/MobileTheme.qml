@@ -10,6 +10,8 @@ QtObject {
     readonly property color line: "#bbb5a8"
     readonly property color accent: "#b84932"
     readonly property color income: "#2e5947"
+    readonly property color historyExpense: "#a92424"
+    readonly property color historyIncome: "#176c33"
     readonly property list<color> expenseCategoryColors: [
         "#D67B50",
         "#E3895A",
@@ -29,4 +31,5 @@ QtObject {
 
     readonly property int pagePadding: 16
     readonly property int touchSize: 48
+    readonly property int phonePageWidth: 480
 }

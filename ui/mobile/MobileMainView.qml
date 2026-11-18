@@ -1,10 +1,13 @@
 pragma ComponentBehavior: Bound
 import QtQuick
 import QtQuick.Controls
+import QtQuick.Controls.Basic as Basic
 import QtQuick.Layouts
 
 ApplicationWindow {
     id: window
+
+    enum Page { Overview, Categories, Accounts, More, Analytics, Settings }
 
     required property var ledger
     required property var updates
@@ -30,97 +33,263 @@ ApplicationWindow {
         id: accountDialog
         parent: window.contentItem
         ledger: window.ledger
+        sheetStyle: true
     }
 
     MobileCategoryDialog {
         id: categoryDialog
         parent: window.contentItem
         ledger: window.ledger
+        sheetStyle: true
     }
 
     MobileOperationDialog {
         id: operationDialog
         parent: window.contentItem
         ledger: window.ledger
+        sheetStyle: true
     }
 
     MobileRemovalDialog {
         id: removalDialog
         parent: window.contentItem
         ledger: window.ledger
+        sheetStyle: true
+    }
+
+    MobileFormDialog {
+        id: operationActions
+
+        property var operation: null
+
+        parent: window.contentItem
+        sheetStyle: true
+        title: "Операция"
+        onClosed: operation = null
+
+        body: ColumnLayout {
+            width: parent.width
+            spacing: 8
+
+            MobileEditorialText {
+                Layout.fillWidth: true
+                text: operationActions.operation?.summary ?? ""
+                wrapMode: Text.Wrap
+                elide: Text.ElideNone
+                color: MobileTheme.muted
+            }
+
+            MobileActionButton {
+                Layout.fillWidth: true
+                cornerRadius: 0
+                text: "Редактировать"
+                enabled: !window.ledger.commandPending
+                onClicked: {
+                    const operation = operationActions.operation
+                    operationActions.close()
+                    operationDialog.openForEdit(operation)
+                }
+            }
+
+            MobileActionButton {
+                Layout.fillWidth: true
+                cornerRadius: 0
+                text: "Удалить"
+                danger: true
+                enabled: !window.ledger.commandPending
+                onClicked: {
+                    const operation = operationActions.operation
+                    operationActions.close()
+                    removalDialog.ask("removeOperation", operation.id, operation.summary)
+                }
+            }
+        }
+    }
+
+    MobileFormDialog {
+        id: assetDialog
+
+        parent: window.contentItem
+        sheetStyle: true
+
+        body: MobileEditorialText {
+            width: parent.width
+            bottomPadding: 4
+            text: "В разработке"
+            color: MobileTheme.muted
+        }
+    }
+
+    component MoreLink: Basic.Button {
+        id: link
+
+        property string detail: "›"
+
+        Layout.fillWidth: true
+        implicitHeight: 46
+        padding: 0
+
+        contentItem: RowLayout {
+            MobileEditorialText {
+                Layout.fillWidth: true
+                text: link.text
+                font.pixelSize: 16
+            }
+
+            MobileEditorialText {
+                text: link.detail
+                font.family: MobileTheme.mono
+                font.pixelSize: 11
+                color: MobileTheme.muted
+            }
+        }
+
+        background: Rectangle {
+            color: link.down ? MobileTheme.soft : "transparent"
+            border.width: link.visualFocus ? 1 : 0
+            border.color: MobileTheme.accent
+
+            Rectangle {
+                anchors.bottom: parent.bottom
+                width: parent.width
+                height: 1
+                color: MobileTheme.line
+            }
+        }
     }
 
     ColumnLayout {
-        anchors.fill: parent
+        anchors.top: parent.top
+        anchors.bottom: parent.bottom
+        anchors.horizontalCenter: parent.horizontalCenter
+        width: Math.min(parent.width, MobileTheme.phonePageWidth)
         spacing: 0
-
-        // Rectangle {
-        //     Layout.fillWidth: true
-        //     Layout.preferredHeight: 48
-        //     color: MobileTheme.sidebar
-
-        //     MobileEditorialText {
-        //         anchors.left: parent.left
-        //         anchors.leftMargin: MobileTheme.pagePadding
-        //         anchors.verticalCenter: parent.verticalCenter
-        //         text: "FPFAPWFAWFAWFWAFWAF."
-        //         font.family: "Gelasio"
-        //         font.italic: true
-        //         font.bold: true
-        //         font.pixelSize: 28
-        //         font.letterSpacing: -1
-        //     }
-
-        //     Rectangle {
-        //         anchors.bottom: parent.bottom
-        //         width: parent.width
-        //         height: 1
-        //         color: MobileTheme.ink
-        //     }
-        // }
 
         StackLayout {
             id: pages
 
             Layout.fillWidth: true
             Layout.fillHeight: true
-            currentIndex: 0
+            currentIndex: MobileMainView.Overview
 
             MobileDashboardPage {
                 ledger: window.ledger
-                onCreateAccountRequested: accountDialog.open()
-                onEditAccountRequested: data => accountDialog.openForEdit(data)
-                onOperationRequested: type => operationDialog.openFor(type)
-                onEditOperationRequested: data => operationDialog.openForEdit(data)
-                onRemoveAccountRequested: (recordId, description) =>
-                    removalDialog.ask("removeAccount", recordId, description)
-                onRemoveOperationRequested: (recordId, description) =>
-                    removalDialog.ask("removeOperation", recordId, description)
+                onAccountsRequested: pages.currentIndex = MobileMainView.Accounts
+                onAssetRequested: name => {
+                    assetDialog.title = name
+                    assetDialog.open()
+                }
+                onOperationActionsRequested: data => {
+                    operationActions.operation = data
+                    operationActions.open()
+                }
             }
 
             MobileCategoriesPage {
                 ledger: window.ledger
-                onCreateRequested: type => categoryDialog.openFor(type)
                 onEditRequested: data => categoryDialog.openForEdit(data)
                 onRemoveRequested: (recordId, description) =>
                     removalDialog.ask("removeCategory", recordId, description)
             }
 
+            MobileAccountsSection {
+                ledger: window.ledger
+                onEditRequested: data => accountDialog.openForEdit(data)
+                onRemoveRequested: (recordId, description) =>
+                    removalDialog.ask("removeAccount", recordId, description)
+            }
+
+            Flickable {
+                id: more
+
+                clip: true
+                contentWidth: width
+                contentHeight: links.implicitHeight + 2 * MobileTheme.pagePadding
+                flickableDirection: Flickable.VerticalFlick
+                boundsBehavior: Flickable.StopAtBounds
+
+                ColumnLayout {
+                    id: links
+
+                    x: MobileTheme.pagePadding
+                    y: 13
+                    width: more.width - 2 * x
+                    spacing: 0
+
+                    MobilePageHeading {
+                        Layout.fillWidth: true
+                        documentStyle: true
+                        text: "Ещё"
+                    }
+
+                    MoreLink {
+                        text: "Аналитика"
+                        onClicked: pages.currentIndex = MobileMainView.Analytics
+                    }
+
+                    MoreLink {
+                        text: "Настройки"
+                        detail: window.updates.updateAvailable ? "Доступно обновление" : "›"
+                        onClicked: pages.currentIndex = MobileMainView.Settings
+                    }
+
+                    MoreLink {
+                        text: "Криптовалюта"
+                        detail: "В разработке"
+                        onClicked: {
+                            assetDialog.title = text
+                            assetDialog.open()
+                        }
+                    }
+
+                    MoreLink {
+                        text: "Инвестиции"
+                        detail: "В разработке"
+                        onClicked: {
+                            assetDialog.title = text
+                            assetDialog.open()
+                        }
+                    }
+                }
+            }
+
             MobileAnalyticsPage {
                 ledger: window.ledger
+                onBackRequested: pages.currentIndex = MobileMainView.More
             }
 
             MobileSettingsPage {
                 ledger: window.ledger
                 updates: window.updates
+                onBackRequested: pages.currentIndex = MobileMainView.More
             }
         }
 
         MobileSidebar {
             Layout.fillWidth: true
-            currentPage: pages.currentIndex
+            phoneLayout: true
+            currentPage: Math.min(pages.currentIndex, MobileMainView.More)
             updateAvailable: window.updates.updateAvailable
+            addEnabled: pages.currentIndex === MobileMainView.Overview
+                ? window.ledger.canAddOperation
+                : (pages.currentIndex === MobileMainView.Categories
+                   || pages.currentIndex === MobileMainView.Accounts)
+                  && window.ledger.ready && !window.ledger.commandPending
+
             onPageRequested: page => pages.currentIndex = page
+            onAddRequested: {
+                switch (pages.currentIndex) {
+                case MobileMainView.Overview:
+                    operationDialog.openFor(1)
+                    break
+                case MobileMainView.Categories:
+                    categoryDialog.openFor(1)
+                    break
+                case MobileMainView.Accounts:
+                    accountDialog.open()
+                    break
+                }
+            }
         }
     }
 }
