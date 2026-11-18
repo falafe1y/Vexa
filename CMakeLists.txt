@@ -45,6 +45,7 @@ if(ANDROID)
 
     add_android_openssl_libraries(Vexa)
     set_target_properties(Vexa PROPERTIES
+        QT_ANDROID_PACKAGE_NAME "com.vexa"
         QT_ANDROID_PACKAGE_SOURCE_DIR "${vexa_icon_dir}/android"
         QT_ANDROID_APP_ICON "@mipmap/vexa_launcher"
     )
