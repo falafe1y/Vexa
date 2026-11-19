@@ -6,39 +6,51 @@ import QtQuick.Layouts
 Basic.ItemDelegate {
     id: row
 
-    property string recordId: ""
-    property string dateText: ""
-    property string accountId: ""
-    property string secondaryId: ""
-    property string amountInput: ""
-    property int operationType: 0
-    property string accountText: ""
-    property string secondaryAccountText: ""
-    property string categoryText: ""
-    property string primaryAmountText: ""
-    property string secondaryAmountText: ""
-    property string descriptionText: ""
+    required property int type
+    required property string recordId
+    required property string dateText
+    required property string accountId
+    required property string secondaryId
+    required property string amountInput
+    required property string accountText
+    required property string secondaryAccountText
+    required property string categoryText
+    required property string primaryAmountText
+    required property string secondaryAmountText
+    required property string descriptionText
+    required property string iconText
+    required property string historyTitle
+    required property string historySubtitle
+    required property string historyAmountText
+    required property string historySecondaryAmountText
+    property bool busy: false
 
-    readonly property bool transfer: operationType === 2
-    readonly property string summary: transfer
-        ? accountText + " " + secondaryAccountText + " · " + primaryAmountText + " / " + secondaryAmountText
-        : accountText + " · " + categoryText + " · " + primaryAmountText
+    readonly property color amountColor: row.type === 0 ? MobileTheme.historyIncome
+        : row.type === 1 ? MobileTheme.historyExpense : MobileTheme.historyTransfer
+    readonly property string summary: row.type === 2
+        ? row.accountText + " " + row.secondaryAccountText
+          + " · " + row.primaryAmountText + " / " + row.secondaryAmountText
+        : row.accountText + " · " + row.categoryText + " · " + row.primaryAmountText
 
     signal actionsRequested(var data)
 
     padding: 0
-    implicitHeight: details.implicitHeight
-    Accessible.name: dateText + ", " + summary + (descriptionText.length ? ", " + descriptionText : "")
+    topPadding: 10
+    bottomPadding: 10
+    implicitHeight: Math.max(66, implicitContentHeight + topPadding + bottomPadding)
+    enabled: !busy
+    Accessible.name: row.dateText + ", " + summary
+        + (row.descriptionText.length ? ", " + row.descriptionText : "")
 
     function requestActions() {
         actionsRequested({
-            id: recordId,
-            type: operationType,
-            accountId: accountId,
-            secondaryId: secondaryId,
-            amountInput: amountInput,
-            dateText: dateText,
-            descriptionText: descriptionText,
+            id: row.recordId,
+            type: row.type,
+            accountId: row.accountId,
+            secondaryId: row.secondaryId,
+            amountInput: row.amountInput,
+            dateText: row.dateText,
+            descriptionText: row.descriptionText,
             summary: summary
         })
     }
@@ -46,73 +58,61 @@ Basic.ItemDelegate {
     onClicked: requestActions()
     onPressAndHold: requestActions()
 
-    component HistoryLine: RowLayout {
-        id: line
+    contentItem: RowLayout {
+        spacing: 11
 
-        required property string account
-        required property string category
-        required property string amount
-        property color amountColor: MobileTheme.ink
+        MobileCategoryIcon {
+            initial: row.iconText
+            transfer: row.type === 2
+        }
 
-        Layout.fillWidth: true
-        Layout.minimumHeight: 34
-        spacing: 4
-
-        MobileEditorialText {
+        ColumnLayout {
             Layout.fillWidth: true
-            Layout.preferredWidth: 1.15
-            text: line.account
-            font.pixelSize: 13
+            Layout.minimumWidth: 0
+            spacing: 5
+
+            MobileEditorialText {
+                Layout.fillWidth: true
+                text: row.historyTitle
+                font.pixelSize: 16
+            }
+
+            MobileEditorialText {
+                Layout.fillWidth: true
+                visible: text.length > 0
+                text: row.historySubtitle
+                font.pixelSize: 12
+                color: MobileTheme.muted
+            }
         }
 
-        MobileEditorialText {
-            Layout.fillWidth: true
-            Layout.preferredWidth: 1
-            text: line.category
-            font.pixelSize: 13
-        }
+        ColumnLayout {
+            Layout.maximumWidth: Math.min(160, row.width * 0.43)
+            Layout.minimumWidth: 0
+            spacing: 5
 
-        MobileEditorialText {
-            Layout.preferredWidth: Math.max(76, line.width * 0.28)
-            text: line.amount
-            font.family: MobileTheme.mono
-            font.pixelSize: 13
-            fontSizeMode: Text.HorizontalFit
-            minimumPixelSize: 9
-            color: line.amountColor
-            horizontalAlignment: Text.AlignRight
-        }
-    }
+            MobileEditorialText {
+                Layout.fillWidth: true
+                text: row.historyAmountText
+                font.family: MobileTheme.mono
+                font.pixelSize: row.width < 350 ? 13 : 14
+                fontSizeMode: Text.HorizontalFit
+                minimumPixelSize: 11
+                horizontalAlignment: Text.AlignRight
+                color: row.amountColor
+            }
 
-    contentItem: ColumnLayout {
-        id: details
-
-        spacing: 0
-
-        HistoryLine {
-            account: row.accountText
-            category: row.transfer ? "Перевод" : row.categoryText
-            amount: row.primaryAmountText
-            amountColor: row.transfer ? MobileTheme.ink
-                : row.operationType === 0 ? MobileTheme.historyIncome : MobileTheme.historyExpense
-        }
-
-        HistoryLine {
-            visible: row.transfer
-            account: row.secondaryAccountText
-            category: ""
-            amount: row.secondaryAmountText
-        }
-
-        MobileEditorialText {
-            Layout.fillWidth: true
-            Layout.bottomMargin: 5
-            visible: text.length > 0
-            text: row.descriptionText
-            font.pixelSize: 12
-            color: MobileTheme.muted
-            wrapMode: Text.Wrap
-            elide: Text.ElideNone
+            MobileEditorialText {
+                Layout.fillWidth: true
+                visible: text.length > 0
+                text: row.historySecondaryAmountText
+                font.family: MobileTheme.mono
+                font.pixelSize: 12
+                fontSizeMode: Text.HorizontalFit
+                minimumPixelSize: 11
+                horizontalAlignment: Text.AlignRight
+                color: row.amountColor
+            }
         }
     }
 

@@ -7,6 +7,7 @@ ColumnLayout {
     id: page
 
     required property var ledger
+    signal historyRequested(string accountId)
     signal editRequested(var data)
     signal removeRequested(string recordId, string description)
 
@@ -53,6 +54,7 @@ ColumnLayout {
             debtText: model.debtText
             limitText: model.creditLimitText
             enabled: !page.ledger.commandPending
+            onHistoryRequested: recordId => page.historyRequested(recordId)
             onRemoveRequested: (recordId, description) => page.removeRequested(recordId, description)
             onEditRequested: data => page.editRequested(data)
         }

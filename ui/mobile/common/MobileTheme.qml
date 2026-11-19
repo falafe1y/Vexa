@@ -12,6 +12,9 @@ QtObject {
     readonly property color income: "#2e5947"
     readonly property color historyExpense: "#a92424"
     readonly property color historyIncome: "#176c33"
+    readonly property color historyTransfer: "#285f9e"
+    readonly property color selectedMuted: "#c7cbd0"
+    readonly property color selectedDebt: "#ffa58e"
     readonly property list<color> expenseCategoryColors: [
         "#D67B50",
         "#E3895A",

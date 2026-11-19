@@ -26,7 +26,9 @@ public:
 
     [[nodiscard]] OperationPage operations(
         qint64 offset,
-        qint64 limit
+        qint64 limit,
+        const OperationFilter& filter = {},
+        const QString& baseCurrencyCode = QStringLiteral("RUB")
         ) const;
 
     [[nodiscard]]

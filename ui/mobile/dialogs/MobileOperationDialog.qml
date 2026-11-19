@@ -24,7 +24,7 @@ MobileFormDialog {
     busy: ledger.commandPending
     onClosed: editData = null
 
-    function openFor(type) {
+    function openFor(type, accountId = "") {
         editData = null
         operationType = type
         errorText = ""
@@ -32,8 +32,10 @@ MobileFormDialog {
         descriptionField.text = ""
         operationDateText = ledger.currentDateText()
         dateField.text = operationDateText
-        accountBox.currentIndex = accountBox.count > 0 ? 0 : -1
-        receiverBox.currentIndex = receiverBox.count > 1 ? 1 : -1
+        const selectedIndex = accountBox.indexOfValue(accountId)
+        accountBox.currentIndex = selectedIndex >= 0 ? selectedIndex : accountBox.count > 0 ? 0 : -1
+        receiverBox.currentIndex = receiverBox.count > 1
+            ? (accountBox.currentIndex === 0 ? 1 : 0) : -1
         categoryBox.currentIndex = categoryBox.count > 0 ? 0 : -1
         ruler.alignToAmount(amountField.normalizedText)
         open()
@@ -62,6 +64,9 @@ MobileFormDialog {
 
         operationType = type
         errorText = ""
+        if (isTransfer && receiverBox.currentIndex === accountBox.currentIndex)
+            receiverBox.currentIndex = receiverBox.count > 1
+                ? (accountBox.currentIndex === 0 ? 1 : 0) : -1
         if (!isTransfer) {
             categoryBox.currentIndex = editData && editData.type === type
                 ? categoryBox.indexOfValue(editData.secondaryId)

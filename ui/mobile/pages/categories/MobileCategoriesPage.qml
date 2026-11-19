@@ -7,6 +7,7 @@ ColumnLayout {
     id: page
 
     required property var ledger
+    signal historyRequested(string categoryId)
     signal editRequested(var data)
     signal removeRequested(string recordId, string description)
 
@@ -25,15 +26,27 @@ ColumnLayout {
         Layout.preferredWidth: 1
         spacing: 0
 
-        MobileEditorialText {
+        RowLayout {
             Layout.fillWidth: true
-            topPadding: 16
-            bottomPadding: 9
-            text: column.heading
-            color: column.headingColor
-            font.family: MobileTheme.mono
-            font.pixelSize: 13
-            Accessible.role: Accessible.Heading
+            Layout.topMargin: 19
+            Layout.bottomMargin: 10
+            spacing: 8
+
+            MobileEditorialText {
+                Layout.fillWidth: true
+                text: column.heading
+                color: column.headingColor
+                font.family: MobileTheme.mono
+                font.pixelSize: 13
+                Accessible.role: Accessible.Heading
+            }
+
+            MobileEditorialText {
+                text: column.categoriesModel.count
+                font.family: MobileTheme.mono
+                font.pixelSize: 11
+                color: MobileTheme.muted
+            }
         }
 
         Rectangle {
@@ -60,18 +73,29 @@ ColumnLayout {
                 required property var model
 
                 width: ListView.view.width
-                implicitHeight: Math.max(44, implicitContentHeight + topPadding + bottomPadding)
+                implicitHeight: Math.max(69, implicitContentHeight + topPadding + bottomPadding)
                 padding: 0
-                topPadding: 8
-                bottomPadding: 8
+                topPadding: 12
+                bottomPadding: 12
                 text: model.name
                 enabled: !page.ledger.commandPending
 
-                contentItem: MobileEditorialText {
-                    text: category.text
-                    font.pixelSize: 16
-                    wrapMode: Text.Wrap
-                    elide: Text.ElideNone
+                contentItem: RowLayout {
+                    spacing: page.width < 350 ? 8 : 10
+
+                    MobileCategoryIcon {
+                        Layout.preferredWidth: page.width < 350 ? 28 : 31
+                        Layout.preferredHeight: 34
+                        initial: category.model.initial
+                    }
+
+                    MobileEditorialText {
+                        Layout.fillWidth: true
+                        text: category.text
+                        font.pixelSize: page.width < 350 ? 14 : 16
+                        wrapMode: Text.Wrap
+                        elide: Text.ElideNone
+                    }
                 }
 
                 background: Rectangle {
@@ -93,6 +117,8 @@ ColumnLayout {
                 MobileContextActionMenu {
                     id: categoryMenu
 
+                    historyEnabled: true
+                    onHistoryRequested: page.historyRequested(category.model.id)
                     onEditRequested: page.editRequested({
                         id: category.model.id,
                         name: category.model.name,
@@ -128,7 +154,7 @@ ColumnLayout {
         Layout.fillHeight: true
         Layout.leftMargin: MobileTheme.pagePadding
         Layout.rightMargin: MobileTheme.pagePadding
-        spacing: 14
+        spacing: 18
 
         CategoryList {
             heading: "Расходы"

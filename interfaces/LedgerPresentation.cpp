@@ -1,6 +1,7 @@
 #include "LedgerPresentation.h"
 
 #include <QLocale>
+#include <QTextBoundaryFinder>
 
 namespace interfaces::presentation {
 
@@ -18,6 +19,14 @@ QString symbol(const QString& code)
     if (code == QStringLiteral("EUR")) return QStringLiteral("€");
     if (code == QStringLiteral("CNY")) return QStringLiteral("¥");
     return code;
+}
+
+QString initial(const QString& name)
+{
+    const auto trimmed = name.trimmed();
+    QTextBoundaryFinder finder(QTextBoundaryFinder::Grapheme, trimmed);
+    const auto end = finder.toNextBoundary();
+    return end > 0 ? trimmed.left(end).toUpper() : QString{};
 }
 
 QString accountTypeText(core::model::AccountType type)
@@ -118,11 +127,12 @@ QVariantMap categoryRow(const services::CategoryData& category)
         {"id", idText(category.id)},
         {"name", category.name},
         {"type", static_cast<int>(category.type)},
-        {"typeText", income ? QStringLiteral("Доход") : QStringLiteral("Расход")}
+        {"typeText", income ? QStringLiteral("Доход") : QStringLiteral("Расход")},
+        {"initial", initial(category.name)}
     };
 }
 
-QVariantMap operationRow(const services::OperationData& operation)
+QVariantMap operationRow(const services::OperationData& operation, const QUuid& historyAccountId)
 {
     const bool income = operation.type == services::OperationType::Income;
     const bool transfer = operation.type == services::OperationType::Transfer;
@@ -140,6 +150,26 @@ QVariantMap operationRow(const services::OperationData& operation)
         );
     }
 
+    const bool receiving = transfer && operation.toAccountId == historyAccountId;
+    QString historyAmount = primary;
+    QString historySecondary;
+    if (transfer) {
+        historyAmount = historyAccountId.isNull() ? amount : receiving ? secondary : primary;
+        if (historyAccountId.isNull() && operation.currencyCode != operation.receivedCurrencyCode) {
+            historySecondary = secondary;
+        }
+    }
+    QString subtitle;
+    if (transfer) {
+        subtitle = operation.accountName + QStringLiteral(" · ") + operation.toAccountName;
+    } else {
+        subtitle = historyAccountId.isNull() ? operation.accountName : QString{};
+        if (!operation.description.isEmpty()) {
+            if (!subtitle.isEmpty()) subtitle += QStringLiteral(" · ");
+            subtitle += operation.description;
+        }
+    }
+
     return {
         {"id", idText(operation.id)},
         {"dateText", operation.date.toString(operationDateFormat)},
@@ -154,7 +184,31 @@ QVariantMap operationRow(const services::OperationData& operation)
         {"categoryText", transfer ? QStringLiteral("—") : operation.categoryName},
         {"primaryAmountText", primary},
         {"secondaryAmountText", secondary},
-        {"descriptionText", operation.description}
+        {"descriptionText", operation.description},
+        {"iconText", transfer ? QStringLiteral("↔") : initial(operation.categoryName)},
+        {"historyTitle", transfer ? QStringLiteral("Перевод") : operation.categoryName},
+        {"historySubtitle", subtitle},
+        {"historyAmountText", historyAmount},
+        {"historySecondaryAmountText", historySecondary}
+    };
+}
+
+QVariantMap operationDayRow(const services::OperationDayData& day,
+    int decimals, const QString& currencyCode)
+{
+    const QLocale locale(QLocale::Russian, QLocale::Russia);
+    const auto fullDate = locale.toString(day.date, QStringLiteral("d MMMM"));
+    auto month = fullDate.mid(fullDate.indexOf(QLatin1Char(' ')) + 1);
+    if (day.date.year() != QDate::currentDate().year()) {
+        month += QLatin1Char(' ') + QString::number(day.date.year());
+    }
+    return {
+        {"dayText", QString::number(day.date.day())},
+        {"monthText", month},
+        {"totalText", (day.totalMinor > 0 ? QStringLiteral("+") : QString{})
+            + money(day.totalMinor, decimals, currencyCode)},
+        {"negative", day.totalMinor < 0},
+        {"positive", day.totalMinor > 0}
     };
 }
 

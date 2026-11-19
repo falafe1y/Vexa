@@ -261,11 +261,13 @@ void LedgerService::requestCategories()
 void LedgerService::requestOperations(
     qint64 offset,
     qint64 limit,
-    const QUuid& version)
+    const QUuid& version,
+    const OperationFilter& filter,
+    const QString& baseCurrencyCode)
 {
     executeRequest(
         QStringLiteral("operations"),
-        [this, offset, limit, version](const State& state) {
+        [this, offset, limit, version, filter, baseCurrencyCode](const State& state) {
             LedgerReadService reader{state.ledger};
 
             const bool resetRequired =
@@ -274,7 +276,9 @@ void LedgerService::requestOperations(
 
             auto page = reader.operations(
                 resetRequired ? 0 : offset,
-                limit
+                limit,
+                filter,
+                baseCurrencyCode
                 );
 
             page.version = state.historyVersion;

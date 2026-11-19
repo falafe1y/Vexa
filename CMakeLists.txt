@@ -32,6 +32,13 @@ add_subdirectory(core/db)
 add_subdirectory(services)
 add_subdirectory(interfaces)
 
+option(VEXA_BUILD_TESTS "Build Vexa tests" OFF)
+if(VEXA_BUILD_TESTS)
+    enable_testing()
+    find_package(Qt6 REQUIRED COMPONENTS Test)
+    add_subdirectory(tests)
+endif()
+
 qt_add_executable(Vexa
     main.cpp
 )
@@ -86,6 +93,13 @@ if(ANDROID OR IOS OR VEXA_MOBILE_UI OR VEXA_TABLET_UI)
     set(vexa_ui_theme MobileTheme)
     set(vexa_ui_entry_type MobileMainView)
     set(vexa_ui_entry_files ${vexa_ui_dir}/${vexa_ui_entry_type}.qml)
+    set(vexa_mobile_files
+        ui/mobile/common/MobileCategoryIcon.qml
+        ui/mobile/pages/dashboard/MobileAccountChip.qml
+        ui/mobile/pages/dashboard/MobileAccountStrip.qml
+        ui/mobile/pages/dashboard/MobileHistorySection.qml
+        ui/mobile/pages/history/MobileHistoryPage.qml
+    )
 else()
     set(vexa_ui_dir ui/desktop)
     set(vexa_ui_prefix "")
@@ -127,6 +141,7 @@ qt_add_qml_module(Vexa
     URI UI
     QML_FILES
         ${vexa_ui_entry_files}
+        ${vexa_mobile_files}
         ${vexa_tablet_files}
         ui/common/ExpenseBreakdown.qml
         ${vexa_ui_dir}/common/${vexa_ui_prefix}ActionButton.qml

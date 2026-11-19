@@ -44,12 +44,17 @@ LedgerInterface::LedgerInterface(services::LedgerService& service,
                 rows.push_back(presentation::accountRow(account));
             }
             accounts_.setRows(rows);
+            if (!historyFilter_.accountId.isNull()
+                && !accountDecimalPlaces_.contains(historyFilter_.accountId)) {
+                setHistoryAccountId({});
+            }
             emit accountsChanged();
             emit availabilityChanged();
         }, Qt::QueuedConnection);
 
     connect(&service_, &services::LedgerService::categoriesReady, this,
         [this](const services::CategoryList& categories) {
+            const auto previousHistoryCategoryName = historyCategoryName();
             QVariantList all, income, expense;
             for (const auto& category : categories) {
                 const auto row = presentation::categoryRow(category);
@@ -60,6 +65,12 @@ LedgerInterface::LedgerInterface(services::LedgerService& service,
             categories_.setRows(all);
             incomeCategories_.setRows(income);
             expenseCategories_.setRows(expense);
+            if (!historyFilter_.categoryId.isNull() && historyCategoryName().isEmpty()) {
+                historyFilter_.categoryId = {};
+                historyFilterUpdated();
+            } else if (historyCategoryName() != previousHistoryCategoryName) {
+                emit historyCategoryNameChanged();
+            }
         }, Qt::QueuedConnection);
 
     connect(&service_, &services::LedgerService::totalBalanceReady, this,
@@ -84,41 +95,13 @@ LedgerInterface::LedgerInterface(services::LedgerService& service,
             emit expenseSummaryChanged();
         }, Qt::QueuedConnection);
 
-    connect(&service_, &services::LedgerService::operationsReady, this,
-        [this](const services::OperationPage& page) {
-            if (!historyLoading_) return;
-            historyLoading_ = false;
-            if (historyReloadPending_) {
-                historyReloadPending_ = false;
-                reloadHistory();
-                return;
-            }
-
-            QVariantList rows;
-            rows.reserve(static_cast<qsizetype>(page.items.size()));
-            for (const auto& operation : page.items) {
-                rows.push_back(presentation::operationRow(operation));
-            }
-
-            if (historyReplace_ || page.resetRequired) history_.setRows(rows);
-            else history_.appendRows(rows);
-
-            historyNextOffset_ = page.nextOffset;
-            historyVersion_ = page.version;
-            historyTotalCount_ = page.totalCount;
-            historyHasMore_ = page.hasMore;
-            historyReplace_ = false;
-            emit historyStateChanged();
-        }, Qt::QueuedConnection);
+    connect(&service_, &services::LedgerService::operationsReady,
+            this, &LedgerInterface::acceptHistoryPage, Qt::QueuedConnection);
 
     connect(&service_, &services::LedgerService::requestFailed, this,
         [this](const QString& request, const QString& message) {
             if (request == QStringLiteral("operations")) {
-                historyLoading_ = false;
-                if (historyReloadPending_) {
-                    historyReloadPending_ = false;
-                    reloadHistory();
-                } else emit historyStateChanged();
+                historyRequestFailed();
             }
             if (request == QStringLiteral("expenseSummary")) {
                 if (finishExpenseSummaryRequest()) {
@@ -174,13 +157,6 @@ QString LedgerInterface::accountsCaption() const
     return presentation::accountsCaption(accounts_.count());
 }
 
-QString LedgerInterface::historyCaption() const
-{
-    if (historyLoading_ && history_.count() == 0) return QStringLiteral("Загрузка истории…");
-    if (historyTotalCount_ == 0) return QStringLiteral("Операций пока нет");
-    return QStringLiteral("");
-}
-
 QString LedgerInterface::expenseSummaryCaption() const
 {
     if (expenseSummaryLoading_) return QStringLiteral("Расчёт расходов…");
@@ -211,6 +187,7 @@ bool LedgerInterface::setBaseCurrencyCode(const QString& code)
         emit baseCurrencyChanged();
         if (ready_) {
             service_.requestTotalBalance(totalCurrencyCode_);
+            reloadHistory();
             expenseSummary_.setRows({});
             expenseTotalText_.clear();
             reloadExpenseSummary();
@@ -253,32 +230,6 @@ bool LedgerInterface::finishExpenseSummaryRequest()
     expenseSummaryReloadPending_ = false;
     reloadExpenseSummary();
     return false;
-}
-
-void LedgerInterface::reloadHistory()
-{
-    if (!ready_) return;
-    if (historyLoading_) {
-        historyReloadPending_ = true;
-        return;
-    }
-    historyNextOffset_ = 0;
-    historyVersion_ = QUuid{};
-    historyHasMore_ = true;
-    historyReplace_ = true;
-    requestHistoryPage();
-}
-
-void LedgerInterface::loadMoreHistory()
-{
-    if (ready_ && !historyLoading_ && historyHasMore_) requestHistoryPage();
-}
-
-void LedgerInterface::requestHistoryPage()
-{
-    historyLoading_ = true;
-    emit historyStateChanged();
-    service_.requestOperations(historyNextOffset_, historyPageSize_, historyVersion_);
 }
 
 } // namespace interfaces

@@ -7,7 +7,7 @@ import QtQuick.Layouts
 ApplicationWindow {
     id: window
 
-    enum Page { Overview, Categories, Accounts, More, Analytics, Settings }
+    enum Page { Dashboard, Categories, Accounts, More, Analytics, Settings, History }
 
     required property var ledger
     required property var updates
@@ -28,6 +28,21 @@ ApplicationWindow {
     palette.button: MobileTheme.paper
     palette.highlight: MobileTheme.ink
     palette.highlightedText: MobileTheme.sidebar
+
+    function openHistory(accountId, categoryId) {
+        pages.currentIndex = MobileMainView.History
+        ledger.filterHistory(accountId, categoryId)
+    }
+
+    function showDashboard() {
+        pages.currentIndex = MobileMainView.Dashboard
+        ledger.resetHistoryFilters()
+    }
+
+    function openOperationActions(data) {
+        operationActions.operation = data
+        operationActions.open()
+    }
 
     MobileAccountDialog {
         id: accountDialog
@@ -170,7 +185,7 @@ ApplicationWindow {
 
             Layout.fillWidth: true
             Layout.fillHeight: true
-            currentIndex: MobileMainView.Overview
+            currentIndex: MobileMainView.Dashboard
 
             MobileDashboardPage {
                 ledger: window.ledger
@@ -179,14 +194,12 @@ ApplicationWindow {
                     assetDialog.title = name
                     assetDialog.open()
                 }
-                onOperationActionsRequested: data => {
-                    operationActions.operation = data
-                    operationActions.open()
-                }
+                onOperationActionsRequested: data => window.openOperationActions(data)
             }
 
             MobileCategoriesPage {
                 ledger: window.ledger
+                onHistoryRequested: categoryId => window.openHistory("", categoryId)
                 onEditRequested: data => categoryDialog.openForEdit(data)
                 onRemoveRequested: (recordId, description) =>
                     removalDialog.ask("removeCategory", recordId, description)
@@ -194,6 +207,7 @@ ApplicationWindow {
 
             MobileAccountsSection {
                 ledger: window.ledger
+                onHistoryRequested: accountId => window.openHistory(accountId, "")
                 onEditRequested: data => accountDialog.openForEdit(data)
                 onRemoveRequested: (recordId, description) =>
                     removalDialog.ask("removeAccount", recordId, description)
@@ -225,6 +239,11 @@ ApplicationWindow {
                     MoreLink {
                         text: "Аналитика"
                         onClicked: pages.currentIndex = MobileMainView.Analytics
+                    }
+
+                    MoreLink {
+                        text: "История операций"
+                        onClicked: window.openHistory("", "")
                     }
 
                     MoreLink {
@@ -263,24 +282,37 @@ ApplicationWindow {
                 updates: window.updates
                 onBackRequested: pages.currentIndex = MobileMainView.More
             }
+
+            MobileHistoryPage {
+                ledger: window.ledger
+                onOperationActionsRequested: data => window.openOperationActions(data)
+                onBackRequested: window.showDashboard()
+            }
         }
 
         MobileSidebar {
             Layout.fillWidth: true
             phoneLayout: true
-            currentPage: Math.min(pages.currentIndex, MobileMainView.More)
+            currentPage: pages.currentIndex === MobileMainView.History
+                ? MobileMainView.Dashboard : Math.min(pages.currentIndex, MobileMainView.More)
             updateAvailable: window.updates.updateAvailable
-            addEnabled: pages.currentIndex === MobileMainView.Overview
+            addEnabled: pages.currentIndex === MobileMainView.Dashboard || pages.currentIndex === MobileMainView.History
                 ? window.ledger.canAddOperation
                 : (pages.currentIndex === MobileMainView.Categories
                    || pages.currentIndex === MobileMainView.Accounts)
                   && window.ledger.ready && !window.ledger.commandPending
 
-            onPageRequested: page => pages.currentIndex = page
+            onPageRequested: page => {
+                if (page === MobileMainView.Dashboard)
+                    window.showDashboard()
+                else
+                    pages.currentIndex = page
+            }
             onAddRequested: {
                 switch (pages.currentIndex) {
-                case MobileMainView.Overview:
-                    operationDialog.openFor(1)
+                case MobileMainView.Dashboard:
+                case MobileMainView.History:
+                    operationDialog.openFor(1, window.ledger.historyAccountId)
                     break
                 case MobileMainView.Categories:
                     categoryDialog.openFor(1)

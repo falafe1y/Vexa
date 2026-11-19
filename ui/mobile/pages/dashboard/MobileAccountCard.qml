@@ -19,6 +19,7 @@ Basic.ItemDelegate {
     property string openingInput: ""
     property string limitInput: ""
     property bool includeDebtInTotal: true
+    signal historyRequested(string recordId)
     signal removeRequested(string recordId, string description)
     signal editRequested(var data)
 
@@ -95,7 +96,7 @@ Basic.ItemDelegate {
             visible: card.credit
             text: "Долг: " + card.debtText
             font.pixelSize: 12
-            color: MobileTheme.accent
+            color: MobileTheme.historyExpense
         }
     }
 
@@ -118,6 +119,8 @@ Basic.ItemDelegate {
     MobileContextActionMenu {
         id: accountMenu
 
+        historyEnabled: true
+        onHistoryRequested: card.historyRequested(card.recordId)
         onEditRequested: card.editRequested({
             id: card.recordId,
             name: card.nameText,

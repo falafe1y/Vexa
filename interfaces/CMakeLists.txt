@@ -1,6 +1,7 @@
 add_library(interfaces STATIC
     LedgerInterface.h
     LedgerInterface.cpp
+    LedgerHistory.cpp
     LedgerInterfaceCommands.cpp
     LedgerPresentation.h
     LedgerPresentation.cpp

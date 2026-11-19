@@ -3,6 +3,9 @@ import QtQuick
 MobilePopupMenu {
     id: menu
 
+    property bool historyEnabled: false
+    signal historyRequested()
+
     property bool removeEnabled: true
     property bool editEnabled: true
     signal removeRequested()
@@ -10,6 +13,12 @@ MobilePopupMenu {
 
     x: parent.width - width
     y: parent.height
+
+    MobilePopupMenuItem {
+        visible: menu.historyEnabled
+        text: "История операций"
+        onTriggered: menu.historyRequested()
+    }
 
     MobilePopupMenuItem {
         text: "Редактировать"

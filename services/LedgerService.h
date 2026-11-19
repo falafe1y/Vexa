@@ -57,7 +57,9 @@ public:
     void requestOperations(
             qint64 offset = 0,
             qint64 limit = 50,
-            const QUuid& version = QUuid{}
+            const QUuid& version = QUuid{},
+            const OperationFilter& filter = {},
+            const QString& baseCurrencyCode = QStringLiteral("RUB")
         );
 
     void addIncome(

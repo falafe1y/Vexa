@@ -4,10 +4,13 @@
 #include "Ledger.h"
 #include "Operation.h"
 
+#include <QSet>
+
 #include <algorithm>
 #include <map>
 #include <numeric>
 #include <stdexcept>
+#include <utility>
 #include <variant>
 #include <vector>
 
@@ -290,80 +293,118 @@ ExpenseSummary LedgerReadService::expenseSummary(core::model::Currency currency)
 
 OperationPage LedgerReadService::operations(
     qint64 offset,
-    qint64 limit) const
+    qint64 limit,
+    const OperationFilter& filter,
+    const QString& baseCurrencyCode) const
 {
-    if (offset < 0) {
-        throw std::invalid_argument(
-            "History offset must not be negative"
-            );
+    using core::model::Currency;
+    using core::model::ExchangeRate;
+    using core::model::Money;
+
+    if (offset < 0 || limit <= 0 || filter.type < -1 || filter.type > 2) {
+        throw std::invalid_argument("Invalid history request");
     }
 
-    if (limit <= 0) {
-        throw std::invalid_argument(
-            "History limit must be positive"
-            );
+    const auto currency = filter.accountId.isNull()
+        ? Currency::fromCode(baseCurrencyCode.toStdString())
+        : ledger_.account(filter.accountId).currency();
+
+    const auto searchText = filter.searchText.trimmed();
+    QString numericSearch = searchText;
+    numericSearch.remove(QChar(' '));
+    numericSearch.remove(QChar(0x00a0));
+    numericSearch.remove(QChar(0x202f));
+    numericSearch.replace(QLatin1Char(','), QLatin1Char('.'));
+    if (numericSearch.startsWith(QLatin1Char('+'))
+        || numericSearch.startsWith(QLatin1Char('-'))
+        || numericSearch.startsWith(QChar(0x2212))) {
+        numericSearch.remove(0, 1);
     }
 
-    OperationPage page;
+    const auto amountMatches = [&numericSearch](qint64 minor, int decimals) {
+        if (numericSearch.isEmpty()) return false;
+        auto text = QString::number(minor).rightJustified(decimals + 1, QLatin1Char('0'));
+        if (decimals > 0) text.insert(text.size() - decimals, QLatin1Char('.'));
+        return text.contains(numericSearch);
+    };
 
-    page.limit = limit;
-    page.totalCount = ledger_.operationCount();
-    page.offset = std::min(offset, page.totalCount);
-    page.nextOffset = page.offset;
+    using CurrencyTotals = std::map<std::string_view, Money>;
+    std::map<QDate, CurrencyTotals> dailyTotals;
+    const auto addAmount = [](CurrencyTotals& totals, Money amount) {
+        const auto [position, inserted] = totals.try_emplace(amount.currency().code(), amount);
+        if (!inserted) position->second = position->second + amount;
+    };
 
-    if (page.offset == page.totalCount) {
-        return page;
+    std::vector<std::size_t> indices;
+    indices.reserve(static_cast<std::size_t>(ledger_.operationCount()));
+
+    for (qint64 i = 0; i < ledger_.operationCount(); ++i) {
+        const auto& operation = ledger_.operationAt(static_cast<std::size_t>(i));
+        const auto data = makeOperationData(operation);
+        const bool transfer = data.type == OperationType::Transfer;
+        if (!filter.accountId.isNull()
+            && data.accountId != filter.accountId && data.toAccountId != filter.accountId) continue;
+        if (!filter.categoryId.isNull() && data.categoryId != filter.categoryId) continue;
+        if (filter.type >= 0 && static_cast<int>(data.type) != filter.type) continue;
+
+        const auto searchable = data.accountName + QLatin1Char(' ') + data.toAccountName
+            + QLatin1Char(' ') + data.categoryName + QLatin1Char(' ') + data.description
+            + QLatin1Char(' ') + data.date.toString(QStringLiteral("dd.MM.yyyy"));
+        if (!searchText.isEmpty() && !searchable.contains(searchText, Qt::CaseInsensitive)
+            && !amountMatches(data.amountMinor, data.decimalPlaces)
+            && !(transfer && amountMatches(data.receivedAmountMinor, data.receivedDecimalPlaces))) continue;
+
+        indices.push_back(static_cast<std::size_t>(i));
+        auto& amounts = dailyTotals[data.date];
+        if (transfer) {
+            if (filter.accountId.isNull()) continue;
+            if (data.toAccountId == filter.accountId) {
+                addAmount(amounts, Money::fromMinorUnits(data.receivedAmountMinor, currency));
+            } else {
+                addAmount(amounts, Money::fromMinorUnits(-data.amountMinor, currency));
+            }
+        } else {
+            const auto sourceCurrency = Currency::fromCode(data.currencyCode.toStdString());
+            addAmount(amounts, Money::fromMinorUnits(
+                data.type == OperationType::Income ? data.amountMinor : -data.amountMinor,
+                sourceCurrency));
+        }
     }
 
-    // Сортируем позиции операций, сохраняя порядок самого журнала.
-    std::vector<std::size_t> indices(
-        static_cast<std::size_t>(page.totalCount)
-        );
-
-    std::iota(
-        indices.begin(),
-        indices.end(),
-        std::size_t{0}
-        );
-
-    std::sort(
-        indices.begin(),
-        indices.end(),
+    std::sort(indices.begin(), indices.end(),
         [this](std::size_t leftIndex, std::size_t rightIndex) {
             const auto& left = ledger_.operationAt(leftIndex);
             const auto& right = ledger_.operationAt(rightIndex);
-
-            if (left.date() != right.date()) {
-                return left.date() > right.date();
-            }
-
-            // При одинаковой дате сначала показываем
-            // операцию, добавленную в журнал позднее.
+            if (left.date() != right.date()) return left.date() > right.date();
             return leftIndex > rightIndex;
-        }
-        );
+        });
 
-    const qint64 count = std::min(
-        limit,
-        page.totalCount - page.offset
-        );
-
+    OperationPage page;
+    page.currencyCode = toCurrencyCode(currency);
+    page.decimalPlaces = currency.decimalPlaces();
+    page.limit = limit;
+    page.totalCount = static_cast<qint64>(indices.size());
+    page.offset = std::min(offset, page.totalCount);
+    const auto count = std::min(limit, page.totalCount - page.offset);
     page.items.reserve(static_cast<std::size_t>(count));
 
+    QSet<QDate> includedDays;
     for (qint64 i = 0; i < count; ++i) {
-        const auto position =
-            static_cast<std::size_t>(page.offset + i);
-
-        const auto operationIndex = indices[position];
-
-        page.items.push_back(
-            makeOperationData(ledger_.operationAt(operationIndex))
-            );
+        const auto index = indices.at(static_cast<std::size_t>(page.offset + i));
+        auto data = makeOperationData(ledger_.operationAt(index));
+        if (!includedDays.contains(data.date)) {
+            auto total = Money::fromMinorUnits(0, currency);
+            for (const auto& [code, amount] : dailyTotals.at(data.date)) {
+                total = total + ExchangeRate::fixed(amount.currency(), currency).convert(amount);
+            }
+            page.days.push_back({data.date, total.minorUnits()});
+            includedDays.insert(data.date);
+        }
+        page.items.push_back(std::move(data));
     }
 
     page.nextOffset = page.offset + count;
     page.hasMore = page.nextOffset < page.totalCount;
-
     return page;
 }
 

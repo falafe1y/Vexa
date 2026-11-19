@@ -19,8 +19,15 @@ class LedgerInterface final : public QObject
     Q_PROPERTY(bool ready READ isReady NOTIFY readyChanged)
     Q_PROPERTY(QString totalBalanceText READ totalBalanceText NOTIFY totalBalanceChanged)
     Q_PROPERTY(bool historyLoading READ isHistoryLoading NOTIFY historyStateChanged)
+    Q_PROPERTY(bool historyLoadingMore READ isHistoryLoadingMore NOTIFY historyStateChanged)
     Q_PROPERTY(bool historyHasMore READ historyHasMore NOTIFY historyStateChanged)
     Q_PROPERTY(QString historyCaption READ historyCaption NOTIFY historyStateChanged)
+    Q_PROPERTY(QString historyAccountId READ historyAccountId WRITE setHistoryAccountId NOTIFY historyFilterChanged)
+    Q_PROPERTY(QString historyCategoryId READ historyCategoryId NOTIFY historyFilterChanged)
+    Q_PROPERTY(QString historyCategoryName READ historyCategoryName NOTIFY historyCategoryNameChanged)
+    Q_PROPERTY(QString historySearchText READ historySearchText WRITE setHistorySearchText NOTIFY historyFilterChanged)
+    Q_PROPERTY(int historyOperationType READ historyOperationType WRITE setHistoryOperationType NOTIFY historyFilterChanged)
+    Q_PROPERTY(QVariantMap historyDays READ historyDays NOTIFY historyStateChanged)
     Q_PROPERTY(bool commandPending READ isCommandPending NOTIFY commandStateChanged)
     Q_PROPERTY(bool canAddOperation READ canAddOperation NOTIFY availabilityChanged)
     Q_PROPERTY(bool canTransfer READ canTransfer NOTIFY availabilityChanged)
@@ -45,11 +52,24 @@ public:
     bool isReady() const noexcept { return ready_; }
     const QString& totalBalanceText() const noexcept { return totalBalanceText_; }
     bool isHistoryLoading() const noexcept { return historyLoading_; }
+    bool isHistoryLoadingMore() const noexcept
+    {
+        return historyLoading_ && !historyReplace_ && !historyReloadPending_;
+    }
     bool historyHasMore() const noexcept { return historyHasMore_; }
     bool isCommandPending() const noexcept { return commandPending_; }
     bool canAddOperation() const noexcept;
     bool canTransfer() const noexcept;
     QString historyCaption() const;
+    QString historyAccountId() const;
+    QString historyCategoryId() const;
+    QString historyCategoryName() const;
+    QString historySearchText() const { return historyFilter_.searchText; }
+    int historyOperationType() const noexcept { return historyFilter_.type; }
+    const QVariantMap& historyDays() const noexcept { return historyDays_; }
+    void setHistoryAccountId(const QString& id);
+    void setHistorySearchText(const QString& text);
+    void setHistoryOperationType(int type);
     QString accountsCaption() const;
     QString baseCurrencyCode() const;
     int baseCurrencyIndex() const;
@@ -70,6 +90,8 @@ public:
     Q_INVOKABLE void refresh();
     Q_INVOKABLE void reloadHistory();
     Q_INVOKABLE void loadMoreHistory();
+    Q_INVOKABLE void filterHistory(const QString& accountId, const QString& categoryId);
+    Q_INVOKABLE void resetHistoryFilters();
 
     Q_INVOKABLE bool createAccount(const QString& name, int type,
         const QString& currencyCode, const QString& openingBalance,
@@ -97,6 +119,8 @@ signals:
     void totalBalanceChanged();
     void expenseSummaryChanged();
     void historyStateChanged();
+    void historyFilterChanged();
+    void historyCategoryNameChanged();
     void commandStateChanged();
     void availabilityChanged();
     void accountsChanged();
@@ -106,6 +130,9 @@ signals:
 
 private:
     void requestHistoryPage();
+    void historyFilterUpdated();
+    void acceptHistoryPage(const services::OperationPage& page);
+    void historyRequestFailed();
     void reloadExpenseSummary();
     bool finishExpenseSummaryRequest();
     bool executeUiCommand(const QString& name, const std::function<void()>& action);
@@ -122,6 +149,10 @@ private:
     bool historyHasMore_ = false;
     bool historyReplace_ = true;
     bool historyReloadPending_ = false;
+    bool historyFailed_ = false;
+    bool historyHasResult_ = false;
+    services::OperationFilter historyFilter_;
+    QVariantMap historyDays_;
     qint64 historyNextOffset_ = 0;
     qint64 historyPageSize_ = 50;
     qint64 historyTotalCount_ = 0;
@@ -136,12 +167,13 @@ private:
 
     ReadListModel accounts_{{"id", "name", "type", "typeText", "currencyCode", "openingInput", "limitInput", "isCreditCard",
         "primaryLabel", "primaryText", "balanceText", "creditLimitText", "debtText", "includeDebtInTotal"}, this};
-    ReadListModel categories_{{"id", "name", "type", "typeText"}, this};
-    ReadListModel incomeCategories_{{"id", "name", "type", "typeText"}, this};
-    ReadListModel expenseCategories_{{"id", "name", "type", "typeText"}, this};
+    ReadListModel categories_{{"id", "name", "type", "typeText", "initial"}, this};
+    ReadListModel incomeCategories_{{"id", "name", "type", "typeText", "initial"}, this};
+    ReadListModel expenseCategories_{{"id", "name", "type", "typeText", "initial"}, this};
     ReadListModel history_{{"id", "dateText", "accountId", "secondaryId", "amountInput", "type", "typeText", "accountText",
         "secondaryAccountText", "categoryText", "primaryAmountText",
-        "secondaryAmountText", "descriptionText"}, this};
+        "secondaryAmountText", "descriptionText", "iconText", "historyTitle", "historySubtitle",
+        "historyAmountText", "historySecondaryAmountText"}, this};
     ReadListModel expenseSummary_{{"id", "name", "amountText", "shareText",
         "isOther", "startAngle", "sweepAngle"}, this};
 };

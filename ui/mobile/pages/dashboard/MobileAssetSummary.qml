@@ -16,7 +16,7 @@ ColumnLayout {
 
     Rectangle {
         Layout.fillWidth: true
-        Layout.preferredHeight: summary.compact ? 90 : Math.max(117, Math.min(147, width * 0.34))
+        Layout.preferredHeight: summary.compact ? 64 : Math.max(117, Math.min(147, width * 0.34))
         color: MobileTheme.ink
 
         ColumnLayout {
@@ -29,9 +29,9 @@ ColumnLayout {
 
             MobileEditorialText {
                 Layout.fillWidth: true
-                text: "ОБЩИЙ ИТОГ"
+                text: "ОБЩИЙ ОСТАТОК"
                 font.family: MobileTheme.mono
-                font.pixelSize: 13
+                font.pixelSize: summary.compact ? 11 : 13
                 color: MobileTheme.line
             }
 
@@ -40,7 +40,7 @@ ColumnLayout {
                 Layout.topMargin: 6
                 text: summary.totalText
                 font.family: MobileTheme.serif
-                font.pixelSize: Math.max(34, Math.min(52, width * 0.12))
+                font.pixelSize: summary.compact ? 30 : 43
                 fontSizeMode: Text.HorizontalFit
                 minimumPixelSize: 17
                 color: MobileTheme.sidebar
@@ -52,7 +52,8 @@ ColumnLayout {
 
     Rectangle {
         Layout.fillWidth: true
-        Layout.preferredHeight: summary.compact ? 58 : 69
+        Layout.preferredHeight: 69
+        visible: !summary.compact
         color: MobileTheme.ink
 
         RowLayout {

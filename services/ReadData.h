@@ -82,6 +82,20 @@ using AccountList = std::vector<AccountData>;
 using CategoryList = std::vector<CategoryData>;
 using OperationList = std::vector<OperationData>;
 
+struct OperationFilter
+{
+    QUuid accountId;
+    QUuid categoryId;
+    QString searchText;
+    int type = -1;
+};
+
+struct OperationDayData
+{
+    QDate date;
+    qint64 totalMinor = 0;
+};
+
 struct ExpenseCategoryData
 {
     QUuid id;
@@ -100,6 +114,9 @@ struct ExpenseSummary
 struct OperationPage
 {
     OperationList items;
+    std::vector<OperationDayData> days;
+    QString currencyCode;
+    int decimalPlaces = 0;
 
     qint64 offset = 0;
     qint64 limit = 0;
