@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.16)
 
-project(Vexa VERSION 0.1.2 LANGUAGES CXX)
+project(Vexa VERSION 0.1.3 LANGUAGES CXX)
 
 set(VEXA_PUBLISHER "Vishnevsky")
 set(vexa_icon_dir "${CMAKE_CURRENT_SOURCE_DIR}/assets/icons")
