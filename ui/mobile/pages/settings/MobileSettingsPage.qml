@@ -27,8 +27,8 @@ Flickable {
 
         MobileActionButton {
             flat: true
-            text: "‹ Ещё"
-            Accessible.name: "Вернуться в раздел «Ещё»"
+            text: "‹ Обзор"
+            Accessible.name: "Вернуться к обзору"
             onClicked: page.backRequested()
         }
 

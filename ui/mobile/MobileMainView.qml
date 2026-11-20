@@ -7,7 +7,7 @@ import QtQuick.Layouts
 ApplicationWindow {
     id: window
 
-    enum Page { Dashboard, Categories, Accounts, More, Analytics, Settings, History }
+    enum Page { Dashboard, Categories, Accounts, Analytics, Settings, History }
 
     required property var ledger
     required property var updates
@@ -135,44 +135,6 @@ ApplicationWindow {
         }
     }
 
-    component MoreLink: Basic.Button {
-        id: link
-
-        property string detail: "›"
-
-        Layout.fillWidth: true
-        implicitHeight: 46
-        padding: 0
-
-        contentItem: RowLayout {
-            MobileEditorialText {
-                Layout.fillWidth: true
-                text: link.text
-                font.pixelSize: 16
-            }
-
-            MobileEditorialText {
-                text: link.detail
-                font.family: MobileTheme.mono
-                font.pixelSize: 11
-                color: MobileTheme.muted
-            }
-        }
-
-        background: Rectangle {
-            color: link.down ? MobileTheme.soft : "transparent"
-            border.width: link.visualFocus ? 1 : 0
-            border.color: MobileTheme.accent
-
-            Rectangle {
-                anchors.bottom: parent.bottom
-                width: parent.width
-                height: 1
-                color: MobileTheme.line
-            }
-        }
-    }
-
     ColumnLayout {
         anchors.top: parent.top
         anchors.bottom: parent.bottom
@@ -213,56 +175,15 @@ ApplicationWindow {
                     removalDialog.ask("removeAccount", recordId, description)
             }
 
-            Flickable {
-                id: more
-
-                clip: true
-                contentWidth: width
-                contentHeight: links.implicitHeight + 2 * MobileTheme.pagePadding
-                flickableDirection: Flickable.VerticalFlick
-                boundsBehavior: Flickable.StopAtBounds
-
-                ColumnLayout {
-                    id: links
-
-                    x: MobileTheme.pagePadding
-                    y: 13
-                    width: more.width - 2 * x
-                    spacing: 0
-
-                    MobilePageHeading {
-                        Layout.fillWidth: true
-                        documentStyle: true
-                        text: "Ещё"
-                    }
-
-                    MoreLink {
-                        text: "Аналитика"
-                        onClicked: pages.currentIndex = MobileMainView.Analytics
-                    }
-
-                    MoreLink {
-                        text: "История операций"
-                        onClicked: window.openHistory("", "")
-                    }
-
-                    MoreLink {
-                        text: "Настройки"
-                        detail: window.updates.updateAvailable ? "Доступно обновление" : "›"
-                        onClicked: pages.currentIndex = MobileMainView.Settings
-                    }
-                }
-            }
-
             MobileAnalyticsPage {
                 ledger: window.ledger
-                onBackRequested: pages.currentIndex = MobileMainView.More
+                onBackRequested: window.showDashboard()
             }
 
             MobileSettingsPage {
                 ledger: window.ledger
                 updates: window.updates
-                onBackRequested: pages.currentIndex = MobileMainView.More
+                onBackRequested: window.showDashboard()
             }
 
             MobileHistoryPage {
@@ -273,10 +194,13 @@ ApplicationWindow {
         }
 
         MobileSidebar {
+            id: navigation
+
             Layout.fillWidth: true
             phoneLayout: true
             currentPage: pages.currentIndex === MobileMainView.History
-                ? MobileMainView.Dashboard : Math.min(pages.currentIndex, MobileMainView.More)
+                ? MobileMainView.Dashboard : Math.min(pages.currentIndex, 3)
+            moreOpen: moreMenu.visible
             updateAvailable: window.updates.updateAvailable
             addEnabled: pages.currentIndex === MobileMainView.Dashboard || pages.currentIndex === MobileMainView.History
                 ? window.ledger.canAddOperation
@@ -285,12 +209,20 @@ ApplicationWindow {
                   && window.ledger.ready && !window.ledger.commandPending
 
             onPageRequested: page => {
+                moreMenu.close()
                 if (page === MobileMainView.Dashboard)
                     window.showDashboard()
                 else
                     pages.currentIndex = page
             }
+            onMoreRequested: {
+                if (moreMenu.visible)
+                    moreMenu.close()
+                else
+                    moreMenu.open()
+            }
             onAddRequested: {
+                moreMenu.close()
                 switch (pages.currentIndex) {
                 case MobileMainView.Dashboard:
                 case MobileMainView.History:
@@ -302,6 +234,54 @@ ApplicationWindow {
                 case MobileMainView.Accounts:
                     accountDialog.open()
                     break
+                }
+            }
+        }
+    }
+
+    MobilePopupMenu {
+        id: moreMenu
+
+        parent: navigation
+        width: Math.min(280, navigation.width - 16)
+        x: navigation.width - width - 8
+        y: -height - 6
+        modal: false
+        focus: true
+        closePolicy: Basic.Popup.CloseOnEscape | Basic.Popup.CloseOnPressOutsideParent
+
+        MobilePopupMenuItem {
+            text: "Аналитика"
+            onTriggered: pages.currentIndex = MobileMainView.Analytics
+        }
+
+        MobilePopupMenuItem {
+            text: "История операций"
+            onTriggered: window.openHistory("", "")
+        }
+
+        MobilePopupMenuItem {
+            id: settingsItem
+
+            text: "Настройки"
+            Accessible.name: window.updates.updateAvailable
+                ? text + ", доступно обновление" : text
+            onTriggered: pages.currentIndex = MobileMainView.Settings
+
+            contentItem: RowLayout {
+                spacing: 12
+
+                MobileEditorialText {
+                    Layout.fillWidth: true
+                    text: settingsItem.text
+                    font.pixelSize: 16
+                }
+
+                MobileEditorialText {
+                    visible: window.updates.updateAvailable
+                    text: "Доступно обновление"
+                    font.pixelSize: 11
+                    color: MobileTheme.muted
                 }
             }
         }

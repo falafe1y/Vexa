@@ -11,7 +11,9 @@ Rectangle {
     property bool updateAvailable: false
     property bool phoneLayout: false
     property bool addEnabled: false
+    property bool moreOpen: false
     signal pageRequested(int page)
+    signal moreRequested()
     signal addRequested()
 
     implicitHeight: phoneLayout ? 64 : 58
@@ -23,8 +25,9 @@ Rectangle {
         required property int pageIndex
         required property string iconPath
 
-        readonly property bool selected: sidebar.currentPage === pageIndex
-        readonly property bool more: pageIndex === 3
+        readonly property bool selected: sidebar.moreOpen ? phoneTab.more
+            : sidebar.currentPage === phoneTab.pageIndex
+        readonly property bool more: phoneTab.pageIndex === 3
 
         Layout.fillWidth: true
         Layout.fillHeight: true
@@ -32,9 +35,9 @@ Rectangle {
         Layout.preferredWidth: 1
         padding: 0
 
-        Accessible.role: Accessible.PageTab
+        Accessible.role: phoneTab.more ? Accessible.ButtonMenu : Accessible.PageTab
         Accessible.selected: selected
-        Accessible.name: more && sidebar.updateAvailable
+        Accessible.name: phoneTab.more && sidebar.updateAvailable
             ? text + ", доступно обновление" : text
 
         contentItem: Item {
@@ -103,7 +106,12 @@ Rectangle {
             }
         }
 
-        onClicked: sidebar.pageRequested(pageIndex)
+        onClicked: {
+            if (phoneTab.more)
+                sidebar.moreRequested()
+            else
+                sidebar.pageRequested(phoneTab.pageIndex)
+        }
     }
 
     RowLayout {
