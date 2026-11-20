@@ -66,7 +66,7 @@ LedgerInterface::LedgerInterface(services::LedgerService& service,
             incomeCategories_.setRows(income);
             expenseCategories_.setRows(expense);
             if (!historyFilter_.categoryId.isNull() && historyCategoryName().isEmpty()) {
-                historyFilter_.categoryId = {};
+                historyFilter_.categoryId = QUuid{};
                 historyFilterUpdated();
             } else if (historyCategoryName() != previousHistoryCategoryName) {
                 emit historyCategoryNameChanged();

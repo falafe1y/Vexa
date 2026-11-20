@@ -57,10 +57,10 @@ void LedgerInterface::filterHistory(const QString& accountId, const QString& cat
     historyFilter_ = {};
     historyFilter_.accountId = QUuid{accountId};
     if (!accountDecimalPlaces_.contains(historyFilter_.accountId)) {
-        historyFilter_.accountId = {};
+        historyFilter_.accountId = QUuid{};
     }
     historyFilter_.categoryId = QUuid{categoryId};
-    if (historyCategoryName().isEmpty()) historyFilter_.categoryId = {};
+    if (historyCategoryName().isEmpty()) historyFilter_.categoryId = QUuid{};
     historyFilterUpdated();
 }
 
@@ -102,7 +102,7 @@ void LedgerInterface::reloadHistory()
         return;
     }
     historyNextOffset_ = 0;
-    historyVersion_ = {};
+    historyVersion_ = QUuid{};
     historyHasMore_ = true;
     historyReplace_ = true;
     requestHistoryPage();
