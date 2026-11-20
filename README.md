@@ -30,6 +30,9 @@ Local-First: система работает без интернета, без �
 <img width="1919" height="1003" alt="image" src="https://github.com/user-attachments/assets/8953665c-7511-43f8-8abf-848fc773686b" />
 <img width="1919" height="1002" alt="image" src="https://github.com/user-attachments/assets/20a7f8ff-0787-4503-9376-56fe0a1216df" />
 <img width="1919" height="1004" alt="image" src="https://github.com/user-attachments/assets/dadee6b1-97a9-4940-bfec-aaa7a7f97b7d" />
-<img width="300" height="680" alt="photo_1_2026-11-15_19-23-20" src="https://github.com/user-attachments/assets/b8b422d7-d8dc-48fc-8067-e5b298fe5dc5" />
-<img width="300" height="680" alt="photo_2_2026-11-15_19-23-20" src="https://github.com/user-attachments/assets/a2260c23-c3b1-4aa5-8c5b-383abe424629" />
+<img width="300" height="680" alt="photo_1_2026-11-20_22-32-10" src="https://github.com/user-attachments/assets/cd3647db-81ae-46bb-879c-0052859b52a1" />
+<img width="300" height="680" alt="photo_3_2026-11-20_22-32-10" src="https://github.com/user-attachments/assets/870756c4-3fe9-48a3-b040-3f13be4b1540" />
+<img width="300" height="680" alt="photo_2_2026-11-20_22-32-10" src="https://github.com/user-attachments/assets/c56e4735-d4f1-44b1-9e0e-5a66fd1992a8" />
+
+
 
