@@ -251,24 +251,6 @@ ApplicationWindow {
                         detail: window.updates.updateAvailable ? "Доступно обновление" : "›"
                         onClicked: pages.currentIndex = MobileMainView.Settings
                     }
-
-                    MoreLink {
-                        text: "Криптовалюта"
-                        detail: "В разработке"
-                        onClicked: {
-                            assetDialog.title = text
-                            assetDialog.open()
-                        }
-                    }
-
-                    MoreLink {
-                        text: "Инвестиции"
-                        detail: "В разработке"
-                        onClicked: {
-                            assetDialog.title = text
-                            assetDialog.open()
-                        }
-                    }
                 }
             }
 

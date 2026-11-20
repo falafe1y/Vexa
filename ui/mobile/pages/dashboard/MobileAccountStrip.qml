@@ -7,9 +7,10 @@ Flickable {
 
     required property var ledger
     property bool compact: false
+    property bool showAllAccounts: true
     readonly property string selectedAccountId: ledger.historyAccountId
 
-    implicitHeight: compact ? 74 : 104
+    implicitHeight: compact ? 73 : 86
     contentWidth: cards.implicitWidth + 2 * MobileTheme.pagePadding
     contentHeight: height
     clip: true
@@ -33,7 +34,7 @@ Flickable {
                 }
             }
         }
-        if (!chip || width <= 0)
+        if (!chip || !chip.visible || width <= 0)
             return
 
         const left = cards.x + chip.x - 8
@@ -51,8 +52,8 @@ Flickable {
 
     Basic.ScrollIndicator.horizontal: Basic.ScrollIndicator {}
 
-    Keys.onLeftPressed: contentX = Math.max(0, contentX - 173)
-    Keys.onRightPressed: contentX = Math.min(Math.max(0, contentWidth - width), contentX + 173)
+    Keys.onLeftPressed: contentX = Math.max(0, contentX - 150)
+    Keys.onRightPressed: contentX = Math.min(Math.max(0, contentWidth - width), contentX + 150)
 
     WheelHandler {
         target: null
@@ -74,12 +75,12 @@ Flickable {
 
         x: MobileTheme.pagePadding
         height: strip.height
-        spacing: 8
+        spacing: 20
 
         MobileAccountChip {
             id: allAccounts
 
-            width: 172
+            visible: strip.showAllAccounts
             height: strip.height
             compact: strip.compact
             nameText: "Все счета"
@@ -105,8 +106,7 @@ Flickable {
                 nameText: model.name
                 balanceText: model.primaryText
                 credit: model.isCreditCard
-                detailText: credit ? "Долг " + model.debtText
-                    : model.type === 0 ? "Наличные" : "Остаток"
+                detailText: credit ? "Долг " + model.debtText : model.typeText
                 selected: strip.selectedAccountId === model.id
                 onClicked: strip.ledger.historyAccountId = accountChip.recordId
             }
